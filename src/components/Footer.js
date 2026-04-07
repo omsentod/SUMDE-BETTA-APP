@@ -21,9 +21,9 @@ export default function Footer() {
                     </div>
                     <div className="footer-contact">
                         <h4>Hubungi Kami</h4>
-                        <p>Email: elite@sumdebetta.com</p>
+                        <p>Email: sumdebetta@gmail.com</p>
                         <p>WhatsApp: +62 812 3456 7890</p>
-                        <p>Lokasi: Jakarta, Indonesia</p>
+                        <p>Lokasi: Tulungagung, Indonesia</p>
                     </div>
                 </div>
                 <div className="footer-bottom">

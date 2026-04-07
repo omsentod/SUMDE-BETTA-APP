@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation';
 
 export default function PaymentPage() {
     const { total, clearCart, cart } = useCart();
-    const [status, setStatus] = useState('pending'); // pending, processing, success
-    const [shipment, setShipment] = useState(null);
+    const [status, setStatus] = useState('pending'); 
     const router = useRouter();
 
     useEffect(() => {
