@@ -1,0 +1,78 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("customer") // "customer" | "admin"
+  phone         String?
+  streetAddress String?
+  rtRw          String?
+  province      String?
+  city          String?
+  district      String?
+  village       String?
+  postalCode    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  category    String
+  gender      String
+  form        String
+  coloration  String
+  description String
+  image       String
+  isSold      Boolean  @default(false)
+  isPremium   Boolean  @default(false)
+  statsForm   String   @default("9.0/10")
+  statsColor  String   @default("9.0/10")
+  statsSpirit String   @default("Aktif")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  userId    String?     
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total     Float
+  status    String      @default("PENDING") // "PENDING" | "PAID" | "EXPIRED"
+  name      String      
+  email     String
+  phone         String
+  streetAddress String
+  rtRw          String
+  province      String
+  city          String
+  district      String
+  village       String
+  postalCode    String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  price     Float    
+}
