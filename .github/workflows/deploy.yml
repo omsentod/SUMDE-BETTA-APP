@@ -63,7 +63,7 @@ jobs:
 
             # --- Clone atau pull frontend build (branch deploy-frontend) ---
             if [ -d "$FRONTEND_DIR/.git" ]; then
-              cd "$FRONTEND_DIR" && git pull origin deploy-frontend
+              cd "$FRONTEND_DIR" && git fetch origin deploy-frontend && git reset --hard origin/deploy-frontend
             else
               git clone "https://${{ secrets.GH_PAT }}@github.com/${{ secrets.GH_REPO }}.git" \
                 --branch deploy-frontend --single-branch "$FRONTEND_DIR"
