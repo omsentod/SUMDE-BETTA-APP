@@ -12,27 +12,27 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Deploy backend to nodejs/ via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          port: 21
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          local-dir: sumde-backend/
-          server-dir: /domains/sumdebetta.com/nodejs/
-          exclude: |
-            **/.git*
-            **/node_modules/**
-            **/dev.db
-          dangerous-clean-slate: false
+      - name: Prepare backend files (exclude node_modules & db)
+        run: rsync -r --exclude='node_modules' --exclude='dev.db' --exclude='.git' sumde-backend/ backend-deploy/
 
-      - name: Install dependencies & restart via SSH
+      - name: Upload backend via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          port: 22
+          source: "backend-deploy/*"
+          target: "/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/nodejs"
+          strip_components: 1
+
+      - name: Install dependencies via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASS }}
+          port: 22
           script: |
             cd ~/domains/sumdebetta.com/nodejs
             npm install --omit=dev
@@ -63,13 +63,13 @@ jobs:
           BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
         run: npm run build
 
-      - name: Deploy frontend to public_html via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Upload frontend via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.FTP_HOST }}
-          port: 21
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          local-dir: sumde-frontend/out/
-          server-dir: /domains/sumdebetta.com/public_html/
-          dangerous-clean-slate: false
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          port: 22
+          source: "sumde-frontend/out/*"
+          target: "/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/public_html"
+          strip_components: 2
