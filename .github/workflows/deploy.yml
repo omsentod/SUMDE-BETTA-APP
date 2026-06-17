@@ -8,7 +8,6 @@ jobs:
   deploy-frontend:
     name: Build & Deploy Next.js
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -30,7 +29,7 @@ jobs:
           BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
         run: npm run build
 
-      - name: Deploy to Hostinger via FTP
+      - name: Deploy frontend to public_html via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -39,3 +38,35 @@ jobs:
           local-dir: sumde-frontend/out/
           server-dir: /domains/sumdebetta.com/public_html/
           dangerous-clean-slate: false
+
+  deploy-backend:
+    name: Deploy Express Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy backend to nodejs/ via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: sumde-backend/
+          server-dir: /domains/sumdebetta.com/nodejs/
+          exclude: |
+            **/.git*
+            **/node_modules/**
+            **/dev.db
+          dangerous-clean-slate: false
+
+      - name: Install dependencies & restart via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ~/domains/sumdebetta.com/nodejs
+            npm install --omit=dev
+            npx prisma generate
