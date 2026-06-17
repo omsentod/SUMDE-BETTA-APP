@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { spawn } = require('child_process');
 const { PrismaClient } = require('@prisma/client');
 
 const app = express();
@@ -400,6 +401,22 @@ app.delete('/api/addresses/:id', async (req, res) => {
 // Root Route check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'SUMDE-BETTA API Server is healthy' });
+});
+
+// Webhook deploy endpoint — triggered by GitHub Actions
+app.post('/webhook/deploy', (req, res) => {
+  const secret = req.headers['x-webhook-secret'];
+  if (!process.env.WEBHOOK_SECRET || secret !== process.env.WEBHOOK_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  res.json({ message: 'Deploy triggered' });
+  const deployScript = path.join(__dirname, 'deploy.sh');
+  const child = spawn('bash', [deployScript], {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, PATH: `/opt/alt/alt-nodejs22/root/usr/bin:${process.env.PATH || ''}` }
+  });
+  child.unref();
 });
 
 // Serve Next.js static frontend from public_html/
