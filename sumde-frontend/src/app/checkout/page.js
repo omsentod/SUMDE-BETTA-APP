@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import SearchableSelect from '@/components/SearchableSelect';
 
 export default function CheckoutPage() {
     const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart } = useCart();
@@ -139,10 +140,8 @@ export default function CheckoutPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Dropdown Handlers
-    const handleProvinceChange = (e) => {
-        const id = e.target.value;
-        const name = e.target.options[e.target.selectedIndex].text;
+    // Dropdown Handlers — receive (id, name) directly from SearchableSelect
+    const handleProvinceChange = (id, name) => {
         setProvId(id);
         setFormData(prev => ({
             ...prev,
@@ -157,9 +156,7 @@ export default function CheckoutPage() {
         setVillages([]);
     };
 
-    const handleCityChange = (e) => {
-        const id = e.target.value;
-        const name = e.target.options[e.target.selectedIndex].text;
+    const handleCityChange = (id, name) => {
         setCityId(id);
         setFormData(prev => ({
             ...prev,
@@ -171,9 +168,7 @@ export default function CheckoutPage() {
         setVillages([]);
     };
 
-    const handleDistrictChange = (e) => {
-        const id = e.target.value;
-        const name = e.target.options[e.target.selectedIndex].text;
+    const handleDistrictChange = (id, name) => {
         setDistrictId(id);
         setFormData(prev => ({
             ...prev,
@@ -182,9 +177,7 @@ export default function CheckoutPage() {
         }));
     };
 
-    const handleVillageChange = (e) => {
-        const id = e.target.value;
-        const name = e.target.options[e.target.selectedIndex].text;
+    const handleVillageChange = (id, name) => {
         setFormData(prev => ({
             ...prev,
             village: id ? name : ''
@@ -217,7 +210,7 @@ export default function CheckoutPage() {
                 <div className="container">
                     <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3.5rem', marginBottom: '4rem', color: 'var(--text-main)' }}>Ringkasan Akuisisi</h1>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '4rem' }}>
+                    <div className="grid-checkout-outer">
 
                         <div className="checkout-left">
                             <div className="cart-items" style={{ marginBottom: '4rem' }}>
@@ -250,7 +243,7 @@ export default function CheckoutPage() {
 
                             <div className="shipment-form" style={{ background: 'rgba(255,255,255,0.02)', padding: '3rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Detail Pengiriman Resmi</h3>
-                                <form onSubmit={handleProceed} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                <form onSubmit={handleProceed} className="grid-form-2col">
                                     <div style={{ gridColumn: '1 / -1' }}>
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nama Penerima</label>
                                         <input type="text" name="name" className="search-input" style={{ width: '100%' }} value={formData.name} onChange={handleInputChange} required />
@@ -267,33 +260,23 @@ export default function CheckoutPage() {
                                     {/* Cascading dropdown selectors */}
                                     <div>
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Provinsi</label>
-                                        <select className="sortSelect" style={{ width: '100%' }} value={provId} onChange={handleProvinceChange} required>
-                                            <option value="" className="sortOption">-- Pilih Provinsi --</option>
-                                            {provinces.map(p => <option key={p.id} value={p.id} className="sortOption">{p.name}</option>)}
-                                        </select>
+                                        <SearchableSelect
+                                            options={provinces}
+                                            value={provId}
+                                            onChange={handleProvinceChange}
+                                            placeholder="-- Pilih Provinsi --"
+                                        />
                                     </div>
                                     <div>
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kabupaten / Kota</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <select className="sortSelect" style={{ width: '100%' }} value={cityId} onChange={handleCityChange} disabled={!provId} required>
-                                                <option value="" className="sortOption">-- Pilih Kabupaten/Kota --</option>
-                                                {cities.map(c => <option key={c.id} value={c.id} className="sortOption">{c.name}</option>)}
-                                            </select>
-                                            {!provId && (
-                                                <div
-                                                    onClick={() => triggerSelectAlert('city', 'Silakan pilih Provinsi terlebih dahulu.')}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        left: 0,
-                                                        right: 0,
-                                                        bottom: 0,
-                                                        cursor: 'not-allowed',
-                                                        zIndex: 10
-                                                    }}
-                                                />
-                                            )}
-                                        </div>
+                                        <SearchableSelect
+                                            options={cities}
+                                            value={cityId}
+                                            onChange={handleCityChange}
+                                            disabled={!provId}
+                                            placeholder="-- Pilih Kabupaten/Kota --"
+                                            onClickDisabled={() => triggerSelectAlert('city', 'Silakan pilih Provinsi terlebih dahulu.')}
+                                        />
                                         {selectAlert.field === 'city' && (
                                             <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.4rem' }}>
                                                 ⚠️ {selectAlert.message}
@@ -302,26 +285,14 @@ export default function CheckoutPage() {
                                     </div>
                                     <div>
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kecamatan</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <select className="sortSelect" style={{ width: '100%' }} value={districtId} onChange={handleDistrictChange} disabled={!cityId} required>
-                                                <option value="" className="sortOption">-- Pilih Kecamatan --</option>
-                                                {districts.map(d => <option key={d.id} value={d.id} className="sortOption">{d.name}</option>)}
-                                            </select>
-                                            {!cityId && (
-                                                <div
-                                                    onClick={() => triggerSelectAlert('district', 'Silakan pilih Kabupaten / Kota terlebih dahulu.')}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        left: 0,
-                                                        right: 0,
-                                                        bottom: 0,
-                                                        cursor: 'not-allowed',
-                                                        zIndex: 10
-                                                    }}
-                                                />
-                                            )}
-                                        </div>
+                                        <SearchableSelect
+                                            options={districts}
+                                            value={districtId}
+                                            onChange={handleDistrictChange}
+                                            disabled={!cityId}
+                                            placeholder="-- Pilih Kecamatan --"
+                                            onClickDisabled={() => triggerSelectAlert('district', 'Silakan pilih Kabupaten / Kota terlebih dahulu.')}
+                                        />
                                         {selectAlert.field === 'district' && (
                                             <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.4rem' }}>
                                                 ⚠️ {selectAlert.message}
@@ -330,26 +301,14 @@ export default function CheckoutPage() {
                                     </div>
                                     <div>
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kelurahan / Desa</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <select className="sortSelect" style={{ width: '100%' }} value={formData.village ? villages.find(v => v.name.toLowerCase() === formData.village.toLowerCase())?.id || '' : ''} onChange={handleVillageChange} disabled={!districtId} required>
-                                                <option value="" className="sortOption">-- Pilih Kelurahan/Desa --</option>
-                                                {villages.map(v => <option key={v.id} value={v.id} className="sortOption">{v.name}</option>)}
-                                            </select>
-                                            {!districtId && (
-                                                <div
-                                                    onClick={() => triggerSelectAlert('village', 'Silakan pilih Kecamatan terlebih dahulu.')}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        left: 0,
-                                                        right: 0,
-                                                        bottom: 0,
-                                                        cursor: 'not-allowed',
-                                                        zIndex: 10
-                                                    }}
-                                                />
-                                            )}
-                                        </div>
+                                        <SearchableSelect
+                                            options={villages}
+                                            value={villages.find(v => v.name.toLowerCase() === formData.village?.toLowerCase())?.id || ''}
+                                            onChange={handleVillageChange}
+                                            disabled={!districtId}
+                                            placeholder="-- Pilih Kelurahan/Desa --"
+                                            onClickDisabled={() => triggerSelectAlert('village', 'Silakan pilih Kecamatan terlebih dahulu.')}
+                                        />
                                         {selectAlert.field === 'village' && (
                                             <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.4rem' }}>
                                                 ⚠️ {selectAlert.message}
@@ -377,7 +336,7 @@ export default function CheckoutPage() {
                             </div>
                         </div>
 
-                        <div className="summary-card" style={{ padding: '3rem', background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: '1rem', height: 'fit-content', position: 'sticky', top: '120px' }}>
+                        <div className="checkout-summary-card">
                             <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '2rem', color: 'var(--text-main)' }}>Total Akuisisi</h2>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '1.1rem', color: 'var(--text-main)' }}>
                                 <span>Subtotal</span>

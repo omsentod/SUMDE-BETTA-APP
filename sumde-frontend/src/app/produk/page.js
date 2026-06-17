@@ -28,6 +28,44 @@ export default function GalleryPage() {
     });
     const [sortBy, setSortBy] = useState('newest');
 
+    // Filter Logic — must be before any conditional return (Rules of Hooks)
+    const filteredProducts = useMemo(() => {
+        let result = [...products];
+
+        if (filters.genders.length > 0) {
+            result = result.filter(p => filters.genders.includes(p.gender));
+        }
+        if (filters.forms.length > 0) {
+            result = result.filter(p => filters.forms.includes(p.form));
+        }
+        if (filters.colors.length > 0) {
+            result = result.filter(p => filters.colors.includes(p.coloration));
+        }
+        if (filters.priceMin !== '') {
+            result = result.filter(p => p.price >= Number(filters.priceMin));
+        }
+        if (filters.priceMax !== '') {
+            result = result.filter(p => p.price <= Number(filters.priceMax));
+        }
+
+        if (sortBy === 'price_asc') {
+            result.sort((a, b) => a.price - b.price);
+        } else if (sortBy === 'price_desc') {
+            result.sort((a, b) => b.price - a.price);
+        } else if (sortBy === 'newest') {
+            result.sort((a, b) => {
+                const aNum = parseInt(a.id);
+                const bNum = parseInt(b.id);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return bNum - aNum;
+                }
+                return b.id.localeCompare(a.id);
+            });
+        }
+
+        return result;
+    }, [filters, sortBy, products]);
+
     if (isLoading) {
         return (
             <div className="pageContainer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
@@ -54,45 +92,6 @@ export default function GalleryPage() {
     const clearFilters = () => {
         setFilters({ genders: [], forms: [], colors: [], priceMin: 0, priceMax: 5000000 });
     };
-
-    // Filter Logic
-    const filteredProducts = useMemo(() => {
-        let result = [...products];
-
-        if (filters.genders.length > 0) {
-            result = result.filter(p => filters.genders.includes(p.gender));
-        }
-        if (filters.forms.length > 0) {
-            result = result.filter(p => filters.forms.includes(p.form));
-        }
-        if (filters.colors.length > 0) {
-            result = result.filter(p => filters.colors.includes(p.coloration));
-        }
-        if (filters.priceMin !== '') {
-            result = result.filter(p => p.price >= Number(filters.priceMin));
-        }
-        if (filters.priceMax !== '') {
-            result = result.filter(p => p.price <= Number(filters.priceMax));
-        }
-
-        // Sort Logic
-        if (sortBy === 'price_asc') {
-            result.sort((a, b) => a.price - b.price);
-        } else if (sortBy === 'price_desc') {
-            result.sort((a, b) => b.price - a.price);
-        } else if (sortBy === 'newest') {
-            result.sort((a, b) => {
-                const aNum = parseInt(a.id);
-                const bNum = parseInt(b.id);
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return bNum - aNum;
-                }
-                return b.id.localeCompare(a.id);
-            });
-        }
-
-        return result;
-    }, [filters, sortBy, products]);
 
     return (
         <div className="pageContainer">

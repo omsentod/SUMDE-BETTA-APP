@@ -81,8 +81,42 @@ export function AuthProvider({ children }) {
         return [];
     };
 
+    const fetchMyAddresses = async () => {
+        if (!currentUser) return [];
+        const res = await fetch(`/api/addresses?userId=${currentUser.id}`);
+        if (res.ok) return res.json();
+        return [];
+    };
+
+    const createAddress = async (data) => {
+        const res = await fetch('/api/addresses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, ...data })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Gagal menyimpan alamat.');
+        return result;
+    };
+
+    const updateAddress = async (id, data) => {
+        const res = await fetch(`/api/addresses/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, ...data })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Gagal memperbarui alamat.');
+        return result;
+    };
+
+    const deleteAddress = async (id) => {
+        const res = await fetch(`/api/addresses/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Gagal menghapus alamat.');
+    };
+
     return (
-        <AuthContext.Provider value={{ currentUser, isLoading, login, register, logout, updateUserProfile, fetchMyOrders }}>
+        <AuthContext.Provider value={{ currentUser, isLoading, login, register, logout, updateUserProfile, fetchMyOrders, fetchMyAddresses, createAddress, updateAddress, deleteAddress }}>
             {children}
         </AuthContext.Provider>
     );

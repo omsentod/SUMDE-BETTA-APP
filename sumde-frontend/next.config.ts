@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+  // rewrites only apply during `next dev` (ignored in static export build)
   async rewrites() {
     return [
       {

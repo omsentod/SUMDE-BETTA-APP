@@ -1,5 +1,17 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
+
+export async function generateStaticParams() {
+  try {
+    const apiUrl = process.env.BACKEND_API_URL || 'http://localhost:5005';
+    const res = await fetch(`${apiUrl}/api/products`);
+    if (!res.ok) return [];
+    const products = await res.json();
+    return products.map((p) => ({ id: String(p.id) }));
+  } catch {
+    return [];
+  }
+}
 import Image from 'next/image';
 import Link from 'next/link';
 import { useProducts } from '@/context/ProductContext';
@@ -47,10 +59,10 @@ export default function ProductDetail() {
         <div className="product-detail-page">
             <section style={{ padding: '8rem 0' }}>
                 <div className="container">
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '6rem', alignItems: 'start' }}>
+                    <div className="grid-detail-outer">
 
                         <div className="detail-visual">
-                            <div style={{ position: 'relative', height: '600px', borderRadius: '1rem', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+                            <div className="detail-image-frame">
                                 <Image
                                     src={product.image}
                                     alt={product.name}
@@ -71,7 +83,7 @@ export default function ProductDetail() {
                             <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: '700' }}>
                                 Edisi {product.id} — {product.category}
                             </span>
-                            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '4.5rem', marginBottom: '1.5rem', lineHeight: '1', color: 'var(--text-main)' }}>
+                            <h1 className="detail-title">
                                 {product.name}
                             </h1>
                             <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: '1.8', marginBottom: '3rem' }}>

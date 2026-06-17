@@ -30,7 +30,7 @@ export default function PaymentPage() {
                     const orderPayload = {
                         userId: currentUser?.id || null,
                         total,
-                        status: 'PAID',
+                        status: 'PROCESSING',
                         name: shipment.name,
                         email: shipment.email,
                         phone: shipment.phone,

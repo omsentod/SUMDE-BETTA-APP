@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 
 const app = express();
@@ -298,9 +299,121 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// Update order status
+app.put('/api/orders/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Status tidak valid.' });
+    }
+    const updated = await prisma.order.update({
+      where: { id },
+      data: { status },
+      include: { items: { include: { product: true } } }
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Address Routes
+app.get('/api/addresses', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId wajib diisi.' });
+    const addresses = await prisma.address.findMany({
+      where: { userId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }]
+    });
+    res.json(addresses);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/addresses', async (req, res) => {
+  try {
+    const { userId, label, recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault } = req.body;
+    if (!userId || !recipientName || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
+      return res.status(400).json({ error: 'Data alamat tidak lengkap.' });
+    }
+    // If setting as default, unset other defaults first
+    if (isDefault) {
+      await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });
+    }
+    // If this is the first address, auto-set as default
+    const count = await prisma.address.count({ where: { userId } });
+    const address = await prisma.address.create({
+      data: { userId, label: label || 'Rumah', recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault: isDefault || count === 0 }
+    });
+    res.status(201).json(address);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { label, recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault, userId } = req.body;
+    if (isDefault && userId) {
+      await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });
+    }
+    const fields = {};
+    if (label !== undefined) fields.label = label;
+    if (recipientName !== undefined) fields.recipientName = recipientName;
+    if (phone !== undefined) fields.phone = phone;
+    if (streetAddress !== undefined) fields.streetAddress = streetAddress;
+    if (rtRw !== undefined) fields.rtRw = rtRw;
+    if (province !== undefined) fields.province = province;
+    if (city !== undefined) fields.city = city;
+    if (district !== undefined) fields.district = district;
+    if (village !== undefined) fields.village = village;
+    if (postalCode !== undefined) fields.postalCode = postalCode;
+    if (isDefault !== undefined) fields.isDefault = isDefault;
+    const updated = await prisma.address.update({ where: { id }, data: fields });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const addr = await prisma.address.findUnique({ where: { id } });
+    await prisma.address.delete({ where: { id } });
+    // If deleted address was default, set the next one as default
+    if (addr?.isDefault) {
+      const next = await prisma.address.findFirst({ where: { userId: addr.userId }, orderBy: { createdAt: 'asc' } });
+      if (next) await prisma.address.update({ where: { id: next.id }, data: { isDefault: true } });
+    }
+    res.json({ message: 'Alamat berhasil dihapus.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Root Route check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'SUMDE-BETTA API Server is healthy' });
+});
+
+// Serve Next.js static build (deployed to public/ via GitHub Actions)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Catch-all: for any non-API route, serve the matching pre-generated HTML
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  const htmlFile = path.join(__dirname, 'public', req.path, 'index.html');
+  res.sendFile(htmlFile, (err) => {
+    if (err) res.sendFile(path.join(__dirname, 'public', 'index.html'), (e) => {
+      if (e) next();
+    });
+  });
 });
 
 // Global Error Handler

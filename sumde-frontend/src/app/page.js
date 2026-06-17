@@ -36,22 +36,12 @@ export default function CatalogHome() {
         <div className="pageContainer" style={{ paddingTop: '90px' }}>
             {/* Minimalist Premium Banner */}
             <section className="promo-banner-section container" style={{ margin: '2rem auto' }}>
-                <div className="promo-banner" style={{
-                    position: 'relative',
-                    height: '400px',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(255,107,53,0.05) 100%)',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '3rem'
-                }}>
-                    <div style={{ zIndex: 2, maxWidth: '50%' }}>
+                <div className="promo-banner-root">
+                    <div className="promo-banner-text">
                         <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
                             Limited Drops
                         </span>
-                        <h1 style={{ fontSize: '3rem', fontFamily: 'var(--font-serif)', fontStyle: 'italic', margin: '1rem 0 1.5rem 0', lineHeight: 1.2 }}>
+                        <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontFamily: 'var(--font-serif)', fontStyle: 'italic', margin: '1rem 0 1.5rem 0', lineHeight: 1.2 }}>
                             Acquire the Rarest <br/>
                             <span className="text-gradient">Koi Galaxy Series</span>
                         </h1>
@@ -60,16 +50,7 @@ export default function CatalogHome() {
                         </p>
                         <Link href="/produk/2" className="btn btn-primary">Lihat Detail Drop</Link>
                     </div>
-                    {/* Floating fish background */}
-                    <div className="banner-image-wrapper" style={{
-                        position: 'absolute',
-                        right: '5%',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: '450px',
-                        height: '450px',
-                        pointerEvents: 'none'
-                    }}>
+                    <div className="promo-banner-image">
                         <Image
                             src="/betta-2.png"
                             alt="Featured Koi Galaxy"
