@@ -21,7 +21,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASS }}
-          port: 22
+          port: 65002
           source: "backend-deploy/*"
           target: "/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/nodejs"
           strip_components: 1
@@ -32,7 +32,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASS }}
-          port: 22
+          port: 65002
           script: |
             cd ~/domains/sumdebetta.com/nodejs
             npm install --omit=dev
@@ -69,7 +69,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASS }}
-          port: 22
+          port: 65002
           source: "sumde-frontend/out/*"
           target: "/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/public_html"
           strip_components: 2
