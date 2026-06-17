@@ -12,19 +12,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Prepare backend files (exclude node_modules & db)
-        run: rsync -r --exclude='node_modules' --exclude='dev.db' --exclude='.git' sumde-backend/ backend-deploy/
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
 
-      - name: Upload backend via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASS }}
-          port: 65002
-          source: "backend-deploy/*"
-          target: "/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/nodejs"
-          strip_components: 1
+      - name: Upload backend via rsync
+        run: |
+          sshpass -p "${{ secrets.SSH_PASS }}" rsync -avz --delete \
+            --exclude='node_modules' --exclude='dev.db' --exclude='.git' \
+            -e "ssh -p 65002 -o StrictHostKeyChecking=no" \
+            sumde-backend/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/nodejs/
 
       - name: Install dependencies via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -64,13 +61,12 @@ jobs:
           BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
         run: npm run build
 
-      - name: Upload frontend via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASS }}
-          port: 65002
-          source: "sumde-frontend/out/*"
-          target: "/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/public_html"
-          strip_components: 2
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Upload frontend via rsync
+        run: |
+          sshpass -p "${{ secrets.SSH_PASS }}" rsync -avz --delete \
+            -e "ssh -p 65002 -o StrictHostKeyChecking=no" \
+            sumde-frontend/out/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/domains/sumdebetta.com/public_html/
