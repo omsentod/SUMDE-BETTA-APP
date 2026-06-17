@@ -34,6 +34,9 @@ jobs:
           password: ${{ secrets.SSH_PASS }}
           port: 65002
           script: |
+            source ~/.bashrc || true
+            source ~/.bash_profile || true
+            export PATH="$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node | tail -1)/bin:$PATH"
             cd ~/domains/sumdebetta.com/nodejs
             npm install --omit=dev
             npx prisma generate
