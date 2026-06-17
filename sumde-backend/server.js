@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 
 const app = express();
@@ -400,20 +399,6 @@ app.delete('/api/addresses/:id', async (req, res) => {
 // Root Route check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'SUMDE-BETTA API Server is healthy' });
-});
-
-// Serve Next.js static build (deployed to public/ via GitHub Actions)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Catch-all: for any non-API route, serve the matching pre-generated HTML
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  const htmlFile = path.join(__dirname, 'public', req.path, 'index.html');
-  res.sendFile(htmlFile, (err) => {
-    if (err) res.sendFile(path.join(__dirname, 'public', 'index.html'), (e) => {
-      if (e) next();
-    });
-  });
 });
 
 // Global Error Handler

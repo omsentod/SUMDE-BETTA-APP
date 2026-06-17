@@ -37,5 +37,5 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: sumde-frontend/out/
-          server-dir: /domains/sumdebetta.com/nodejs/public/
+          server-dir: /domains/sumdebetta.com/public_html/
           dangerous-clean-slate: false
