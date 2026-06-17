@@ -1,5 +1,4 @@
-'use client';
-import { useParams, useRouter } from 'next/navigation';
+import ProductDetailClient from './ProductDetailClient';
 
 export async function generateStaticParams() {
   try {
@@ -12,116 +11,7 @@ export async function generateStaticParams() {
     return [];
   }
 }
-import Image from 'next/image';
-import Link from 'next/link';
-import { useProducts } from '@/context/ProductContext';
-import { useCart } from '@/context/CartContext';
 
-export default function ProductDetail() {
-    const { id } = useParams();
-    const router = useRouter();
-    const { addToCart, buyNow, cart } = useCart();
-    const { products, isLoading } = useProducts();
-
-    const product = products.find((p) => p.id === id);
-
-    if (isLoading) {
-        return (
-            <div className="pageContainer" style={{ paddingTop: '90px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)' }}>Memuat Spesimen...</h2>
-            </div>
-        );
-    }
-
-    if (!product) {
-        return (
-            <div className="container" style={{ padding: '10rem 0', textAlign: 'center' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem' }}>Koleksi Tidak Ditemukan</h2>
-                <Link href="/produk" className="btn btn-primary" style={{ marginTop: '2rem' }}>Kembali ke Galeri</Link>
-            </div>
-        );
-    }
-
-    const isInCart = cart.some((item) => item.id === product.id);
-
-    const formattedPrice = new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-    }).format(product.price);
-
-    const handleAcquire = () => {
-        buyNow(product);
-        router.push('/checkout');
-    };
-
-    return (
-        <div className="product-detail-page">
-            <section style={{ padding: '8rem 0' }}>
-                <div className="container">
-                    <div className="grid-detail-outer">
-
-                        <div className="detail-visual">
-                            <div className="detail-image-frame">
-                                <Image
-                                    src={product.image}
-                                    alt={product.name}
-                                    fill
-                                    style={{ objectFit: 'cover' }}
-                                />
-                                {product.isSold && (
-                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ padding: '1rem 3rem', border: '2px solid var(--primary)', color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '2rem', fontStyle: 'italic', backdropFilter: 'blur(5px)' }}>
-                                            Arsip
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="detail-info">
-                            <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: '700' }}>
-                                Edisi {product.id} — {product.category}
-                            </span>
-                            <h1 className="detail-title">
-                                {product.name}
-                            </h1>
-                            <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: '1.8', marginBottom: '3rem' }}>
-                                {product.description}
-                            </p>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', marginBottom: '4rem', padding: '2rem', background: 'var(--glass)', border: '1px solid var(--glass-border)', borderRadius: '0.5rem', color: 'var(--text-main)' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Grade Bentuk</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsForm || product.stats?.form || '9.0/10'}</span>
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Intensitas Warna</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsColor || product.stats?.color || '9.0/10'}</span>
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Mental</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsSpirit || product.stats?.spirit || 'Aktif'}</span>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
-                                <span style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-main)' }}>{formattedPrice}</span>
-                                {!product.isSold && (
-                                    <button
-                                        onClick={handleAcquire}
-                                        className="btn btn-primary"
-                                        style={{ padding: '1.2rem 3rem', cursor: 'pointer' }}
-                                    >
-                                        Akuisisi Spesimen (Beli Sekarang)
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-        </div>
-    );
+export default function Page() {
+  return <ProductDetailClient />;
 }
