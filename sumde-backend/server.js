@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 
 const app = express();
@@ -399,6 +400,19 @@ app.delete('/api/addresses/:id', async (req, res) => {
 // Root Route check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'SUMDE-BETTA API Server is healthy' });
+});
+
+// Serve Next.js static frontend from public_html/
+const frontendPath = path.join(__dirname, '../public_html');
+app.use(express.static(frontendPath));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  const file = path.join(frontendPath, req.path, 'index.html');
+  res.sendFile(file, (err) => {
+    if (err) res.sendFile(path.join(frontendPath, 'index.html'), (e) => {
+      if (e) next();
+    });
+  });
 });
 
 // Global Error Handler
