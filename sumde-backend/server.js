@@ -404,7 +404,7 @@ app.get('/health', (req, res) => {
 });
 
 // Webhook deploy endpoint — triggered by GitHub Actions
-app.post('/webhook/deploy', (req, res) => {
+app.post('/api/webhook/deploy', (req, res) => {
   const secret = req.headers['x-webhook-secret'];
   if (!process.env.WEBHOOK_SECRET || secret !== process.env.WEBHOOK_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });

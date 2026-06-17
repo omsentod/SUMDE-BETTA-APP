@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Trigger webhook deploy
         run: |
-          curl -f -X POST https://sumdebetta.com/webhook/deploy \
+          curl -f -X POST https://sumdebetta.com/api/webhook/deploy \
             -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}" \
             -H "Content-Type: application/json" \
             -d '{}' \
