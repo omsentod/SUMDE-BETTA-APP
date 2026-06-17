@@ -18,6 +18,7 @@ jobs:
           port: 65002
           command_timeout: 20m
           script: |
+            set -e
             export PATH="/opt/alt/alt-nodejs22/root/usr/bin:$PATH"
             REPO_DIR="$HOME/domains/sumdebetta.com/.repo"
 
