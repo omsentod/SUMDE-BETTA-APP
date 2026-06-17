@@ -76,6 +76,7 @@ jobs:
             cd "$HOME/domains/sumdebetta.com/nodejs"
             npm install --omit=dev
             npx prisma generate
+            DATABASE_URL="${{ secrets.DATABASE_URL }}" npx prisma db push
 
             # --- Sync frontend build ke public_html/ ---
             rsync -r --delete --exclude='.git' \
