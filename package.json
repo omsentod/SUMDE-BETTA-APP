@@ -2,12 +2,14 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "npm install lightningcss-linux-x64-gnu && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
+    "postbuild": "node prisma/seed.js",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js"
   },
