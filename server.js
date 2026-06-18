@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 
-const dev = process.env.NODE_ENV !== 'production';
+const dev = false;
 const hostname = 'localhost';
 const port = process.env.PORT || 3000;
 
@@ -10,7 +10,8 @@ const port = process.env.PORT || 3000;
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+app.prepare()
+  .then(() => {
   createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
@@ -28,4 +29,8 @@ app.prepare().then(() => {
     .listen(port, () => {
       console.log(`> Ready on http://${hostname}:${port}`);
     });
+})
+.catch((err) => {
+  console.error('Next.js app.prepare() failed to start:', err);
+  process.exit(1);
 });
