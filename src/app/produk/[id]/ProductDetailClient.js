@@ -11,8 +11,18 @@ export default function ProductDetailClient() {
     const router = useRouter();
     const { addToCart, buyNow, cart } = useCart();
     const { products, isLoading } = useProducts();
+    const [selectedSize, setSelectedSize] = useState('');
 
     const product = products.find((p) => p.id === id);
+
+    useEffect(() => {
+        if (product && product.sizes && Array.isArray(product.sizes)) {
+            const available = product.sizes.find(s => s.quantity > 0);
+            if (available) {
+                setSelectedSize(available.size);
+            }
+        }
+    }, [product]);
 
     if (isLoading) {
         return (
@@ -30,17 +40,6 @@ export default function ProductDetailClient() {
             </div>
         );
     }
-
-    const [selectedSize, setSelectedSize] = useState('');
-
-    useEffect(() => {
-        if (product && product.sizes && Array.isArray(product.sizes)) {
-            const available = product.sizes.find(s => s.quantity > 0);
-            if (available) {
-                setSelectedSize(available.size);
-            }
-        }
-    }, [product]);
 
     const formattedPrice = new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -91,7 +90,7 @@ export default function ProductDetailClient() {
 
                         <div className="detail-info">
                             <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: '700' }}>
-                                Edisi {product.id} — {product.category}
+                                Edisi #{product.id.slice(0, 8).toUpperCase()} — {product.category}
                             </span>
                             <h1 className="detail-title">
                                 {product.name}

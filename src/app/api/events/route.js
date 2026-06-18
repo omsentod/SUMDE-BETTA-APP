@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
+
 // GET: Mengambil daftar event
 // - Jika query ?active=true: ambil maksimal 5 event aktif (mengutamakan ongoing, diisi upcoming terdekat)
 // - Jika tidak: ambil semua event (untuk admin dashboard dan halaman daftar event)

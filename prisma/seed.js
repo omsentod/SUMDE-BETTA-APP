@@ -90,10 +90,56 @@ async function main() {
     });
   }
 
+  const eventCount = await prisma.promoEvent.count();
+  if (eventCount === 0) {
+    const now = new Date();
+    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const tenDaysLater = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
+
+    await prisma.promoEvent.createMany({
+      data: [
+        {
+          title: 'TikTok Live Bid & Sale',
+          subtitle: 'Edisi Spesial Malam Jumat',
+          description: 'Gabung ke Live Streaming TikTok kami sekarang! Dapatkan kesempatan bid ikan cupang premium mulai dari 10rb rupiah dan gratis ongkir se-Indonesia selama sesi live berlangsung.',
+          image: '/betta-2.png',
+          targetUrl: 'https://tiktok.com/@sumdebetta/live',
+          buttonText: 'Gabung Live Sekarang',
+          isActive: true,
+          startDate: null,
+          endDate: null
+        },
+        {
+          title: 'Shopee Flash Sale up to 40%',
+          subtitle: 'Hanya 3 Jam Saja!',
+          description: 'Serbu diskon kilat untuk varian cupang Plakat Koi dan Halfmoon Giant di toko Shopee resmi kami. Stok terbatas hanya untuk 10 pembeli pertama!',
+          image: '/betta-3.png',
+          targetUrl: 'https://shopee.co.id/sumdebetta',
+          buttonText: 'Belanja di Shopee',
+          isActive: true,
+          startDate: null,
+          endDate: null
+        },
+        {
+          title: 'Exclusive Drop: Koi Nebula Series',
+          subtitle: 'Rilis Segera',
+          description: 'Nantikan perilisan koleksi genetik terbaru kami: Koi Nebula Series. Mutasi warna kosmik dengan form saringan kelas kontes. Tandai kalender Anda!',
+          image: '/betta-1.png',
+          targetUrl: '/produk',
+          buttonText: 'Lihat Galeri',
+          isActive: true,
+          startDate: threeDaysLater,
+          endDate: tenDaysLater
+        }
+      ]
+    });
+  }
+
   console.log('Seed berhasil!');
   console.log('Admin  : admin@sumdebetta.com / admin123');
   console.log('User   : user@sumdebetta.com / user123');
   console.log('Produk : 3 item berhasil dibuat');
+  console.log('Event  : 3 item promo berhasil dibuat');
 }
 
 main()

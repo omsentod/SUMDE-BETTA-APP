@@ -86,66 +86,48 @@ export default function CatalogHome() {
 
     return (
         <div className="pageContainer" style={{ paddingTop: '90px' }}>
-            {/* Minimalist Premium Banner / Multi-Event Carousel */}
-            <section className="promo-banner-section container" style={{ margin: '2rem auto', position: 'relative' }}>
+            <section className="container" style={{ margin: '2rem auto' }}>
                 {!eventsLoading && events.length > 0 ? (
-                    <div className="promo-banner-carousel">
+                    <div className="hero-carousel-section">
                         {events.map((event, idx) => {
                             const isActiveSlide = idx === currentSlide;
                             const isExternalUrl = event.targetUrl.startsWith('http://') || event.targetUrl.startsWith('https://');
-                            
-                            // Deteksi status waktu event untuk menampilkan label bantu jika diperlukan
-                            const now = new Date();
-                            const start = event.startDate ? new Date(event.startDate) : null;
-                            const isUpcoming = start && start > now;
 
                             return (
                                 <div
                                     key={event.id}
-                                    style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '3rem',
-                                        opacity: isActiveSlide ? 1 : 0,
-                                        zIndex: isActiveSlide ? 10 : 0,
-                                        pointerEvents: isActiveSlide ? 'auto' : 'none',
-                                        transform: isActiveSlide ? 'scale(1)' : 'scale(0.98)',
-                                        transition: 'all 0.8s ease-in-out',
-                                        background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(255,107,53,0.04) 100%)'
-                                    }}
+                                    className={`hero-slide ${isActiveSlide ? 'hero-slide-active' : ''}`}
                                 >
-                                    <div className="promo-banner-text" style={{ maxWidth: '55%' }}>
-                                        <span style={{ color: isUpcoming ? '#3B82F6' : 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
-                                            {isUpcoming ? 'Upcoming Event' : (event.subtitle || 'Active Promo')}
+                                    {/* Background Image */}
+                                    <Image
+                                        src={event.image}
+                                        alt={event.title}
+                                        fill
+                                        sizes="(max-width: 1400px) 100vw, 1400px"
+                                        className="hero-bg-image"
+                                        priority={idx === 0}
+                                    />
+                                    
+                                    {/* Dark Overlay for Text Readability */}
+                                    <div className="hero-overlay"></div>
+
+                                    {/* Centered Overlay Content */}
+                                    <div className="hero-content">
+                                        <span className="sub-title">
+                                            {event.subtitle || 'PROMO EVENT'}
                                         </span>
-                                        <h1 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.6rem)', fontFamily: 'var(--font-serif)', fontStyle: 'italic', margin: '1rem 0 1.2rem 0', lineHeight: 1.2, color: 'var(--text-main)' }}>
-                                            {event.title}
-                                        </h1>
-                                        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem', lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {event.description}
-                                        </p>
+                                        <h1>{event.title}</h1>
+                                        <p>{event.description}</p>
                                         
                                         {isExternalUrl ? (
-                                            <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                                                {event.buttonText || 'Lihat Event'}
+                                            <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                                {event.buttonText || 'LIHAT EVENT'}
                                             </a>
                                         ) : (
-                                            <Link href={event.targetUrl} className="btn btn-primary">
-                                                {event.buttonText || 'Lihat Event'}
+                                            <Link href={event.targetUrl} className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                                {event.buttonText || 'LIHAT EVENT'}
                                             </Link>
                                         )}
-                                    </div>
-                                    <div className="promo-banner-image">
-                                        <Image
-                                            src={event.image}
-                                            alt={event.title}
-                                            fill
-                                            style={{ objectFit: 'contain' }}
-                                            priority={idx === 0}
-                                        />
                                     </div>
                                 </div>
                             );
@@ -153,27 +135,12 @@ export default function CatalogHome() {
 
                         {/* Carousel Indicators (Dots) */}
                         {events.length > 1 && (
-                            <div style={{
-                                position: 'absolute',
-                                bottom: '1.5rem',
-                                left: '3rem',
-                                display: 'flex',
-                                gap: '0.6rem',
-                                zIndex: 30
-                            }}>
+                            <div className="hero-carousel-dots">
                                 {events.map((_, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => setCurrentSlide(idx)}
-                                        style={{
-                                            width: idx === currentSlide ? '24px' : '8px',
-                                            height: '8px',
-                                            borderRadius: '4px',
-                                            background: idx === currentSlide ? 'var(--primary)' : 'rgba(255,255,255,0.2)',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.3s ease'
-                                        }}
+                                        className={`hero-dot ${idx === currentSlide ? 'hero-dot-active' : ''}`}
                                     />
                                 ))}
                             </div>
@@ -181,45 +148,56 @@ export default function CatalogHome() {
                     </div>
                 ) : (
                     /* Fallback ke Featured Premium Product Banner jika event kosong atau loading */
-                    <div className="promo-banner-root">
-                        <div className="promo-banner-text">
-                            <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
-                                {featuredProduct ? "Premium Drop" : "Limited Drops"}
-                            </span>
-                            <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontFamily: 'var(--font-serif)', fontStyle: 'italic', margin: '1rem 0 1.5rem 0', lineHeight: 1.2 }}>
-                                {featuredProduct ? (
-                                    <>
-                                        Acquire the Rarest <br/>
-                                        <span className="text-gradient">{featuredProduct.name}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        Acquire the Rarest <br/>
-                                        <span className="text-gradient">Koi Galaxy Series</span>
-                                    </>
-                                )}
-                            </h1>
-                            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-                                {featuredProduct ? featuredProduct.description : "Koleksi eksklusif hasil seleksi genetik terbaik dengan mutasi warna nebula penuh. Hanya untuk kolektor sejati."}
-                            </p>
-                            {featuredProduct ? (
-                                <Link href={`/produk/${featuredProduct.id}`} className="btn btn-primary">Lihat Detail Drop</Link>
-                            ) : (
-                                <Link href="/produk" className="btn btn-primary">Lihat Koleksi</Link>
-                            )}
-                        </div>
-                        <div className="promo-banner-image">
+                    <div className="hero-carousel-section">
+                        <div className="hero-slide hero-slide-active">
+                            {/* Background Image */}
                             <Image
                                 src={featuredProduct ? featuredProduct.image : "/betta-2.png"}
                                 alt={featuredProduct ? featuredProduct.name : "Featured Koi Galaxy"}
                                 fill
-                                style={{ objectFit: 'contain' }}
+                                sizes="(max-width: 1400px) 100vw, 1400px"
+                                className="hero-bg-image"
                                 priority
-                              />
-                          </div>
-                      </div>
-                  )}
-              </section>
+                            />
+                            
+                            {/* Dark Overlay for Text Readability */}
+                            <div className="hero-overlay"></div>
+
+                            {/* Centered Overlay Content */}
+                            <div className="hero-content">
+                                <span className="sub-title">
+                                    {featuredProduct ? "PREMIUM DROP" : "LIMITED DROPS"}
+                                </span>
+                                <h1>
+                                    {featuredProduct ? (
+                                        <>
+                                            Acquire the Rarest<br/>
+                                            <span className="text-gradient">{featuredProduct.name}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            Acquire the Rarest<br/>
+                                            <span className="text-gradient">Koi Galaxy Series</span>
+                                        </>
+                                    )}
+                                </h1>
+                                <p>
+                                    {featuredProduct ? featuredProduct.description : "Koleksi eksklusif hasil seleksi genetik terbaik dengan mutasi warna nebula penuh. Hanya untuk kolektor sejati."}
+                                </p>
+                                {featuredProduct ? (
+                                    <Link href={`/produk/${featuredProduct.id}`} className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                        LIHAT DETAIL DROP
+                                    </Link>
+                                ) : (
+                                    <Link href="/produk" className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                        LIHAT KOLEKSI
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </section>
 
             {/* Quick Categories Selector */}
             <section className="categories-tabs-section container" style={{ margin: '3rem auto' }}>

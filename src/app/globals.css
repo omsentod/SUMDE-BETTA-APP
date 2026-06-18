@@ -1841,19 +1841,146 @@ h1, h2, h3 {
     transform: scale(0.92);
 }
 
-/* Promo Banner Carousel */
-.promo-banner-carousel {
+/* Cinematic Full-Bleed Hero Carousel */
+.hero-carousel-section {
     position: relative;
-    height: 400px;
-    border-radius: 16px;
+    width: 100%;
+    height: 70vh; /* 70% dari tinggi layar agar proporsional dan megah */
+    min-height: 480px;
     overflow: hidden;
-    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+    background: var(--bg-dark);
 }
+
 @media (max-width: 768px) {
-    .promo-banner-carousel {
-        height: 350px;
+    .hero-carousel-section {
+        height: 60vh;
+        min-height: 400px;
+        border-radius: 16px;
     }
 }
+
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hero-slide-active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 2;
+}
+
+/* Gambar Latar Belakang Cover */
+.hero-bg-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Efek zoom-in pelan saat slide aktif */
+.hero-slide-active .hero-bg-image {
+    transform: scale(1.05);
+}
+
+/* Lapisan Gelap Pembantu Keterbacaan Teks */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.7) 100%),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.65));
+    z-index: 2;
+}
+
+/* Konten Teks Tengah */
+.hero-content {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    opacity: 0;
+    transform: translateY(25px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+
+.hero-slide-active .hero-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Pagination Dots */
+.hero-carousel-dots {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.6rem;
+    z-index: 10;
+}
+
+.hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s ease;
+}
+
+.hero-dot-active {
+    width: 24px;
+    border-radius: 4px;
+    background: var(--primary);
+    box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* Hero Content Typography styling */
+.hero-content .sub-title {
+    display: block;
+    color: var(--primary);
+    letter-spacing: 0.2rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.hero-content h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-content p {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: #e0e0e0;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+
+
 
 
 
