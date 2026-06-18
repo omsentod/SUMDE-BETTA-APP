@@ -9,9 +9,10 @@ export async function POST(request) {
     }
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || user.password !== password) {
-      return NextResponse.json({ error: 'Kredensial tidak valid.' }, { status: 401 });
+      return NextResponse.json({ error: 'Username atau password salah.' }, { status: 401 });
     }
-    const { password: _, ...userData } = user;
+    const userData = { ...user };
+    delete userData.password;
     return NextResponse.json(userData);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
