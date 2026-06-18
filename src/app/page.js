@@ -120,11 +120,11 @@ export default function CatalogHome() {
                                         <p>{event.description}</p>
 
                                         {isExternalUrl ? (
-                                            <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                            <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary hero-btn">
                                                 {event.buttonText || 'LIHAT EVENT'}
                                             </a>
                                         ) : (
-                                            <Link href={event.targetUrl} className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                            <Link href={event.targetUrl} className="btn btn-primary hero-btn">
                                                 {event.buttonText || 'LIHAT EVENT'}
                                             </Link>
                                         )}
@@ -185,11 +185,11 @@ export default function CatalogHome() {
                                     {featuredProduct ? featuredProduct.description : "Koleksi eksklusif hasil seleksi genetik terbaik dengan mutasi warna nebula penuh. Hanya untuk kolektor sejati."}
                                 </p>
                                 {featuredProduct ? (
-                                    <Link href={`/produk/${featuredProduct.id}`} className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                    <Link href={`/produk/${featuredProduct.id}`} className="btn btn-primary hero-btn">
                                         LIHAT DETAIL DROP
                                     </Link>
                                 ) : (
-                                    <Link href="/produk" className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
+                                    <Link href="/produk" className="btn btn-primary hero-btn">
                                         LIHAT KOLEKSI
                                     </Link>
                                 )}
@@ -200,16 +200,8 @@ export default function CatalogHome() {
             </section>
 
             {/* Quick Categories Selector */}
-            <section className="categories-tabs-section container" style={{ margin: '3rem auto' }}>
-                <div style={{
-                    display: 'flex',
-                    gap: '2.5rem',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    borderBottom: '1px solid var(--border-color)',
-                    paddingBottom: '2.5rem'
-                }}>
+            <section className="categories-tabs-section container">
+                <div className="categories-tabs-container">
                     {categoriesWithImages.map(cat => (
                         <div
                             key={cat.name}
@@ -235,14 +227,7 @@ export default function CatalogHome() {
                                     />
                                 </div>
                             </div>
-                            <span style={{
-                                fontSize: '0.85rem',
-                                fontWeight: selectedCategory === cat.name ? '700' : '500',
-                                color: selectedCategory === cat.name ? 'var(--primary)' : 'var(--text-muted)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.1rem',
-                                transition: 'color 0.3s'
-                            }}>
+                            <span className={`category-name ${selectedCategory === cat.name ? 'category-name-active' : ''}`}>
                                 {cat.name}
                             </span>
                         </div>
@@ -252,7 +237,7 @@ export default function CatalogHome() {
 
             {/* Hottest Drops Section */}
             {selectedCategory === 'Semua' && hottestDrops.length > 0 && (
-                <section className="hottest-drops-section container" style={{ margin: '4rem auto' }}>
+                <section className="hottest-drops-section container">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                         <div>
                             <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem' }}>Hottest Drops</h2>
@@ -261,7 +246,7 @@ export default function CatalogHome() {
                         <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600' }}>Updated 24 hours ago</span>
                     </div>
 
-                    <div className="productGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+                    <div className="productGrid">
                         {hottestDrops.map(product => (
                             <ProductCard key={product.id} {...product} />
                         ))}
@@ -270,7 +255,7 @@ export default function CatalogHome() {
             )}
 
             {/* Main Listings Grid */}
-            <section className="main-listings-section container" style={{ margin: '5rem auto' }}>
+            <section className="main-listings-section container">
                 <div style={{ marginBottom: '3rem' }}>
                     <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', marginBottom: '0.5rem' }}>
                         {selectedCategory === 'Semua' ? 'Semua Rilis' : `${selectedCategory} Collection`}
@@ -281,7 +266,7 @@ export default function CatalogHome() {
                 </div>
 
                 {filteredProducts.length > 0 ? (
-                    <div className="productGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+                    <div className="productGrid">
                         {filteredProducts.map(product => (
                             <ProductCard key={product.id} {...product} />
                         ))}

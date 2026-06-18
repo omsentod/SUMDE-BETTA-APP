@@ -66,7 +66,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Shortcut Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2.5rem' }}>
+                <div className="grid-shortcut">
                     {shortcuts.map(s => (
                         <Link key={s.href} href={s.href} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.2s, transform 0.2s', textDecoration: 'none !important' }}
                             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
@@ -80,7 +80,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Edit Profile Form */}
-                <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '2rem' }}>
+                <div className="dashboard-card">
                     <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', fontStyle: 'italic', marginBottom: '1.5rem', color: 'var(--text-main)' }}>Edit Profil</h3>
 
                     {success && (

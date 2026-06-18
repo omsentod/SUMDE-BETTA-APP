@@ -90,7 +90,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
             </Link>
 
             {/* Actions (Isolated from card click) */}
-            <div className={styles.actionsContainer} style={{ padding: '0 1.25rem 1.25rem 1.25rem', marginTop: 'auto' }}>
+            <div className={styles.actionsContainer}>
                 <button
                     onClick={handleBuyNow}
                     className={isSold ? styles.buyBtnSold : styles.buyBtnActive}

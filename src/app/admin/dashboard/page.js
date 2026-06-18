@@ -56,51 +56,15 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{label}</label>
             <div 
                 onClick={() => setIsOpen(!isOpen)}
-                style={{
-                    background: 'var(--input-bg)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-main)',
-                    padding: '0.8rem 1.2rem',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    userSelect: 'none',
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                    boxShadow: isOpen ? '0 0 0 2px var(--primary-glow)' : 'none',
-                    borderColor: isOpen ? 'var(--primary)' : 'var(--border-color)'
-                }}
+                className={`manageable-select-trigger ${isOpen ? 'open' : ''}`}
             >
                 <span>{value || '-- Pilih --'}</span>
                 <span style={{ fontSize: '0.65rem', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none', opacity: 0.7 }}>▼</span>
             </div>
 
             {isOpen && (
-                <div style={{
-                    position: 'absolute',
-                    top: '105%',
-                    left: 0,
-                    width: '100%',
-                    background: 'rgba(30, 30, 30, 0.98)',
-                    backdropFilter: 'blur(15px)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-                    zIndex: 2100,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.6rem 1rem',
-                        borderBottom: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.1)'
-                    }}>
+                <div className="manageable-select-dropdown">
+                    <div className="manageable-select-header">
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pilih Opsi</span>
                         <button
                             type="button"
@@ -108,23 +72,13 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                                 e.stopPropagation();
                                 setIsDeleteMode(!isDeleteMode);
                             }}
-                            style={{
-                                background: isDeleteMode ? 'rgba(255, 77, 79, 0.15)' : 'rgba(255,255,255,0.05)',
-                                border: '1px solid ' + (isDeleteMode ? '#ff4d4f' : 'var(--border-color)'),
-                                borderRadius: '4px',
-                                color: isDeleteMode ? '#ff4d4f' : 'var(--text-muted)',
-                                padding: '0.2rem 0.6rem',
-                                fontSize: '0.7rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                fontWeight: 'bold'
-                            }}
+                            className={`manageable-select-edit-btn ${isDeleteMode ? 'active' : ''}`}
                         >
                             {isDeleteMode ? 'Selesai Edit' : 'Edit List ⚙️'}
                         </button>
                     </div>
 
-                    <div style={{ overflowY: 'auto', maxHeight: '180px', padding: '0.5rem 0' }}>
+                    <div className="manageable-select-list">
                         {options.map((opt) => {
                             const isSelected = opt === value;
                             return (
@@ -135,19 +89,8 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                                         onChange(opt);
                                         setIsOpen(false);
                                     }}
-                                    style={{
-                                        padding: '0.7rem 1.2rem',
-                                        fontSize: '0.875rem',
-                                        color: isSelected ? 'var(--primary)' : 'var(--text-main)',
-                                        background: isSelected ? 'rgba(255, 107, 53, 0.08)' : 'transparent',
-                                        cursor: isDeleteMode ? 'default' : 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        transition: 'background 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => { if (!isSelected && !isDeleteMode) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-                                    onMouseLeave={(e) => { if (!isSelected && !isDeleteMode) e.currentTarget.style.background = 'transparent'; }}
+                                    className={`manageable-select-item ${isSelected ? 'selected' : ''}`}
+                                    style={{ cursor: isDeleteMode ? 'default' : 'pointer' }}
                                 >
                                     <span>{opt}</span>
                                     {isDeleteMode && (
@@ -174,31 +117,13 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                             );
                         })}
                     </div>
-                    <div style={{ 
-                        borderTop: '1px solid var(--border-color)', 
-                        padding: '0.6rem 0.8rem', 
-                        display: 'flex', 
-                        gap: '0.5rem',
-                        background: 'rgba(0,0,0,0.2)'
-                    }}>
+                    <div className="manageable-select-footer">
                         <input
                             type="text"
                             placeholder="Tambah opsi baru..."
                             value={newValue}
                             onChange={(e) => setNewValue(e.target.value)}
-                            style={{
-                                flex: 1,
-                                background: 'rgba(255,255,255,0.03)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '6px',
-                                color: 'var(--text-main)',
-                                padding: '0.45rem 0.8rem',
-                                fontSize: '0.8rem',
-                                outline: 'none',
-                                transition: 'border-color 0.2s'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                            className="manageable-select-input"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     e.preventDefault();
@@ -663,16 +588,16 @@ export default function AdminDashboard() {
         <div className="pageContainer" style={{ paddingTop: '100px', minHeight: '100vh' }}>
             <div className="container" style={{ paddingBottom: '5rem' }}>
                 {/* Header Dashboard */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '2rem' }}>
+                <div className="dashboard-header">
                     <div>
                         <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
                             Otoritas Tertinggi
                         </span>
-                        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontStyle: 'italic', marginTop: '0.5rem', color: 'var(--text-main)' }}>
+                        <h1>
                             Admin Dashboard
                         </h1>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div className="dashboard-header-buttons">
                         <button
                             onClick={() => {
                                 setIsAddModalOpen(true);
@@ -697,7 +622,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Tab Navigator */}
-                <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '3rem', paddingBottom: '1rem' }}>
+                <div className="dashboard-tabs">
                     {[
                         { id: 'products', name: 'Kelola Produk' },
                         { id: 'users', name: 'Kelola User' },
@@ -859,7 +784,7 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
+                                        <div className="grid-transaction-inner">
                                             <div>
                                                 <h5 style={{ textTransform: 'uppercase', fontSize: '0.75rem', color: 'var(--primary)', letterSpacing: '0.1rem', marginBottom: '1rem' }}>Produk Dibeli</h5>
                                                 {order.items.map(item => (
@@ -972,33 +897,8 @@ export default function AdminDashboard() {
 
             {/* Modal CRUD: Add/Edit Product */}
             {(isAddModalOpen || isEditModalOpen) && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 2000,
-                    background: 'rgba(0,0,0,0.7)',
-                    backdropFilter: 'blur(5px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '2rem',
-                    overflowY: 'auto'
-                }}>
-                    <div style={{
-                        background: 'rgba(20, 20, 20, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '24px',
-                        padding: '3rem 2.5rem',
-                        width: '100%',
-                        maxWidth: '750px',
-                        height: 'fit-content',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        position: 'relative',
-                        margin: 'auto',
-                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                    }}>
+                <div className="modal-backdrop">
+                    <div className="modal-container">
                         <h3 style={{ 
                             fontFamily: 'var(--font-serif)', 
                             fontSize: '2.2rem', 
@@ -1305,33 +1205,8 @@ export default function AdminDashboard() {
 
             {/* Modal CRUD: Add/Edit Event */}
             {(isEventAddModalOpen || isEventEditModalOpen) && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 2000,
-                    background: 'rgba(0,0,0,0.7)',
-                    backdropFilter: 'blur(5px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '2rem',
-                    overflowY: 'auto'
-                }}>
-                    <div style={{
-                        background: 'rgba(20, 20, 20, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '24px',
-                        padding: '3rem 2.5rem',
-                        width: '100%',
-                        maxWidth: '750px',
-                        height: 'fit-content',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        position: 'relative',
-                        margin: 'auto',
-                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                    }}>
+                <div className="modal-backdrop">
+                    <div className="modal-container">
                         <h3 style={{ 
                             fontFamily: 'var(--font-serif)', 
                             fontSize: '2.2rem', 

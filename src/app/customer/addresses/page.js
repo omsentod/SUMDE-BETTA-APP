@@ -181,7 +181,7 @@ export default function AddressesPage() {
 
                 {/* Add/Edit Form */}
                 {showForm && (
-                    <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '2rem', marginBottom: '2rem' }}>
+                    <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
                         <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', fontStyle: 'italic', marginBottom: '1.5rem', color: 'var(--text-main)' }}>
                             {editingId ? 'Edit Alamat' : 'Tambah Alamat Baru'}
                         </h3>

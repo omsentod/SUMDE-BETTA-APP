@@ -206,9 +206,9 @@ export default function CheckoutPage() {
 
     return (
         <div className="checkout-page">
-            <section style={{ padding: '8rem 0' }}>
+            <section className="checkout-section">
                 <div className="container">
-                    <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3.5rem', marginBottom: '4rem', color: 'var(--text-main)' }}>Ringkasan Akuisisi</h1>
+                    <h1 className="checkout-title">Ringkasan Akuisisi</h1>
 
                     <div className="grid-checkout-outer">
 
@@ -216,15 +216,15 @@ export default function CheckoutPage() {
                             <div className="cart-items" style={{ marginBottom: '4rem' }}>
                                 <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Spesimen Terpilih</h3>
                                 {cart.map((item) => (
-                                    <div key={`${item.id}-${item.selectedSize}`} style={{ display: 'flex', gap: '2rem', padding: '2rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
-                                        <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+                                    <div key={`${item.id}-${item.selectedSize}`} className="checkout-item-row">
+                                        <div className="checkout-item-image">
                                             <Image src={item.image} alt={item.name} fill style={{ objectFit: 'cover' }} />
                                         </div>
-                                        <div style={{ flex: 1 }}>
-                                            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>{item.name}</h3>
-                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>Spesimen {item.category}</p>
+                                        <div className="checkout-item-info">
+                                            <h3>{item.name}</h3>
+                                            <p className="checkout-item-sub">Spesimen {item.category}</p>
                                             {item.selectedSize && (
-                                                <p style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: '600', marginTop: '0.2rem' }}>
+                                                <p className="checkout-item-size">
                                                     Size: {item.selectedSize}
                                                 </p>
                                             )}
@@ -234,11 +234,11 @@ export default function CheckoutPage() {
                                             <span style={{ color: 'var(--text-main)' }}>{item.quantity}</span>
                                             <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
                                         </div>
-                                        <div style={{ textAlign: 'right', minWidth: '150px' }}>
-                                            <p style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>
+                                        <div className="checkout-item-price">
+                                            <p>
                                                 {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}
                                             </p>
-                                            <button onClick={() => removeFromCart(item.id, item.selectedSize)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.7rem', marginTop: '0.5rem' }}>
+                                            <button onClick={() => removeFromCart(item.id, item.selectedSize)} className="checkout-item-delete">
                                                 HAPUS
                                             </button>
                                         </div>
@@ -246,7 +246,7 @@ export default function CheckoutPage() {
                                 ))}
                             </div>
 
-                            <div className="shipment-form" style={{ background: 'rgba(255,255,255,0.02)', padding: '3rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div className="checkout-form-container">
                                 <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Detail Pengiriman Resmi</h3>
                                 <form onSubmit={handleProceed} className="grid-form-2col">
                                     <div style={{ gridColumn: '1 / -1' }}>
