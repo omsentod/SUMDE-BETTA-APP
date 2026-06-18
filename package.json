@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "npm install lightningcss-linux-x64-gnu && next build",
+    "build": "node -e \"const fs=require('fs'); if(process.env.NODE_ENV === 'production' && fs.existsSync('.env.production')) fs.copyFileSync('.env.production', '.env')\" && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
