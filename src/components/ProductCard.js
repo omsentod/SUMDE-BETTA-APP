@@ -5,7 +5,7 @@ import styles from './ProductCard.module.css';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 
-export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, stats }) {
+export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit }) {
     const { addToCart, buyNow } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -17,14 +17,14 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        addToCart({ id, name, price, form, coloration, gender, image, category, description, stats });
+        addToCart({ id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit });
     };
 
     const handleBuyNow = (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!isSold) {
-            buyNow({ id, name, price, form, coloration, gender, image, category, description, stats });
+            buyNow({ id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit });
             router.push('/checkout');
         }
     };
@@ -74,7 +74,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                         <span className={styles.dot}></span>
                         <span>{form}</span>
                         <span className={styles.dot}></span>
-                        <span>{coloration}</span>
+                        <span>{age}</span>
                     </div>
 
                     {/* Title */}

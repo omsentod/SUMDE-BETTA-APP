@@ -18,7 +18,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, statsColor, statsSpirit, quantity, sizes } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, age, statsSpirit, quantity, sizes } = await request.json();
     if (!name || price === undefined || !category || !gender || !form || !coloration || !description || !image) {
       return NextResponse.json({ error: 'Data produk tidak lengkap.' }, { status: 400 });
     }
@@ -28,7 +28,7 @@ export async function POST(request) {
         name, price: parseFloat(price), category, gender, form, coloration, description, image,
         isPremium: Boolean(isPremium),
         statsForm: statsForm || '9.0/10',
-        statsColor: statsColor || '9.0/10',
+        age: age || '9.0/10',
         statsSpirit: statsSpirit || 'Aktif',
         quantity: qty,
         sizes: sizes || [],

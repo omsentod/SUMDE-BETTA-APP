@@ -58,8 +58,8 @@ model Product {
   image       String
   isSold      Boolean  @default(false)
   isPremium   Boolean  @default(false)
-  statsForm   String   @default("9.0/10")
-  statsColor  String   @default("9.0/10")
+  statsForm   String   @default("COMP")
+  age         String   @default("4 Month")
   statsSpirit String   @default("Aktif")
   quantity    Int      @default(1)
   sizes       Json?

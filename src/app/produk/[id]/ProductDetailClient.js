@@ -106,7 +106,7 @@ export default function ProductDetailClient() {
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Umur</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsColor || '4 Month'}</span>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.age || '4 Month'}</span>
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Gender</label>

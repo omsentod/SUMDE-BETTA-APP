@@ -310,7 +310,7 @@ export default function AdminDashboard() {
         image: '/betta-1.png',
         isPremium: false,
         statsForm: 'COMP',
-        statsColor: '4 Month',
+        age: '4 Month',
         statsSpirit: 'Aktif',
         quantity: 1,
         sizes: []
@@ -620,7 +620,7 @@ export default function AdminDashboard() {
             image: product.image,
             isPremium: product.isPremium,
             statsForm: product.statsForm || 'COMP',
-            statsColor: product.statsColor || '4 Month',
+            age: product.age || '4 Month',
             statsSpirit: product.statsSpirit || 'Aktif',
             quantity: product.quantity !== undefined ? product.quantity : 1,
             sizes: parsedSizes || []
@@ -640,7 +640,7 @@ export default function AdminDashboard() {
             image: '/betta-1.png',
             isPremium: false,
             statsForm: 'COMP',
-            statsColor: '4 Month',
+            age: '4 Month',
             statsSpirit: 'Aktif',
             quantity: 1,
             sizes: []
@@ -1180,8 +1180,8 @@ export default function AdminDashboard() {
                                     placeholder="Contoh: 4 Month, 5 Bulan"
                                     className="search-input"
                                     style={{ width: '100%' }}
-                                    value={productForm.statsColor}
-                                    onChange={(e) => setProductForm({ ...productForm, statsColor: e.target.value })}
+                                    value={productForm.age}
+                                    onChange={(e) => setProductForm({ ...productForm, age: e.target.value })}
                                     required
                                 />
                             </div>

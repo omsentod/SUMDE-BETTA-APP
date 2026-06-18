@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = await params;
-    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, statsColor, statsSpirit, isSold, quantity, sizes } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes } = await request.json();
     const dataToUpdate = {};
     if (name !== undefined) dataToUpdate.name = name;
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
@@ -27,7 +27,7 @@ export async function PUT(request, { params }) {
     if (image !== undefined) dataToUpdate.image = image;
     if (isPremium !== undefined) dataToUpdate.isPremium = Boolean(isPremium);
     if (statsForm !== undefined) dataToUpdate.statsForm = statsForm;
-    if (statsColor !== undefined) dataToUpdate.statsColor = statsColor;
+    if (age !== undefined) dataToUpdate.age = age;
     if (statsSpirit !== undefined) dataToUpdate.statsSpirit = statsSpirit;
     if (isSold !== undefined) dataToUpdate.isSold = Boolean(isSold);
     if (quantity !== undefined) {
