@@ -28,12 +28,19 @@ export default function EventsPage() {
     // Filter out inactive or expired events for public view
     const publicEvents = useMemo(() => {
         const now = new Date();
-        return events.filter(event => {
-            if (!event.isActive) return false;
-            // Jika tanggal selesai diset dan sudah lewat, sembunyikan dari publik
-            if (event.endDate && new Date(event.endDate) < now) return false;
-            return true;
-        });
+        return events
+            .filter(event => {
+                if (!event.isActive) return false;
+                if (event.endDate && new Date(event.endDate) < now) return false;
+                return true;
+            })
+            .sort((a, b) => {
+                const aOngoing = !a.startDate || new Date(a.startDate) <= now;
+                const bOngoing = !b.startDate || new Date(b.startDate) <= now;
+                if (aOngoing && !bOngoing) return -1;
+                if (!aOngoing && bOngoing) return 1;
+                return 0;
+            });
     }, [events]);
 
     // Filter events based on tab
