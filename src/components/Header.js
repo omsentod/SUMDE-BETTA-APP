@@ -65,8 +65,8 @@ export default function Header() {
                 <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
 
                     {/* Logo */}
-                    <Link href="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <Image src="/logo.png" alt="Sumde Betta Logo" width={50} height={50} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+                    <Link href="/" className="logo-link">
+                        <Image src="/logo.png" alt="Sumde Betta Logo" width={44} height={44} className="logo-img" />
                         <div className="logo-text">SUMDE <span className="logo-highlight">BETTA</span></div>
                     </Link>
 
@@ -83,8 +83,7 @@ export default function Header() {
                         {/* Theme toggle */}
                         <button
                             onClick={toggleTheme}
-                            className="btn btn-outline"
-                            style={{ padding: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', cursor: 'pointer' }}
+                            className="header-action-btn hide-on-mobile"
                             aria-label="Toggle Theme"
                         >
                             <ThemeIcon theme={theme} />
@@ -93,8 +92,8 @@ export default function Header() {
                         {/* Cart */}
                         <button
                             onClick={toggleCart}
-                            className="btn btn-outline"
-                            style={{ padding: '0.6rem', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', cursor: 'pointer' }}
+                            className="header-action-btn"
+                            aria-label="Keranjang Belanja"
                         >
                             <CartIcon />
                             {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
@@ -102,7 +101,7 @@ export default function Header() {
 
                         {/* Auth: Profile dropdown or Masuk */}
                         {currentUser ? (
-                            <div className="profile-menu-wrapper" ref={profileRef}>
+                            <div className="profile-menu-wrapper hide-on-mobile" ref={profileRef}>
                                 <button
                                     className="profile-avatar-btn"
                                     onClick={() => setProfileOpen(prev => !prev)}
@@ -154,13 +153,13 @@ export default function Header() {
                                 </div>
                             </div>
                         ) : (
-                            <Link href="/login" className="btn btn-primary" style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '8px' }}>
+                            <Link href="/login" className="btn btn-primary hide-on-mobile" style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '8px' }}>
                                 Masuk
                             </Link>
                         )}
 
                         {/* Hamburger (mobile only) */}
-                        <button className="mobile-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Buka Menu">
+                        <button className="header-action-btn mobile-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Buka Menu">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
                             </svg>

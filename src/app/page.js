@@ -12,7 +12,7 @@ export default function CatalogHome() {
     // Extract unique categories dynamically and find an image for each
     const categoriesWithImages = useMemo(() => {
         const list = [{ name: 'Semua', image: '/logo.png' }]; // Use logo for Semua
-        
+
         const seen = new Set();
         products.forEach(p => {
             if (p.form && !seen.has(p.form.toLowerCase())) {
@@ -23,7 +23,7 @@ export default function CatalogHome() {
                 });
             }
         });
-        
+
         return list;
     }, [products]);
 
@@ -107,7 +107,7 @@ export default function CatalogHome() {
                                         className="hero-bg-image"
                                         priority={idx === 0}
                                     />
-                                    
+
                                     {/* Dark Overlay for Text Readability */}
                                     <div className="hero-overlay"></div>
 
@@ -118,7 +118,7 @@ export default function CatalogHome() {
                                         </span>
                                         <h1>{event.title}</h1>
                                         <p>{event.description}</p>
-                                        
+
                                         {isExternalUrl ? (
                                             <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'inline-block', margin: '0 auto' }}>
                                                 {event.buttonText || 'LIHAT EVENT'}
@@ -159,7 +159,7 @@ export default function CatalogHome() {
                                 className="hero-bg-image"
                                 priority
                             />
-                            
+
                             {/* Dark Overlay for Text Readability */}
                             <div className="hero-overlay"></div>
 
@@ -171,12 +171,12 @@ export default function CatalogHome() {
                                 <h1>
                                     {featuredProduct ? (
                                         <>
-                                            Acquire the Rarest<br/>
+                                            Acquire the Rarest<br />
                                             <span className="text-gradient">{featuredProduct.name}</span>
                                         </>
                                     ) : (
                                         <>
-                                            Acquire the Rarest<br/>
+                                            Acquire the Rarest<br />
                                             <span className="text-gradient">Koi Galaxy Series</span>
                                         </>
                                     )}
@@ -201,14 +201,14 @@ export default function CatalogHome() {
 
             {/* Quick Categories Selector */}
             <section className="categories-tabs-section container" style={{ margin: '3rem auto' }}>
-                <div style={{ 
-                    display: 'flex', 
-                    gap: '2.5rem', 
-                    flexWrap: 'wrap', 
-                    justifyContent: 'center', 
+                <div style={{
+                    display: 'flex',
+                    gap: '2.5rem',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
                     alignItems: 'center',
-                    borderBottom: '1px solid var(--border-color)', 
-                    paddingBottom: '2.5rem' 
+                    borderBottom: '1px solid var(--border-color)',
+                    paddingBottom: '2.5rem'
                 }}>
                     {categoriesWithImages.map(cat => (
                         <div
@@ -216,7 +216,7 @@ export default function CatalogHome() {
                             onClick={() => setSelectedCategory(cat.name)}
                             className="category-card"
                         >
-                            <div 
+                            <div
                                 className="category-circle"
                                 style={{
                                     background: selectedCategory === cat.name ? 'linear-gradient(135deg, var(--primary), var(--secondary))' : 'var(--glass-border)',
