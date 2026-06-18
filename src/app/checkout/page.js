@@ -216,24 +216,29 @@ export default function CheckoutPage() {
                             <div className="cart-items" style={{ marginBottom: '4rem' }}>
                                 <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Spesimen Terpilih</h3>
                                 {cart.map((item) => (
-                                    <div key={item.id} style={{ display: 'flex', gap: '2rem', padding: '2rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
+                                    <div key={`${item.id}-${item.selectedSize}`} style={{ display: 'flex', gap: '2rem', padding: '2rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
                                         <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '0.5rem', overflow: 'hidden' }}>
                                             <Image src={item.image} alt={item.name} fill style={{ objectFit: 'cover' }} />
                                         </div>
                                         <div style={{ flex: 1 }}>
                                             <h3 style={{ fontSize: '1.2rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>{item.name}</h3>
-                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Spesimen {item.category}</p>
+                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>Spesimen {item.category}</p>
+                                            {item.selectedSize && (
+                                                <p style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: '600', marginTop: '0.2rem' }}>
+                                                    Size: {item.selectedSize}
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="qty-control">
-                                            <button onClick={() => updateQuantity(item.id, -1)} className="qty-btn" style={{ cursor: 'pointer' }}>-</button>
+                                            <button onClick={() => updateQuantity(item.id, -1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>-</button>
                                             <span style={{ color: 'var(--text-main)' }}>{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, 1)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
+                                            <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
                                         </div>
                                         <div style={{ textAlign: 'right', minWidth: '150px' }}>
                                             <p style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>
                                                 {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}
                                             </p>
-                                            <button onClick={() => removeFromCart(item.id)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.7rem', marginTop: '0.5rem' }}>
+                                            <button onClick={() => removeFromCart(item.id, item.selectedSize)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.7rem', marginTop: '0.5rem' }}>
                                                 HAPUS
                                             </button>
                                         </div>

@@ -18,10 +18,11 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, statsColor, statsSpirit } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, statsColor, statsSpirit, quantity, sizes } = await request.json();
     if (!name || price === undefined || !category || !gender || !form || !coloration || !description || !image) {
       return NextResponse.json({ error: 'Data produk tidak lengkap.' }, { status: 400 });
     }
+    const qty = quantity !== undefined ? parseInt(quantity) : 1;
     const newProduct = await prisma.product.create({
       data: {
         name, price: parseFloat(price), category, gender, form, coloration, description, image,
@@ -29,7 +30,9 @@ export async function POST(request) {
         statsForm: statsForm || '9.0/10',
         statsColor: statsColor || '9.0/10',
         statsSpirit: statsSpirit || 'Aktif',
-        isSold: false
+        quantity: qty,
+        sizes: sizes || [],
+        isSold: qty === 0
       }
     });
     return NextResponse.json(newProduct, { status: 201 });

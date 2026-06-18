@@ -61,6 +61,8 @@ model Product {
   statsForm   String   @default("9.0/10")
   statsColor  String   @default("9.0/10")
   statsSpirit String   @default("Aktif")
+  quantity    Int      @default(1)
+  sizes       Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
@@ -96,3 +98,19 @@ model OrderItem {
   quantity  Int      @default(1)
   price     Float    
 }
+
+model PromoEvent {
+  id          String    @id @default(uuid())
+  title       String
+  subtitle    String?
+  description String    @db.Text
+  image       String    @default("/betta-2.png")
+  targetUrl   String
+  buttonText  String    @default("Lihat Event")
+  isActive    Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+

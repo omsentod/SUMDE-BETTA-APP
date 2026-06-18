@@ -74,6 +74,7 @@ export default function Header() {
                     <nav className="nav-links">
                         <Link href="/">Beranda</Link>
                         <Link href="/produk">Produk</Link>
+                        <Link href="/event">Event</Link>
                         <Link href="/tentang">Tentang Kami</Link>
                     </nav>
 
@@ -185,6 +186,7 @@ export default function Header() {
                 <nav className="mobile-nav-links">
                     <Link href="/" className="mobile-nav-link" onClick={closeMenu}>Beranda</Link>
                     <Link href="/produk" className="mobile-nav-link" onClick={closeMenu}>Produk</Link>
+                    <Link href="/event" className="mobile-nav-link" onClick={closeMenu}>Event</Link>
                     <Link href="/tentang" className="mobile-nav-link" onClick={closeMenu}>Tentang Kami</Link>
                     {isCustomer && (
                         <>

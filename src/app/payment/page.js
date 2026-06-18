@@ -44,7 +44,8 @@ export default function PaymentPage() {
                         items: cart.map(item => ({
                             productId: item.id,
                             quantity: item.quantity,
-                            price: item.price
+                            price: item.price,
+                            selectedSize: item.selectedSize
                         }))
                     };
 
@@ -130,8 +131,8 @@ export default function PaymentPage() {
                             <h3 style={{ fontSize: '0.8rem', color: 'var(--primary)', letterSpacing: '0.2rem', marginBottom: '1.5rem' }}>RINGKASAN PESANAN</h3>
                             <div style={{ marginBottom: '2rem' }}>
                                 {cart.map(item => (
-                                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                        <span>{item.name} x {item.quantity}</span>
+                                    <div key={`${item.id}-${item.selectedSize}`} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                        <span>{item.name} {item.selectedSize ? `(Size: ${item.selectedSize})` : ''} x {item.quantity}</span>
                                         <span>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}</span>
                                     </div>
                                 ))}

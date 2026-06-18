@@ -27,7 +27,36 @@ export async function POST(request) {
         await tx.orderItem.create({
           data: { orderId: newOrder.id, productId: item.productId || item.id, quantity: parseInt(item.quantity) || 1, price: parseFloat(item.price) }
         });
-        await tx.product.update({ where: { id: item.productId || item.id }, data: { isSold: true } });
+        
+        const product = await tx.product.findUnique({ where: { id: item.productId || item.id } });
+        if (product) {
+          let updatedSizes = [];
+          if (product.sizes && Array.isArray(product.sizes)) {
+            updatedSizes = product.sizes.map((s) => {
+              if (s.size === item.selectedSize) {
+                const newQty = Math.max(0, s.quantity - (parseInt(item.quantity) || 1));
+                return { ...s, quantity: newQty };
+              }
+              return s;
+            });
+          }
+          
+          let newTotalQty = 0;
+          if (updatedSizes.length > 0) {
+            newTotalQty = updatedSizes.reduce((sum, s) => sum + s.quantity, 0);
+          } else {
+            newTotalQty = Math.max(0, product.quantity - (parseInt(item.quantity) || 1));
+          }
+          
+          await tx.product.update({
+            where: { id: product.id },
+            data: {
+              sizes: updatedSizes.length > 0 ? updatedSizes : undefined,
+              quantity: newTotalQty,
+              isSold: newTotalQty === 0
+            }
+          });
+        }
       }
       return newOrder;
     });

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function CartSidebar() {
     const { 
         cart, 
-        checkoutTotal, 
+        cartCheckedTotal, 
         isCartOpen, 
         toggleCart, 
         updateQuantity, 
@@ -45,12 +45,12 @@ export default function CartSidebar() {
                         </div>
                     ) : (
                         cart.map((item) => (
-                            <div key={item.id} className="cart-item-side" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div key={`${item.id}-${item.selectedSize}`} className="cart-item-side" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 {/* Checkbox for item selection (Shopee style) */}
                                 <input
                                     type="checkbox"
                                     checked={item.checked !== false}
-                                    onChange={() => toggleItemCheck(item.id)}
+                                    onChange={() => toggleItemCheck(item.id, item.selectedSize)}
                                     style={{
                                         cursor: 'pointer',
                                         width: '18px',
@@ -66,18 +66,23 @@ export default function CartSidebar() {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <h4 style={{ fontSize: '0.95rem', marginBottom: '0.2rem', color: 'var(--text-main)' }}>{item.name}</h4>
+                                        {item.selectedSize && (
+                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.2rem 0' }}>
+                                                Size: {item.selectedSize}
+                                            </p>
+                                        )}
                                         <p style={{ color: '#FF6B35', fontSize: '0.85rem', fontWeight: 'bold' }}>
                                             {formattedCurrency(item.price)}
                                         </p>
                                         <div className="qty-control" style={{ marginTop: '0.4rem', scale: '0.8', originX: 'left' }}>
-                                            <button onClick={() => updateQuantity(item.id, -1)} className="qty-btn" style={{ cursor: 'pointer' }}>-</button>
+                                            <button onClick={() => updateQuantity(item.id, -1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>-</button>
                                             <span style={{ color: 'var(--text-main)' }}>{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, 1)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
+                                            <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
                                         </div>
                                     </div>
                                 </div>
                                 <button 
-                                    onClick={() => removeFromCart(item.id)} 
+                                    onClick={() => removeFromCart(item.id, item.selectedSize)} 
                                     style={{ 
                                         background: 'none', 
                                         border: 'none', 
@@ -97,7 +102,7 @@ export default function CartSidebar() {
                 <div className="cart-footer">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '1.2rem', fontWeight: '600', color: 'var(--text-main)' }}>
                         <span>Total Terpilih</span>
-                        <span style={{ color: '#FF6B35' }}>{formattedCurrency(checkoutTotal)}</span>
+                        <span style={{ color: '#FF6B35' }}>{formattedCurrency(cartCheckedTotal)}</span>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button onClick={toggleCart} className="btn btn-outline" style={{ flex: 1, padding: '0.8rem', cursor: 'pointer' }}>Batal</button>

@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -30,7 +31,16 @@ export default function ProductDetailClient() {
         );
     }
 
-    const isInCart = cart.some((item) => item.id === product.id);
+    const [selectedSize, setSelectedSize] = useState('');
+
+    useEffect(() => {
+        if (product && product.sizes && Array.isArray(product.sizes)) {
+            const available = product.sizes.find(s => s.quantity > 0);
+            if (available) {
+                setSelectedSize(available.size);
+            }
+        }
+    }, [product]);
 
     const formattedPrice = new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -39,8 +49,20 @@ export default function ProductDetailClient() {
     }).format(product.price);
 
     const handleAcquire = () => {
-        buyNow(product);
+        if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && !selectedSize) {
+            alert('Mohon pilih ukuran (size) terlebih dahulu.');
+            return;
+        }
+        buyNow({ ...product, selectedSize });
         router.push('/checkout');
+    };
+
+    const handleAddToCart = () => {
+        if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && !selectedSize) {
+            alert('Mohon pilih ukuran (size) terlebih dahulu.');
+            return;
+        }
+        addToCart({ ...product, selectedSize });
     };
 
     return (
@@ -81,28 +103,87 @@ export default function ProductDetailClient() {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', marginBottom: '4rem', padding: '2rem', background: 'var(--glass)', border: '1px solid var(--glass-border)', borderRadius: '0.5rem', color: 'var(--text-main)' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Grade Bentuk</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsForm || product.stats?.form || '9.0/10'}</span>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsForm || 'COMP'}</span>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Intensitas Warna</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsColor || product.stats?.color || '9.0/10'}</span>
+                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Umur</label>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsColor || '4 Month'}</span>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Mental</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsSpirit || product.stats?.spirit || 'Aktif'}</span>
+                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Gender</label>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: '600', textTransform: 'uppercase' }}>{product.gender || 'MALE'}</span>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
-                                <span style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-main)' }}>{formattedPrice}</span>
-                                {!product.isSold && (
-                                    <button
-                                        onClick={handleAcquire}
-                                        className="btn btn-primary"
-                                        style={{ padding: '1.2rem 3rem', cursor: 'pointer' }}
-                                    >
-                                        Akuisisi Spesimen (Beli Sekarang)
-                                    </button>
+                            {/* Size Selection Area */}
+                            {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && (
+                                <div style={{ marginBottom: '3rem', color: 'var(--text-main)' }}>
+                                    <h3 style={{ fontSize: '1.0rem', textTransform: 'uppercase', letterSpacing: '0.1rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pilih Ukuran (Size)</h3>
+                                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                        {product.sizes.map((s) => {
+                                            const isOutOfStock = s.quantity <= 0;
+                                            const isSelected = selectedSize === s.size;
+                                            return (
+                                                <button
+                                                    key={s.size}
+                                                    disabled={isOutOfStock}
+                                                    onClick={() => setSelectedSize(s.size)}
+                                                    className={`btn ${isSelected ? 'btn-primary' : 'btn-outline'}`}
+                                                    style={{
+                                                        padding: '0.5rem 1.2rem',
+                                                        borderRadius: '30px',
+                                                        fontSize: '0.85rem',
+                                                        opacity: isOutOfStock ? 0.3 : 1,
+                                                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        minWidth: '80px'
+                                                    }}
+                                                >
+                                                    <span style={{ fontWeight: '700' }}>{s.size}</span>
+                                                    <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>
+                                                        {isOutOfStock ? 'Habis' : `Stok: ${s.quantity}`}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-main)', marginRight: '1rem' }}>{formattedPrice}</span>
+                                {!product.isSold && product.quantity > 0 ? (
+                                    <>
+                                        <button
+                                            onClick={handleAcquire}
+                                            className="btn btn-primary"
+                                            style={{ padding: '1rem 2.5rem', cursor: 'pointer', borderRadius: '30px' }}
+                                        >
+                                            Beli Sekarang
+                                        </button>
+                                        <button
+                                            onClick={handleAddToCart}
+                                            className="btn btn-outline"
+                                            style={{ padding: '1rem 2rem', cursor: 'pointer', borderRadius: '30px' }}
+                                        >
+                                            Tambah ke Keranjang
+                                        </button>
+                                    </>
+                                ) : (
+                                    <span style={{ 
+                                        padding: '0.8rem 2.5rem', 
+                                        border: '1px solid var(--primary)', 
+                                        color: 'var(--primary)', 
+                                        fontFamily: 'var(--font-serif)', 
+                                        fontSize: '1.1rem', 
+                                        fontStyle: 'italic', 
+                                        background: 'rgba(255,255,255,0.02)',
+                                        borderRadius: '30px'
+                                    }}>
+                                        Stok Habis / Terjual
+                                    </span>
                                 )}
                             </div>
                         </div>

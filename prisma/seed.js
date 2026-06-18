@@ -42,6 +42,11 @@ async function main() {
           statsForm: '9.5/10',
           statsColor: '9.0/10',
           statsSpirit: 'Agresif',
+          quantity: 5,
+          sizes: [
+            { size: 'M', quantity: 3 },
+            { size: 'M+', quantity: 2 }
+          ]
         },
         {
           name: 'Crowntail Red Dragon',
@@ -56,6 +61,11 @@ async function main() {
           statsForm: '9.0/10',
           statsColor: '9.5/10',
           statsSpirit: 'Aktif',
+          quantity: 3,
+          sizes: [
+            { size: 'S', quantity: 1 },
+            { size: 'M', quantity: 2 }
+          ]
         },
         {
           name: 'Plakat Yellow Koi',
@@ -70,6 +80,11 @@ async function main() {
           statsForm: '9.0/10',
           statsColor: '10/10',
           statsSpirit: 'Aktif',
+          quantity: 2,
+          sizes: [
+            { size: 'M', quantity: 1 },
+            { size: 'L', quantity: 1 }
+          ]
         },
       ],
     });

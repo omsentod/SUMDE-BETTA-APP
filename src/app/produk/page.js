@@ -4,10 +4,6 @@ import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/context/ProductContext";
 
 
-// Filter Options
-const GENDERS = ['Male', 'Female', 'Pair'];
-const FORMS = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'];
-const COLORS = ['Avatar', 'Multicolor', 'Koi', 'Copper', 'Solid', 'Super Red', 'Galaxy', 'Nemo', 'Black Samurai'];
 const SORT_OPTIONS = [
     { label: 'Newest', value: 'newest' },
     { label: 'Price: Low to High', value: 'price_asc' },
@@ -16,6 +12,26 @@ const SORT_OPTIONS = [
 
 export default function GalleryPage() {
     const { products, isLoading } = useProducts();
+
+    // Derive filter options dynamically from current products list
+    const genders = useMemo(() => {
+        const set = new Set(products.map(p => p.gender).filter(Boolean));
+        ['Male', 'Female', 'Pair'].forEach(g => set.add(g));
+        return Array.from(set).sort();
+    }, [products]);
+
+    const forms = useMemo(() => {
+        const set = new Set(products.map(p => p.form).filter(Boolean));
+        ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'].forEach(f => set.add(f));
+        return Array.from(set).sort();
+    }, [products]);
+
+    const colors = useMemo(() => {
+        const set = new Set(products.map(p => p.coloration).filter(Boolean));
+        ['Avatar', 'Multicolor', 'Koi', 'Copper', 'Solid', 'Super Red', 'Galaxy', 'Nemo', 'Black Samurai'].forEach(c => set.add(c));
+        return Array.from(set).sort();
+    }, [products]);
+
     // State Management
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
@@ -130,7 +146,7 @@ export default function GalleryPage() {
                         <div className="filterSection">
                             <h3 className="filterSectionTitle">Gender</h3>
                             <div className="checkboxGroup">
-                                {GENDERS.map(gender => (
+                                {genders.map(gender => (
                                     <label key={gender} className="checkboxLabel">
                                         <input
                                             type="checkbox"
@@ -150,7 +166,7 @@ export default function GalleryPage() {
                         <div className="filterSection">
                             <h3 className="filterSectionTitle">Form / Tail Type</h3>
                             <div className="checkboxGroupScrollable">
-                                {FORMS.map(form => (
+                                {forms.map(form => (
                                     <label key={form} className="checkboxLabel">
                                         <input
                                             type="checkbox"
@@ -170,7 +186,7 @@ export default function GalleryPage() {
                         <div className="filterSection">
                             <h3 className="filterSectionTitle">Coloration</h3>
                             <div className="checkboxGroupScrollable">
-                                {COLORS.map(color => (
+                                {colors.map(color => (
                                     <label key={color} className="checkboxLabel">
                                         <input
                                             type="checkbox"

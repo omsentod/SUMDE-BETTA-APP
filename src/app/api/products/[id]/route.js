@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = await params;
-    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, statsColor, statsSpirit, isSold } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, statsColor, statsSpirit, isSold, quantity, sizes } = await request.json();
     const dataToUpdate = {};
     if (name !== undefined) dataToUpdate.name = name;
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
@@ -30,6 +30,12 @@ export async function PUT(request, { params }) {
     if (statsColor !== undefined) dataToUpdate.statsColor = statsColor;
     if (statsSpirit !== undefined) dataToUpdate.statsSpirit = statsSpirit;
     if (isSold !== undefined) dataToUpdate.isSold = Boolean(isSold);
+    if (quantity !== undefined) {
+      const qty = parseInt(quantity);
+      dataToUpdate.quantity = qty;
+      dataToUpdate.isSold = qty === 0;
+    }
+    if (sizes !== undefined) dataToUpdate.sizes = sizes;
     const updatedProduct = await prisma.product.update({ where: { id }, data: dataToUpdate });
     return NextResponse.json(updatedProduct);
   } catch (error) {
