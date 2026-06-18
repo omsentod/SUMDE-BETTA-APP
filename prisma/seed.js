@@ -1,0 +1,86 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function main() {
+  // Users
+  await prisma.user.upsert({
+    where: { email: 'admin@sumdebetta.com' },
+    update: {},
+    create: {
+      email: 'admin@sumdebetta.com',
+      password: 'admin123',
+      name: 'Admin Sumde',
+      role: 'admin',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'user@sumdebetta.com' },
+    update: {},
+    create: {
+      email: 'user@sumdebetta.com',
+      password: 'user123',
+      name: 'User Demo',
+      role: 'customer',
+    },
+  });
+
+  // Products
+  const products = [
+    {
+      name: 'Halfmoon Blue Marble',
+      price: 150000,
+      category: 'Ikan Cupang',
+      gender: 'Jantan',
+      form: 'Halfmoon',
+      coloration: 'Blue Marble',
+      description: 'Ikan cupang halfmoon dengan warna blue marble yang memukau. Sirip mengembang sempurna membentuk setengah lingkaran 180°. Cocok untuk kontes maupun koleksi pribadi.',
+      image: '/betta-1.png',
+      isPremium: true,
+      statsForm: '9.5/10',
+      statsColor: '9.0/10',
+      statsSpirit: 'Agresif',
+    },
+    {
+      name: 'Crowntail Red Dragon',
+      price: 120000,
+      category: 'Ikan Cupang',
+      gender: 'Jantan',
+      form: 'Crowntail',
+      coloration: 'Red Dragon',
+      description: 'Cupang crowntail dengan warna merah menyala dan sisik dragon yang tegas. Ekor bercabang-cabang seperti mahkota memberikan kesan gagah dan eksotis.',
+      image: '/betta-2.png',
+      isPremium: false,
+      statsForm: '9.0/10',
+      statsColor: '9.5/10',
+      statsSpirit: 'Aktif',
+    },
+    {
+      name: 'Plakat Yellow Koi',
+      price: 200000,
+      category: 'Ikan Cupang',
+      gender: 'Jantan',
+      form: 'Plakat',
+      coloration: 'Yellow Koi',
+      description: 'Plakat premium dengan pola koi kuning-putih yang langka. Tubuh kompak dan sirip pendek khas plakat membuat warna tampil lebih mencolok. Sangat jarang di pasaran.',
+      image: '/betta-3.png',
+      isPremium: true,
+      statsForm: '9.0/10',
+      statsColor: '10/10',
+      statsSpirit: 'Aktif',
+    },
+  ];
+
+  for (const product of products) {
+    await prisma.product.create({ data: product });
+  }
+
+  console.log('Seed berhasil!');
+  console.log('Admin  : admin@sumdebetta.com / admin123');
+  console.log('User   : user@sumdebetta.com / user123');
+  console.log('Produk : 3 item berhasil dibuat');
+}
+
+main()
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());
