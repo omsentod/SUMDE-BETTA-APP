@@ -40,6 +40,39 @@ export default function AdminDashboard() {
         statsSpirit: 'Aktif'
     });
 
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        setUploadError('');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Gagal mengunggah gambar.');
+            }
+
+            setProductForm(prev => ({ ...prev, image: data.url }));
+        } catch (err) {
+            console.error(err);
+            setUploadError(err.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     // Protect Route
     useEffect(() => {
         if (!authLoading) {
@@ -493,15 +526,81 @@ export default function AdminDashboard() {
                             </div>
 
                             <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Path Gambar (Contoh: /betta-1.png)</label>
-                                <input
-                                    type="text"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
-                                    value={productForm.image}
-                                    onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
-                                    required
-                                />
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Foto Produk</label>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    gap: '1.5rem', 
+                                    alignItems: 'center', 
+                                    background: 'rgba(255,255,255,0.02)', 
+                                    padding: '1.2rem', 
+                                    borderRadius: '12px', 
+                                    border: '1px dashed var(--border-color)' 
+                                }}>
+                                    <div style={{ 
+                                        position: 'relative', 
+                                        width: '100px', 
+                                        height: '100px', 
+                                        borderRadius: '8px', 
+                                        overflow: 'hidden', 
+                                        background: 'rgba(255,255,255,0.05)',
+                                        flexShrink: 0
+                                    }}>
+                                        {productForm.image ? (
+                                            <Image 
+                                                src={productForm.image} 
+                                                alt="Preview" 
+                                                fill 
+                                                style={{ objectFit: 'cover' }} 
+                                            />
+                                        ) : (
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                height: '100%', 
+                                                color: 'var(--text-muted)' 
+                                            }}>
+                                                No Image
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ flexGrow: 1 }}>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileUpload}
+                                            id="product-image-upload"
+                                            style={{ display: 'none' }}
+                                        />
+                                        <label 
+                                            htmlFor="product-image-upload" 
+                                            className="btn btn-outline" 
+                                            style={{ 
+                                                display: 'inline-block', 
+                                                cursor: 'pointer', 
+                                                padding: '0.5rem 1rem', 
+                                                fontSize: '0.85rem',
+                                                borderRadius: '6px',
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            {isUploading ? 'Mengunggah...' : 'Pilih Foto dari Komputer'}
+                                        </label>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', margin: '0.5rem 0 0 0' }}>
+                                            Format yang didukung: JPG, PNG, GIF, WEBP. Maksimal 20MB.
+                                        </p>
+                                        {uploadError && (
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.25rem', margin: '0.25rem 0 0 0' }}>
+                                                Error: {uploadError}
+                                            </p>
+                                        )}
+                                        <input 
+                                            type="hidden" 
+                                            value={productForm.image} 
+                                            required 
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <div style={{ gridColumn: '1 / -1' }}>
