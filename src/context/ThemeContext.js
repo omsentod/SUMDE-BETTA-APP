@@ -4,11 +4,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('dark');
+    const [theme, setTheme] = useState('light');
 
     // Load theme from localStorage on initial render
     useEffect(() => {
-        const savedTheme = localStorage.getItem('sumde-theme') || 'dark';
+        const savedTheme = localStorage.getItem('sumde-theme') || 'light';
         setTheme(savedTheme);
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);
