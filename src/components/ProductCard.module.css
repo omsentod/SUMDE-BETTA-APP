@@ -87,7 +87,7 @@
 }
 
 .title {
-    @apply text-sm font-bold text-[var(--text-main)] mb-1 leading-snug font-serif italic line-clamp-1;
+    @apply text-sm font-extrabold text-[var(--text-main)] mb-1 leading-snug font-sans not-italic line-clamp-1;
 }
 
 @media (min-width: 640px) {

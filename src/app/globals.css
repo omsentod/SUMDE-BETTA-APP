@@ -26,8 +26,8 @@
     --input-border: #333333;
     --qty-bg: rgba(255, 255, 255, 0.05);
 
-    --font-main: 'Outfit', sans-serif;
-    --font-serif: 'Playfair Display', serif;
+    --font-main: 'Inter', sans-serif;
+    --font-serif: 'Inter', sans-serif;
     --transition-luxe: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 
     --modal-bg: rgba(20, 20, 20, 0.95);
@@ -116,7 +116,10 @@ body {
 h1,
 h2,
 h3 {
-    letter-spacing: -0.02em;
+    font-family: var(--font-main) !important;
+    font-weight: 800 !important;
+    font-style: normal !important;
+    letter-spacing: -0.03em;
 }
 
 .text-gradient {
@@ -343,7 +346,8 @@ h3 {
     font-family: var(--font-serif);
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
-    font-style: italic;
+    font-weight: 800;
+    font-style: normal;
 }
 
 .product-price {
@@ -619,8 +623,8 @@ h3 {
     font-size: 2.25rem;
     line-height: 2.5rem;
     font-family: var(--font-serif);
-    font-weight: 700;
-    font-style: italic;
+    font-weight: 800;
+    font-style: normal;
     color: #F5F5F7;
     margin-bottom: 1rem;
 }
