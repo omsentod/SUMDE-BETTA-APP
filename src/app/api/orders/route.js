@@ -19,44 +19,24 @@ export async function POST(request) {
     if (!name || !email || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode || !items || items.length === 0) {
       return NextResponse.json({ error: 'Detail pesanan tidak lengkap.' }, { status: 400 });
     }
+    // NOTE: stock is intentionally NOT decremented here. It is decremented only
+    // when payment is confirmed by the DOKU webhook (see webhook/route.js), so
+    // abandoned/unpaid PENDING orders no longer consume stock. selectedSize is
+    // persisted so the webhook knows which size to decrement.
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: { userId: userId || null, total: parseFloat(total), status: status || 'PENDING', name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode }
       });
       for (const item of items) {
         await tx.orderItem.create({
-          data: { orderId: newOrder.id, productId: item.productId || item.id, quantity: parseInt(item.quantity) || 1, price: parseFloat(item.price) }
+          data: {
+            orderId: newOrder.id,
+            productId: item.productId || item.id,
+            quantity: parseInt(item.quantity) || 1,
+            price: parseFloat(item.price),
+            selectedSize: item.selectedSize ?? null,
+          }
         });
-        
-        const product = await tx.product.findUnique({ where: { id: item.productId || item.id } });
-        if (product) {
-          let updatedSizes = [];
-          if (product.sizes && Array.isArray(product.sizes)) {
-            updatedSizes = product.sizes.map((s) => {
-              if (s.size === item.selectedSize) {
-                const newQty = Math.max(0, s.quantity - (parseInt(item.quantity) || 1));
-                return { ...s, quantity: newQty };
-              }
-              return s;
-            });
-          }
-          
-          let newTotalQty = 0;
-          if (updatedSizes.length > 0) {
-            newTotalQty = updatedSizes.reduce((sum, s) => sum + s.quantity, 0);
-          } else {
-            newTotalQty = Math.max(0, product.quantity - (parseInt(item.quantity) || 1));
-          }
-          
-          await tx.product.update({
-            where: { id: product.id },
-            data: {
-              sizes: updatedSizes.length > 0 ? updatedSizes : undefined,
-              quantity: newTotalQty,
-              isSold: newTotalQty === 0
-            }
-          });
-        }
       }
       return newOrder;
     });
