@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { hashPassword } from '@/lib/auth';
 
 export async function POST(request) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 400 });
     }
     const user = await prisma.user.create({
-      data: { email, password, name, role: 'customer' }
+      data: { email, password: hashPassword(password), name, role: 'customer' }
     });
     const { password: _, ...userData } = user;
     return NextResponse.json(userData, { status: 201 });
