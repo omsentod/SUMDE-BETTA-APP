@@ -9,7 +9,7 @@ import SearchableSelect from '@/components/SearchableSelect';
 
 export default function CheckoutPage() {
     const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart } = useCart();
-    const { currentUser } = useAuth();
+    const { currentUser, fetchMyAddresses, createAddress } = useAuth();
     const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -35,6 +35,12 @@ export default function CheckoutPage() {
     const [cityId, setCityId] = useState('');
     const [districtId, setDistrictId] = useState('');
 
+    // Saved-address picker state
+    const [savedAddresses, setSavedAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState(null);
+    const [autofillTarget, setAutofillTarget] = useState(null); // { province, city, district } names to resolve into dropdown IDs
+    const [savingAddress, setSavingAddress] = useState(false);
+
     const [selectAlert, setSelectAlert] = useState({ field: '', message: '' });
 
     const triggerSelectAlert = (field, message) => {
@@ -44,40 +50,75 @@ export default function CheckoutPage() {
         }, 3000);
     };
 
-    // Load currentUser profile address details if exists
+    // Fill the form from a saved Address record (from the address book)
+    const applyAddress = (addr) => {
+        setFormData({
+            name: addr.recipientName || '',
+            email: currentUser?.email || '',
+            phone: addr.phone || '',
+            streetAddress: addr.streetAddress || '',
+            rtRw: addr.rtRw || '',
+            province: addr.province || '',
+            city: addr.city || '',
+            district: addr.district || '',
+            village: addr.village || '',
+            postalCode: addr.postalCode || ''
+        });
+        // Reset region IDs so the cascading selects re-resolve from the names
+        setProvId(''); setCityId(''); setDistrictId('');
+        setCities([]); setDistricts([]); setVillages([]);
+        setAutofillTarget({ province: addr.province, city: addr.city, district: addr.district });
+        setSelectedAddressId(addr.id);
+    };
+
+    // Fallback: fill the form from the user's own profile columns
+    const applyProfile = () => {
+        if (!currentUser) return;
+        setFormData({
+            name: currentUser.name || '',
+            email: currentUser.email || '',
+            phone: currentUser.phone || '',
+            streetAddress: currentUser.streetAddress || '',
+            rtRw: currentUser.rtRw || '',
+            province: currentUser.province || '',
+            city: currentUser.city || '',
+            district: currentUser.district || '',
+            village: currentUser.village || '',
+            postalCode: currentUser.postalCode || ''
+        });
+        setAutofillTarget({ province: currentUser.province, city: currentUser.city, district: currentUser.district });
+    };
+
+    // Load saved addresses on mount; auto-fill the default one (else profile)
     useEffect(() => {
-        if (currentUser) {
-            setFormData({
-                name: currentUser.name || '',
-                email: currentUser.email || '',
-                phone: currentUser.phone || '',
-                streetAddress: currentUser.streetAddress || '',
-                rtRw: currentUser.rtRw || '',
-                province: currentUser.province || '',
-                city: currentUser.city || '',
-                district: currentUser.district || '',
-                village: currentUser.village || '',
-                postalCode: currentUser.postalCode || ''
-            });
-        }
+        if (!currentUser) return;
+        let cancelled = false;
+        fetchMyAddresses().then(list => {
+            if (cancelled) return;
+            setSavedAddresses(list);
+            const def = list.find(a => a.isDefault) || list[0];
+            if (def) applyAddress(def);
+            else applyProfile();
+        });
+        return () => { cancelled = true; };
     }, [currentUser]);
 
-    // 1. Fetch Provinces on mount
+    // Fetch provinces once on mount
     useEffect(() => {
         fetch('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json')
             .then(res => res.json())
-            .then(data => {
-                setProvinces(data);
-                // Try autofill mapping for province
-                if (currentUser?.province) {
-                    const match = data.find(p => p.name.toLowerCase() === currentUser.province.toLowerCase());
-                    if (match) setProvId(match.id);
-                }
-            })
+            .then(setProvinces)
             .catch(err => console.error('Gagal memuat provinsi:', err));
-    }, [currentUser]);
+    }, []);
 
-    // 2. Fetch Cities when province changes
+    // Resolve province ID from the autofill target name
+    useEffect(() => {
+        if (!autofillTarget?.province || provinces.length === 0) return;
+        const match = provinces.find(p => p.name.toLowerCase() === autofillTarget.province.toLowerCase());
+        if (match) setProvId(match.id);
+    }, [autofillTarget, provinces]);
+
+    // Fetch cities when province changes
     useEffect(() => {
         if (!provId) {
             setCities([]);
@@ -85,18 +126,18 @@ export default function CheckoutPage() {
         }
         fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${provId}.json`)
             .then(res => res.json())
-            .then(data => {
-                setCities(data);
-                // Try autofill mapping for city
-                if (currentUser?.city) {
-                    const match = data.find(c => c.name.toLowerCase() === currentUser.city.toLowerCase());
-                    if (match) setCityId(match.id);
-                }
-            })
+            .then(setCities)
             .catch(err => console.error('Gagal memuat kabupaten/kota:', err));
-    }, [provId, currentUser]);
+    }, [provId]);
 
-    // 3. Fetch Districts when city changes
+    // Resolve city ID from the autofill target name
+    useEffect(() => {
+        if (!autofillTarget?.city || cities.length === 0) return;
+        const match = cities.find(c => c.name.toLowerCase() === autofillTarget.city.toLowerCase());
+        if (match) setCityId(match.id);
+    }, [autofillTarget, cities]);
+
+    // Fetch districts when city changes
     useEffect(() => {
         if (!cityId) {
             setDistricts([]);
@@ -104,18 +145,18 @@ export default function CheckoutPage() {
         }
         fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${cityId}.json`)
             .then(res => res.json())
-            .then(data => {
-                setDistricts(data);
-                // Try autofill mapping for district
-                if (currentUser?.district) {
-                    const match = data.find(d => d.name.toLowerCase() === currentUser.district.toLowerCase());
-                    if (match) setDistrictId(match.id);
-                }
-            })
+            .then(setDistricts)
             .catch(err => console.error('Gagal memuat kecamatan:', err));
-    }, [cityId, currentUser]);
+    }, [cityId]);
 
-    // 4. Fetch Villages when district changes
+    // Resolve district ID from the autofill target name
+    useEffect(() => {
+        if (!autofillTarget?.district || districts.length === 0) return;
+        const match = districts.find(d => d.name.toLowerCase() === autofillTarget.district.toLowerCase());
+        if (match) setDistrictId(match.id);
+    }, [autofillTarget, districts]);
+
+    // Fetch villages when district changes
     useEffect(() => {
         if (!districtId) {
             setVillages([]);
@@ -123,9 +164,7 @@ export default function CheckoutPage() {
         }
         fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${districtId}.json`)
             .then(res => res.json())
-            .then(data => {
-                setVillages(data);
-            })
+            .then(setVillages)
             .catch(err => console.error('Gagal memuat kelurahan/desa:', err));
     }, [districtId]);
 
@@ -142,6 +181,8 @@ export default function CheckoutPage() {
 
     // Dropdown Handlers — receive (id, name) directly from SearchableSelect
     const handleProvinceChange = (id, name) => {
+        setAutofillTarget(null);
+        setSelectedAddressId(null);
         setProvId(id);
         setFormData(prev => ({
             ...prev,
@@ -157,6 +198,8 @@ export default function CheckoutPage() {
     };
 
     const handleCityChange = (id, name) => {
+        setAutofillTarget(null);
+        setSelectedAddressId(null);
         setCityId(id);
         setFormData(prev => ({
             ...prev,
@@ -169,6 +212,8 @@ export default function CheckoutPage() {
     };
 
     const handleDistrictChange = (id, name) => {
+        setAutofillTarget(null);
+        setSelectedAddressId(null);
         setDistrictId(id);
         setFormData(prev => ({
             ...prev,
@@ -182,6 +227,38 @@ export default function CheckoutPage() {
             ...prev,
             village: id ? name : ''
         }));
+    };
+
+    // Save the currently-entered form as a new entry in the address book
+    const handleSaveAddress = async () => {
+        const { name, phone, streetAddress, rtRw, province, city, district, village, postalCode } = formData;
+        if (!name || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
+            alert('Lengkapi seluruh detail alamat terlebih dahulu sebelum menyimpan.');
+            return;
+        }
+        setSavingAddress(true);
+        try {
+            const created = await createAddress({
+                label: 'Rumah',
+                recipientName: name,
+                phone,
+                streetAddress,
+                rtRw,
+                province,
+                city,
+                district,
+                village,
+                postalCode,
+                isDefault: savedAddresses.length === 0
+            });
+            setSavedAddresses(prev => [...prev, created]);
+            setSelectedAddressId(created.id);
+            alert('Alamat berhasil disimpan ke buku alamat.');
+        } catch (err) {
+            alert(err.message || 'Gagal menyimpan alamat.');
+        } finally {
+            setSavingAddress(false);
+        }
     };
 
     const handleProceed = (e) => {
@@ -248,6 +325,47 @@ export default function CheckoutPage() {
 
                             <div className="checkout-form-container">
                                 <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Detail Pengiriman Resmi</h3>
+
+                                {/* Saved address picker */}
+                                {currentUser && savedAddresses.length > 0 && (
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pilih dari alamat tersimpan:</p>
+                                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                            {savedAddresses.map(addr => {
+                                                const active = selectedAddressId === addr.id;
+                                                return (
+                                                    <button
+                                                        key={addr.id}
+                                                        type="button"
+                                                        onClick={() => applyAddress(addr)}
+                                                        style={{
+                                                            textAlign: 'left',
+                                                            flex: '1 1 240px',
+                                                            minWidth: '240px',
+                                                            padding: '1rem 1.2rem',
+                                                            borderRadius: '0.8rem',
+                                                            border: `1px solid ${active ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}`,
+                                                            background: active ? 'rgba(255,107,53,0.08)' : 'rgba(255,255,255,0.02)',
+                                                            color: 'var(--text-main)',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.15s'
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{addr.label}</span>
+                                                            {addr.isDefault && <span style={{ fontSize: '0.65rem', color: 'var(--primary)' }}>★ Utama</span>}
+                                                        </div>
+                                                        <p style={{ fontWeight: '600', fontSize: '0.9rem', margin: '0 0 0.2rem' }}>{addr.recipientName} · {addr.phone}</p>
+                                                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                                                            {addr.streetAddress}, Kel. {addr.village}, {addr.city}, {addr.province} {addr.postalCode}
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <form onSubmit={handleProceed} className="grid-form-2col">
                                     <div style={{ gridColumn: '1 / -1' }}>
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nama Penerima</label>
@@ -335,6 +453,28 @@ export default function CheckoutPage() {
                                         <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nama Jalan, No. Rumah, Blok</label>
                                         <textarea name="streetAddress" className="search-input" style={{ width: '100%', minHeight: '80px', resize: 'none' }} placeholder="Contoh: Jl. Sudirman No. 12, Komplek Duta Mas Blok A1" value={formData.streetAddress} onChange={handleInputChange} required></textarea>
                                     </div>
+
+                                    {/* Save current form into the address book */}
+                                    {currentUser && (
+                                        <div style={{ gridColumn: '1 / -1' }}>
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveAddress}
+                                                disabled={savingAddress}
+                                                style={{
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.15)',
+                                                    color: 'var(--text-main)',
+                                                    padding: '0.8rem 1.5rem',
+                                                    borderRadius: '0.6rem',
+                                                    cursor: savingAddress ? 'default' : 'pointer',
+                                                    fontSize: '0.85rem'
+                                                }}
+                                            >
+                                                {savingAddress ? 'Menyimpan...' : '💾 Simpan alamat ini ke buku alamat'}
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <button type="submit" id="submit-shipment" style={{ display: 'none' }}></button>
                                 </form>

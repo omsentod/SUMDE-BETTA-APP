@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { syncUserProfileFromAddress } from '@/lib/address';
 
 export async function GET(request) {
   try {
@@ -29,6 +30,10 @@ export async function POST(request) {
     const address = await prisma.address.create({
       data: { userId, label: label || 'Rumah', recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault: isDefault || count === 0 }
     });
+    // Mirror the default address into the User profile columns
+    if (address.isDefault) {
+      await syncUserProfileFromAddress(userId, address);
+    }
     return NextResponse.json(address, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { syncUserProfileFromAddress } from '@/lib/address';
 
 export async function PUT(request, { params }) {
   try {
@@ -21,6 +22,10 @@ export async function PUT(request, { params }) {
     if (postalCode !== undefined) fields.postalCode = postalCode;
     if (isDefault !== undefined) fields.isDefault = isDefault;
     const updated = await prisma.address.update({ where: { id }, data: fields });
+    // Keep the User profile in sync with the default address
+    if (updated.isDefault) {
+      await syncUserProfileFromAddress(updated.userId, updated);
+    }
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -34,7 +39,10 @@ export async function DELETE(request, { params }) {
     await prisma.address.delete({ where: { id } });
     if (addr?.isDefault) {
       const next = await prisma.address.findFirst({ where: { userId: addr.userId }, orderBy: { createdAt: 'asc' } });
-      if (next) await prisma.address.update({ where: { id: next.id }, data: { isDefault: true } });
+      if (next) {
+        await prisma.address.update({ where: { id: next.id }, data: { isDefault: true } });
+        await syncUserProfileFromAddress(next.userId, next);
+      }
     }
     return NextResponse.json({ message: 'Alamat berhasil dihapus.' });
   } catch (error) {

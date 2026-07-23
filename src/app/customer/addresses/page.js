@@ -36,6 +36,7 @@ export default function AddressesPage() {
     const [provId, setProvId] = useState('');
     const [cityId, setCityId] = useState('');
     const [districtId, setDistrictId] = useState('');
+    const [autofillTarget, setAutofillTarget] = useState(null); // { province, city, district } names to resolve into dropdown IDs when editing
     const [selectAlert, setSelectAlert] = useState({ field: '', message: '' });
 
     useEffect(() => {
@@ -70,6 +71,25 @@ export default function AddressesPage() {
             .then(r => r.json()).then(setVillages).catch(() => {});
     }, [districtId]);
 
+    // Resolve dropdown IDs from the saved address names (used when editing)
+    useEffect(() => {
+        if (!autofillTarget?.province || provinces.length === 0) return;
+        const m = provinces.find(p => p.name.toLowerCase() === autofillTarget.province.toLowerCase());
+        if (m) setProvId(m.id);
+    }, [autofillTarget, provinces]);
+
+    useEffect(() => {
+        if (!autofillTarget?.city || cities.length === 0) return;
+        const m = cities.find(c => c.name.toLowerCase() === autofillTarget.city.toLowerCase());
+        if (m) setCityId(m.id);
+    }, [autofillTarget, cities]);
+
+    useEffect(() => {
+        if (!autofillTarget?.district || districts.length === 0) return;
+        const m = districts.find(d => d.name.toLowerCase() === autofillTarget.district.toLowerCase());
+        if (m) setDistrictId(m.id);
+    }, [autofillTarget, districts]);
+
     const triggerAlert = (field, message) => {
         setSelectAlert({ field, message });
         setTimeout(() => setSelectAlert(prev => prev.field === field ? { field: '', message: '' } : prev), 3000);
@@ -79,6 +99,7 @@ export default function AddressesPage() {
         setForm(emptyForm);
         setProvId(''); setCityId(''); setDistrictId('');
         setCities([]); setDistricts([]); setVillages([]);
+        setAutofillTarget(null);
         setEditingId(null); setError(''); setShowForm(true);
     };
 
@@ -86,20 +107,24 @@ export default function AddressesPage() {
         setForm({ label: addr.label, recipientName: addr.recipientName, phone: addr.phone, streetAddress: addr.streetAddress, rtRw: addr.rtRw, province: addr.province, city: addr.city, district: addr.district, village: addr.village, postalCode: addr.postalCode, isDefault: addr.isDefault });
         setProvId(''); setCityId(''); setDistrictId('');
         setCities([]); setDistricts([]); setVillages([]);
+        setAutofillTarget({ province: addr.province, city: addr.city, district: addr.district });
         setEditingId(addr.id); setError(''); setShowForm(true);
     };
 
     const handleProvince = (id, name) => {
+        setAutofillTarget(null);
         setProvId(id); setCityId(''); setDistrictId('');
         setCities([]); setDistricts([]); setVillages([]);
         setForm(p => ({ ...p, province: name, city: '', district: '', village: '' }));
     };
     const handleCity = (id, name) => {
+        setAutofillTarget(null);
         setCityId(id); setDistrictId('');
         setDistricts([]); setVillages([]);
         setForm(p => ({ ...p, city: name, district: '', village: '' }));
     };
     const handleDistrict = (id, name) => {
+        setAutofillTarget(null);
         setDistrictId(id); setVillages([]);
         setForm(p => ({ ...p, district: name, village: '' }));
     };
