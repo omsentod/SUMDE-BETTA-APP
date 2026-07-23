@@ -289,7 +289,7 @@ export default function AdminDashboard() {
     const loadUsers = async () => {
         setUsersLoading(true);
         try {
-            const res = await fetch('/api/users');
+            const res = await fetch(`/api/users?requesterId=${currentUser.id}`);
             if (res.ok) setUsers(await res.json());
         } catch (err) {
             console.error(err);
@@ -461,7 +461,7 @@ export default function AdminDashboard() {
             const res = await fetch('/api/users', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: user.id, role: newRole })
+                body: JSON.stringify({ id: user.id, requesterId: currentUser.id, role: newRole })
             });
             if (res.ok) {
                 setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u));
@@ -480,7 +480,7 @@ export default function AdminDashboard() {
         if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
 
         try {
-            const res = await fetch(`/api/users?id=${id}`, {
+            const res = await fetch(`/api/users?id=${id}&requesterId=${currentUser.id}`, {
                 method: 'DELETE'
             });
             if (res.ok) {

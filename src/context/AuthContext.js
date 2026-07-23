@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
         const response = await fetch('/api/users', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: currentUser.id, ...profileData })
+            body: JSON.stringify({ id: currentUser.id, requesterId: currentUser.id, ...profileData })
         });
 
         const data = await response.json();
