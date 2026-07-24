@@ -157,19 +157,41 @@ export default function TentangPage() {
                 <div className="container">
                     <div className="trustGrid">
                         <div className="trustCard">
-                            <span className="trustIcon">📦</span>
+                            <span className="trustIcon">
+                                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                            </span>
                             <div className="statNumber">500+</div>
                             <h3 style={{ margin: '1rem 0' }}>Pengiriman Aman</h3>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Teknologi pengemasan oksigen murni dengan tingkat keberhasilan hidup 100% ke seluruh Indonesia.</p>
                         </div>
                         <div className="trustCard">
-                            <span className="trustIcon">🏆</span>
+                            <span className="trustIcon">
+                                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                                    <path d="M4 22h16"></path>
+                                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+                                </svg>
+                            </span>
                             <div className="statNumber">25+</div>
                             <h3 style={{ margin: '1rem 0' }}>Juara Kontes</h3>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Indukan pilihan yang telah memenangkan berbagai kompetisi IBC di tingkat nasional maupun internasional.</p>
                         </div>
                         <div className="trustCard">
-                            <span className="trustIcon">🤝</span>
+                            <span className="trustIcon">
+                                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </span>
                             <div className="statNumber">1k+</div>
                             <h3 style={{ margin: '1rem 0' }}>Kolektor Loyal</h3>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Komunitas kolektor eksklusif yang mempercayakan akuisisi spesimen mereka kepada keahlian kami.</p>
@@ -238,8 +260,18 @@ export default function TentangPage() {
                             ))}
                         </div>
 
-                        <button className="farmNavBtn farmNavBtnPrev" onClick={prevFarmSlide}>←</button>
-                        <button className="farmNavBtn farmNavBtnNext" onClick={nextFarmSlide}>→</button>
+                        <button className="farmNavBtn farmNavBtnPrev" onClick={prevFarmSlide} aria-label="Slide sebelumnya">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </button>
+                        <button className="farmNavBtn farmNavBtnNext" onClick={nextFarmSlide} aria-label="Slide berikutnya">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
 
                         <div className="farmCarouselIndicators">
                             {FARM_DOCS.map((_, index) => (

@@ -4,9 +4,10 @@ import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import styles from './adminDashboard.module.css';
 
 // Custom Styled and Manageable Dropdown Component (CRUD)
-function ManageableSelect({ label, value, onChange, options, setOptions, defaultOptions }) {
+function ManageableSelect({ label, value, onChange, options, setOptions }) {
     const [isOpen, setIsOpen] = useState(false);
     const [newValue, setNewValue] = useState('');
     const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -26,7 +27,6 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
     const handleAdd = () => {
         const trimmed = newValue.trim();
         if (!trimmed) return;
-        // Case-insensitive check
         if (options.some(o => o.toLowerCase() === trimmed.toLowerCase())) {
             alert('Opsi ini sudah ada.');
             return;
@@ -38,33 +38,29 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
 
     const handleDelete = (opt, e) => {
         e.stopPropagation();
-        if (confirm(`Apakah Anda yakin ingin menghapus opsi "${opt}" dari daftar?`)) {
-            if (opt === value) {
-                const remaining = options.filter(o => o !== opt);
-                if (remaining.length > 0) {
-                    onChange(remaining[0]);
-                } else {
-                    onChange('');
-                }
-            }
-            setOptions(options.filter(o => o !== opt));
+        if (opt === value) {
+            const remaining = options.filter(o => o !== opt);
+            onChange(remaining.length > 0 ? remaining[0] : '');
         }
+        setOptions(options.filter(o => o !== opt));
     };
 
     return (
         <div ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{label}</label>
+            <label className={styles.formLabel}>{label}</label>
             <div 
                 onClick={() => setIsOpen(!isOpen)}
-                className={`manageable-select-trigger ${isOpen ? 'open' : ''}`}
+                className={styles.selectTrigger}
             >
                 <span>{value || '-- Pilih --'}</span>
-                <span style={{ fontSize: '0.65rem', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none', opacity: 0.7 }}>▼</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none', opacity: 0.7 }}>
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
             </div>
 
             {isOpen && (
-                <div className="manageable-select-dropdown">
-                    <div className="manageable-select-header">
+                <div className={styles.selectDropdown}>
+                    <div className={styles.selectHeader}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pilih Opsi</span>
                         <button
                             type="button"
@@ -72,13 +68,17 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                                 e.stopPropagation();
                                 setIsDeleteMode(!isDeleteMode);
                             }}
-                            className={`manageable-select-edit-btn ${isDeleteMode ? 'active' : ''}`}
+                            className={styles.selectEditBtn}
                         >
-                            {isDeleteMode ? 'Selesai Edit' : 'Edit List ⚙️'}
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            {isDeleteMode ? 'Selesai Edit' : 'Edit List'}
                         </button>
                     </div>
 
-                    <div className="manageable-select-list">
+                    <div className={styles.selectList}>
                         {options.map((opt) => {
                             const isSelected = opt === value;
                             return (
@@ -89,7 +89,7 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                                         onChange(opt);
                                         setIsOpen(false);
                                     }}
-                                    className={`manageable-select-item ${isSelected ? 'selected' : ''}`}
+                                    className={`${styles.selectItem} ${isSelected ? styles.selectItemSelected : ''}`}
                                     style={{ cursor: isDeleteMode ? 'default' : 'pointer' }}
                                 >
                                     <span>{opt}</span>
@@ -100,30 +100,31 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
-                                                color: '#ff4d4f',
+                                                color: '#ef4444',
                                                 cursor: 'pointer',
-                                                fontSize: '0.85rem',
-                                                padding: '0.2rem 0.5rem',
-                                                opacity: 0.8,
-                                                transition: 'opacity 0.2s, transform 0.2s'
+                                                padding: '0.2rem',
+                                                display: 'flex',
+                                                alignItems: 'center'
                                             }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; e.currentTarget.style.transform = 'scale(1.1)'; }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.8; e.currentTarget.style.transform = 'scale(1)'; }}
                                         >
-                                            🗑️
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
                                         </button>
                                     )}
                                 </div>
                             );
                         })}
                     </div>
-                    <div className="manageable-select-footer">
+                    <div className={styles.selectFooter}>
                         <input
                             type="text"
                             placeholder="Tambah opsi baru..."
                             value={newValue}
                             onChange={(e) => setNewValue(e.target.value)}
-                            className="manageable-select-input"
+                            className={styles.formInput}
+                            style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     e.preventDefault();
@@ -134,19 +135,8 @@ function ManageableSelect({ label, value, onChange, options, setOptions, default
                         <button
                             type="button"
                             onClick={handleAdd}
-                            style={{
-                                background: 'var(--primary)',
-                                border: 'none',
-                                borderRadius: '6px',
-                                color: 'black',
-                                padding: '0.45rem 0.8rem',
-                                fontSize: '0.85rem',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                transition: 'opacity 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.target.style.opacity = 0.9}
-                            onMouseLeave={(e) => e.target.style.opacity = 1}
+                            className="btn btn-primary"
+                            style={{ padding: '0.45rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem' }}
                         >
                             +
                         </button>
@@ -201,6 +191,27 @@ export default function AdminDashboard() {
     const [ordersLoading, setOrdersLoading] = useState(false);
     const [eventsLoading, setEventsLoading] = useState(false);
 
+    // Search & Filtering states
+    const [productSearch, setProductSearch] = useState('');
+    const [productCategoryFilter, setProductCategoryFilter] = useState('All');
+    const [productStockFilter, setProductStockFilter] = useState('All');
+
+    const [userSearch, setUserSearch] = useState('');
+    const [userRoleFilter, setUserRoleFilter] = useState('All');
+
+    const [orderSearch, setOrderSearch] = useState('');
+    const [orderStatusFilter, setOrderStatusFilter] = useState('All');
+
+    const [eventSearch, setEventSearch] = useState('');
+
+    // Confirmation Modal state
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        desc: '',
+        onConfirm: null
+    });
+
     // Modal state for Event CRUD
     const [isEventAddModalOpen, setIsEventAddModalOpen] = useState(false);
     const [isEventEditModalOpen, setIsEventEditModalOpen] = useState(false);
@@ -224,7 +235,7 @@ export default function AdminDashboard() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentEditProduct, setCurrentEditProduct] = useState(null);
 
-    // Form inputs for CRUD
+    // Form inputs for Product CRUD
     const [productForm, setProductForm] = useState({
         name: '',
         price: '',
@@ -242,40 +253,8 @@ export default function AdminDashboard() {
         sizes: []
     });
 
-
-
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
-
-    const handleFileUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        setUploadError('');
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || 'Gagal mengunggah gambar.');
-            }
-
-            setProductForm(prev => ({ ...prev, image: data.url }));
-        } catch (err) {
-            console.error(err);
-            setUploadError(err.message);
-        } finally {
-            setIsUploading(false);
-        }
-    };
 
     // Protect Route
     useEffect(() => {
@@ -286,7 +265,7 @@ export default function AdminDashboard() {
         }
     }, [currentUser, authLoading, router]);
 
-    // Load users & orders
+    // Load users, orders, & events initially for KPI calculation
     const loadUsers = async () => {
         setUsersLoading(true);
         try {
@@ -311,7 +290,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // Load events
     const loadEvents = async () => {
         setEventsLoading(true);
         try {
@@ -326,15 +304,71 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         if (currentUser && currentUser.role === 'admin') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            if (activeTab === 'users') loadUsers();
-            if (activeTab === 'transactions') loadOrders();
-            if (activeTab === 'events') loadEvents();
+            loadUsers();
+            loadOrders();
+            loadEvents();
         }
-    }, [activeTab, currentUser]);
+    }, [currentUser]);
 
-    // Handle event file upload
-    const handleEventFileUpload = async (e) => {
+    // KPI Metrics calculation
+    const kpiMetrics = useMemo(() => {
+        const totalRevenue = orders
+            .filter(o => o.status === 'PAID')
+            .reduce((sum, o) => sum + (o.total || 0), 0);
+
+        const pendingOrdersCount = orders.filter(o => o.status === 'PENDING').length;
+        const lowStockCount = products.filter(p => p.quantity <= 2).length;
+
+        return {
+            totalRevenue,
+            totalOrders: orders.length,
+            pendingOrdersCount,
+            totalProducts: products.length,
+            lowStockCount,
+            totalUsers: users.length
+        };
+    }, [orders, products, users]);
+
+    // Filtered lists
+    const filteredProducts = useMemo(() => {
+        return products.filter(p => {
+            const matchSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                                (p.form && p.form.toLowerCase().includes(productSearch.toLowerCase()));
+            const matchCategory = productCategoryFilter === 'All' || p.form === productCategoryFilter;
+            let matchStock = true;
+            if (productStockFilter === 'Ready') matchStock = p.quantity > 0;
+            if (productStockFilter === 'Sold') matchStock = p.quantity === 0;
+            if (productStockFilter === 'LowStock') matchStock = p.quantity > 0 && p.quantity <= 2;
+
+            return matchSearch && matchCategory && matchStock;
+        });
+    }, [products, productSearch, productCategoryFilter, productStockFilter]);
+
+    const filteredUsers = useMemo(() => {
+        return users.filter(u => {
+            const matchSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+                                u.email.toLowerCase().includes(userSearch.toLowerCase());
+            const matchRole = userRoleFilter === 'All' || u.role === userRoleFilter;
+            return matchSearch && matchRole;
+        });
+    }, [users, userSearch, userRoleFilter]);
+
+    const filteredOrders = useMemo(() => {
+        return orders.filter(o => {
+            const matchSearch = o.id.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                                (o.name && o.name.toLowerCase().includes(orderSearch.toLowerCase())) ||
+                                (o.email && o.email.toLowerCase().includes(orderSearch.toLowerCase()));
+            const matchStatus = orderStatusFilter === 'All' || o.status === orderStatusFilter;
+            return matchSearch && matchStatus;
+        });
+    }, [orders, orderSearch, orderStatusFilter]);
+
+    const filteredEvents = useMemo(() => {
+        return events.filter(e => e.title.toLowerCase().includes(eventSearch.toLowerCase()));
+    }, [events, eventSearch]);
+
+    // File Upload Handler
+    const handleFileUpload = async (e, setTargetForm) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -351,11 +385,9 @@ export default function AdminDashboard() {
             });
 
             const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || 'Gagal mengunggah gambar.');
-            }
+            if (!res.ok) throw new Error(data.error || 'Gagal mengunggah gambar.');
 
-            setEventForm(prev => ({ ...prev, image: data.url }));
+            setTargetForm(prev => ({ ...prev, image: data.url }));
         } catch (err) {
             console.error(err);
             setUploadError(err.message);
@@ -364,142 +396,13 @@ export default function AdminDashboard() {
         }
     };
 
-    // Handle event submit (Create)
-    const handleAddEvent = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await fetch('/api/events', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(eventForm)
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Gagal menambahkan event.');
-            setEvents(prev => [data, ...prev]);
-            setIsEventAddModalOpen(false);
-            resetEventForm();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Handle event update (Edit)
-    const handleEditEventSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await fetch('/api/events', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: currentEditEvent.id, ...eventForm })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Gagal memperbarui event.');
-            setEvents(prev => prev.map(ev => ev.id === currentEditEvent.id ? data : ev));
-            setIsEventEditModalOpen(false);
-            setCurrentEditEvent(null);
-            resetEventForm();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Handle event delete
-    const handleDeleteEvent = async (id) => {
-        if (!confirm('Apakah Anda yakin ingin menghapus event ini?')) return;
-        try {
-            const res = await fetch(`/api/events?id=${id}`, {
-                method: 'DELETE'
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Gagal menghapus event.');
-            setEvents(prev => prev.filter(ev => ev.id !== id));
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Open Edit Event Modal
-    const openEditEventModal = (event) => {
-        setCurrentEditEvent(event);
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            const pad = (num) => String(num).padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        };
-        setEventForm({
-            title: event.title,
-            subtitle: event.subtitle || '',
-            description: event.description,
-            image: event.image,
-            targetUrl: event.targetUrl,
-            buttonText: event.buttonText || 'Lihat Event',
-            isActive: event.isActive,
-            startDate: formatDate(event.startDate),
-            endDate: formatDate(event.endDate)
-        });
-        setIsEventEditModalOpen(true);
-    };
-
-    // Reset Event Form
-    const resetEventForm = () => {
-        setEventForm({
-            title: '',
-            subtitle: '',
-            description: '',
-            image: '/betta-2.png',
-            targetUrl: '',
-            buttonText: 'Lihat Event',
-            isActive: true,
-            startDate: '',
-            endDate: ''
-        });
-    };
-
-    // Handle user toggle role
-    const handleToggleRole = async (user) => {
-        const newRole = user.role === 'admin' ? 'customer' : 'admin';
-        try {
-            const res = await fetch('/api/users', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: user.id, role: newRole })
-            });
-            if (res.ok) {
-                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u));
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    // Handle user delete
-    const handleDeleteUser = async (id) => {
-        if (id === currentUser.id) {
-            alert('Anda tidak bisa menghapus akun Anda sendiri.');
-            return;
-        }
-        if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
-
-        try {
-            const res = await fetch(`/api/users?id=${id}`, {
-                method: 'DELETE'
-            });
-            if (res.ok) {
-                setUsers(prev => prev.filter(u => u.id !== id));
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    // Handle product submit
+    // Product Submit
     const handleAddProduct = async (e) => {
         e.preventDefault();
         try {
             await addProduct(productForm);
             setIsAddModalOpen(false);
-            resetForm();
+            resetProductForm();
         } catch (err) {
             alert(err.message);
         }
@@ -511,22 +414,28 @@ export default function AdminDashboard() {
             await updateProduct(currentEditProduct.id, productForm);
             setIsEditModalOpen(false);
             setCurrentEditProduct(null);
-            resetForm();
+            resetProductForm();
         } catch (err) {
             alert(err.message);
         }
     };
 
-    const handleDeleteProduct = async (id) => {
-        if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
-        try {
-            await deleteProduct(id);
-        } catch (err) {
-            alert(err.message);
-        }
+    const confirmDeleteProduct = (product) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Hapus Produk',
+            desc: `Apakah Anda yakin ingin menghapus produk "${product.name}"? Tindakan ini tidak dapat dibatalkan.`,
+            onConfirm: async () => {
+                try {
+                    await deleteProduct(product.id);
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+        });
     };
 
-    const openEditModal = (product) => {
+    const openEditProductModal = (product) => {
         setCurrentEditProduct(product);
         let parsedSizes = [];
         try {
@@ -555,7 +464,7 @@ export default function AdminDashboard() {
         setIsEditModalOpen(true);
     };
 
-    const resetForm = () => {
+    const resetProductForm = () => {
         setProductForm({
             name: '',
             price: '',
@@ -574,6 +483,135 @@ export default function AdminDashboard() {
         });
     };
 
+    // Event Submit
+    const handleAddEvent = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventForm)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Gagal menambahkan event.');
+            setEvents(prev => [data, ...prev]);
+            setIsEventAddModalOpen(false);
+            resetEventForm();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleEditEventSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/events', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: currentEditEvent.id, ...eventForm })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Gagal memperbarui event.');
+            setEvents(prev => prev.map(ev => ev.id === currentEditEvent.id ? data : ev));
+            setIsEventEditModalOpen(false);
+            setCurrentEditEvent(null);
+            resetEventForm();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const confirmDeleteEvent = (event) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Hapus Event Banner',
+            desc: `Apakah Anda yakin ingin menghapus event "${event.title}"?`,
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/events?id=${event.id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Gagal menghapus event.');
+                    setEvents(prev => prev.filter(ev => ev.id !== event.id));
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+        });
+    };
+
+    const openEditEventModal = (event) => {
+        setCurrentEditEvent(event);
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const pad = (num) => String(num).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
+        setEventForm({
+            title: event.title,
+            subtitle: event.subtitle || '',
+            description: event.description,
+            image: event.image,
+            targetUrl: event.targetUrl,
+            buttonText: event.buttonText || 'Lihat Event',
+            isActive: event.isActive,
+            startDate: formatDate(event.startDate),
+            endDate: formatDate(event.endDate)
+        });
+        setIsEventEditModalOpen(true);
+    };
+
+    const resetEventForm = () => {
+        setEventForm({
+            title: '',
+            subtitle: '',
+            description: '',
+            image: '/betta-2.png',
+            targetUrl: '',
+            buttonText: 'Lihat Event',
+            isActive: true,
+            startDate: '',
+            endDate: ''
+        });
+    };
+
+    // User Operations
+    const handleToggleRole = async (user) => {
+        const newRole = user.role === 'admin' ? 'customer' : 'admin';
+        try {
+            const res = await fetch('/api/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: user.id, role: newRole })
+            });
+            if (res.ok) {
+                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const confirmDeleteUser = (user) => {
+        if (user.id === currentUser.id) {
+            alert('Anda tidak bisa menghapus akun Anda sendiri.');
+            return;
+        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Hapus User',
+            desc: `Apakah Anda yakin ingin menghapus akun "${user.name}" (${user.email})?`,
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/users?id=${user.id}`, { method: 'DELETE' });
+                    if (res.ok) setUsers(prev => prev.filter(u => u.id !== user.id));
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        });
+    };
+
     const formattedCurrency = (value) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
     };
@@ -587,109 +625,271 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="pageContainer" style={{ paddingTop: '100px', minHeight: '100vh' }}>
-            <div className="container" style={{ paddingBottom: '5rem' }}>
-                {/* Header Dashboard */}
-                <div className="dashboard-header">
+        <div className={styles.dashboardWrapper}>
+            <div className="container">
+                {/* Header */}
+                <div className={styles.dashboardHeader}>
                     <div>
-                        <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
-                            Otoritas Tertinggi
-                        </span>
-                        <h1>
-                            Admin Dashboard
-                        </h1>
+                        <span className={styles.headerBadge}>Otoritas Tertinggi</span>
+                        <h1 className={styles.headerTitle}>Admin Dashboard</h1>
                     </div>
-                    <div className="dashboard-header-buttons">
-                        <button
-                            onClick={() => {
-                                setIsAddModalOpen(true);
-                                resetForm();
-                            }}
-                            className="btn btn-primary"
-                            style={{ display: activeTab === 'products' ? 'block' : 'none' }}
-                        >
-                            + Tambah Produk
-                        </button>
-                        <button
-                            onClick={() => {
-                                setIsEventAddModalOpen(true);
-                                resetEventForm();
-                            }}
-                            className="btn btn-primary"
-                            style={{ display: activeTab === 'events' ? 'block' : 'none' }}
-                        >
-                            + Tambah Event
-                        </button>
+                    <div className={styles.headerButtons}>
+                        {activeTab === 'products' && (
+                            <button
+                                onClick={() => {
+                                    setIsAddModalOpen(true);
+                                    resetProductForm();
+                                }}
+                                className="btn btn-primary"
+                                style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
+                            >
+                                + Tambah Produk
+                            </button>
+                        )}
+                        {activeTab === 'events' && (
+                            <button
+                                onClick={() => {
+                                    setIsEventAddModalOpen(true);
+                                    resetEventForm();
+                                }}
+                                className="btn btn-primary"
+                                style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
+                            >
+                                + Tambah Event
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* KPI Metrics Cards Grid */}
+                <div className={styles.kpiGrid}>
+                    <div className={styles.kpiCard}>
+                        <div className={styles.kpiHeader}>
+                            <span className={styles.kpiTitle}>Total Omset</span>
+                            <div className={styles.kpiIconWrapper}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div className={styles.kpiValue}>{formattedCurrency(kpiMetrics.totalRevenue)}</div>
+                        <div className={styles.kpiSubtext}>Dari transaksi berstatus PAID</div>
+                    </div>
+
+                    <div className={styles.kpiCard}>
+                        <div className={styles.kpiHeader}>
+                            <span className={styles.kpiTitle}>Total Pesanan</span>
+                            <div className={styles.kpiIconWrapper}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div className={styles.kpiValue}>{kpiMetrics.totalOrders}</div>
+                        <div className={styles.kpiSubtext}>
+                            {kpiMetrics.pendingOrdersCount > 0 ? (
+                                <span style={{ color: '#F59E0B', fontWeight: '600' }}>
+                                    ⚠️ {kpiMetrics.pendingOrdersCount} Pesanan PENDING
+                                </span>
+                            ) : (
+                                <span>Semua transaksi diproses</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className={styles.kpiCard}>
+                        <div className={styles.kpiHeader}>
+                            <span className={styles.kpiTitle}>Katalog Produk</span>
+                            <div className={styles.kpiIconWrapper}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div className={styles.kpiValue}>{kpiMetrics.totalProducts}</div>
+                        <div className={styles.kpiSubtext}>
+                            {kpiMetrics.lowStockCount > 0 ? (
+                                <span style={{ color: '#EF4444', fontWeight: '600' }}>
+                                    {kpiMetrics.lowStockCount} Produk Stok Menipis/Habis
+                                </span>
+                            ) : (
+                                <span>Stok aman tersedia</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className={styles.kpiCard}>
+                        <div className={styles.kpiHeader}>
+                            <span className={styles.kpiTitle}>Total Pengguna</span>
+                            <div className={styles.kpiIconWrapper}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div className={styles.kpiValue}>{kpiMetrics.totalUsers}</div>
+                        <div className={styles.kpiSubtext}>Pelanggan & Admin terdaftar</div>
                     </div>
                 </div>
 
                 {/* Tab Navigator */}
-                <div className="dashboard-tabs">
+                <div className={styles.tabsContainer}>
                     {[
-                        { id: 'products', name: 'Kelola Produk' },
-                        { id: 'users', name: 'Kelola User' },
-                        { id: 'transactions', name: 'Daftar Transaksi' },
-                        { id: 'events', name: 'Kelola Event' }
+                        { 
+                            id: 'products', 
+                            name: 'Kelola Produk', 
+                            count: products.length,
+                            icon: (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>
+                            ) 
+                        },
+                        { 
+                            id: 'users', 
+                            name: 'Kelola User', 
+                            count: users.length,
+                            icon: (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            ) 
+                        },
+                        { 
+                            id: 'transactions', 
+                            name: 'Daftar Transaksi', 
+                            count: orders.length,
+                            icon: (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                            ) 
+                        },
+                        { 
+                            id: 'events', 
+                            name: 'Kelola Event', 
+                            count: events.length,
+                            icon: (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            ) 
+                        }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                                fontWeight: activeTab === tab.id ? '700' : '500',
-                                cursor: 'pointer',
-                                fontSize: '1.1rem',
-                                paddingBottom: '1rem',
-                                borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : 'none',
-                                marginBottom: '-1.1rem',
-                                transition: 'all 0.2s'
-                            }}
+                            className={`${styles.tabButton} ${activeTab === tab.id ? styles.tabActive : ''}`}
                         >
-                            {tab.name}
+                            {tab.icon}
+                            <span>{tab.name}</span>
+                            <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.5rem', borderRadius: '10px', background: activeTab === tab.id ? 'rgba(234,179,8,0.15)' : 'rgba(255,255,255,0.05)' }}>
+                                {tab.count}
+                            </span>
                         </button>
                     ))}
                 </div>
 
-                {/* Tab Contents: Kelola Produk */}
+                {/* Tab: Products */}
                 {activeTab === 'products' && (
                     <div>
+                        {/* Controls */}
+                        <div className={styles.controlBar}>
+                            <div className={styles.searchBox}>
+                                <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama produk atau jenis form..."
+                                    value={productSearch}
+                                    onChange={(e) => setProductSearch(e.target.value)}
+                                    className={styles.searchInput}
+                                />
+                            </div>
+
+                            <div className={styles.filterGroup}>
+                                <select
+                                    value={productCategoryFilter}
+                                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                                    className={styles.selectInput}
+                                >
+                                    <option value="All">Semua Kategori</option>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+
+                                <select
+                                    value={productStockFilter}
+                                    onChange={(e) => setProductStockFilter(e.target.value)}
+                                    className={styles.selectInput}
+                                >
+                                    <option value="All">Semua Status Stok</option>
+                                    <option value="Ready">Tersedia (Ready)</option>
+                                    <option value="LowStock">Stok Menipis (≤ 2)</option>
+                                    <option value="Sold">Terjual / Habis</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Table */}
                         {productsLoading ? (
                             <p style={{ color: 'var(--text-muted)' }}>Memuat produk...</p>
-                        ) : products.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>Belum ada produk terdaftar di database.</p>
+                        ) : filteredProducts.length === 0 ? (
+                            <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                Tidak ada produk yang sesuai dengan kriteria pencarian.
+                            </div>
                         ) : (
-                            <div style={{ overflowX: 'auto', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: 'var(--text-main)' }}>
+                            <div className={styles.tableCard}>
+                                <table className={styles.dataTable}>
                                     <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.01)' }}>
-                                            <th style={{ padding: '1.2rem' }}>Gambar</th>
-                                            <th style={{ padding: '1.2rem' }}>Nama</th>
-                                            <th style={{ padding: '1.2rem' }}>Kategori</th>
-                                            <th style={{ padding: '1.2rem' }}>Harga</th>
-                                            <th style={{ padding: '1.2rem' }}>Status</th>
-                                            <th style={{ padding: '1.2rem', textAlign: 'right' }}>Aksi</th>
+                                        <tr>
+                                            <th>Gambar</th>
+                                            <th>Nama Produk</th>
+                                            <th>Kategori & Ukuran</th>
+                                            <th>Harga</th>
+                                            <th>Status Stok</th>
+                                            <th style={{ textAlign: 'right' }}>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {products.map(product => (
-                                            <tr key={product.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }} className="table-row-hover">
-                                                <td style={{ padding: '1rem 1.2rem' }}>
-                                                    <div style={{ position: 'relative', width: '50px', height: '50px', borderRadius: '8px', overflow: 'hidden' }}>
+                                        {filteredProducts.map(product => (
+                                            <tr key={product.id} className={styles.tableRow}>
+                                                <td>
+                                                    <div className={styles.productThumb}>
                                                         <Image src={product.image} alt={product.name} fill style={{ objectFit: 'cover' }} />
                                                     </div>
                                                 </td>
-                                                <td style={{ padding: '1.2rem', fontWeight: '600' }}>{product.name}</td>
-                                                <td style={{ padding: '1.2rem' }}>
+                                                <td style={{ fontWeight: '600' }}>
+                                                    <div>{product.name}</div>
+                                                    {product.isPremium && (
+                                                        <span className={`${styles.badge} ${styles.badgeWarning}`} style={{ marginTop: '0.2rem', fontSize: '0.7rem' }}>
+                                                            ★ Premium
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
                                                     <div>{product.form} ({product.gender})</div>
                                                     {product.sizes && (() => {
                                                         try {
                                                             const parsed = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
                                                             if (Array.isArray(parsed) && parsed.length > 0) {
                                                                 return (
-                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                                                                        Sizes: {parsed.map(s => `${s.size} (stok:${s.quantity})`).join(', ')}
+                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                                                        Size: {parsed.map(s => `${s.size} (${s.quantity})`).join(', ')}
                                                                     </div>
                                                                 );
                                                             }
@@ -699,17 +899,41 @@ export default function AdminDashboard() {
                                                         return null;
                                                     })()}
                                                 </td>
-                                                <td style={{ padding: '1.2rem' }}>{formattedCurrency(product.price)}</td>
-                                                <td style={{ padding: '1.2rem' }}>
+                                                <td style={{ fontWeight: '600' }}>{formattedCurrency(product.price)}</td>
+                                                <td>
                                                     {product.quantity > 0 ? (
-                                                        <span style={{ color: '#10B981', fontSize: '0.85rem', padding: '0.2rem 0.6rem', border: '1px solid #10B981', borderRadius: '4px' }}>Ready (Stok: {product.quantity})</span>
+                                                        <span className={`${styles.badge} ${product.quantity <= 2 ? styles.badgeWarning : styles.badgeSuccess}`}>
+                                                            Stok: {product.quantity}
+                                                        </span>
                                                     ) : (
-                                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '0.2rem 0.6rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}>Terjual</span>
+                                                        <span className={`${styles.badge} ${styles.badgeMuted}`}>
+                                                            Habis
+                                                        </span>
                                                     )}
                                                 </td>
-                                                <td style={{ padding: '1.2rem', textAlign: 'right' }}>
-                                                    <button onClick={() => openEditModal(product)} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', marginRight: '0.5rem', borderRadius: '6px' }}>Edit</button>
-                                                    <button onClick={() => handleDeleteProduct(product.id)} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', color: 'var(--primary)', borderColor: 'var(--primary)', borderRadius: '6px' }}>Hapus</button>
+                                                <td>
+                                                    <div className={styles.actionGroup}>
+                                                        <button 
+                                                            onClick={() => openEditProductModal(product)} 
+                                                            className={styles.iconBtn}
+                                                            title="Edit Produk"
+                                                        >
+                                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                            </svg>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => confirmDeleteProduct(product)} 
+                                                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                                            title="Hapus Produk"
+                                                        >
+                                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -720,33 +944,89 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* Tab Contents: Kelola User */}
+                {/* Tab: Users */}
                 {activeTab === 'users' && (
                     <div>
+                        {/* Controls */}
+                        <div className={styles.controlBar}>
+                            <div className={styles.searchBox}>
+                                <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama atau email pengguna..."
+                                    value={userSearch}
+                                    onChange={(e) => setUserSearch(e.target.value)}
+                                    className={styles.searchInput}
+                                />
+                            </div>
+
+                            <div className={styles.filterGroup}>
+                                <select
+                                    value={userRoleFilter}
+                                    onChange={(e) => setUserRoleFilter(e.target.value)}
+                                    className={styles.selectInput}
+                                >
+                                    <option value="All">Semua Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="customer">Customer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Table */}
                         {usersLoading ? (
                             <p style={{ color: 'var(--text-muted)' }}>Memuat pengguna...</p>
+                        ) : filteredUsers.length === 0 ? (
+                            <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                Tidak ada pengguna yang sesuai dengan pencarian.
+                            </div>
                         ) : (
-                            <div style={{ overflowX: 'auto', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: 'var(--text-main)' }}>
+                            <div className={styles.tableCard}>
+                                <table className={styles.dataTable}>
                                     <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.01)' }}>
-                                            <th style={{ padding: '1.2rem' }}>Nama</th>
-                                            <th style={{ padding: '1.2rem' }}>Email</th>
-                                            <th style={{ padding: '1.2rem' }}>Role</th>
-                                            <th style={{ padding: '1.2rem' }}>Kontak</th>
-                                            <th style={{ padding: '1.2rem', textAlign: 'right' }}>Aksi</th>
+                                        <tr>
+                                            <th>Nama Lengkap</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>No. Telepon</th>
+                                            <th style={{ textAlign: 'right' }}>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {users.map(user => (
-                                            <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                <td style={{ padding: '1.2rem', fontWeight: '600' }}>{user.name}</td>
-                                                <td style={{ padding: '1.2rem' }}>{user.email}</td>
-                                                <td style={{ padding: '1.2rem', textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 'bold', color: user.role === 'admin' ? 'var(--primary)' : 'var(--secondary)' }}>{user.role}</td>
-                                                <td style={{ padding: '1.2rem', color: 'var(--text-muted)' }}>{user.phone || '-'}</td>
-                                                <td style={{ padding: '1.2rem', textAlign: 'right' }}>
-                                                    <button onClick={() => handleToggleRole(user)} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', marginRight: '0.5rem', borderRadius: '6px' }}>Ubah Role</button>
-                                                    <button onClick={() => handleDeleteUser(user.id)} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', color: 'var(--primary)', borderColor: 'var(--primary)', borderRadius: '6px' }} disabled={user.id === currentUser.id}>Hapus</button>
+                                        {filteredUsers.map(user => (
+                                            <tr key={user.id} className={styles.tableRow}>
+                                                <td style={{ fontWeight: '600' }}>{user.name}</td>
+                                                <td>{user.email}</td>
+                                                <td>
+                                                    <span className={`${styles.badge} ${user.role === 'admin' ? styles.badgeWarning : styles.badgeInfo}`}>
+                                                        {user.role.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td style={{ color: 'var(--text-muted)' }}>{user.phone || '-'}</td>
+                                                <td>
+                                                    <div className={styles.actionGroup}>
+                                                        <button 
+                                                            onClick={() => handleToggleRole(user)} 
+                                                            className="btn btn-outline" 
+                                                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem', borderRadius: '8px' }}
+                                                        >
+                                                            Ubah Role
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => confirmDeleteUser(user)} 
+                                                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                                            disabled={user.id === currentUser.id}
+                                                            title="Hapus User"
+                                                        >
+                                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -757,56 +1037,85 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* Tab Contents: Daftar Transaksi */}
+                {/* Tab: Transactions */}
                 {activeTab === 'transactions' && (
                     <div>
+                        {/* Controls */}
+                        <div className={styles.controlBar}>
+                            <div className={styles.searchBox}>
+                                <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Cari ID Pesanan, Nama, atau Email Pembeli..."
+                                    value={orderSearch}
+                                    onChange={(e) => setOrderSearch(e.target.value)}
+                                    className={styles.searchInput}
+                                />
+                            </div>
+
+                            <div className={styles.filterGroup}>
+                                <select
+                                    value={orderStatusFilter}
+                                    onChange={(e) => setOrderStatusFilter(e.target.value)}
+                                    className={styles.selectInput}
+                                >
+                                    <option value="All">Semua Status</option>
+                                    <option value="PAID">Lunas (PAID)</option>
+                                    <option value="PENDING">Menunggu Pembayaran (PENDING)</option>
+                                    <option value="CANCELLED">Dibatalkan (CANCELLED)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Transactions List */}
                         {ordersLoading ? (
                             <p style={{ color: 'var(--text-muted)' }}>Memuat transaksi...</p>
-                        ) : orders.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>Belum ada transaksi pembelian tercatat.</p>
+                        ) : filteredOrders.length === 0 ? (
+                            <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                Belum ada transaksi yang sesuai.
+                            </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                                {orders.map(order => (
-                                    <div key={order.id} style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                            <div className={styles.orderList}>
+                                {filteredOrders.map(order => (
+                                    <div key={order.id} className={styles.orderCard}>
+                                        <div className={styles.orderHeader}>
                                             <div>
-                                                <h4 style={{ fontSize: '1.1rem', margin: 0 }}>Pesanan #{order.id.slice(0, 8)}</h4>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(order.createdAt).toLocaleString()}</span>
+                                                <h4 className={styles.orderId}>Pesanan #{order.id.slice(0, 8)}</h4>
+                                                <span className={styles.orderDate}>{new Date(order.createdAt).toLocaleString('id-ID')}</span>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <span style={{
-                                                    fontSize: '0.85rem',
-                                                    padding: '0.2rem 0.8rem',
-                                                    borderRadius: '4px',
-                                                    border: '1px solid',
-                                                    color: order.status === 'PAID' ? '#10B981' : '#F59E0B',
-                                                    borderColor: order.status === 'PAID' ? '#10B981' : '#F59E0B',
-                                                    fontWeight: '600'
-                                                }}>{order.status}</span>
+                                            <div>
+                                                <span className={`${styles.badge} ${order.status === 'PAID' ? styles.badgeSuccess : order.status === 'PENDING' ? styles.badgeWarning : styles.badgeDanger}`}>
+                                                    {order.status}
+                                                </span>
                                             </div>
                                         </div>
 
-                                        <div className="grid-transaction-inner">
+                                        <div className={styles.orderInnerGrid}>
                                             <div>
-                                                <h5 style={{ textTransform: 'uppercase', fontSize: '0.75rem', color: 'var(--primary)', letterSpacing: '0.1rem', marginBottom: '1rem' }}>Produk Dibeli</h5>
+                                                <h5 className={styles.orderSectionTitle}>Produk Dibeli</h5>
                                                 {order.items.map(item => (
-                                                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                                    <div key={item.id} className={styles.orderItemRow}>
                                                         <span>{item.product?.name || 'Produk dihapus'} (x{item.quantity})</span>
                                                         <span>{formattedCurrency(item.price * item.quantity)}</span>
                                                     </div>
                                                 ))}
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--border-color)', fontWeight: '700' }}>
-                                                    <span>Total</span>
-                                                    <span>{formattedCurrency(order.total)}</span>
+                                                <div className={styles.orderTotalRow}>
+                                                    <span>Total Tagihan</span>
+                                                    <span style={{ color: 'var(--primary)' }}>{formattedCurrency(order.total)}</span>
                                                 </div>
                                             </div>
                                             <div>
-                                                <h5 style={{ textTransform: 'uppercase', fontSize: '0.75rem', color: 'var(--primary)', letterSpacing: '0.1rem', marginBottom: '1rem' }}>Pelanggan & Pengiriman</h5>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                                                    <p style={{ color: 'var(--text-main)', fontWeight: '600' }}>{order.name}</p>
-                                                    <p>Email: {order.email}</p>
-                                                    <p>Telp: {order.phone}</p>
-                                                    <p>Alamat: {order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province}, {order.postalCode}</p>
+                                                <h5 className={styles.orderSectionTitle}>Pelanggan & Tujuan Pengiriman</h5>
+                                                <div className={styles.customerInfo}>
+                                                    <div className={styles.customerName}>{order.name}</div>
+                                                    <div>Email: {order.email}</div>
+                                                    <div>Telp: {order.phone}</div>
+                                                    <div style={{ marginTop: '0.4rem' }}>
+                                                        Alamat: {order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province}, {order.postalCode}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -817,74 +1126,114 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* Tab Contents: Kelola Event */}
+                {/* Tab: Events */}
                 {activeTab === 'events' && (
                     <div>
+                        {/* Controls */}
+                        <div className={styles.controlBar}>
+                            <div className={styles.searchBox}>
+                                <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Cari judul event..."
+                                    value={eventSearch}
+                                    onChange={(e) => setEventSearch(e.target.value)}
+                                    className={styles.searchInput}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Table */}
                         {eventsLoading ? (
                             <p style={{ color: 'var(--text-muted)' }}>Memuat event...</p>
-                        ) : events.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>Belum ada event terdaftar di database.</p>
+                        ) : filteredEvents.length === 0 ? (
+                            <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                Belum ada event terdaftar.
+                            </div>
                         ) : (
-                            <div style={{ overflowX: 'auto', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: 'var(--text-main)' }}>
+                            <div className={styles.tableCard}>
+                                <table className={styles.dataTable}>
                                     <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.01)' }}>
-                                            <th style={{ padding: '1.2rem' }}>Banner</th>
-                                            <th style={{ padding: '1.2rem' }}>Judul</th>
-                                            <th style={{ padding: '1.2rem' }}>Link Target</th>
-                                            <th style={{ padding: '1.2rem' }}>Jadwal Waktu</th>
-                                            <th style={{ padding: '1.2rem' }}>Status</th>
-                                            <th style={{ padding: '1.2rem', textAlign: 'right' }}>Aksi</th>
+                                        <tr>
+                                            <th>Banner</th>
+                                            <th>Judul Event</th>
+                                            <th>Link Target</th>
+                                            <th>Jadwal Waktu</th>
+                                            <th>Status</th>
+                                            <th style={{ textAlign: 'right' }}>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {events.map(event => {
+                                        {filteredEvents.map(event => {
                                             const now = new Date();
                                             const start = event.startDate ? new Date(event.startDate) : null;
                                             const end = event.endDate ? new Date(event.endDate) : null;
-                                            
+
                                             let timeStatus = 'Sedang Berlangsung';
-                                            let statusColor = '#10B981'; // Green
-                                            
+                                            let badgeStyle = styles.badgeSuccess;
+
                                             if (!event.isActive) {
                                                 timeStatus = 'Nonaktif';
-                                                statusColor = 'var(--text-muted)';
+                                                badgeStyle = styles.badgeMuted;
                                             } else if (start && start > now) {
                                                 timeStatus = 'Segera Hadir';
-                                                statusColor = '#3B82F6'; // Blue
+                                                badgeStyle = styles.badgeInfo;
                                             } else if (end && end < now) {
                                                 timeStatus = 'Sudah Selesai';
-                                                statusColor = '#EF4444'; // Red
+                                                badgeStyle = styles.badgeDanger;
                                             }
 
                                             return (
-                                                <tr key={event.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }} className="table-row-hover">
-                                                    <td style={{ padding: '1rem 1.2rem' }}>
-                                                        <div style={{ position: 'relative', width: '80px', height: '45px', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <tr key={event.id} className={styles.tableRow}>
+                                                    <td>
+                                                        <div className={styles.eventThumb}>
                                                             <Image src={event.image} alt={event.title} fill style={{ objectFit: 'cover' }} />
                                                         </div>
                                                     </td>
-                                                    <td style={{ padding: '1.2rem', fontWeight: '600' }}>
+                                                    <td style={{ fontWeight: '600' }}>
                                                         <div>{event.title}</div>
                                                         {event.subtitle && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{event.subtitle}</div>}
                                                     </td>
-                                                    <td style={{ padding: '1.2rem', fontSize: '0.85rem' }}>
+                                                    <td style={{ fontSize: '0.85rem' }}>
                                                         <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
                                                             {event.targetUrl.length > 30 ? `${event.targetUrl.slice(0, 30)}...` : event.targetUrl}
                                                         </a>
                                                     </td>
-                                                    <td style={{ padding: '1.2rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                                                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
                                                         <div>Mulai: {start ? start.toLocaleString('id-ID') : 'Langsung'}</div>
                                                         <div>Selesai: {end ? end.toLocaleString('id-ID') : 'Selamanya'}</div>
                                                     </td>
-                                                    <td style={{ padding: '1.2rem' }}>
-                                                        <span style={{ color: statusColor, fontSize: '0.85rem', padding: '0.2rem 0.6rem', border: `1px solid ${statusColor}`, borderRadius: '4px' }}>
+                                                    <td>
+                                                        <span className={`${styles.badge} ${badgeStyle}`}>
                                                             {timeStatus}
                                                         </span>
                                                     </td>
-                                                    <td style={{ padding: '1.2rem', textAlign: 'right' }}>
-                                                        <button onClick={() => openEditEventModal(event)} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', marginRight: '0.5rem', borderRadius: '6px' }}>Edit</button>
-                                                        <button onClick={() => handleDeleteEvent(event.id)} className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', color: 'var(--primary)', borderColor: 'var(--primary)', borderRadius: '6px' }}>Hapus</button>
+                                                    <td>
+                                                        <div className={styles.actionGroup}>
+                                                            <button 
+                                                                onClick={() => openEditEventModal(event)} 
+                                                                className={styles.iconBtn}
+                                                                title="Edit Event"
+                                                            >
+                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => confirmDeleteEvent(event)} 
+                                                                className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                                                title="Hapus Event"
+                                                            >
+                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );
@@ -897,28 +1246,20 @@ export default function AdminDashboard() {
                 )}
             </div>
 
-            {/* Modal CRUD: Add/Edit Product */}
+            {/* Modal CRUD: Product */}
             {(isAddModalOpen || isEditModalOpen) && (
-                <div className="modal-backdrop">
-                    <div className="modal-container">
-                        <h3 style={{ 
-                            fontFamily: 'var(--font-serif)', 
-                            fontSize: '2.2rem', 
-                            fontStyle: 'italic', 
-                            marginBottom: '2rem', 
-                            color: 'var(--text-main)',
-                            textAlign: 'center'
-                        }}>
+                <div className={styles.modalBackdrop}>
+                    <div className={styles.modalContainer}>
+                        <h3 className={styles.modalTitle}>
                             {isAddModalOpen ? 'Tambah Produk Baru' : 'Edit Detail Produk'}
                         </h3>
 
-                        <form onSubmit={isAddModalOpen ? handleAddProduct : handleEditProductSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Nama Produk</label>
+                        <form onSubmit={isAddModalOpen ? handleAddProduct : handleEditProductSubmit} className={styles.formGrid}>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel}>Nama Produk</label>
                                 <input
                                     type="text"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={productForm.name}
                                     onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                                     required
@@ -926,11 +1267,10 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Harga (Rupiah)</label>
+                                <label className={styles.formLabel}>Harga (Rupiah)</label>
                                 <input
                                     type="number"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={productForm.price}
                                     onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                                     required
@@ -944,7 +1284,6 @@ export default function AdminDashboard() {
                                     onChange={(val) => setProductForm({ ...productForm, category: val, form: val })}
                                     options={categories}
                                     setOptions={setCategories}
-                                    defaultOptions={defaultCategories}
                                 />
                             </div>
 
@@ -955,61 +1294,28 @@ export default function AdminDashboard() {
                                     onChange={(val) => setProductForm({ ...productForm, gender: val })}
                                     options={genders}
                                     setOptions={setGenders}
-                                    defaultOptions={defaultGenders}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Corak Warna (Coloration)</label>
+                                <label className={styles.formLabel}>Corak Warna (Coloration)</label>
                                 <input
                                     type="text"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={productForm.coloration}
                                     onChange={(e) => setProductForm({ ...productForm, coloration: e.target.value })}
                                     required
                                 />
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>Foto Produk</label>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    flexDirection: 'column',
-                                    gap: '1.5rem', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    background: 'rgba(255,255,255,0.02)', 
-                                    padding: '2rem 1.5rem', 
-                                    borderRadius: '16px', 
-                                    border: '1px dashed var(--border-color)',
-                                    textAlign: 'center'
-                                }}>
-                                    <div style={{ 
-                                        position: 'relative', 
-                                        width: '150px', 
-                                        height: '150px', 
-                                        borderRadius: '12px', 
-                                        overflow: 'hidden', 
-                                        background: 'rgba(255,255,255,0.05)',
-                                        boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-                                        flexShrink: 0
-                                    }}>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel} style={{ textAlign: 'center' }}>Foto Produk</label>
+                                <div className={styles.uploadBox}>
+                                    <div className={styles.previewThumb}>
                                         {productForm.image ? (
-                                            <Image 
-                                                src={productForm.image} 
-                                                alt="Preview" 
-                                                fill 
-                                                style={{ objectFit: 'cover' }} 
-                                            />
+                                            <Image src={productForm.image} alt="Preview" fill style={{ objectFit: 'cover' }} />
                                         ) : (
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center', 
-                                                height: '100%', 
-                                                color: 'var(--text-muted)' 
-                                            }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
                                                 No Image
                                             </div>
                                         )}
@@ -1018,46 +1324,27 @@ export default function AdminDashboard() {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={handleFileUpload}
+                                            onChange={(e) => handleFileUpload(e, setProductForm)}
                                             id="product-image-upload"
                                             style={{ display: 'none' }}
                                         />
                                         <label 
                                             htmlFor="product-image-upload" 
                                             className="btn btn-outline" 
-                                            style={{ 
-                                                display: 'inline-block', 
-                                                cursor: 'pointer', 
-                                                padding: '0.6rem 1.5rem', 
-                                                fontSize: '0.85rem',
-                                                borderRadius: '30px',
-                                                textAlign: 'center'
-                                            }}
+                                            style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}
                                         >
                                             {isUploading ? 'Mengunggah...' : 'Pilih Foto dari Komputer'}
                                         </label>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0 0 0' }}>
-                                            Format yang didukung: JPG, PNG, GIF, WEBP. Maksimal 20MB.
-                                        </p>
-                                        {uploadError && (
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', margin: '0.25rem 0 0 0' }}>
-                                                Error: {uploadError}
-                                            </p>
-                                        )}
-                                        <input 
-                                            type="hidden" 
-                                            value={productForm.image} 
-                                            required 
-                                        />
+                                        {uploadError && <p style={{ fontSize: '0.75rem', color: '#EF4444' }}>Error: {uploadError}</p>}
                                     </div>
                                 </div>
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Deskripsi Produk</label>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel}>Deskripsi Produk</label>
                                 <textarea
-                                    className="search-input"
-                                    style={{ width: '100%', minHeight: '80px', resize: 'none' }}
+                                    className={styles.formInput}
+                                    style={{ minHeight: '80px', resize: 'none' }}
                                     value={productForm.description}
                                     onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                                     required
@@ -1071,35 +1358,34 @@ export default function AdminDashboard() {
                                     onChange={(val) => setProductForm({ ...productForm, statsForm: val })}
                                     options={grades}
                                     setOptions={setGrades}
-                                    defaultOptions={defaultGrades}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Umur (Age)</label>
+                                <label className={styles.formLabel}>Umur (Age)</label>
                                 <input
                                     type="text"
                                     placeholder="Contoh: 4 Month, 5 Bulan"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={productForm.age}
                                     onChange={(e) => setProductForm({ ...productForm, age: e.target.value })}
                                     required
                                 />
                             </div>
 
-
-                            {/* Sizes and Stock Management Section */}
-                            <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
-                                <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '1rem', textAlign: 'center' }}>Kelola Ukuran (Size) & Jumlah Stok</label>
-                                <div style={{ background: 'rgba(255,255,255,0.01)', padding: '1.5rem 1rem', border: '1px dashed var(--border-color)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            {/* Sizes & Stock */}
+                            <div className={styles.formFullWidth} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+                                <label className={styles.formLabel} style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--text-main)', textAlign: 'center', marginBottom: '1rem' }}>
+                                    Kelola Ukuran (Size) & Jumlah Stok
+                                </label>
+                                <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', border: '1px dashed var(--border-color)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     {productForm.sizes && productForm.sizes.map((s, index) => (
-                                        <div key={index} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.8rem', alignItems: 'center', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                        <div key={index} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.8rem', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
                                             <input
                                                 type="text"
                                                 placeholder="Size (S, M, L)"
-                                                className="search-input"
-                                                style={{ flex: '1 1 120px', minWidth: '80px', margin: 0 }}
+                                                className={styles.formInput}
+                                                style={{ flex: '1 1 120px' }}
                                                 value={s.size}
                                                 onChange={(e) => {
                                                     const newSizes = [...productForm.sizes];
@@ -1112,8 +1398,8 @@ export default function AdminDashboard() {
                                             <input
                                                 type="number"
                                                 placeholder="Stok"
-                                                className="search-input"
-                                                style={{ flex: '1 1 120px', minWidth: '80px', margin: 0 }}
+                                                className={styles.formInput}
+                                                style={{ flex: '1 1 120px' }}
                                                 value={s.quantity}
                                                 min="0"
                                                 onChange={(e) => {
@@ -1127,7 +1413,7 @@ export default function AdminDashboard() {
                                             <button
                                                 type="button"
                                                 className="btn btn-outline"
-                                                style={{ color: 'var(--primary)', borderColor: 'var(--primary)', padding: '0.6rem 1.2rem', borderRadius: '8px', fontSize: '0.85rem', flexShrink: 0 }}
+                                                style={{ color: '#EF4444', borderColor: '#EF4444', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}
                                                 onClick={() => {
                                                     const newSizes = productForm.sizes.filter((_, idx) => idx !== index);
                                                     const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
@@ -1154,11 +1440,11 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Total Jumlah Produk (Dihitung Otomatis)</label>
+                                <label className={styles.formLabel}>Total Jumlah Produk (Dihitung Otomatis)</label>
                                 <input
                                     type="number"
-                                    className="search-input"
-                                    style={{ width: '100%', opacity: 0.7 }}
+                                    className={styles.formInput}
+                                    style={{ opacity: 0.7 }}
                                     value={productForm.sizes?.length > 0 ? productForm.quantity : (productForm.quantity || 0)}
                                     onChange={(e) => {
                                         if (!productForm.sizes || productForm.sizes.length === 0) {
@@ -1172,15 +1458,15 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.2rem' }}>
                                 <input
                                     type="checkbox"
-                                    className="checkboxInput"
                                     id="isPremiumCheck"
                                     checked={productForm.isPremium}
                                     onChange={(e) => setProductForm({ ...productForm, isPremium: e.target.checked })}
+                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                 />
                                 <label htmlFor="isPremiumCheck" style={{ fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>Ikan Premium</label>
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                            <div className={styles.formActions}>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1205,53 +1491,44 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* Modal CRUD: Add/Edit Event */}
+            {/* Modal CRUD: Event */}
             {(isEventAddModalOpen || isEventEditModalOpen) && (
-                <div className="modal-backdrop">
-                    <div className="modal-container">
-                        <h3 style={{ 
-                            fontFamily: 'var(--font-serif)', 
-                            fontSize: '2.2rem', 
-                            fontStyle: 'italic', 
-                            marginBottom: '2rem', 
-                            color: 'var(--text-main)',
-                            textAlign: 'center'
-                        }}>
+                <div className={styles.modalBackdrop}>
+                    <div className={styles.modalContainer}>
+                        <h3 className={styles.modalTitle}>
                             {isEventAddModalOpen ? 'Tambah Event Baru' : 'Edit Detail Event'}
                         </h3>
 
-                        <form onSubmit={isEventAddModalOpen ? handleAddEvent : handleEditEventSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Judul Event / Promo</label>
+                        <form onSubmit={isEventAddModalOpen ? handleAddEvent : handleEditEventSubmit} className={styles.formGrid}>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel}>Judul Event / Promo</label>
                                 <input
                                     type="text"
                                     placeholder="Contoh: TikTok Shop Live Streaming"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={eventForm.title}
                                     onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
                                     required
                                 />
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Subjudul Event (Opsional)</label>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel}>Subjudul Event (Opsional)</label>
                                 <input
                                     type="text"
                                     placeholder="Contoh: Dapatkan diskon 50% dan gift menarik selama live!"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={eventForm.subtitle}
                                     onChange={(e) => setEventForm({ ...eventForm, subtitle: e.target.value })}
                                 />
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Deskripsi Event</label>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel}>Deskripsi Event</label>
                                 <textarea
                                     placeholder="Jelaskan detail event Anda..."
-                                    className="search-input"
-                                    style={{ width: '100%', minHeight: '80px', resize: 'none' }}
+                                    className={styles.formInput}
+                                    style={{ minHeight: '80px', resize: 'none' }}
                                     value={eventForm.description}
                                     onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
                                     required
@@ -1259,12 +1536,11 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Link Target (URL)</label>
+                                <label className={styles.formLabel}>Link Target (URL)</label>
                                 <input
                                     type="url"
                                     placeholder="Contoh: https://tiktok.com/@sumdebetta/live"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={eventForm.targetUrl}
                                     onChange={(e) => setEventForm({ ...eventForm, targetUrl: e.target.value })}
                                     required
@@ -1272,12 +1548,11 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Teks Tombol (Button Text)</label>
+                                <label className={styles.formLabel}>Teks Tombol (Button Text)</label>
                                 <input
                                     type="text"
                                     placeholder="Contoh: Gabung Live, Beli Sekarang"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={eventForm.buttonText}
                                     onChange={(e) => setEventForm({ ...eventForm, buttonText: e.target.value })}
                                     required
@@ -1285,66 +1560,33 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Waktu Mulai (Opsional)</label>
+                                <label className={styles.formLabel}>Waktu Mulai (Opsional)</label>
                                 <input
                                     type="datetime-local"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={eventForm.startDate}
                                     onChange={(e) => setEventForm({ ...eventForm, startDate: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Waktu Selesai (Opsional)</label>
+                                <label className={styles.formLabel}>Waktu Selesai (Opsional)</label>
                                 <input
                                     type="datetime-local"
-                                    className="search-input"
-                                    style={{ width: '100%' }}
+                                    className={styles.formInput}
                                     value={eventForm.endDate}
                                     onChange={(e) => setEventForm({ ...eventForm, endDate: e.target.value })}
                                 />
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>Banner / Gambar Promosi</label>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    flexDirection: 'column',
-                                    gap: '1.5rem', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    background: 'rgba(255,255,255,0.02)', 
-                                    padding: '2rem 1.5rem', 
-                                    borderRadius: '16px', 
-                                    border: '1px dashed var(--border-color)',
-                                    textAlign: 'center'
-                                }}>
-                                    <div style={{ 
-                                        position: 'relative', 
-                                        width: '240px', 
-                                        height: '135px', 
-                                        borderRadius: '12px', 
-                                        overflow: 'hidden', 
-                                        background: 'rgba(255,255,255,0.05)',
-                                        boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-                                        flexShrink: 0
-                                    }}>
+                            <div className={styles.formFullWidth}>
+                                <label className={styles.formLabel} style={{ textAlign: 'center' }}>Banner / Gambar Promosi</label>
+                                <div className={styles.uploadBox}>
+                                    <div className={styles.eventPreviewThumb}>
                                         {eventForm.image ? (
-                                            <Image 
-                                                src={eventForm.image} 
-                                                alt="Preview Banner" 
-                                                fill 
-                                                style={{ objectFit: 'cover' }} 
-                                            />
+                                            <Image src={eventForm.image} alt="Preview Banner" fill style={{ objectFit: 'cover' }} />
                                         ) : (
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center', 
-                                                height: '100%', 
-                                                color: 'var(--text-muted)' 
-                                            }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
                                                 No Image Preview
                                             </div>
                                         )}
@@ -1353,53 +1595,34 @@ export default function AdminDashboard() {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={handleEventFileUpload}
+                                            onChange={(e) => handleFileUpload(e, setEventForm)}
                                             id="event-image-upload"
                                             style={{ display: 'none' }}
                                         />
                                         <label 
                                             htmlFor="event-image-upload" 
                                             className="btn btn-outline" 
-                                            style={{ 
-                                                display: 'inline-block', 
-                                                cursor: 'pointer', 
-                                                padding: '0.6rem 1.5rem', 
-                                                fontSize: '0.85rem',
-                                                borderRadius: '30px',
-                                                textAlign: 'center'
-                                            }}
+                                            style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}
                                         >
                                             {isUploading ? 'Mengunggah...' : 'Pilih Banner dari Komputer'}
                                         </label>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0 0 0' }}>
-                                            Format yang didukung: JPG, PNG, GIF, WEBP. Maksimal 20MB.
-                                        </p>
-                                        {uploadError && (
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', margin: '0.25rem 0 0 0' }}>
-                                                Error: {uploadError}
-                                            </p>
-                                        )}
-                                        <input 
-                                            type="hidden" 
-                                            value={eventForm.image} 
-                                            required 
-                                        />
+                                        {uploadError && <p style={{ fontSize: '0.75rem', color: '#EF4444' }}>Error: {uploadError}</p>}
                                     </div>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.2rem', gridColumn: '1 / -1' }}>
+                            <div className={styles.formFullWidth} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.2rem' }}>
                                 <input
                                     type="checkbox"
-                                    className="checkboxInput"
                                     id="isEventActiveCheck"
                                     checked={eventForm.isActive}
                                     onChange={(e) => setEventForm({ ...eventForm, isActive: e.target.checked })}
+                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                 />
                                 <label htmlFor="isEventActiveCheck" style={{ fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>Event Aktif (Ditampilkan di Website)</label>
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                            <div className={styles.formActions}>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1420,6 +1643,44 @@ export default function AdminDashboard() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Confirmation Modal */}
+            {confirmModal.isOpen && (
+                <div className={styles.modalBackdrop}>
+                    <div className={styles.confirmModal}>
+                        <div className={styles.confirmIcon}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <h4 className={styles.confirmTitle}>{confirmModal.title}</h4>
+                        <p className={styles.confirmDesc}>{confirmModal.desc}</p>
+                        <div className={styles.confirmActions}>
+                            <button
+                                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                                className="btn btn-outline"
+                                style={{ flex: 1, borderRadius: '30px', padding: '0.75rem' }}
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (confirmModal.onConfirm) {
+                                        await confirmModal.onConfirm();
+                                    }
+                                    setConfirmModal({ ...confirmModal, isOpen: false });
+                                }}
+                                className="btn btn-primary"
+                                style={{ flex: 1, borderRadius: '30px', padding: '0.75rem', background: '#EF4444', borderColor: '#EF4444', color: '#fff' }}
+                            >
+                                Hapus Data
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
