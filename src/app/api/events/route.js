@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,7 @@ export async function GET(request) {
 // POST: Membuat event baru
 export async function POST(request) {
   try {
+    await requireAdmin(request);
     const body = await request.json();
     const { title, subtitle, description, image, targetUrl, buttonText, isActive, startDate, endDate } = body;
 
@@ -94,6 +96,7 @@ export async function POST(request) {
 
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
+    if (error.status) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Error POST event:', error);
     return NextResponse.json({ error: 'Gagal membuat event baru.' }, { status: 500 });
   }
@@ -102,6 +105,7 @@ export async function POST(request) {
 // PUT: Memperbarui event
 export async function PUT(request) {
   try {
+    await requireAdmin(request);
     const body = await request.json();
     const { id, title, subtitle, description, image, targetUrl, buttonText, isActive, startDate, endDate } = body;
 
@@ -133,6 +137,7 @@ export async function PUT(request) {
 
     return NextResponse.json(updatedEvent);
   } catch (error) {
+    if (error.status) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Error PUT event:', error);
     return NextResponse.json({ error: 'Gagal memperbarui event.' }, { status: 500 });
   }
@@ -141,6 +146,7 @@ export async function PUT(request) {
 // DELETE: Menghapus event
 export async function DELETE(request) {
   try {
+    await requireAdmin(request);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -154,6 +160,7 @@ export async function DELETE(request) {
 
     return NextResponse.json({ message: 'Event berhasil dihapus.' });
   } catch (error) {
+    if (error.status) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Error DELETE event:', error);
     return NextResponse.json({ error: 'Gagal menghapus event.' }, { status: 500 });
   }

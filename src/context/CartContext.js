@@ -8,13 +8,26 @@ export function CartProvider({ children }) {
     const [directCheckoutItem, setDirectCheckoutItem] = useState(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    // Load cart & directCheckout from localStorage
+    // Load cart & directCheckout from localStorage on mount.
+    // We intentionally hydrate here (not via a lazy useState initializer) so the
+    // first client render matches the server-rendered HTML and avoids a hydration
+    // mismatch. This is a legitimate one-time sync from an external store, so the
+    // "setState in effect" rule is disabled just for these hydration lines.
     useEffect(() => {
-        const savedCart = localStorage.getItem('sumde-cart');
-        if (savedCart) setCart(JSON.parse(savedCart));
+        try {
+            const savedCart = localStorage.getItem('sumde-cart');
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe localStorage hydration
+            if (savedCart) setCart(JSON.parse(savedCart));
+        } catch {
+            localStorage.removeItem('sumde-cart');
+        }
 
-        const savedDirect = localStorage.getItem('sumde-direct-checkout');
-        if (savedDirect) setDirectCheckoutItem(JSON.parse(savedDirect));
+        try {
+            const savedDirect = localStorage.getItem('sumde-direct-checkout');
+            if (savedDirect) setDirectCheckoutItem(JSON.parse(savedDirect));
+        } catch {
+            localStorage.removeItem('sumde-direct-checkout');
+        }
     }, []);
 
     const toggleCart = () => setIsCartOpen(!isCartOpen);

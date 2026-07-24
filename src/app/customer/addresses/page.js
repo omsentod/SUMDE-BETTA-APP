@@ -54,18 +54,21 @@ export default function AddressesPage() {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!provId) { setCities([]); return; }
         fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${provId}.json`)
             .then(r => r.json()).then(setCities).catch(() => {});
     }, [provId]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!cityId) { setDistricts([]); return; }
         fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${cityId}.json`)
             .then(r => r.json()).then(setDistricts).catch(() => {});
     }, [cityId]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!districtId) { setVillages([]); return; }
         fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${districtId}.json`)
             .then(r => r.json()).then(setVillages).catch(() => {});
@@ -75,18 +78,21 @@ export default function AddressesPage() {
     useEffect(() => {
         if (!autofillTarget?.province || provinces.length === 0) return;
         const m = provinces.find(p => p.name.toLowerCase() === autofillTarget.province.toLowerCase());
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- API-driven cascading autofill
         if (m) setProvId(m.id);
     }, [autofillTarget, provinces]);
 
     useEffect(() => {
         if (!autofillTarget?.city || cities.length === 0) return;
         const m = cities.find(c => c.name.toLowerCase() === autofillTarget.city.toLowerCase());
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- API-driven cascading autofill
         if (m) setCityId(m.id);
     }, [autofillTarget, cities]);
 
     useEffect(() => {
         if (!autofillTarget?.district || districts.length === 0) return;
         const m = districts.find(d => d.name.toLowerCase() === autofillTarget.district.toLowerCase());
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- API-driven cascading autofill
         if (m) setDistrictId(m.id);
     }, [autofillTarget, districts]);
 

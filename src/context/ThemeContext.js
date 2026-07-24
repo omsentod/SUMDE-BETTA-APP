@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
@@ -9,6 +9,7 @@ export function ThemeProvider({ children }) {
     // Load theme from localStorage on initial render
     useEffect(() => {
         const savedTheme = localStorage.getItem('sumde-theme') || 'light';
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe localStorage hydration
         setTheme(savedTheme);
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);

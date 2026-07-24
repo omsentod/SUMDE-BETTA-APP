@@ -18,6 +18,7 @@ export default function CustomerDashboard() {
             if (!currentUser) {
                 router.push('/login');
             } else {
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate form with user profile when loaded
                 setForm({ name: currentUser.name || '', phone: currentUser.phone || '' });
             }
         }

@@ -1,29 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getSession, requireAdmin } from '@/lib/auth';
 
 const VALID_STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
-
-/**
- * Resolve the requesting user from a client-asserted userId.
- *
- * NOTE: This project has no server-side session (login only stores the user in
- * localStorage). Identity is asserted by the client via userId, the same pattern
- * used by /api/addresses and /api/users. We re-read the role from the DB here
- * instead of trusting any role value sent by the client.
- */
-async function resolveRequester(userId) {
-  if (!userId) return null;
-  return prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, role: true }
-  });
-}
 
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    const requesterId = request.nextUrl.searchParams.get('userId');
-
     const order = await prisma.order.findUnique({
       where: { id },
       include: { items: { include: { product: true } } }
@@ -32,55 +15,43 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Pesanan tidak ditemukan.' }, { status: 404 });
     }
 
-    // Guest orders have no owner and are protected only by their unguessable
-    // UUID. This is required so guest checkout can poll its own payment status.
-    // Orders that belong to a registered user must be read only by that user or
-    // an admin.
+    // Guest orders (no owner) are readable via their unguessable UUID so guest
+    // checkout can poll its own status. Orders owned by a user require that
+    // same user or an admin.
     if (order.userId !== null) {
-      const requester = await resolveRequester(requesterId);
-      if (!requester) {
+      const session = await getSession(request);
+      if (!session) {
         return NextResponse.json({ error: 'Autentikasi diperlukan.' }, { status: 401 });
       }
-      const isOwner = order.userId === requester.id;
-      const isAdmin = requester.role === 'admin';
-      if (!isOwner && !isAdmin) {
+      if (order.userId !== session.id && session.role !== 'admin') {
         return NextResponse.json({ error: 'Anda tidak memiliki akses ke pesanan ini.' }, { status: 403 });
       }
     }
 
     return NextResponse.json(order);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = await params;
-    const { userId: requesterId, status } = await request.json();
+    // Only admins may change order status via this endpoint.
+    await requireAdmin(request);
 
-    // The PROCESSING status means "payment confirmed" and is what the UI treats
-    // as a successful payment. It must NEVER be settable from a client request —
-    // it is set exclusively by the DOKU webhook after signature verification.
+    const { id } = await params;
+    const { status } = await request.json();
+
+    // PROCESSING = "paid" and is set exclusively by the DOKU webhook after
+    // signature verification — never from a client, not even an admin.
     if (status === 'PROCESSING') {
       return NextResponse.json(
         { error: 'Status PROCESSING hanya dapat ditetapkan oleh webhook pembayaran DOKU.' },
         { status: 403 }
       );
     }
-
     if (!status || !VALID_STATUSES.includes(status)) {
       return NextResponse.json({ error: 'Status tidak valid.' }, { status: 400 });
-    }
-
-    // Every other status change (SHIPPED / COMPLETED / CANCELLED / PENDING) is an
-    // admin-only operation.
-    const requester = await resolveRequester(requesterId);
-    if (!requester) {
-      return NextResponse.json({ error: 'Autentikasi diperlukan.' }, { status: 401 });
-    }
-    if (requester.role !== 'admin') {
-      return NextResponse.json({ error: 'Hanya admin yang dapat mengubah status pesanan.' }, { status: 403 });
     }
 
     const updated = await prisma.order.update({
@@ -90,6 +61,6 @@ export async function PUT(request, { params }) {
     });
     return NextResponse.json(updated);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }

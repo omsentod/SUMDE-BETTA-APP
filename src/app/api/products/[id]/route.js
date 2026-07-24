@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request, { params }) {
   try {
@@ -14,6 +15,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
+    await requireAdmin(request);
     const { id } = await params;
     const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes } = await request.json();
     const dataToUpdate = {};
@@ -39,17 +41,18 @@ export async function PUT(request, { params }) {
     const updatedProduct = await prisma.product.update({ where: { id }, data: dataToUpdate });
     return NextResponse.json(updatedProduct);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }
 
 export async function DELETE(request, { params }) {
   try {
+    await requireAdmin(request);
     const { id } = await params;
     await prisma.orderItem.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
     return NextResponse.json({ message: 'Produk berhasil dihapus.' });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    await requireAdmin(request);
     const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, age, statsSpirit, quantity, sizes } = await request.json();
     if (!name || price === undefined || !category || !gender || !form || !coloration || !description || !image) {
       return NextResponse.json({ error: 'Data produk tidak lengkap.' }, { status: 400 });
@@ -37,6 +39,6 @@ export async function POST(request) {
     });
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }

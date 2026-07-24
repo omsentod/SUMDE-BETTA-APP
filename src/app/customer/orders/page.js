@@ -28,6 +28,26 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ALL');
+    const [payingOrderId, setPayingOrderId] = useState(null);
+
+    const handlePayNow = async (orderId) => {
+        setPayingOrderId(orderId);
+        try {
+            const callbackUrl = window.location.origin + '/customer/orders';
+            const res = await fetch('/api/payment/doku', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, callbackUrl })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            window.location.href = data.paymentUrl;
+        } catch (err) {
+            console.error('Payment error:', err);
+            alert(err.message || 'Gagal memulai pembayaran.');
+            setPayingOrderId(null);
+        }
+    };
 
     useEffect(() => {
         if (!authLoading && !currentUser) router.push('/login');
@@ -130,6 +150,20 @@ export default function OrdersPage() {
                                         <span style={{ color: 'var(--text-main)', fontWeight: '600' }}>{order.name}</span>
                                         {' · '}{order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province} {order.postalCode}
                                     </div>
+                                    
+                                    {/* Actions */}
+                                    {order.status === 'PENDING' && (
+                                        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', background: 'rgba(255,107,53,0.02)' }}>
+                                            <button 
+                                                className="btn btn-primary" 
+                                                style={{ padding: '0.5rem 1.5rem', fontSize: '0.9rem', cursor: payingOrderId === order.id ? 'wait' : 'pointer' }}
+                                                onClick={() => handlePayNow(order.id)}
+                                                disabled={payingOrderId === order.id}
+                                            >
+                                                {payingOrderId === order.id ? 'Memproses...' : 'Bayar Sekarang'}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

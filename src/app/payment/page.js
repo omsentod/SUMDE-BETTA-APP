@@ -1,12 +1,10 @@
 'use client';
 import { useCart } from '@/context/CartContext';
-import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function PaymentPage() {
     const { checkoutTotal: total, clearCheckout: clearCart, checkoutItems: cart } = useCart();
-    const { currentUser } = useAuth();
     const router = useRouter();
 
     const [shipment, setShipment] = useState(null);
@@ -17,10 +15,32 @@ export default function PaymentPage() {
     const [activePayment, setActivePayment] = useState(null);
     const [status, setStatus] = useState('pending'); // 'pending' | 'checkout_created' | 'success'
 
+    // Auto-check helper
+    const autoCheckPayment = useCallback(async (orderId) => {
+        if (!orderId) return;
+        try {
+            // Session cookie is sent automatically; guest orders (userId null)
+            // are readable via their UUID.
+            const res = await fetch(`/api/orders/${orderId}`);
+            if (res.ok) {
+                const order = await res.json();
+                if (order.status === 'PROCESSING') {
+                    setStatus('success');
+                    clearCart();
+                    localStorage.removeItem('temp-shipment');
+                    localStorage.removeItem('active-payment');
+                }
+            }
+        } catch (err) {
+            console.error('Failed to auto-check order status:', err);
+        }
+    }, [clearCart]);
+
     // 1. Load temp-shipment and check for active payment on mount
     useEffect(() => {
         const shipData = localStorage.getItem('temp-shipment');
         if (shipData) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShipment(JSON.parse(shipData));
         }
 
@@ -35,10 +55,7 @@ export default function PaymentPage() {
             // Redirect to checkout if no shipping context
             router.push('/checkout');
         }
-        // currentUser?.id is included so the auto-check re-runs once the auth
-        // state hydrates from localStorage, allowing it to pass the userId
-        // required to read an order that belongs to a logged-in user.
-    }, [router, currentUser?.id]);
+    }, [router, autoCheckPayment]);
 
     const formattedTotal = new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -46,35 +63,12 @@ export default function PaymentPage() {
         minimumFractionDigits: 0
     }).format(total);
 
-    // Auto-check helper
-    const autoCheckPayment = async (orderId) => {
-        if (!orderId) return;
-        try {
-            const url = currentUser?.id
-                ? `/api/orders/${orderId}?userId=${currentUser.id}`
-                : `/api/orders/${orderId}`;
-            const res = await fetch(url);
-            if (res.ok) {
-                const order = await res.json();
-                if (order.status === 'PROCESSING') {
-                    setStatus('success');
-                    clearCart();
-                    localStorage.removeItem('temp-shipment');
-                    localStorage.removeItem('active-payment');
-                }
-            }
-        } catch (err) {
-            console.error('Failed to auto-check order status:', err);
-        }
-    };
-
     // 2. Inisiasi Doku Checkout
     const handleProceedToDoku = async () => {
         setLoading(true);
         try {
             // Step 1: Create order as PENDING in database
             const orderPayload = {
-                userId: currentUser?.id || null,
                 total,
                 status: 'PENDING',
                 name: shipment.name,
@@ -153,10 +147,7 @@ export default function PaymentPage() {
 
         setCheckingStatus(true);
         try {
-            const url = currentUser?.id
-                ? `/api/orders/${activePayment.orderId}?userId=${currentUser.id}`
-                : `/api/orders/${activePayment.orderId}`;
-            const res = await fetch(url);
+            const res = await fetch(`/api/orders/${activePayment.orderId}`);
             if (!res.ok) {
                 throw new Error('Gagal memverifikasi status pesanan.');
             }

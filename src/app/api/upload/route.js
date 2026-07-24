@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { requireAdmin } from '@/lib/auth';
 
 export async function POST(request) {
   try {
+    await requireAdmin(request);
     const formData = await request.formData();
     const file = formData.get('file');
 
@@ -52,6 +54,7 @@ export async function POST(request) {
     // Mengembalikan URL relatif gambar
     return NextResponse.json({ url: `/uploads/${safeFilename}` });
   } catch (error) {
+    if (error.status) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Terjadi kesalahan saat mengunggah file.' }, { status: 500 });
   }

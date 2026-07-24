@@ -20,8 +20,10 @@ export async function POST(request) {
     }
 
     // Request Checkout Session from Doku Sandbox
+    // Append timestamp to avoid 'INVOICE ALREADY USED' if retrying payment
+    const dokuInvoiceNumber = `${order.id}_${Date.now()}`;
     const dokuResponse = await createCheckoutSession({
-      invoiceNumber: order.id,
+      invoiceNumber: dokuInvoiceNumber,
       amount: order.total,
       callbackUrl
     });

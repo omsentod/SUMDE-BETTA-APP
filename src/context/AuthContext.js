@@ -7,12 +7,14 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Identity now comes from the httpOnly session cookie, resolved server-side
+    // via /api/auth/me — no longer from localStorage (which was spoofable).
     useEffect(() => {
-        const savedUser = localStorage.getItem('sumde-current-user');
-        if (savedUser) {
-            setCurrentUser(JSON.parse(savedUser));
-        }
-        setIsLoading(false);
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => setCurrentUser(data.user || null))
+            .catch(() => {})
+            .finally(() => setIsLoading(false));
     }, []);
 
     const login = async (email, password) => {
@@ -21,14 +23,12 @@ export function AuthProvider({ children }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-
         const data = await response.json();
         if (!response.ok) {
             throw new Error(data.error || 'Login gagal.');
         }
-
+        // The server set the session cookie; keep a copy of the user in state.
         setCurrentUser(data);
-        localStorage.setItem('sumde-current-user', JSON.stringify(data));
         return data;
     };
 
@@ -46,9 +46,13 @@ export function AuthProvider({ children }) {
         return data;
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch {
+            // ignore network errors on logout
+        }
         setCurrentUser(null);
-        localStorage.removeItem('sumde-current-user');
     };
 
     const updateUserProfile = async (profileData) => {
@@ -56,7 +60,7 @@ export function AuthProvider({ children }) {
         const response = await fetch('/api/users', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: currentUser.id, requesterId: currentUser.id, ...profileData })
+            body: JSON.stringify({ id: currentUser.id, ...profileData })
         });
 
         const data = await response.json();
@@ -64,26 +68,22 @@ export function AuthProvider({ children }) {
             throw new Error(data.error || 'Gagal memperbarui profil.');
         }
 
-        // Keep the role from previous currentUser state if not returned
         const updated = { ...currentUser, ...data };
         setCurrentUser(updated);
-        localStorage.setItem('sumde-current-user', JSON.stringify(updated));
         return updated;
     };
 
     const fetchMyOrders = async () => {
         if (!currentUser) return [];
+        // The server already scopes orders to the session user.
         const res = await fetch('/api/orders');
-        if (res.ok) {
-            const allOrders = await res.json();
-            return allOrders.filter(o => o.userId === currentUser.id);
-        }
+        if (res.ok) return res.json();
         return [];
     };
 
     const fetchMyAddresses = async () => {
         if (!currentUser) return [];
-        const res = await fetch(`/api/addresses?userId=${currentUser.id}`);
+        const res = await fetch('/api/addresses');
         if (res.ok) return res.json();
         return [];
     };
@@ -92,7 +92,7 @@ export function AuthProvider({ children }) {
         const res = await fetch('/api/addresses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, ...data })
+            body: JSON.stringify(data)
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Gagal menyimpan alamat.');
@@ -103,7 +103,7 @@ export function AuthProvider({ children }) {
         const res = await fetch(`/api/addresses/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, ...data })
+            body: JSON.stringify(data)
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Gagal memperbarui alamat.');

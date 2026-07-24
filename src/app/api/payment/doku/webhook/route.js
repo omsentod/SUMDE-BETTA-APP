@@ -86,15 +86,17 @@ export async function POST(request) {
 
     const payload = JSON.parse(rawBody);
     const invoiceNumber = payload.order?.invoice_number;
+    // Extract actual order ID (strip off the timestamp suffix if present)
+    const actualOrderId = invoiceNumber ? invoiceNumber.split('_')[0] : null;
     const rawStatus = payload.payment?.status;
 
-    if (!invoiceNumber || !rawStatus) {
+    if (!actualOrderId || !rawStatus) {
       return NextResponse.json({ error: 'Invalid webhook payload structure.' }, { status: 400 });
     }
     const paymentStatus = rawStatus.toUpperCase();
 
     const order = await prisma.order.findUnique({
-      where: { id: invoiceNumber },
+      where: { id: actualOrderId },
       include: { items: { include: { product: true } } },
     });
     if (!order) {
@@ -105,7 +107,7 @@ export async function POST(request) {
     // for an already-finalized order is acknowledged (200) but not re-processed,
     // so stock is never decremented twice.
     if (order.status !== 'PENDING') {
-      console.log(`Doku Webhook: Order ${invoiceNumber} already ${order.status}. Skipping (DOKU status=${paymentStatus}).`);
+      console.log(`Doku Webhook: Order ${actualOrderId} already ${order.status}. Skipping (DOKU status=${paymentStatus}).`);
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
@@ -113,20 +115,20 @@ export async function POST(request) {
       // Payment confirmed → mark PROCESSING and decrement stock atomically (P2-b).
       await prisma.$transaction(async (tx) => {
         await decrementStockForOrder(tx, order);
-        await tx.order.update({ where: { id: invoiceNumber }, data: { status: 'PROCESSING' } });
+        await tx.order.update({ where: { id: actualOrderId }, data: { status: 'PROCESSING' } });
       });
-      console.log(`Doku Webhook: Order ${invoiceNumber} paid → PROCESSING, stock updated.`);
+      console.log(`Doku Webhook: Order ${actualOrderId} paid → PROCESSING, stock updated.`);
     } else if (FAILED_STATUSES.includes(paymentStatus)) {
       // Failed / expired / cancelled → cancel the order. No stock was decremented
       // at creation, so there is nothing to restore.
-      await prisma.order.update({ where: { id: invoiceNumber }, data: { status: 'CANCELLED' } });
-      console.log(`Doku Webhook: Order ${invoiceNumber} ${paymentStatus} → CANCELLED.`);
+      await prisma.order.update({ where: { id: actualOrderId }, data: { status: 'CANCELLED' } });
+      console.log(`Doku Webhook: Order ${actualOrderId} ${paymentStatus} → CANCELLED.`);
     } else if (paymentStatus === 'PENDING') {
       // DOKU still awaiting payment — leave the order as-is.
-      console.log(`Doku Webhook: Order ${invoiceNumber} still PENDING at DOKU. No-op.`);
+      console.log(`Doku Webhook: Order ${actualOrderId} still PENDING at DOKU. No-op.`);
     } else {
       // Unknown status (e.g. REFUNDED after capture) — do not guess; log for review.
-      console.warn(`Doku Webhook: Unhandled DOKU status "${paymentStatus}" for order ${invoiceNumber}. No change applied.`);
+      console.warn(`Doku Webhook: Unhandled DOKU status "${paymentStatus}" for order ${actualOrderId}. No change applied.`);
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

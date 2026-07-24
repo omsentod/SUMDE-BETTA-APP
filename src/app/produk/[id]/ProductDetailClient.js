@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,18 +11,16 @@ export default function ProductDetailClient() {
     const router = useRouter();
     const { addToCart, buyNow, cart } = useCart();
     const { products, isLoading } = useProducts();
+    const [prevProductId, setPrevProductId] = useState(null);
     const [selectedSize, setSelectedSize] = useState('');
 
     const product = products.find((p) => p.id === id);
 
-    useEffect(() => {
-        if (product && product.sizes && Array.isArray(product.sizes)) {
-            const available = product.sizes.find(s => s.quantity > 0);
-            if (available) {
-                setSelectedSize(available.size);
-            }
-        }
-    }, [product]);
+    if (product && product.id !== prevProductId) {
+        setPrevProductId(product.id);
+        const available = product.sizes?.find(s => s.quantity > 0)?.size || '';
+        setSelectedSize(available);
+    }
 
     if (isLoading) {
         return (

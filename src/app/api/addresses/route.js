@@ -1,26 +1,27 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireUser } from '@/lib/auth';
 import { syncUserProfileFromAddress } from '@/lib/address';
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    if (!userId) return NextResponse.json({ error: 'userId wajib diisi.' }, { status: 400 });
+    const session = await requireUser(request);
     const addresses = await prisma.address.findMany({
-      where: { userId },
+      where: { userId: session.id },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }]
     });
     return NextResponse.json(addresses);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }
 
 export async function POST(request) {
   try {
-    const { userId, label, recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault } = await request.json();
-    if (!userId || !recipientName || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
+    const session = await requireUser(request);
+    const userId = session.id;
+    const { label, recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault } = await request.json();
+    if (!recipientName || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
       return NextResponse.json({ error: 'Data alamat tidak lengkap.' }, { status: 400 });
     }
     if (isDefault) {
@@ -36,6 +37,6 @@ export async function POST(request) {
     }
     return NextResponse.json(address, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }

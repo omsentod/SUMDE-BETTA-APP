@@ -172,6 +172,7 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         if (products.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCategories(prev => {
                 const cats = new Set([...defaultCategories, ...prev]);
                 products.forEach(p => { if (p.form) cats.add(p.form); });
@@ -289,7 +290,7 @@ export default function AdminDashboard() {
     const loadUsers = async () => {
         setUsersLoading(true);
         try {
-            const res = await fetch(`/api/users?requesterId=${currentUser.id}`);
+            const res = await fetch('/api/users');
             if (res.ok) setUsers(await res.json());
         } catch (err) {
             console.error(err);
@@ -310,14 +311,6 @@ export default function AdminDashboard() {
         }
     };
 
-    useEffect(() => {
-        if (currentUser && currentUser.role === 'admin') {
-            if (activeTab === 'users') loadUsers();
-            if (activeTab === 'transactions') loadOrders();
-            if (activeTab === 'events') loadEvents();
-        }
-    }, [activeTab, currentUser]);
-
     // Load events
     const loadEvents = async () => {
         setEventsLoading(true);
@@ -330,6 +323,15 @@ export default function AdminDashboard() {
             setEventsLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (currentUser && currentUser.role === 'admin') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (activeTab === 'users') loadUsers();
+            if (activeTab === 'transactions') loadOrders();
+            if (activeTab === 'events') loadEvents();
+        }
+    }, [activeTab, currentUser]);
 
     // Handle event file upload
     const handleEventFileUpload = async (e) => {
@@ -461,7 +463,7 @@ export default function AdminDashboard() {
             const res = await fetch('/api/users', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: user.id, requesterId: currentUser.id, role: newRole })
+                body: JSON.stringify({ id: user.id, role: newRole })
             });
             if (res.ok) {
                 setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u));
@@ -480,7 +482,7 @@ export default function AdminDashboard() {
         if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
 
         try {
-            const res = await fetch(`/api/users?id=${id}&requesterId=${currentUser.id}`, {
+            const res = await fetch(`/api/users?id=${id}`, {
                 method: 'DELETE'
             });
             if (res.ok) {

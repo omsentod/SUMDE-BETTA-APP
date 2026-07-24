@@ -115,12 +115,14 @@ export default function CheckoutPage() {
     useEffect(() => {
         if (!autofillTarget?.province || provinces.length === 0) return;
         const match = provinces.find(p => p.name.toLowerCase() === autofillTarget.province.toLowerCase());
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- API-driven cascading autofill
         if (match) setProvId(match.id);
     }, [autofillTarget, provinces]);
 
     // Fetch cities when province changes
     useEffect(() => {
         if (!provId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCities([]);
             return;
         }
@@ -134,12 +136,14 @@ export default function CheckoutPage() {
     useEffect(() => {
         if (!autofillTarget?.city || cities.length === 0) return;
         const match = cities.find(c => c.name.toLowerCase() === autofillTarget.city.toLowerCase());
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- API-driven cascading autofill
         if (match) setCityId(match.id);
     }, [autofillTarget, cities]);
 
     // Fetch districts when city changes
     useEffect(() => {
         if (!cityId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setDistricts([]);
             return;
         }
@@ -153,12 +157,14 @@ export default function CheckoutPage() {
     useEffect(() => {
         if (!autofillTarget?.district || districts.length === 0) return;
         const match = districts.find(d => d.name.toLowerCase() === autofillTarget.district.toLowerCase());
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- API-driven cascading autofill
         if (match) setDistrictId(match.id);
     }, [autofillTarget, districts]);
 
     // Fetch villages when district changes
     useEffect(() => {
         if (!districtId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setVillages([]);
             return;
         }

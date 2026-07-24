@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const ProductContext = createContext();
 
@@ -7,8 +7,8 @@ export function ProductProvider({ children }) {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchProducts = async () => {
-        setIsLoading(true);
+    const fetchProducts = useCallback(async ({ showLoading = true } = {}) => {
+        if (showLoading) setIsLoading(true);
         try {
             const res = await fetch('/api/products');
             if (res.ok) {
@@ -20,10 +20,24 @@ export function ProductProvider({ children }) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchProducts();
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch('/api/products');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!cancelled) setProducts(data);
+                }
+            } catch (error) {
+                console.error('Gagal mengambil data produk:', error);
+            } finally {
+                if (!cancelled) setIsLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
     }, []);
 
     const addProduct = async (productData) => {
