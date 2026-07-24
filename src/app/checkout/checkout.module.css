@@ -1,0 +1,164 @@
+.sectionTitle {
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.2rem;
+    color: var(--primary);
+}
+
+.savedAddressSection {
+    margin-bottom: 2rem;
+}
+
+.savedAddressLabel {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.savedAddressGrid {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.addressCard {
+    text-align: left;
+    flex: 1 1 240px;
+    min-width: 240px;
+    padding: 1rem 1.2rem;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.addressCardActive {
+    border-color: var(--primary);
+    background: rgba(255, 107, 53, 0.08);
+}
+
+.addressCardHeader {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.addressTag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.addressDefaultBadge {
+    font-size: 0.65rem;
+    color: var(--primary);
+}
+
+.addressRecipient {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 0 0 0.2rem;
+}
+
+.addressDetailText {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.fieldLabel {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+}
+
+.fullCol {
+    grid-column: 1 / -1;
+}
+
+.inputFull {
+    width: 100%;
+}
+
+.selectAlertText {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--primary);
+    margin-top: 0.4rem;
+}
+
+.streetAddressInput {
+    width: 100%;
+    min-height: 80px;
+    resize: none;
+}
+
+.saveAddressBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-main);
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.saveAddressBtnDisabled {
+    cursor: default;
+}
+
+.summaryTitle {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: var(--text-main);
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.summaryRowLarge {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.summaryTotalRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    font-size: 1.8rem;
+    font-weight: 600;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 2rem;
+    color: var(--text-main);
+}
+
+.proceedBtn {
+    width: 100%;
+    padding: 1.2rem;
+    cursor: pointer;
+}
+
+.disclaimerText {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 1.5rem;
+    line-height: 1.5;
+}

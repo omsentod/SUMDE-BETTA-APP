@@ -34,63 +34,50 @@ export default function CartSidebar() {
             <div className={`cart-overlay ${isCartOpen ? 'open' : ''}`} onClick={toggleCart}></div>
             <div className={`cart-sidebar ${isCartOpen ? 'open' : ''}`}>
                 <div className="cart-header">
-                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', fontStyle: 'italic' }}>Keranjang</h2>
-                    <button onClick={toggleCart} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
+                    <h2 className="cart-header-title">Keranjang</h2>
+                    <button onClick={toggleCart} className="cart-header-close">×</button>
                 </div>
 
                 <div className="cart-items-list">
                     {cart.length === 0 ? (
-                        <div style={{ textAlign: 'center', marginTop: '5rem', color: 'var(--text-muted)' }}>
+                        <div className="cart-empty-state">
                             <p>Belum ada spesimen terpilih.</p>
                         </div>
                     ) : (
                         cart.map((item) => (
-                            <div key={`${item.id}-${item.selectedSize}`} className="cart-item-side" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                {/* Checkbox for item selection (Shopee style) */}
+                            <div key={`${item.id}-${item.selectedSize}`} className="cart-item-side cart-item-row">
+                                {/* Checkbox for item selection */}
                                 <input
                                     type="checkbox"
                                     checked={item.checked !== false}
                                     onChange={() => toggleItemCheck(item.id, item.selectedSize)}
-                                    style={{
-                                        cursor: 'pointer',
-                                        width: '18px',
-                                        height: '18px',
-                                        accentColor: 'var(--primary)',
-                                        flexShrink: 0
-                                    }}
+                                    className="cart-checkbox"
                                 />
 
-                                <div style={{ display: 'flex', gap: '1rem', flex: 1, alignItems: 'center' }}>
-                                    <div style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '0.5rem', overflow: 'hidden', flexShrink: 0 }}>
-                                        <Image src={item.image} alt={item.name} fill style={{ objectFit: 'cover' }} />
+                                <div className="cart-item-body">
+                                    <div className="cart-item-img-wrapper">
+                                        <Image src={item.image} alt={item.name} fill className="object-cover" />
                                     </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ fontSize: '0.95rem', marginBottom: '0.2rem', color: 'var(--text-main)' }}>{item.name}</h4>
+                                    <div className="flex-1">
+                                        <h4 className="cart-item-title">{item.name}</h4>
                                         {item.selectedSize && (
-                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.2rem 0' }}>
+                                            <p className="cart-item-size">
                                                 Size: {item.selectedSize}
                                             </p>
                                         )}
-                                        <p style={{ color: '#FF6B35', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                        <p className="cart-item-price">
                                             {formattedCurrency(item.price)}
                                         </p>
-                                        <div className="qty-control" style={{ marginTop: '0.4rem', scale: '0.8', originX: 'left' }}>
-                                            <button onClick={() => updateQuantity(item.id, -1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>-</button>
-                                            <span style={{ color: 'var(--text-main)' }}>{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
+                                        <div className="qty-control mt-1 scale-90 origin-left">
+                                            <button onClick={() => updateQuantity(item.id, -1, item.selectedSize)} className="qty-btn cursor-pointer">-</button>
+                                            <span className="text-[var(--text-main)]">{item.quantity}</span>
+                                            <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn cursor-pointer">+</button>
                                         </div>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => removeFromCart(item.id, item.selectedSize)} 
-                                    style={{ 
-                                        background: 'none', 
-                                        border: 'none', 
-                                        color: 'var(--primary)', 
-                                        cursor: 'pointer', 
-                                        fontSize: '0.75rem',
-                                        padding: '0.5rem 0'
-                                    }}
+                                    className="cart-item-remove-btn"
                                 >
                                     Hapus
                                 </button>
@@ -100,16 +87,15 @@ export default function CartSidebar() {
                 </div>
 
                 <div className="cart-footer">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '1.2rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                    <div className="cart-footer-row">
                         <span>Total Terpilih</span>
-                        <span style={{ color: '#FF6B35' }}>{formattedCurrency(cartCheckedTotal)}</span>
+                        <span className="color-primary">{formattedCurrency(cartCheckedTotal)}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button onClick={toggleCart} className="btn btn-outline" style={{ flex: 1, padding: '0.8rem', cursor: 'pointer' }}>Batal</button>
+                    <div className="cart-footer-btn-group">
+                        <button onClick={toggleCart} className="btn btn-outline cart-footer-btn">Batal</button>
                         <button
                             onClick={handleCheckout}
-                            className="btn btn-primary"
-                            style={{ flex: 1, padding: '0.8rem', cursor: 'pointer' }}
+                            className="btn btn-primary cart-footer-btn"
                             disabled={cart.filter(i => i.checked !== false).length === 0}
                         >
                             Lanjut Checkout

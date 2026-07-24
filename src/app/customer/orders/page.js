@@ -61,40 +61,30 @@ export default function OrdersPage() {
     const filtered = activeTab === 'ALL' ? orders : orders.filter(o => o.status === activeTab);
 
     if (authLoading || !currentUser) {
-        return <div className="pageContainer" style={{ paddingTop: '120px', textAlign: 'center' }}><h2 style={{ color: 'var(--text-muted)' }}>Memverifikasi akun...</h2></div>;
+        return <div className="pageContainer pt-[120px] text-center"><h2 className="text-[var(--text-muted)]">Memverifikasi akun...</h2></div>;
     }
 
     return (
-        <div className="pageContainer" style={{ paddingTop: '100px', minHeight: '100vh' }}>
-            <div className="container" style={{ maxWidth: '900px', paddingBottom: '5rem' }}>
+        <div className="pageContainer orders-page-container">
+            <div className="container orders-wrapper">
 
                 {/* Header */}
-                <div style={{ marginBottom: '2.5rem' }}>
-                    <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase' }}>Customer Area</span>
-                    <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', fontStyle: 'italic', marginTop: '0.4rem', color: 'var(--text-main)' }}>Pesanan Saya</h1>
+                <div className="orders-header">
+                    <span className="text-[var(--primary)] tracking-[0.2rem] text-[0.75rem] font-bold uppercase">Customer Area</span>
+                    <h1 className="font-[var(--font-serif)] text-[2.5rem] italic mt-[0.4rem] text-[var(--text-main)]">Pesanan Saya</h1>
                 </div>
 
                 {/* Status Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                <div className="orders-tabs-wrapper">
                     {TABS.map(tab => {
                         const count = tab.key === 'ALL' ? orders.length : orders.filter(o => o.status === tab.key).length;
                         return (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
-                                style={{
-                                    padding: '0.4rem 1rem',
-                                    borderRadius: '20px',
-                                    border: activeTab === tab.key ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                                    background: activeTab === tab.key ? 'var(--primary)' : 'transparent',
-                                    color: activeTab === tab.key ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                }}
+                                className={`orders-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
                             >
-                                {tab.label} {count > 0 && <span style={{ opacity: 0.75 }}>({count})</span>}
+                                {tab.label} {count > 0 && <span className="opacity-75">({count})</span>}
                             </button>
                         );
                     })}
@@ -102,61 +92,63 @@ export default function OrdersPage() {
 
                 {/* Orders List */}
                 {loading ? (
-                    <p style={{ color: 'var(--text-muted)' }}>Memuat pesanan...</p>
+                    <p className="text-[var(--text-muted)]">Memuat pesanan...</p>
                 ) : filtered.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '5rem 0', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                        <span style={{ fontSize: '3rem' }}>🐟</span>
-                        <h4 style={{ margin: '1rem 0 0.5rem', color: 'var(--text-main)' }}>Belum ada pesanan</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Mulai belanja koleksi ikan betta eksklusif kami.</p>
-                        <Link href="/produk" className="btn btn-primary" style={{ cursor: 'pointer' }}>Jelajahi Produk</Link>
+                    <div className="orders-empty-card">
+                        <span className="text-[3rem]">🐟</span>
+                        <h4 className="my-[1rem] mb-[0.5rem] text-[var(--text-main)]">Belum ada pesanan</h4>
+                        <p className="text-[var(--text-muted)] text-[0.9rem] mb-[1.5rem]">Mulai belanja koleksi ikan betta eksklusif kami.</p>
+                        <Link href="/produk" className="btn btn-primary cursor-pointer">Jelajahi Produk</Link>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="orders-list-container">
                         {filtered.map(order => {
                             const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
                             return (
-                                <div key={order.id} style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                                <div key={order.id} className="order-card">
                                     {/* Order Header */}
-                                    <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                    <div className="order-card-header">
                                         <div>
-                                            <h4 style={{ fontSize: '0.95rem', margin: 0, color: 'var(--text-main)', fontWeight: '600' }}>
-                                                Pesanan <span style={{ color: 'var(--primary)' }}>#{order.id.slice(0, 8).toUpperCase()}</span>
+                                            <h4 className="order-card-title">
+                                                Pesanan <span className="text-[var(--primary)]">#{order.id.slice(0, 8).toUpperCase()}</span>
                                             </h4>
-                                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                            <span className="order-card-date">
                                                 {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
-                                        <span style={{ fontSize: '0.8rem', padding: '0.3rem 0.9rem', borderRadius: '20px', border: `1px solid ${cfg.border}`, background: cfg.bg, color: cfg.color, fontWeight: '700', whiteSpace: 'nowrap' }}>
+                                        <span 
+                                            className="order-status-badge"
+                                            style={{ border: `1px solid ${cfg.border}`, background: cfg.bg, color: cfg.color }}
+                                        >
                                             {cfg.label}
                                         </span>
                                     </div>
 
                                     {/* Order Items */}
-                                    <div style={{ padding: '1.25rem 1.5rem' }}>
+                                    <div className="order-card-items">
                                         {order.items.map(item => (
-                                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                                                <span>{item.product?.name || 'Produk dihapus'} <span style={{ color: 'var(--text-muted)' }}>× {item.quantity}</span></span>
-                                                <span style={{ fontWeight: '600' }}>{fmt(item.price * item.quantity)}</span>
+                                            <div key={item.id} className="order-item-row">
+                                                <span>{item.product?.name || 'Produk dihapus'} <span className="text-[var(--text-muted)]">× {item.quantity}</span></span>
+                                                <span className="font-semibold">{fmt(item.price * item.quantity)}</span>
                                             </div>
                                         ))}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--border-color)', fontWeight: '700', color: 'var(--text-main)' }}>
+                                        <div className="order-total-row">
                                             <span>Total</span>
-                                            <span style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>{fmt(order.total)}</span>
+                                            <span className="text-[var(--primary)] text-[1.1rem]">{fmt(order.total)}</span>
                                         </div>
                                     </div>
 
                                     {/* Shipping Info */}
-                                    <div style={{ padding: '0.75rem 1.5rem 1.25rem', borderTop: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                        <span style={{ color: 'var(--text-main)', fontWeight: '600' }}>{order.name}</span>
+                                    <div className="order-shipping-info">
+                                        <span className="text-[var(--text-main)] font-semibold">{order.name}</span>
                                         {' · '}{order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province} {order.postalCode}
                                     </div>
                                     
                                     {/* Actions */}
                                     {order.status === 'PENDING' && (
-                                        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', background: 'rgba(255,107,53,0.02)' }}>
+                                        <div className="order-actions-bar">
                                             <button 
-                                                className="btn btn-primary" 
-                                                style={{ padding: '0.5rem 1.5rem', fontSize: '0.9rem', cursor: payingOrderId === order.id ? 'wait' : 'pointer' }}
+                                                className="btn btn-primary text-[0.9rem] px-6 py-2" 
                                                 onClick={() => handlePayNow(order.id)}
                                                 disabled={payingOrderId === order.id}
                                             >

@@ -4,6 +4,10 @@
     @apply flex flex-col bg-[var(--bg-card)] rounded-2xl overflow-hidden border border-[var(--border-color)] shadow-sm transition-all duration-300 transform;
 }
 
+.cardLink {
+    @apply flex flex-col h-full text-inherit no-underline;
+}
+
 .card:hover {
     @apply shadow-xl border-[var(--text-muted)] -translate-y-1;
 }

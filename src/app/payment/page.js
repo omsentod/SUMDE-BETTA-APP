@@ -2,6 +2,7 @@
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import styles from './payment.module.css';
 
 export default function PaymentPage() {
     const { checkoutTotal: total, clearCheckout: clearCart, checkoutItems: cart } = useCart();
@@ -193,13 +194,13 @@ export default function PaymentPage() {
 
     return (
         <div className="payment-page">
-            <section style={{ padding: '8rem 0' }}>
-                <div className="container" style={{ maxWidth: '850px' }}>
+            <section className={styles.sectionPadding}>
+                <div className={`container ${styles.paymentContainer}`}>
                     
                     {/* Header */}
-                    <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-                        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', marginBottom: '0.8rem', color: 'var(--text-main)' }}>Penyelesaian Aman</h1>
-                        <p style={{ color: 'var(--text-muted)' }}>
+                    <div className={styles.headerText}>
+                        <h1 className={styles.headerTitle}>Penyelesaian Aman</h1>
+                        <p className="text-[var(--text-muted)]">
                             {status === 'pending' 
                                 ? 'Konfirmasi akuisisi Anda menggunakan portal pembayaran terenkripsi DOKU Checkout.' 
                                 : 'Pembayaran Anda sedang berjalan. Segera selesaikan transaksi Anda di portal DOKU.'}
@@ -208,16 +209,16 @@ export default function PaymentPage() {
 
                     {/* Step 1: Pending landing page */}
                     {status === 'pending' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '3rem' }}>
+                        <div className={styles.gridTwoCol}>
                             {/* Actions Card */}
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div className={styles.actionsCard}>
                                 <div>
-                                    <h3 style={{ fontSize: '0.8rem', color: 'var(--primary)', letterSpacing: '0.2rem', marginBottom: '2rem', textTransform: 'uppercase' }}>DOKU CHECKOUT</h3>
+                                    <h3 className={styles.cardSectionTitle}>DOKU CHECKOUT</h3>
                                     
-                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: '1.7', marginBottom: '3rem' }}>
+                                    <div className={styles.cardDescription}>
                                         <p>Anda akan dialihkan ke halaman aman <b>DOKU Checkout</b> untuk menyelesaikan transaksi.</p>
-                                        <p style={{ marginTop: '0.5rem' }}>Metode yang didukung di portal Doku Sandbox:</p>
-                                        <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0' }}>
+                                        <p className="mt-2">Metode yang didukung di portal Doku Sandbox:</p>
+                                        <ul className={styles.methodList}>
                                             <li>Virtual Account (BCA, Mandiri, BNI, BRI, Permata)</li>
                                             <li>QRIS (Pindai Barcode dinamis)</li>
                                             <li>Credit Card (Uji coba CC Sandbox)</li>
@@ -228,8 +229,7 @@ export default function PaymentPage() {
 
                                 <button
                                     onClick={handleProceedToDoku}
-                                    className="btn btn-primary"
-                                    style={{ width: '100%', padding: '1.3rem', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                                    className={`btn btn-primary ${styles.dokuBtn}`}
                                     disabled={loading}
                                 >
                                     {loading ? 'Menghubungkan ke DOKU...' : 'Bayar Sekarang via DOKU Checkout'}
@@ -237,26 +237,26 @@ export default function PaymentPage() {
                             </div>
 
                             {/* Summary Card */}
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.05)', height: 'fit-content' }}>
-                                <h3 style={{ fontSize: '0.8rem', color: 'var(--primary)', letterSpacing: '0.2rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>RINGKASAN TAGIHAN</h3>
-                                <div style={{ marginBottom: '2rem' }}>
+                            <div className={styles.summaryCard}>
+                                <h3 className={styles.cardSectionTitle}>RINGKASAN TAGIHAN</h3>
+                                <div className="mb-8">
                                     {cart.map(item => (
-                                        <div key={`${item.id}-${item.selectedSize}`} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                                            <span style={{ color: 'var(--text-muted)' }}>{item.name} x {item.quantity}</span>
+                                        <div key={`${item.id}-${item.selectedSize}`} className={styles.summaryItemRow}>
+                                            <span className="text-[var(--text-muted)]">{item.name} x {item.quantity}</span>
                                             <span>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}</span>
                                         </div>
                                     ))}
-                                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '1.1rem', fontWeight: '600', display: 'flex', justifyContent: 'space-between', color: 'var(--text-main)' }}>
+                                    <div className={styles.summaryTotalRow}>
                                         <span>Total Tagihan</span>
-                                        <span style={{ color: '#00b4d8' }}>{formattedTotal}</span>
+                                        <span className="color-secondary">{formattedTotal}</span>
                                     </div>
                                 </div>
 
-                                <h3 style={{ fontSize: '0.8rem', color: 'var(--primary)', letterSpacing: '0.2rem', marginBottom: '1rem', textTransform: 'uppercase' }}>PENGIRIMAN</h3>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                                    <p style={{ color: 'white', fontWeight: '500', margin: '0 0 0.3rem 0' }}>{shipment?.name}</p>
-                                    <p style={{ margin: '0 0 0.3rem 0' }}>{shipment?.phone}</p>
-                                    <p style={{ margin: '0' }}>{shipment?.streetAddress}, Kel. {shipment?.village}, {shipment?.city}, {shipment?.province}</p>
+                                <h3 className={styles.cardSectionTitle}>PENGIRIMAN</h3>
+                                <div className={styles.shippingInfoBox}>
+                                    <p className="text-white font-medium mb-1">{shipment?.name}</p>
+                                    <p className="mb-1">{shipment?.phone}</p>
+                                    <p className="m-0">{shipment?.streetAddress}, Kel. {shipment?.village}, {shipment?.city}, {shipment?.province}</p>
                                 </div>
                             </div>
                         </div>
@@ -264,65 +264,31 @@ export default function PaymentPage() {
 
                     {/* Step 2: Waiting/Callback state */}
                     {status === 'checkout_created' && activePayment && (
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3.5rem', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                border: '3px solid rgba(0, 180, 216, 0.2)',
-                                borderTop: '3px solid #00b4d8',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite',
-                                margin: '0 auto 2.5rem auto'
-                            }}></div>
+                        <div className={styles.waitingCard}>
+                            <div className={styles.spinner}></div>
                             
-                            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.2rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Menunggu Pembayaran</h2>
-                            <p style={{ color: 'var(--text-muted)', maxWidth: '500px', margin: '0 auto 2.5rem auto', lineHeight: '1.6' }}>
+                            <h2 className={styles.waitingTitle}>Menunggu Pembayaran</h2>
+                            <p className={styles.waitingText}>
                                 Halaman pembayaran DOKU Checkout telah berhasil dibuat. Silakan selesaikan pembayaran di jendela baru, lalu kembali ke sini untuk memeriksa status pembayaran Anda.
                             </p>
 
-                            <style jsx>{`
-                                @keyframes spin {
-                                    0% { transform: rotate(0deg); }
-                                    100% { transform: rotate(360deg); }
-                                }
-                            `}</style>
-
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', maxWidth: '500px', margin: '0 auto' }}>
+                            <div className={styles.btnGroup}>
                                 <button
                                     onClick={() => window.location.href = activePayment.paymentUrl}
-                                    className="btn btn-primary"
-                                    style={{ flex: 1.2, padding: '1.2rem', cursor: 'pointer', fontSize: '0.95rem' }}
+                                    className={`btn btn-primary ${styles.continueBtn}`}
                                 >
                                     Lanjutkan Ke DOKU
                                 </button>
                                 <button
                                     onClick={handleCheckStatus}
-                                    style={{
-                                        flex: 1.2,
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        color: 'white',
-                                        padding: '1.2rem',
-                                        borderRadius: '0.8rem',
-                                        cursor: 'pointer',
-                                        fontSize: '0.95rem'
-                                    }}
+                                    className={styles.checkStatusBtn}
                                     disabled={checkingStatus}
                                 >
                                     {checkingStatus ? 'Memeriksa...' : 'Cek Status Pembayaran'}
                                 </button>
                                 <button
                                     onClick={handleCancelPayment}
-                                    style={{
-                                        flex: 0.6,
-                                        background: 'rgba(255, 0, 0, 0.1)',
-                                        border: '1px solid rgba(255, 0, 0, 0.2)',
-                                        color: '#ff6b6b',
-                                        padding: '1.2rem',
-                                        borderRadius: '0.8rem',
-                                        cursor: 'pointer',
-                                        fontSize: '0.9rem'
-                                    }}
+                                    className={styles.cancelBtn}
                                 >
                                     Batal
                                 </button>

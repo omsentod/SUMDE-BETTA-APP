@@ -16,5 +16,7 @@
 - **Deferred Stock Reduction**: Stock is **never** decremented when an order is created (`PENDING`). Stock is only decremented upon receiving a verified `SUCCESS` status from the DOKU webhook.
 
 ## 4. UI Aesthetics & Theme System
-- **Luxury Betta Design System**: Maintain the dark mode aesthetic, vibrant accents, sleek typography, and smooth CSS transitions defined in `src/app/globals.css`.
+- **No Inline Styles in JSX**: Do NOT write inline styles (`style={{ ... }}`) inside JSX components. All styling MUST be placed in dedicated CSS files (`.css` or `.module.css`) using clean BEM/semantic CSS class names.
+- **Dedicated CSS Files Per Feature/Page**: Do NOT dump page-specific styles into `globals.css`. Create dedicated CSS files or CSS Modules (e.g. `checkout.module.css`, `payment.module.css`, `dashboard.module.css`) for each page/feature.
+- **Luxury Betta Design System**: Maintain the dark mode aesthetic, vibrant accents, sleek typography, and smooth CSS transitions defined in CSS files.
 - **Responsive Layout**: Ensure interactive elements, tables, forms, and product grids adapt cleanly to mobile screen sizes.

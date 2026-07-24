@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import SearchableSelect from '@/components/SearchableSelect';
+import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
     const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart } = useCart();
@@ -296,12 +297,12 @@ export default function CheckoutPage() {
                     <div className="grid-checkout-outer">
 
                         <div className="checkout-left">
-                            <div className="cart-items" style={{ marginBottom: '4rem' }}>
-                                <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Spesimen Terpilih</h3>
+                            <div className="cart-items mb-16">
+                                <h3 className={styles.sectionTitle}>Spesimen Terpilih</h3>
                                 {cart.map((item) => (
                                     <div key={`${item.id}-${item.selectedSize}`} className="checkout-item-row">
                                         <div className="checkout-item-image">
-                                            <Image src={item.image} alt={item.name} fill style={{ objectFit: 'cover' }} />
+                                            <Image src={item.image} alt={item.name} fill className="object-cover" />
                                         </div>
                                         <div className="checkout-item-info">
                                             <h3>{item.name}</h3>
@@ -313,9 +314,9 @@ export default function CheckoutPage() {
                                             )}
                                         </div>
                                         <div className="qty-control">
-                                            <button onClick={() => updateQuantity(item.id, -1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>-</button>
-                                            <span style={{ color: 'var(--text-main)' }}>{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn" style={{ cursor: 'pointer' }}>+</button>
+                                            <button onClick={() => updateQuantity(item.id, -1, item.selectedSize)} className="qty-btn cursor-pointer">-</button>
+                                            <span className="text-[var(--text-main)]">{item.quantity}</span>
+                                            <button onClick={() => updateQuantity(item.id, 1, item.selectedSize)} className="qty-btn cursor-pointer">+</button>
                                         </div>
                                         <div className="checkout-item-price">
                                             <p>
@@ -330,13 +331,13 @@ export default function CheckoutPage() {
                             </div>
 
                             <div className="checkout-form-container">
-                                <h3 style={{ marginBottom: '2rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--primary)' }}>Detail Pengiriman Resmi</h3>
+                                <h3 className={styles.sectionTitle}>Detail Pengiriman Resmi</h3>
 
                                 {/* Saved address picker */}
                                 {currentUser && savedAddresses.length > 0 && (
-                                    <div style={{ marginBottom: '2rem' }}>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pilih dari alamat tersimpan:</p>
-                                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                    <div className={styles.savedAddressSection}>
+                                        <p className={styles.savedAddressLabel}>Pilih dari alamat tersimpan:</p>
+                                        <div className={styles.savedAddressGrid}>
                                             {savedAddresses.map(addr => {
                                                 const active = selectedAddressId === addr.id;
                                                 return (
@@ -344,25 +345,14 @@ export default function CheckoutPage() {
                                                         key={addr.id}
                                                         type="button"
                                                         onClick={() => applyAddress(addr)}
-                                                        style={{
-                                                            textAlign: 'left',
-                                                            flex: '1 1 240px',
-                                                            minWidth: '240px',
-                                                            padding: '1rem 1.2rem',
-                                                            borderRadius: '0.8rem',
-                                                            border: `1px solid ${active ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}`,
-                                                            background: active ? 'rgba(255,107,53,0.08)' : 'rgba(255,255,255,0.02)',
-                                                            color: 'var(--text-main)',
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.15s'
-                                                        }}
+                                                        className={`${styles.addressCard} ${active ? styles.addressCardActive : ''}`}
                                                     >
-                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{addr.label}</span>
-                                                            {addr.isDefault && <span style={{ fontSize: '0.65rem', color: 'var(--primary)' }}>★ Utama</span>}
+                                                        <div className={styles.addressCardHeader}>
+                                                            <span className={styles.addressTag}>{addr.label}</span>
+                                                            {addr.isDefault && <span className={styles.addressDefaultBadge}>★ Utama</span>}
                                                         </div>
-                                                        <p style={{ fontWeight: '600', fontSize: '0.9rem', margin: '0 0 0.2rem' }}>{addr.recipientName} · {addr.phone}</p>
-                                                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                                                        <p className={styles.addressRecipient}>{addr.recipientName} · {addr.phone}</p>
+                                                        <p className={styles.addressDetailText}>
                                                             {addr.streetAddress}, Kel. {addr.village}, {addr.city}, {addr.province} {addr.postalCode}
                                                         </p>
                                                     </button>
@@ -373,22 +363,22 @@ export default function CheckoutPage() {
                                 )}
 
                                 <form onSubmit={handleProceed} className="grid-form-2col">
-                                    <div style={{ gridColumn: '1 / -1' }}>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nama Penerima</label>
-                                        <input type="text" name="name" className="search-input" style={{ width: '100%' }} value={formData.name} onChange={handleInputChange} required />
+                                    <div className={styles.fullCol}>
+                                        <label className={styles.fieldLabel}>Nama Penerima</label>
+                                        <input type="text" name="name" className={`search-input ${styles.inputFull}`} value={formData.name} onChange={handleInputChange} required />
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Alamat Email</label>
-                                        <input type="email" name="email" className="search-input" style={{ width: '100%' }} value={formData.email} onChange={handleInputChange} required />
+                                        <label className={styles.fieldLabel}>Alamat Email</label>
+                                        <input type="email" name="email" className={`search-input ${styles.inputFull}`} value={formData.email} onChange={handleInputChange} required />
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nomor Telepon</label>
-                                        <input type="text" name="phone" className="search-input" style={{ width: '100%' }} value={formData.phone} onChange={handleInputChange} required />
+                                        <label className={styles.fieldLabel}>Nomor Telepon</label>
+                                        <input type="text" name="phone" className={`search-input ${styles.inputFull}`} value={formData.phone} onChange={handleInputChange} required />
                                     </div>
 
                                     {/* Cascading dropdown selectors */}
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Provinsi</label>
+                                        <label className={styles.fieldLabel}>Provinsi</label>
                                         <SearchableSelect
                                             options={provinces}
                                             value={provId}
@@ -397,7 +387,7 @@ export default function CheckoutPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kabupaten / Kota</label>
+                                        <label className={styles.fieldLabel}>Kabupaten / Kota</label>
                                         <SearchableSelect
                                             options={cities}
                                             value={cityId}
@@ -407,13 +397,13 @@ export default function CheckoutPage() {
                                             onClickDisabled={() => triggerSelectAlert('city', 'Silakan pilih Provinsi terlebih dahulu.')}
                                         />
                                         {selectAlert.field === 'city' && (
-                                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.4rem' }}>
+                                            <span className={styles.selectAlertText}>
                                                 ⚠️ {selectAlert.message}
                                             </span>
                                         )}
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kecamatan</label>
+                                        <label className={styles.fieldLabel}>Kecamatan</label>
                                         <SearchableSelect
                                             options={districts}
                                             value={districtId}
@@ -423,13 +413,13 @@ export default function CheckoutPage() {
                                             onClickDisabled={() => triggerSelectAlert('district', 'Silakan pilih Kabupaten / Kota terlebih dahulu.')}
                                         />
                                         {selectAlert.field === 'district' && (
-                                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.4rem' }}>
+                                            <span className={styles.selectAlertText}>
                                                 ⚠️ {selectAlert.message}
                                             </span>
                                         )}
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kelurahan / Desa</label>
+                                        <label className={styles.fieldLabel}>Kelurahan / Desa</label>
                                         <SearchableSelect
                                             options={villages}
                                             value={villages.find(v => v.name.toLowerCase() === formData.village?.toLowerCase())?.id || ''}
@@ -439,7 +429,7 @@ export default function CheckoutPage() {
                                             onClickDisabled={() => triggerSelectAlert('village', 'Silakan pilih Kecamatan terlebih dahulu.')}
                                         />
                                         {selectAlert.field === 'village' && (
-                                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.4rem' }}>
+                                            <span className={styles.selectAlertText}>
                                                 ⚠️ {selectAlert.message}
                                             </span>
                                         )}
@@ -447,68 +437,59 @@ export default function CheckoutPage() {
 
                                     {/* Text fields for specific details */}
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>RT / RW</label>
-                                        <input type="text" name="rtRw" className="search-input" style={{ width: '100%' }} placeholder="Contoh: RT 02 / RW 04" value={formData.rtRw} onChange={handleInputChange} required />
+                                        <label className={styles.fieldLabel}>RT / RW</label>
+                                        <input type="text" name="rtRw" className={`search-input ${styles.inputFull}`} placeholder="Contoh: RT 02 / RW 04" value={formData.rtRw} onChange={handleInputChange} required />
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Kode Pos</label>
-                                        <input type="text" name="postalCode" className="search-input" style={{ width: '100%' }} value={formData.postalCode} onChange={handleInputChange} required />
+                                        <label className={styles.fieldLabel}>Kode Pos</label>
+                                        <input type="text" name="postalCode" className={`search-input ${styles.inputFull}`} value={formData.postalCode} onChange={handleInputChange} required />
                                     </div>
 
-                                    <div style={{ gridColumn: '1 / -1' }}>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Nama Jalan, No. Rumah, Blok</label>
-                                        <textarea name="streetAddress" className="search-input" style={{ width: '100%', minHeight: '80px', resize: 'none' }} placeholder="Contoh: Jl. Sudirman No. 12, Komplek Duta Mas Blok A1" value={formData.streetAddress} onChange={handleInputChange} required></textarea>
+                                    <div className={styles.fullCol}>
+                                        <label className={styles.fieldLabel}>Nama Jalan, No. Rumah, Blok</label>
+                                        <textarea name="streetAddress" className={`search-input ${styles.streetAddressInput}`} placeholder="Contoh: Jl. Sudirman No. 12, Komplek Duta Mas Blok A1" value={formData.streetAddress} onChange={handleInputChange} required></textarea>
                                     </div>
 
                                     {/* Save current form into the address book */}
                                     {currentUser && (
-                                        <div style={{ gridColumn: '1 / -1' }}>
+                                        <div className={styles.fullCol}>
                                             <button
                                                 type="button"
                                                 onClick={handleSaveAddress}
                                                 disabled={savingAddress}
-                                                style={{
-                                                    background: 'rgba(255,255,255,0.05)',
-                                                    border: '1px solid rgba(255,255,255,0.15)',
-                                                    color: 'var(--text-main)',
-                                                    padding: '0.8rem 1.5rem',
-                                                    borderRadius: '0.6rem',
-                                                    cursor: savingAddress ? 'default' : 'pointer',
-                                                    fontSize: '0.85rem'
-                                                }}
+                                                className={`${styles.saveAddressBtn} ${savingAddress ? styles.saveAddressBtnDisabled : ''}`}
                                             >
                                                 {savingAddress ? 'Menyimpan...' : '💾 Simpan alamat ini ke buku alamat'}
                                             </button>
                                         </div>
                                     )}
 
-                                    <button type="submit" id="submit-shipment" style={{ display: 'none' }}></button>
+                                    <button type="submit" id="submit-shipment" className="hidden"></button>
                                 </form>
                             </div>
                         </div>
 
                         <div className="checkout-summary-card">
-                            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '2rem', color: 'var(--text-main)' }}>Total Akuisisi</h2>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '1.1rem', color: 'var(--text-main)' }}>
+                            <h2 className={styles.summaryTitle}>Total Akuisisi</h2>
+                            <div className={styles.summaryRow}>
                                 <span>Subtotal</span>
                                 <span>{formattedTotal}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', fontSize: '1.1rem', color: 'var(--text-main)' }}>
+                            <div className={styles.summaryRowLarge}>
                                 <span>Penanganan Aman</span>
-                                <span style={{ color: 'var(--secondary)' }}>Gratis</span>
+                                <span className="color-secondary">Gratis</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', fontSize: '1.8rem', fontWeight: '600', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem', color: 'var(--text-main)' }}>
+                            <div className={styles.summaryTotalRow}>
                                 <span>Total</span>
                                 <span>{formattedTotal}</span>
                             </div>
                             <button
                                 onClick={() => document.getElementById('submit-shipment').click()}
-                                className="btn btn-primary"
-                                style={{ width: '100%', padding: '1.2rem', cursor: 'pointer' }}
+                                className={`btn btn-primary ${styles.proceedBtn}`}
                             >
                                 Lanjutkan Ke Pembayaran
                             </button>
-                            <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '1.5rem', lineHeight: '1.5' }}>
+                            <p className={styles.disclaimerText}>
                                 Dengan melanjutkan, Anda menyetujui syarat akuisisi dan penanganan spesimen elit kami.
                             </p>
                         </div>

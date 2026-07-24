@@ -62,7 +62,7 @@ export default function Header() {
     return (
         <>
             <header className="header">
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <div className="container header-container">
 
                     {/* Logo */}
                     <Link href="/" className="logo-link">
@@ -79,7 +79,7 @@ export default function Header() {
                     </nav>
 
                     {/* Desktop Actions */}
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <div className="header-actions">
                         {/* Theme toggle */}
                         <button
                             onClick={toggleTheme}
@@ -153,7 +153,7 @@ export default function Header() {
                                 </div>
                             </div>
                         ) : (
-                            <Link href="/login" className="btn btn-primary hide-on-mobile" style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '8px' }}>
+                            <Link href="/login" className="btn btn-primary hide-on-mobile header-login-btn">
                                 Masuk
                             </Link>
                         )}
@@ -171,11 +171,11 @@ export default function Header() {
             {/* Mobile Nav Overlay */}
             <div className={`mobile-nav-overlay${menuOpen ? ' open' : ''}`}>
                 <div className="mobile-nav-header">
-                    <Link href="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Image src="/logo.png" alt="Logo" width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+                    <Link href="/" onClick={closeMenu} className="logo-link">
+                        <Image src="/logo.png" alt="Logo" width={40} height={40} className="logo-img" />
                         <div className="logo-text">SUMDE <span className="logo-highlight">BETTA</span></div>
                     </Link>
-                    <button onClick={closeMenu} style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '0.5rem' }}>
+                    <button onClick={closeMenu} className="mobile-close-btn">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -195,24 +195,24 @@ export default function Header() {
                         </>
                     )}
                     {isAdmin && (
-                        <Link href="/admin/dashboard" className="mobile-nav-link" onClick={closeMenu} style={{ color: 'var(--primary)' }}>Admin Dashboard</Link>
+                        <Link href="/admin/dashboard" className="mobile-nav-link mobile-admin-link" onClick={closeMenu}>Admin Dashboard</Link>
                     )}
                 </nav>
 
                 <div className="mobile-nav-actions">
                     {currentUser ? (
-                        <button onClick={() => { logout(); closeMenu(); }} className="btn btn-outline" style={{ flex: 1, cursor: 'pointer' }}>
+                        <button onClick={() => { logout(); closeMenu(); }} className="btn btn-outline mobile-btn-flex">
                             Logout
                         </button>
                     ) : (
-                        <Link href="/login" className="btn btn-primary" onClick={closeMenu} style={{ flex: 1, textAlign: 'center' }}>
+                        <Link href="/login" className="btn btn-primary mobile-btn-flex" onClick={closeMenu}>
                             Masuk
                         </Link>
                     )}
-                    <button onClick={toggleTheme} className="btn btn-outline" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} aria-label="Toggle Theme">
+                    <button onClick={toggleTheme} className="btn btn-outline mobile-icon-btn" aria-label="Toggle Theme">
                         <ThemeIcon theme={theme} />
                     </button>
-                    <button onClick={() => { toggleCart(); closeMenu(); }} className="btn btn-outline" style={{ padding: '0.75rem', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <button onClick={() => { toggleCart(); closeMenu(); }} className="btn btn-outline mobile-icon-btn">
                         <CartIcon />
                         {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
                     </button>

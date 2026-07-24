@@ -32,49 +32,31 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="pageContainer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '90vh' }}>
-            <div style={{
-                width: '100%',
-                maxWidth: '450px',
-                padding: '3rem',
-                background: 'var(--bg-card)',
-                borderRadius: '16px',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-            }}>
-                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                    <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
+        <div className="pageContainer auth-page-container">
+            <div className="auth-card">
+                <div className="auth-header">
+                    <span className="auth-subtitle">
                         Welcome Back
                     </span>
-                    <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', fontStyle: 'italic', marginTop: '0.5rem', color: 'var(--text-main)' }}>
+                    <h1 className="auth-title">
                         Masuk Akun
                     </h1>
                 </div>
 
                 {error && (
-                    <div style={{
-                        padding: '1rem',
-                        background: 'rgba(255,107,53,0.1)',
-                        border: '1px solid var(--primary)',
-                        borderRadius: '8px',
-                        color: 'var(--primary)',
-                        fontSize: '0.9rem',
-                        marginBottom: '1.5rem',
-                        textAlign: 'center'
-                    }}>
+                    <div className="auth-alert-error">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <form onSubmit={handleSubmit} className="auth-form">
                     <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
+                        <label className="auth-label">
                             Email
                         </label>
                         <input
                             type="email"
-                            className="search-input"
-                            style={{ width: '100%', padding: '0.9rem' }}
+                            className="search-input auth-input-full"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="nama@email.com"
@@ -83,13 +65,12 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
+                        <label className="auth-label">
                             Password
                         </label>
                         <input
                             type="password"
-                            className="search-input"
-                            style={{ width: '100%', padding: '0.9rem' }}
+                            className="search-input auth-input-full"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Masukkan password Anda"
@@ -99,17 +80,16 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className="btn btn-primary"
-                        style={{ width: '100%', padding: '1rem', marginTop: '1rem' }}
+                        className="btn btn-primary auth-submit-btn"
                         disabled={isLoading}
                     >
                         {isLoading ? 'Memproses...' : 'Masuk'}
                     </button>
                 </form>
 
-                <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                <div className="auth-footer">
                     Belum punya akun?{' '}
-                    <Link href="/register" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'underline' }}>
+                    <Link href="/register" className="auth-link">
                         Daftar Sekarang
                     </Link>
                 </div>

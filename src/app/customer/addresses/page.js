@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import SearchableSelect from '@/components/SearchableSelect';
+import styles from './addresses.module.css';
 
 const LABELS = ['Rumah', 'Kantor', 'Kos', 'Lainnya'];
 
@@ -36,7 +37,7 @@ export default function AddressesPage() {
     const [provId, setProvId] = useState('');
     const [cityId, setCityId] = useState('');
     const [districtId, setDistrictId] = useState('');
-    const [autofillTarget, setAutofillTarget] = useState(null); // { province, city, district } names to resolve into dropdown IDs when editing
+    const [autofillTarget, setAutofillTarget] = useState(null);
     const [selectAlert, setSelectAlert] = useState({ field: '', message: '' });
 
     useEffect(() => {
@@ -74,7 +75,6 @@ export default function AddressesPage() {
             .then(r => r.json()).then(setVillages).catch(() => {});
     }, [districtId]);
 
-    // Resolve dropdown IDs from the saved address names (used when editing)
     useEffect(() => {
         if (!autofillTarget?.province || provinces.length === 0) return;
         const m = provinces.find(p => p.name.toLowerCase() === autofillTarget.province.toLowerCase());
@@ -166,7 +166,6 @@ export default function AddressesPage() {
             await deleteAddress(id);
             setAddresses(prev => {
                 const remaining = prev.filter(a => a.id !== id);
-                // If deleted was default, backend auto-sets next; refetch
                 fetchMyAddresses().then(setAddresses);
                 return remaining;
             });
@@ -187,24 +186,21 @@ export default function AddressesPage() {
     };
 
     if (authLoading || !currentUser) {
-        return <div className="pageContainer" style={{ paddingTop: '120px', textAlign: 'center' }}><h2 style={{ color: 'var(--text-muted)' }}>Memverifikasi akun...</h2></div>;
+        return <div className="pageContainer pt-[120px] text-center"><h2 className="text-[var(--text-muted)]">Memverifikasi akun...</h2></div>;
     }
 
-    const inputStyle = { width: '100%', padding: '0.7rem 1rem', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '0.5rem', color: 'var(--text-main)', fontSize: '0.9rem', boxSizing: 'border-box' };
-    const labelStyle = { display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.4rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' };
-
     return (
-        <div className="pageContainer" style={{ paddingTop: '100px', minHeight: '100vh' }}>
-            <div className="container" style={{ maxWidth: '900px', paddingBottom: '5rem' }}>
+        <div className={`pageContainer ${styles.pagePadding}`}>
+            <div className={`container ${styles.containerWrapper}`}>
 
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div className={styles.headerRow}>
                     <div>
-                        <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase' }}>Customer Area</span>
-                        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', fontStyle: 'italic', marginTop: '0.4rem', color: 'var(--text-main)' }}>Alamat Saya</h1>
+                        <span className="text-[var(--primary)] tracking-[0.2rem] text-[0.75rem] font-bold uppercase">Customer Area</span>
+                        <h1 className="font-[var(--font-serif)] text-[2.5rem] italic mt-[0.4rem] text-[var(--text-main)]">Alamat Saya</h1>
                     </div>
                     {!showForm && (
-                        <button onClick={openAddForm} className="btn btn-primary" style={{ cursor: 'pointer', alignSelf: 'center' }}>
+                        <button onClick={openAddForm} className={`btn btn-primary ${styles.addBtn}`}>
                             + Tambah Alamat
                         </button>
                     )}
@@ -212,18 +208,18 @@ export default function AddressesPage() {
 
                 {/* Add/Edit Form */}
                 {showForm && (
-                    <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
-                        <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', fontStyle: 'italic', marginBottom: '1.5rem', color: 'var(--text-main)' }}>
+                    <div className={`dashboard-card ${styles.formCard}`}>
+                        <h3 className={styles.formTitle}>
                             {editingId ? 'Edit Alamat' : 'Tambah Alamat Baru'}
                         </h3>
 
-                        {error && <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid #EF4444', borderRadius: '8px', color: '#EF4444', fontSize: '0.85rem', marginBottom: '1.25rem' }}>{error}</div>}
+                        {error && <div className={styles.errorAlert}>{error}</div>}
 
                         <form onSubmit={handleSubmit}>
                             {/* Label selector */}
-                            <div style={{ marginBottom: '1.25rem' }}>
-                                <label style={labelStyle}>Label Alamat</label>
-                                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <div className={styles.labelSection}>
+                                <label className={styles.label}>Label Alamat</label>
+                                <div className={styles.labelGroup}>
                                     {LABELS.map(l => {
                                         const cfg = LABEL_COLORS[l];
                                         const active = form.label === l;
@@ -232,16 +228,11 @@ export default function AddressesPage() {
                                                 key={l}
                                                 type="button"
                                                 onClick={() => setForm(p => ({ ...p, label: l }))}
+                                                className={styles.labelBtn}
                                                 style={{
-                                                    padding: '0.4rem 1.1rem',
-                                                    borderRadius: '20px',
-                                                    border: `1px solid ${active ? cfg.color : 'var(--border-color)'}`,
-                                                    background: active ? cfg.bg : 'transparent',
-                                                    color: active ? cfg.color : 'var(--text-muted)',
-                                                    fontWeight: '600',
-                                                    fontSize: '0.85rem',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s',
+                                                    borderColor: active ? cfg.color : undefined,
+                                                    background: active ? cfg.bg : undefined,
+                                                    color: active ? cfg.color : undefined,
                                                 }}
                                             >{l}</button>
                                         );
@@ -251,61 +242,61 @@ export default function AddressesPage() {
 
                             <div className="grid-form-2col">
                                 <div>
-                                    <label style={labelStyle}>Nama Penerima</label>
-                                    <input style={inputStyle} value={form.recipientName} onChange={e => setForm(p => ({ ...p, recipientName: e.target.value }))} required placeholder="Nama lengkap penerima" />
+                                    <label className={styles.label}>Nama Penerima</label>
+                                    <input className={styles.input} value={form.recipientName} onChange={e => setForm(p => ({ ...p, recipientName: e.target.value }))} required placeholder="Nama lengkap penerima" />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Nomor Telepon</label>
-                                    <input style={inputStyle} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} required placeholder="08xxxxxxxxxx" />
+                                    <label className={styles.label}>Nomor Telepon</label>
+                                    <input className={styles.input} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} required placeholder="08xxxxxxxxxx" />
                                 </div>
 
                                 <div>
-                                    <label style={labelStyle}>Provinsi</label>
+                                    <label className={styles.label}>Provinsi</label>
                                     <SearchableSelect options={provinces} value={provId} onChange={handleProvince} placeholder="-- Pilih Provinsi --" />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Kabupaten / Kota</label>
+                                    <label className={styles.label}>Kabupaten / Kota</label>
                                     <SearchableSelect options={cities} value={cityId} onChange={handleCity} disabled={!provId} placeholder="-- Pilih Kab/Kota --" onClickDisabled={() => triggerAlert('city', 'Pilih Provinsi terlebih dahulu.')} />
-                                    {selectAlert.field === 'city' && <span style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.3rem', display: 'block' }}>⚠️ {selectAlert.message}</span>}
+                                    {selectAlert.field === 'city' && <span className={styles.selectAlert}>⚠️ {selectAlert.message}</span>}
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Kecamatan</label>
+                                    <label className={styles.label}>Kecamatan</label>
                                     <SearchableSelect options={districts} value={districtId} onChange={handleDistrict} disabled={!cityId} placeholder="-- Pilih Kecamatan --" onClickDisabled={() => triggerAlert('district', 'Pilih Kab/Kota terlebih dahulu.')} />
-                                    {selectAlert.field === 'district' && <span style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.3rem', display: 'block' }}>⚠️ {selectAlert.message}</span>}
+                                    {selectAlert.field === 'district' && <span className={styles.selectAlert}>⚠️ {selectAlert.message}</span>}
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Kelurahan / Desa</label>
+                                    <label className={styles.label}>Kelurahan / Desa</label>
                                     <SearchableSelect options={villages} value={villages.find(v => v.name.toLowerCase() === form.village?.toLowerCase())?.id || ''} onChange={handleVillage} disabled={!districtId} placeholder="-- Pilih Kel/Desa --" onClickDisabled={() => triggerAlert('village', 'Pilih Kecamatan terlebih dahulu.')} />
-                                    {selectAlert.field === 'village' && <span style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.3rem', display: 'block' }}>⚠️ {selectAlert.message}</span>}
+                                    {selectAlert.field === 'village' && <span className={styles.selectAlert}>⚠️ {selectAlert.message}</span>}
                                 </div>
 
                                 <div>
-                                    <label style={labelStyle}>RT / RW</label>
-                                    <input style={inputStyle} value={form.rtRw} onChange={e => setForm(p => ({ ...p, rtRw: e.target.value }))} required placeholder="RT 01 / RW 04" />
+                                    <label className={styles.label}>RT / RW</label>
+                                    <input className={styles.input} value={form.rtRw} onChange={e => setForm(p => ({ ...p, rtRw: e.target.value }))} required placeholder="RT 01 / RW 04" />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Kode Pos</label>
-                                    <input style={inputStyle} value={form.postalCode} onChange={e => setForm(p => ({ ...p, postalCode: e.target.value }))} required placeholder="12345" />
+                                    <label className={styles.label}>Kode Pos</label>
+                                    <input className={styles.input} value={form.postalCode} onChange={e => setForm(p => ({ ...p, postalCode: e.target.value }))} required placeholder="12345" />
                                 </div>
 
-                                <div style={{ gridColumn: '1 / -1' }}>
-                                    <label style={labelStyle}>Nama Jalan, No. Rumah, Blok</label>
-                                    <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'none' }} value={form.streetAddress} onChange={e => setForm(p => ({ ...p, streetAddress: e.target.value }))} required placeholder="Jl. Sudirman No. 12..." />
+                                <div className={styles.fullCol}>
+                                    <label className={styles.label}>Nama Jalan, No. Rumah, Blok</label>
+                                    <textarea className={`${styles.input} ${styles.textarea}`} value={form.streetAddress} onChange={e => setForm(p => ({ ...p, streetAddress: e.target.value }))} required placeholder="Jl. Sudirman No. 12..." />
                                 </div>
 
-                                <div style={{ gridColumn: '1 / -1' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                                        <input type="checkbox" checked={form.isDefault} onChange={e => setForm(p => ({ ...p, isDefault: e.target.checked }))} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                                <div className={styles.checkboxContainer}>
+                                    <label className="flex items-center gap-2 cursor-pointer text-[0.9rem] text-[var(--text-main)]">
+                                        <input type="checkbox" checked={form.isDefault} onChange={e => setForm(p => ({ ...p, isDefault: e.target.checked }))} className={styles.checkbox} />
                                         Jadikan sebagai alamat utama
                                     </label>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                                <button type="submit" className="btn btn-primary" style={{ cursor: 'pointer' }} disabled={saving}>
+                            <div className={styles.formActions}>
+                                <button type="submit" className={`btn btn-primary ${styles.saveBtn}`} disabled={saving}>
                                     {saving ? 'Menyimpan...' : (editingId ? 'Simpan Perubahan' : 'Simpan Alamat')}
                                 </button>
-                                <button type="button" className="btn btn-outline" style={{ cursor: 'pointer' }} onClick={() => setShowForm(false)}>
+                                <button type="button" className={`btn btn-outline ${styles.cancelBtn}`} onClick={() => setShowForm(false)}>
                                     Batal
                                 </button>
                             </div>
@@ -315,58 +306,60 @@ export default function AddressesPage() {
 
                 {/* Address List */}
                 {loading ? (
-                    <p style={{ color: 'var(--text-muted)' }}>Memuat alamat...</p>
+                    <p className="text-[var(--text-muted)]">Memuat alamat...</p>
                 ) : addresses.length === 0 && !showForm ? (
-                    <div style={{ textAlign: 'center', padding: '4rem 0', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                        <span style={{ fontSize: '3rem' }}>📍</span>
-                        <h4 style={{ margin: '1rem 0 0.5rem', color: 'var(--text-main)' }}>Belum ada alamat tersimpan</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Tambahkan alamat pengiriman untuk memudahkan transaksi.</p>
-                        <button onClick={openAddForm} className="btn btn-primary" style={{ cursor: 'pointer' }}>+ Tambah Alamat</button>
+                    <div className={styles.emptyStateCard}>
+                        <span className={styles.emptyIcon}>📍</span>
+                        <h4 className={styles.emptyTitle}>Belum ada alamat tersimpan</h4>
+                        <p className={styles.emptySubtitle}>Tambahkan alamat pengiriman untuk memudahkan transaksi.</p>
+                        <button onClick={openAddForm} className={`btn btn-primary ${styles.addBtn}`}>+ Tambah Alamat</button>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className={styles.addressListGrid}>
                         {addresses.map(addr => {
                             const cfg = LABEL_COLORS[addr.label] || LABEL_COLORS.Lainnya;
                             return (
-                                <div key={addr.id} style={{ background: 'var(--bg-card)', borderRadius: '12px', border: addr.isDefault ? '1.5px solid var(--primary)' : '1px solid var(--border-color)', padding: '1.5rem', position: 'relative', transition: 'border-color 0.2s' }}>
+                                <div key={addr.id} className={`${styles.addressCard} ${addr.isDefault ? styles.addressCardDefault : ''}`}>
                                     {/* Badges */}
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                                        <span style={{ padding: '0.2rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}` }}>
-                                            {addr.label}
-                                        </span>
-                                        {addr.isDefault && (
-                                            <span style={{ padding: '0.2rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', background: 'rgba(255,107,53,0.1)', color: 'var(--primary)', border: '1px solid var(--primary)' }}>
-                                                ★ Utama
+                                    <div className={styles.addressCardHeader}>
+                                        <div className={styles.addressBadges}>
+                                            <span className={styles.labelBadge} style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}` }}>
+                                                {addr.label}
                                             </span>
-                                        )}
+                                            {addr.isDefault && (
+                                                <span className={styles.defaultBadge}>
+                                                    ★ Utama
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className={styles.cardActionGroup}>
+                                            {!addr.isDefault && (
+                                                <button onClick={() => handleSetDefault(addr.id)} className={styles.cardActionBtnDefault}>
+                                                    Jadikan Utama
+                                                </button>
+                                            )}
+                                            <button onClick={() => openEditForm(addr)} className={styles.cardActionBtn}>
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(addr.id)}
+                                                disabled={deletingId === addr.id}
+                                                className={`${styles.cardActionBtn} ${styles.cardActionBtnDelete}`}
+                                            >
+                                                {deletingId === addr.id ? 'Menghapus...' : 'Hapus'}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Info */}
-                                    <p style={{ fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.2rem', fontSize: '1rem' }}>{addr.recipientName}</p>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>{addr.phone}</p>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                                    <p className="font-bold color-[var(--text-main)] mb-1 text-base">{addr.recipientName}</p>
+                                    <p className="text-[var(--text-muted)] text-sm mb-1">{addr.phone}</p>
+                                    <p className="text-[var(--text-muted)] text-sm leading-relaxed">
                                         {addr.streetAddress}, {addr.rtRw}, Kel. {addr.village}, Kec. {addr.district},<br />
                                         {addr.city}, {addr.province} {addr.postalCode}
                                     </p>
-
-                                    {/* Actions */}
-                                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                                        {!addr.isDefault && (
-                                            <button onClick={() => handleSetDefault(addr.id)} style={{ fontSize: '0.8rem', color: 'var(--primary)', background: 'none', border: '1px solid var(--primary)', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer' }}>
-                                                Jadikan Utama
-                                            </button>
-                                        )}
-                                        <button onClick={() => openEditForm(addr)} style={{ fontSize: '0.8rem', color: 'var(--text-main)', background: 'none', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer' }}>
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(addr.id)}
-                                            disabled={deletingId === addr.id}
-                                            style={{ fontSize: '0.8rem', color: '#EF4444', background: 'none', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer' }}
-                                        >
-                                            {deletingId === addr.id ? 'Menghapus...' : 'Hapus'}
-                                        </button>
-                                    </div>
                                 </div>
                             );
                         })}
@@ -376,3 +369,4 @@ export default function AddressesPage() {
         </div>
     );
 }
+
