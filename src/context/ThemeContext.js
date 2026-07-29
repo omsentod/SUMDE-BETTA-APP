@@ -1,12 +1,12 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState('light');
 
-    // Load theme from localStorage on initial render
+    // Load persisted theme (SSR-safe: default first, hydrate on mount)
     useEffect(() => {
         const savedTheme = localStorage.getItem('sumde-theme') || 'light';
         // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe localStorage hydration
@@ -14,18 +14,18 @@ export function ThemeProvider({ children }) {
         document.documentElement.setAttribute('data-theme', savedTheme);
     }, []);
 
-    const toggleTheme = () => {
-        const newTheme = theme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('sumde-theme', newTheme);
-    };
+    const toggleTheme = useCallback(() => {
+        setTheme((prev) => {
+            const next = prev === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('sumde-theme', next);
+            return next;
+        });
+    }, []);
 
-    return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
-            {children}
-        </ThemeContext.Provider>
-    );
+    const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
+
+    return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

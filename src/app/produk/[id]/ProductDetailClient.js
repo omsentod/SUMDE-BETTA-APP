@@ -1,40 +1,44 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
+import styles from './productDetail.module.css';
 
 export default function ProductDetailClient() {
     const { id } = useParams();
     const router = useRouter();
-    const { addToCart, buyNow, cart } = useCart();
+    const { addToCart, buyNow } = useCart();
     const { products, isLoading } = useProducts();
-    const [prevProductId, setPrevProductId] = useState(null);
     const [selectedSize, setSelectedSize] = useState('');
+    const [sizeError, setSizeError] = useState('');
 
     const product = products.find((p) => p.id === id);
 
-    if (product && product.id !== prevProductId) {
-        setPrevProductId(product.id);
-        const available = product.sizes?.find(s => s.quantity > 0)?.size || '';
-        setSelectedSize(available);
-    }
+    // Reset selected size + error whenever we're viewing a different product
+    // (product id changes because URL param or products list updated).
+    useEffect(() => {
+        if (!product) return;
+        const firstAvailable = product.sizes?.find((s) => s.quantity > 0)?.size || '';
+        setSelectedSize(firstAvailable);
+        setSizeError('');
+    }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (isLoading) {
         return (
-            <div className="pageContainer" style={{ paddingTop: '90px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)' }}>Memuat Spesimen...</h2>
+            <div className={`pageContainer ${styles.stateWrap}`}>
+                <h2 className={styles.stateTitle}>Memuat Spesimen...</h2>
             </div>
         );
     }
 
     if (!product) {
         return (
-            <div className="container" style={{ padding: '10rem 0', textAlign: 'center' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem' }}>Koleksi Tidak Ditemukan</h2>
-                <Link href="/produk" className="btn btn-primary" style={{ marginTop: '2rem' }}>Kembali ke Galeri</Link>
+            <div className={`pageContainer ${styles.stateWrap}`}>
+                <h2 className={styles.notFoundTitle}>Koleksi Tidak Ditemukan</h2>
+                <Link href="/produk" className="btn btn-primary">Kembali ke Galeri</Link>
             </div>
         );
     }
@@ -42,145 +46,142 @@ export default function ProductDetailClient() {
     const formattedPrice = new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
-        minimumFractionDigits: 0
+        minimumFractionDigits: 0,
     }).format(product.price);
 
+    const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+    const requiresSizePick = hasSizes && !selectedSize;
+
     const handleAcquire = () => {
-        if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && !selectedSize) {
-            alert('Mohon pilih ukuran (size) terlebih dahulu.');
+        if (requiresSizePick) {
+            setSizeError('Mohon pilih ukuran (size) terlebih dahulu.');
             return;
         }
+        setSizeError('');
         buyNow({ ...product, selectedSize });
         router.push('/checkout');
     };
 
     const handleAddToCart = () => {
-        if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && !selectedSize) {
-            alert('Mohon pilih ukuran (size) terlebih dahulu.');
+        if (requiresSizePick) {
+            setSizeError('Mohon pilih ukuran (size) terlebih dahulu.');
             return;
         }
+        setSizeError('');
         addToCart({ ...product, selectedSize });
     };
 
-    return (
-        <div className="product-detail-page">
-            <section style={{ padding: '8rem 0' }}>
-                <div className="container">
-                    <div className="grid-detail-outer">
+    const canBuy = !product.isSold && product.quantity > 0;
 
-                        <div className="detail-visual">
-                            <div className="detail-image-frame">
+    return (
+        <div className={styles.page}>
+            <section className={styles.section}>
+                <div className="container">
+                    <div className={styles.grid}>
+
+                        {/* Image */}
+                        <div>
+                            <div className={styles.imageFrame}>
                                 <Image
                                     src={product.image}
                                     alt={product.name}
                                     fill
-                                    style={{ objectFit: 'cover' }}
+                                    sizes="(max-width: 900px) 100vw, 50vw"
+                                    className={styles.image}
                                 />
                                 {product.isSold && (
-                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ padding: '1rem 3rem', border: '2px solid var(--primary)', color: 'var(--primary)', fontFamily: 'var(--font-serif)', fontSize: '2rem', fontStyle: 'italic', backdropFilter: 'blur(5px)' }}>
-                                            Arsip
-                                        </span>
+                                    <div className={styles.soldOverlay}>
+                                        <span className={styles.soldBadge}>Arsip</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="detail-info">
-                            <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: '700' }}>
+                        {/* Info */}
+                        <div>
+                            <span className={styles.eyebrow}>
                                 Edisi #{product.id.slice(0, 8).toUpperCase()} — {product.category}
                             </span>
-                            <h1 className="detail-title">
-                                {product.name}
-                            </h1>
-                            <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: '1.8', marginBottom: '3rem' }}>
-                                {product.description}
-                            </p>
+                            <h1 className={styles.title}>{product.name}</h1>
+                            <p className={styles.description}>{product.description}</p>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', marginBottom: '4rem', padding: '2rem', background: 'var(--glass)', border: '1px solid var(--glass-border)', borderRadius: '0.5rem', color: 'var(--text-main)' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Grade Bentuk</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.statsForm || 'COMP'}</span>
+                            <div className={styles.metaCard}>
+                                <div className={styles.metaItem}>
+                                    <label className={styles.metaLabel}>Grade Bentuk</label>
+                                    <span className={styles.metaValue}>{product.statsForm || 'COMP'}</span>
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Umur</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600' }}>{product.age || '4 Month'}</span>
+                                <div className={styles.metaItem}>
+                                    <label className={styles.metaLabel}>Umur</label>
+                                    <span className={styles.metaValue}>{product.age || '4 Month'}</span>
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Gender</label>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: '600', textTransform: 'uppercase' }}>{product.gender || 'MALE'}</span>
+                                <div className={styles.metaItem}>
+                                    <label className={styles.metaLabel}>Gender</label>
+                                    <span className={`${styles.metaValue} ${styles.metaValueUpper}`}>
+                                        {product.gender || 'MALE'}
+                                    </span>
                                 </div>
                             </div>
 
-                            {/* Size Selection Area */}
-                            {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && (
-                                <div style={{ marginBottom: '3rem', color: 'var(--text-main)' }}>
-                                    <h3 style={{ fontSize: '1.0rem', textTransform: 'uppercase', letterSpacing: '0.1rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pilih Ukuran (Size)</h3>
-                                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                            {hasSizes && (
+                                <div className={`${styles.sizeSection} ${sizeError ? styles.sizeSectionInvalid : ''}`}>
+                                    <h3 className={styles.sizeHeader}>Pilih Ukuran (Size)</h3>
+                                    <div className={styles.sizeList}>
                                         {product.sizes.map((s) => {
                                             const isOutOfStock = s.quantity <= 0;
                                             const isSelected = selectedSize === s.size;
+                                            const cls = [
+                                                styles.sizeBtn,
+                                                isSelected && styles.sizeBtnSelected,
+                                                isOutOfStock && styles.sizeBtnOut,
+                                            ].filter(Boolean).join(' ');
                                             return (
                                                 <button
                                                     key={s.size}
+                                                    type="button"
                                                     disabled={isOutOfStock}
-                                                    onClick={() => setSelectedSize(s.size)}
-                                                    className={`btn ${isSelected ? 'btn-primary' : 'btn-outline'}`}
-                                                    style={{
-                                                        padding: '0.5rem 1.2rem',
-                                                        borderRadius: '30px',
-                                                        fontSize: '0.85rem',
-                                                        opacity: isOutOfStock ? 0.3 : 1,
-                                                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        minWidth: '80px'
+                                                    onClick={() => {
+                                                        setSelectedSize(s.size);
+                                                        if (sizeError) setSizeError('');
                                                     }}
+                                                    className={cls}
                                                 >
-                                                    <span style={{ fontWeight: '700' }}>{s.size}</span>
-                                                    <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>
+                                                    <span className={styles.sizeLabel}>{s.size}</span>
+                                                    <span className={styles.sizeStock}>
                                                         {isOutOfStock ? 'Habis' : `Stok: ${s.quantity}`}
                                                     </span>
                                                 </button>
                                             );
                                         })}
                                     </div>
+                                    {sizeError && (
+                                        <div className={styles.sizeError} role="alert">
+                                            {sizeError}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-main)', marginRight: '1rem' }}>{formattedPrice}</span>
-                                {!product.isSold && product.quantity > 0 ? (
+                            <div className={styles.actionBar}>
+                                <span className={styles.price}>{formattedPrice}</span>
+                                {canBuy ? (
                                     <>
                                         <button
+                                            type="button"
                                             onClick={handleAcquire}
-                                            className="btn btn-primary"
-                                            style={{ padding: '1rem 2.5rem', cursor: 'pointer', borderRadius: '30px' }}
+                                            className={styles.buyBtn}
                                         >
                                             Beli Sekarang
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={handleAddToCart}
-                                            className="btn btn-outline"
-                                            style={{ padding: '1rem 2rem', cursor: 'pointer', borderRadius: '30px' }}
+                                            className={styles.cartBtn}
                                         >
                                             Tambah ke Keranjang
                                         </button>
                                     </>
                                 ) : (
-                                    <span style={{ 
-                                        padding: '0.8rem 2.5rem', 
-                                        border: '1px solid var(--primary)', 
-                                        color: 'var(--primary)', 
-                                        fontFamily: 'var(--font-serif)', 
-                                        fontSize: '1.1rem', 
-                                        fontStyle: 'italic', 
-                                        background: 'rgba(255,255,255,0.02)',
-                                        borderRadius: '30px'
-                                    }}>
-                                        Stok Habis / Terjual
-                                    </span>
+                                    <span className={styles.soldOutTag}>Stok Habis / Terjual</span>
                                 )}
                             </div>
                         </div>

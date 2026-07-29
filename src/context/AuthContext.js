@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -7,119 +7,119 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Identity now comes from the httpOnly session cookie, resolved server-side
-    // via /api/auth/me — no longer from localStorage (which was spoofable).
+    // Identity comes from the httpOnly session cookie, resolved server-side
+    // via /api/auth/me — never from localStorage (that used to be spoofable).
     useEffect(() => {
         fetch('/api/auth/me')
-            .then(res => res.json())
-            .then(data => setCurrentUser(data.user || null))
+            .then((res) => res.json())
+            .then((data) => setCurrentUser(data.user || null))
             .catch(() => {})
             .finally(() => setIsLoading(false));
     }, []);
 
-    const login = async (email, password) => {
+    const login = useCallback(async (email, password) => {
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
         });
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Login gagal.');
-        }
-        // The server set the session cookie; keep a copy of the user in state.
+        if (!response.ok) throw new Error(data.error || 'Login gagal.');
         setCurrentUser(data);
         return data;
-    };
+    }, []);
 
-    const register = async (name, email, password) => {
+    const register = useCallback(async (name, email, password) => {
         const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
+            body: JSON.stringify({ name, email, password }),
         });
-
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Registrasi gagal.');
-        }
+        if (!response.ok) throw new Error(data.error || 'Registrasi gagal.');
         return data;
-    };
+    }, []);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
         } catch {
             // ignore network errors on logout
         }
         setCurrentUser(null);
-    };
+    }, []);
 
-    const updateUserProfile = async (profileData) => {
+    // Reads currentUser via functional-update-safe accessor. Since the caller
+    // usually needs currentUser (e.g. to send id), we keep it as a dep.
+    const updateUserProfile = useCallback(async (profileData) => {
         if (!currentUser) return;
         const response = await fetch('/api/users', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: currentUser.id, ...profileData })
+            body: JSON.stringify({ id: currentUser.id, ...profileData }),
         });
-
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Gagal memperbarui profil.');
-        }
-
+        if (!response.ok) throw new Error(data.error || 'Gagal memperbarui profil.');
         const updated = { ...currentUser, ...data };
         setCurrentUser(updated);
         return updated;
-    };
+    }, [currentUser]);
 
-    const fetchMyOrders = async () => {
-        if (!currentUser) return [];
-        // The server already scopes orders to the session user.
+    const fetchMyOrders = useCallback(async () => {
+        // Server scopes orders by session, so no id needs to be passed
         const res = await fetch('/api/orders');
         if (res.ok) return res.json();
         return [];
-    };
+    }, []);
 
-    const fetchMyAddresses = async () => {
-        if (!currentUser) return [];
+    const fetchMyAddresses = useCallback(async () => {
         const res = await fetch('/api/addresses');
         if (res.ok) return res.json();
         return [];
-    };
+    }, []);
 
-    const createAddress = async (data) => {
+    const createAddress = useCallback(async (data) => {
         const res = await fetch('/api/addresses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Gagal menyimpan alamat.');
         return result;
-    };
+    }, []);
 
-    const updateAddress = async (id, data) => {
+    const updateAddress = useCallback(async (id, data) => {
         const res = await fetch(`/api/addresses/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Gagal memperbarui alamat.');
         return result;
-    };
+    }, []);
 
-    const deleteAddress = async (id) => {
+    const deleteAddress = useCallback(async (id) => {
         const res = await fetch(`/api/addresses/${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Gagal menghapus alamat.');
-    };
+    }, []);
 
-    return (
-        <AuthContext.Provider value={{ currentUser, isLoading, login, register, logout, updateUserProfile, fetchMyOrders, fetchMyAddresses, createAddress, updateAddress, deleteAddress }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    const value = useMemo(() => ({
+        currentUser, isLoading,
+        login, register, logout,
+        updateUserProfile,
+        fetchMyOrders, fetchMyAddresses,
+        createAddress, updateAddress, deleteAddress,
+    }), [
+        currentUser, isLoading,
+        login, register, logout,
+        updateUserProfile,
+        fetchMyOrders, fetchMyAddresses,
+        createAddress, updateAddress, deleteAddress,
+    ]);
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

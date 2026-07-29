@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const CartContext = createContext();
 
@@ -8,11 +8,8 @@ export function CartProvider({ children }) {
     const [directCheckoutItem, setDirectCheckoutItem] = useState(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    // Load cart & directCheckout from localStorage on mount.
-    // We intentionally hydrate here (not via a lazy useState initializer) so the
-    // first client render matches the server-rendered HTML and avoids a hydration
-    // mismatch. This is a legitimate one-time sync from an external store, so the
-    // "setState in effect" rule is disabled just for these hydration lines.
+    // Hydrate from localStorage. See CartContext original comment for why
+    // this is deliberately an effect (SSR-safe first render).
     useEffect(() => {
         try {
             const savedCart = localStorage.getItem('sumde-cart');
@@ -21,7 +18,6 @@ export function CartProvider({ children }) {
         } catch {
             localStorage.removeItem('sumde-cart');
         }
-
         try {
             const savedDirect = localStorage.getItem('sumde-direct-checkout');
             if (savedDirect) setDirectCheckoutItem(JSON.parse(savedDirect));
@@ -30,14 +26,12 @@ export function CartProvider({ children }) {
         }
     }, []);
 
-    const toggleCart = () => setIsCartOpen(!isCartOpen);
-
-    // Save cart to localStorage
+    // Persist cart on any change
     useEffect(() => {
         localStorage.setItem('sumde-cart', JSON.stringify(cart));
     }, [cart]);
 
-    // Save directCheckout to localStorage
+    // Persist directCheckout on any change
     useEffect(() => {
         if (directCheckoutItem) {
             localStorage.setItem('sumde-direct-checkout', JSON.stringify(directCheckoutItem));
@@ -46,120 +40,143 @@ export function CartProvider({ children }) {
         }
     }, [directCheckoutItem]);
 
-    const addToCart = (product) => {
+    // ---- Handlers: all stable across renders (no state in deps; use setter
+    //      functional-updates to read current state safely). ----
+
+    const toggleCart = useCallback(() => setIsCartOpen((p) => !p), []);
+
+    const addToCart = useCallback((product) => {
         setCart((prev) => {
             const exists = prev.find((item) => item.id === product.id && item.selectedSize === product.selectedSize);
             if (exists) {
                 return prev.map((item) =>
-                    (item.id === product.id && item.selectedSize === product.selectedSize) 
-                        ? { ...item, quantity: (item.quantity || 1) + 1, checked: true } 
+                    (item.id === product.id && item.selectedSize === product.selectedSize)
+                        ? { ...item, quantity: (item.quantity || 1) + 1, checked: true }
                         : item
                 );
             }
             return [...prev, { ...product, quantity: 1, checked: true }];
         });
         setIsCartOpen(true);
-    };
+    }, []);
 
-    const buyNow = (product) => {
-        const item = { ...product, quantity: 1, checked: true };
-        setDirectCheckoutItem(item);
-    };
+    const buyNow = useCallback((product) => {
+        setDirectCheckoutItem({ ...product, quantity: 1, checked: true });
+    }, []);
 
-    const toggleItemCheck = (id, selectedSize) => {
+    const toggleItemCheck = useCallback((id, selectedSize) => {
         setCart((prev) =>
             prev.map((item) =>
-                (item.id === id && item.selectedSize === selectedSize) 
-                    ? { ...item, checked: item.checked === false ? true : false } 
+                (item.id === id && item.selectedSize === selectedSize)
+                    ? { ...item, checked: item.checked === false ? true : false }
                     : item
             )
         );
-    };
+    }, []);
 
-    const updateQuantity = (id, delta, selectedSize) => {
-        if (directCheckoutItem && directCheckoutItem.id === id && directCheckoutItem.selectedSize === selectedSize) {
-            setDirectCheckoutItem((prev) => {
+    const updateQuantity = useCallback((id, delta, selectedSize) => {
+        // Prefer directCheckoutItem when it matches; otherwise mutate cart.
+        // We read state via the setter's `prev` so the handler stays stable.
+        setDirectCheckoutItem((prev) => {
+            if (prev && prev.id === id && prev.selectedSize === selectedSize) {
                 const newQty = (prev.quantity || 1) + delta;
                 return { ...prev, quantity: newQty > 0 ? newQty : 1 };
-            });
-            return;
-        }
-        setCart((prev) => {
-            return prev.map((item) => {
+            }
+            return prev;
+        });
+        setCart((prev) =>
+            prev.map((item) => {
                 if (item.id === id && item.selectedSize === selectedSize) {
                     const newQty = (item.quantity || 1) + delta;
                     return { ...item, quantity: newQty > 0 ? newQty : 1 };
                 }
                 return item;
-            });
-        });
-    };
+            })
+        );
+    }, []);
 
-    const removeFromCart = (id, selectedSize) => {
-        if (directCheckoutItem && directCheckoutItem.id === id && directCheckoutItem.selectedSize === selectedSize) {
-            setDirectCheckoutItem(null);
-            return;
-        }
+    const removeFromCart = useCallback((id, selectedSize) => {
+        setDirectCheckoutItem((prev) =>
+            (prev && prev.id === id && prev.selectedSize === selectedSize) ? null : prev
+        );
         setCart((prev) => prev.filter((item) => !(item.id === id && item.selectedSize === selectedSize)));
-    };
+    }, []);
 
-    const clearCart = () => setCart([]);
+    const clearCart = useCallback(() => setCart([]), []);
 
-    const clearCheckout = () => {
-        if (directCheckoutItem) {
-            setDirectCheckoutItem(null);
-        } else {
-            // Remove only the items that were checked out (checked = true)
-            setCart((prev) => prev.filter((item) => item.checked === false));
-        }
-    };
+    const clearCheckout = useCallback(() => {
+        setDirectCheckoutItem((prev) => (prev ? null : prev));
+        setCart((prev) => prev.filter((item) => item.checked === false));
+    }, []);
 
-    // Main Cart Totals
-    const total = cart.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
-    const itemCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    
-    // Checked Cart Totals (ignoring direct checkout)
-    const cartCheckedTotal = cart
-        .filter((item) => item.checked !== false)
-        .reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+    // ---- Derived values: only recompute when their source state changes. ----
 
-    // Selected Checkout Totals & Items (Shopee style)
-    const checkoutItems = directCheckoutItem 
-        ? [directCheckoutItem] 
-        : cart.filter((item) => item.checked !== false);
-
-    const checkoutTotal = directCheckoutItem
-        ? directCheckoutItem.price * (directCheckoutItem.quantity || 1)
-        : checkoutItems.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
-
-    const checkoutCount = directCheckoutItem
-        ? (directCheckoutItem.quantity || 1)
-        : checkoutItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-
-    return (
-        <CartContext.Provider value={{ 
-            cart, 
-            addToCart, 
-            buyNow,
-            toggleItemCheck,
-            updateQuantity, 
-            removeFromCart, 
-            clearCart, 
-            clearCheckout,
-            total, 
-            itemCount, 
-            cartCheckedTotal,
-            isCartOpen, 
-            toggleCart,
-            directCheckoutItem,
-            setDirectCheckoutItem,
-            checkoutItems,
-            checkoutTotal,
-            checkoutCount
-        }}>
-            {children}
-        </CartContext.Provider>
+    const total = useMemo(
+        () => cart.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0),
+        [cart]
     );
+
+    const itemCount = useMemo(
+        () => cart.reduce((sum, item) => sum + (item.quantity || 1), 0),
+        [cart]
+    );
+
+    const cartCheckedTotal = useMemo(
+        () => cart.filter((i) => i.checked !== false)
+                  .reduce((sum, item) => sum + item.price * (item.quantity || 1), 0),
+        [cart]
+    );
+
+    const checkoutItems = useMemo(
+        () => directCheckoutItem ? [directCheckoutItem] : cart.filter((i) => i.checked !== false),
+        [cart, directCheckoutItem]
+    );
+
+    const checkoutTotal = useMemo(
+        () => directCheckoutItem
+            ? directCheckoutItem.price * (directCheckoutItem.quantity || 1)
+            : checkoutItems.reduce((sum, i) => sum + i.price * (i.quantity || 1), 0),
+        [directCheckoutItem, checkoutItems]
+    );
+
+    const checkoutCount = useMemo(
+        () => directCheckoutItem
+            ? (directCheckoutItem.quantity || 1)
+            : checkoutItems.reduce((sum, i) => sum + (i.quantity || 1), 0),
+        [directCheckoutItem, checkoutItems]
+    );
+
+    // ---- Stable provider value — this is the fix. Without useMemo, every
+    //      consumer re-renders on every parent render, which is what caused
+    //      the checkout OOM (cart reference change fired the rate effect
+    //      infinitely). ----
+    const value = useMemo(() => ({
+        cart,
+        addToCart,
+        buyNow,
+        toggleItemCheck,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        clearCheckout,
+        total,
+        itemCount,
+        cartCheckedTotal,
+        isCartOpen,
+        toggleCart,
+        directCheckoutItem,
+        setDirectCheckoutItem,
+        checkoutItems,
+        checkoutTotal,
+        checkoutCount,
+    }), [
+        cart, directCheckoutItem, isCartOpen,
+        total, itemCount, cartCheckedTotal, checkoutItems, checkoutTotal, checkoutCount,
+        addToCart, buyNow, toggleItemCheck, updateQuantity, removeFromCart,
+        clearCart, clearCheckout, toggleCart,
+    ]);
+
+    return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

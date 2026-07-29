@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const ProductContext = createContext();
 
@@ -40,51 +40,51 @@ export function ProductProvider({ children }) {
         return () => { cancelled = true; };
     }, []);
 
-    const addProduct = async (productData) => {
+    const addProduct = useCallback(async (productData) => {
         const res = await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(productData)
+            body: JSON.stringify(productData),
         });
         const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || 'Gagal menambahkan produk.');
-        }
-        setProducts(prev => [data, ...prev]);
+        if (!res.ok) throw new Error(data.error || 'Gagal menambahkan produk.');
+        setProducts((prev) => [data, ...prev]);
         return data;
-    };
+    }, []);
 
-    const updateProduct = async (id, productData) => {
+    const updateProduct = useCallback(async (id, productData) => {
         const res = await fetch(`/api/products/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(productData)
+            body: JSON.stringify(productData),
         });
         const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || 'Gagal mengubah produk.');
-        }
-        setProducts(prev => prev.map(p => p.id === id ? data : p));
+        if (!res.ok) throw new Error(data.error || 'Gagal mengubah produk.');
+        setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
         return data;
-    };
+    }, []);
 
-    const deleteProduct = async (id) => {
-        const res = await fetch(`/api/products/${id}`, {
-            method: 'DELETE'
-        });
+    const deleteProduct = useCallback(async (id) => {
+        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
         const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || 'Gagal menghapus produk.');
-        }
-        setProducts(prev => prev.filter(p => p.id !== id));
+        if (!res.ok) throw new Error(data.error || 'Gagal menghapus produk.');
+        // The endpoint may soft-delete (returns { archived: true }) — in that
+        // case flip the local flag instead of removing the row, so admin can
+        // still see + restore it.
+        setProducts((prev) =>
+            data.archived
+                ? prev.map((p) => (p.id === id ? { ...p, isArchived: true } : p))
+                : prev.filter((p) => p.id !== id)
+        );
         return data;
-    };
+    }, []);
 
-    return (
-        <ProductContext.Provider value={{ products, isLoading, fetchProducts, addProduct, updateProduct, deleteProduct }}>
-            {children}
-        </ProductContext.Provider>
-    );
+    const value = useMemo(() => ({
+        products, isLoading, fetchProducts,
+        addProduct, updateProduct, deleteProduct,
+    }), [products, isLoading, fetchProducts, addProduct, updateProduct, deleteProduct]);
+
+    return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 }
 
 export function useProducts() {
