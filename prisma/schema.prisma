@@ -58,6 +58,7 @@ model Product {
   image       String
   isSold      Boolean  @default(false)
   isPremium   Boolean  @default(false)
+  isArchived  Boolean  @default(false)
   statsForm   String   @default("COMP")
   age         String   @default("4 Month")
   statsSpirit String   @default("Aktif")

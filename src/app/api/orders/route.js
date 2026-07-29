@@ -20,10 +20,43 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { total, name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items } = await request.json();
+    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items } = await request.json();
     if (!name || !email || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode || !items || items.length === 0) {
       return NextResponse.json({ error: 'Detail pesanan tidak lengkap.' }, { status: 400 });
     }
+
+    // Normalize incoming items — client only supplies productId, quantity, and
+    // (optional) selectedSize. Price and total are authoritative from the DB.
+    const normalized = [];
+    for (const raw of items) {
+      const productId = raw.productId || raw.id;
+      const quantity = parseInt(raw.quantity);
+      if (!productId || !Number.isFinite(quantity) || quantity <= 0) {
+        return NextResponse.json({ error: 'Item pesanan tidak valid.' }, { status: 400 });
+      }
+      normalized.push({ productId, quantity, selectedSize: raw.selectedSize ?? null });
+    }
+
+    // Load authoritative prices from DB in a single query.
+    const productIds = [...new Set(normalized.map(i => i.productId))];
+    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+    const productById = new Map(products.map(p => [p.id, p]));
+    for (const item of normalized) {
+      const product = productById.get(item.productId);
+      if (!product) {
+        return NextResponse.json({ error: `Produk ${item.productId} tidak ditemukan.` }, { status: 400 });
+      }
+      if (product.isArchived) {
+        return NextResponse.json({ error: `Produk "${product.name}" sudah tidak tersedia.` }, { status: 400 });
+      }
+    }
+
+    // Compute the authoritative total server-side. The client's total is
+    // ignored — trusting it would let a caller pay any amount they want.
+    const serverTotal = normalized.reduce((sum, item) => {
+      const product = productById.get(item.productId);
+      return sum + product.price * item.quantity;
+    }, 0);
 
     // Attribute the order to the logged-in user (guest checkout => null).
     // userId is taken from the session, never trusted from the request body.
@@ -34,16 +67,17 @@ export async function POST(request) {
     // successful payment. selectedSize is persisted for the webhook.
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
-        data: { userId, total: parseFloat(total), status: 'PENDING', name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode }
+        data: { userId, total: serverTotal, status: 'PENDING', name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode }
       });
-      for (const item of items) {
+      for (const item of normalized) {
+        const product = productById.get(item.productId);
         await tx.orderItem.create({
           data: {
             orderId: newOrder.id,
-            productId: item.productId || item.id,
-            quantity: parseInt(item.quantity) || 1,
-            price: parseFloat(item.price),
-            selectedSize: item.selectedSize ?? null,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: product.price,
+            selectedSize: item.selectedSize,
           }
         });
       }

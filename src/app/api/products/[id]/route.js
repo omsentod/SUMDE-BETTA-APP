@@ -49,9 +49,17 @@ export async function DELETE(request, { params }) {
   try {
     await requireAdmin(request);
     const { id } = await params;
-    await prisma.orderItem.deleteMany({ where: { productId: id } });
+
+    // If the product has ever been ordered, keep the row (and its OrderItems)
+    // so past invoices stay intact — flip isArchived instead. Otherwise a
+    // clean hard-delete is safe.
+    const orderItemCount = await prisma.orderItem.count({ where: { productId: id } });
+    if (orderItemCount > 0) {
+      await prisma.product.update({ where: { id }, data: { isArchived: true } });
+      return NextResponse.json({ message: 'Produk diarsipkan (memiliki riwayat pesanan).', archived: true });
+    }
     await prisma.product.delete({ where: { id } });
-    return NextResponse.json({ message: 'Produk berhasil dihapus.' });
+    return NextResponse.json({ message: 'Produk berhasil dihapus.', archived: false });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

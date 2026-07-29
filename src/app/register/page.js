@@ -101,8 +101,8 @@ export default function RegisterPage() {
                             className="search-input auth-input-full"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Minimal 6 karakter"
-                            minLength={6}
+                            placeholder="Minimal 8 karakter"
+                            minLength={8}
                             required
                         />
                     </div>

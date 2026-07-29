@@ -11,7 +11,9 @@ const SORT_OPTIONS = [
 ];
 
 export default function GalleryPage() {
-    const { products, isLoading } = useProducts();
+    const { products: allProducts, isLoading } = useProducts();
+    // Hide soft-deleted (archived) products from the public gallery.
+    const products = useMemo(() => allProducts.filter(p => !p.isArchived), [allProducts]);
 
     // Derive filter options dynamically from current products list
     const genders = useMemo(() => {

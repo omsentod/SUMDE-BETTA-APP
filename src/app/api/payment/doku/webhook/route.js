@@ -9,6 +9,11 @@ const requestTarget = '/api/payment/doku/webhook';
 const SUCCESS_STATUSES = ['SUCCESS'];
 const FAILED_STATUSES = ['FAILED', 'EXPIRED', 'VOID', 'CANCELLED'];
 
+// Reject webhooks whose timestamp header is further than this from server clock.
+// DOKU normally delivers within seconds; anything older is either replay or a
+// broken retry. Keep generous to survive minor clock drift.
+const MAX_TIMESTAMP_SKEW_MS = 5 * 60 * 1000; // 5 minutes
+
 // Constant-time signature comparison (P2-d).
 function signaturesMatch(received, expected) {
   const a = Buffer.from(received);
@@ -67,6 +72,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing security headers.' }, { status: 401 });
     }
 
+    // Reject stale / replayed webhooks. The timestamp is inside the signature
+    // envelope, so it can't be tampered with without breaking signature verification,
+    // but an attacker replaying an old signed request would still be caught here.
+    const timestampMs = Date.parse(timestampHeader);
+    if (!Number.isFinite(timestampMs) || Math.abs(Date.now() - timestampMs) > MAX_TIMESTAMP_SKEW_MS) {
+      console.error(`Doku webhook timestamp rejected (header=${timestampHeader}).`);
+      return NextResponse.json({ error: 'Timestamp out of range.' }, { status: 401 });
+    }
+
     // Calculate expected Digest of raw body, then reconstruct the expected Signature
     const calculatedDigest = generateDigest(rawBody);
     const calculatedSignature = generateSignature(
@@ -112,6 +126,19 @@ export async function POST(request) {
     }
 
     if (SUCCESS_STATUSES.includes(paymentStatus)) {
+      // Defense-in-depth: refuse to mark the order paid unless DOKU's reported
+      // amount matches what we stored server-side. Guards against any path
+      // where the price sent to DOKU could drift from what we charge.
+      const paidAmount = Number(payload.order?.amount);
+      const expectedAmount = Math.round(order.total);
+      if (!Number.isFinite(paidAmount) || paidAmount !== expectedAmount) {
+        console.error(
+          `Doku Webhook: amount mismatch for order ${actualOrderId} — ` +
+          `expected ${expectedAmount}, got ${paidAmount}. Leaving PENDING for human review.`
+        );
+        return NextResponse.json({ error: 'Amount mismatch.' }, { status: 400 });
+      }
+
       // Payment confirmed → mark PROCESSING and decrement stock atomically (P2-b).
       await prisma.$transaction(async (tx) => {
         await decrementStockForOrder(tx, order);

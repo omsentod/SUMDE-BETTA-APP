@@ -35,8 +35,13 @@ export function verifyPassword(plain, stored) {
     const b = Buffer.from(derived, 'hex');
     return a.length === b.length && crypto.timingSafeEqual(a, b);
   }
-  // Legacy plaintext password (created before hashing existed)
-  return stored === plain;
+  // Legacy plaintext password (created before hashing existed).
+  // Use a constant-time comparison so we don't leak length/prefix information
+  // via response timing.
+  const a = Buffer.from(stored);
+  const b = Buffer.from(plain);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
 }
 
 export function isLegacyPassword(stored) {

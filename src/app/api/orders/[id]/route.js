@@ -15,17 +15,16 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Pesanan tidak ditemukan.' }, { status: 404 });
     }
 
-    // Guest orders (no owner) are readable via their unguessable UUID so guest
-    // checkout can poll its own status. Orders owned by a user require that
-    // same user or an admin.
-    if (order.userId !== null) {
-      const session = await getSession(request);
-      if (!session) {
-        return NextResponse.json({ error: 'Autentikasi diperlukan.' }, { status: 401 });
-      }
-      if (order.userId !== session.id && session.role !== 'admin') {
-        return NextResponse.json({ error: 'Anda tidak memiliki akses ke pesanan ini.' }, { status: 403 });
-      }
+    // Full order details (name, email, phone, address, items) are PII —
+    // require the owner or an admin. Guest orders (userId = null) are NOT
+    // fetchable through this endpoint; the payment page polls the minimal
+    // /status endpoint instead, which returns only the order status.
+    const session = await getSession(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Autentikasi diperlukan.' }, { status: 401 });
+    }
+    if (order.userId !== session.id && session.role !== 'admin') {
+      return NextResponse.json({ error: 'Anda tidak memiliki akses ke pesanan ini.' }, { status: 403 });
     }
 
     return NextResponse.json(order);

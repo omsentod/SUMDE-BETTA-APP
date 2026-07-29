@@ -16,16 +16,14 @@ export default function PaymentPage() {
     const [activePayment, setActivePayment] = useState(null);
     const [status, setStatus] = useState('pending'); // 'pending' | 'checkout_created' | 'success'
 
-    // Auto-check helper
+    // Auto-check helper — polls the minimal /status endpoint (no PII exposed).
     const autoCheckPayment = useCallback(async (orderId) => {
         if (!orderId) return;
         try {
-            // Session cookie is sent automatically; guest orders (userId null)
-            // are readable via their UUID.
-            const res = await fetch(`/api/orders/${orderId}`);
+            const res = await fetch(`/api/orders/${orderId}/status`);
             if (res.ok) {
-                const order = await res.json();
-                if (order.status === 'PROCESSING') {
+                const { status: orderStatus } = await res.json();
+                if (orderStatus === 'PROCESSING') {
                     setStatus('success');
                     clearCart();
                     localStorage.removeItem('temp-shipment');
@@ -148,13 +146,13 @@ export default function PaymentPage() {
 
         setCheckingStatus(true);
         try {
-            const res = await fetch(`/api/orders/${activePayment.orderId}`);
+            const res = await fetch(`/api/orders/${activePayment.orderId}/status`);
             if (!res.ok) {
                 throw new Error('Gagal memverifikasi status pesanan.');
             }
 
-            const order = await res.json();
-            if (order.status === 'PROCESSING') {
+            const { status: orderStatus } = await res.json();
+            if (orderStatus === 'PROCESSING') {
                 setStatus('success');
                 clearCart();
                 localStorage.removeItem('temp-shipment');

@@ -6,8 +6,12 @@ import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/context/ProductContext";
 
 export default function CatalogHome() {
-    const { products, isLoading } = useProducts();
+    const { products: allProducts, isLoading } = useProducts();
     const [selectedCategory, setSelectedCategory] = useState('Semua');
+
+    // Archived products are soft-deleted — kept for order-history integrity
+    // but hidden from all public listings.
+    const products = useMemo(() => allProducts.filter(p => !p.isArchived), [allProducts]);
 
     // Extract unique categories dynamically and find an image for each
     const categoriesWithImages = useMemo(() => {
