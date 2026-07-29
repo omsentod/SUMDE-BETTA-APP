@@ -20,6 +20,16 @@ const TABS = [
     { key: 'COMPLETED', label: 'Selesai' },
 ];
 
+// Empty-state copy tailored per tab so the message actually reflects the
+// active filter — not the same "belum ada pesanan" for every status.
+const EMPTY_STATES = {
+    ALL:        { title: 'Belum ada pesanan',                desc: 'Mulai belanja koleksi ikan betta eksklusif kami.', showCta: true  },
+    PENDING:    { title: 'Tidak ada tagihan menunggu bayar', desc: 'Semua pesanan sudah dibayar, atau kamu belum membuat pesanan baru.', showCta: false },
+    PROCESSING: { title: 'Belum ada pesanan diproses',       desc: 'Pesanan yang sudah dibayar akan muncul di sini.', showCta: false },
+    SHIPPED:    { title: 'Belum ada pesanan dikirim',        desc: 'Pesanan yang sedang dalam perjalanan akan muncul di sini.', showCta: false },
+    COMPLETED:  { title: 'Belum ada pesanan selesai',        desc: 'Pesanan yang sudah diterima akan muncul di sini.', showCta: false },
+};
+
 const fmt = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 
 export default function OrdersPage() {
@@ -94,12 +104,31 @@ export default function OrdersPage() {
                 {loading ? (
                     <p className="text-[var(--text-muted)]">Memuat pesanan...</p>
                 ) : filtered.length === 0 ? (
-                    <div className="orders-empty-card">
-                        <span className="text-[3rem]">🐟</span>
-                        <h4 className="my-[1rem] mb-[0.5rem] text-[var(--text-main)]">Belum ada pesanan</h4>
-                        <p className="text-[var(--text-muted)] text-[0.9rem] mb-[1.5rem]">Mulai belanja koleksi ikan betta eksklusif kami.</p>
-                        <Link href="/produk" className="btn btn-primary cursor-pointer">Jelajahi Produk</Link>
-                    </div>
+                    (() => {
+                        const empty = EMPTY_STATES[activeTab] || EMPTY_STATES.ALL;
+                        return (
+                            <div className="orders-empty-card">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.6}
+                                    stroke="currentColor"
+                                    width="52"
+                                    height="52"
+                                    className="empty-icon"
+                                    aria-hidden="true"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338A2.25 2.25 0 0017.088 3.75H6.912a2.25 2.25 0 00-2.152 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z" />
+                                </svg>
+                                <h4>{empty.title}</h4>
+                                <p>{empty.desc}</p>
+                                {empty.showCta && (
+                                    <Link href="/produk" className="btn btn-primary cursor-pointer">Jelajahi Produk</Link>
+                                )}
+                            </div>
+                        );
+                    })()
                 ) : (
                     <div className="orders-list-container">
                         {filtered.map(order => {

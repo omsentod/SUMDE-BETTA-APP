@@ -3087,11 +3087,39 @@ h3 {
 }
 
 .orders-empty-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
     text-align: center;
-    padding: 5rem 0;
+    padding: 4rem 1.5rem;
     background: var(--bg-card);
     border-radius: 16px;
     border: 1px solid var(--border-color);
+}
+
+.orders-empty-card .empty-icon {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.orders-empty-card h4 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.orders-empty-card p {
+    margin: 0;
+    max-width: 32ch;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.orders-empty-card .btn {
+    margin-top: 0.5rem;
 }
 
 .orders-list-container {

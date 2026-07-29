@@ -18,7 +18,14 @@
 ## 4. UI Aesthetics & Theme System
 - **No Inline Styles in JSX**: Do NOT write inline styles (`style={{ ... }}`) inside JSX components. All styling MUST be placed in dedicated CSS files (`.css` or `.module.css`) using clean BEM/semantic CSS class names.
 - **Dedicated CSS Files Per Feature/Page**: Do NOT dump page-specific styles into `globals.css`. Create dedicated CSS files or CSS Modules (e.g. `checkout.module.css`, `payment.module.css`, `dashboard.module.css`) for each page/feature.
-- **Luxury Betta Design System**: Maintain the dark mode aesthetic, vibrant accents, sleek typography, and smooth CSS transitions defined in CSS files.
+- **Luxury Betta Design System**: Maintain the aesthetic, vibrant accents, sleek typography, and smooth CSS transitions defined in CSS files.
 - **Responsive Layout**: Ensure interactive elements, tables, forms, and product grids adapt cleanly to mobile screen sizes.
 - **No Emojis/Emoticons in UI**: Do NOT use raw emoji characters or text emoticons in the UI. Always use clean vector SVG icons or standard HTML icon elements for visual iconography.
+- **Light + Dark Mode Parity — MANDATORY**: Any UI surface with a background color (modals, popups, dropdowns, toasts, side panels, cards) MUST use the theme CSS variables (`--bg-card`, `--modal-bg`, `--dropdown-bg`, `--header-bg`, etc.) that already flip between light and dark mode. NEVER hardcode a hex color like `#121216`, `#050505`, `#111`, `#fff` for a background — that locks the surface into one theme. After building any modal/popup/panel, verify it looks correct in BOTH modes by toggling `[data-theme="dark"]`. If a needed variable doesn't exist yet, add both light and dark values to `:root` and `[data-theme="dark"]` in `globals.css` before using it.
+- **Empty States Must Vary With Context**: On any page filtered by tabs/status/category (orders, products, users), the empty state message MUST reflect the active filter — never render "Belum ada X" for every tab. Example: on `/customer/orders`, tab `PENDING` → "Tidak ada tagihan menunggu bayar" not "Belum ada pesanan". Every empty state must be `display: flex; flex-direction: column; align-items: center; gap: <spacing>` so icon/heading/description/CTA stack cleanly, never overlap.
+
+## 5. Cart & Purchase Flow
+- **Size Selection Gating**: A product with a non-empty `sizes` JSON array MUST NOT be purchasable without a `selectedSize`. On `ProductCard`, if `sizes.length > 0`, disable "Beli Sekarang" and the cart icon and swap the CTA to "Pilih Ukuran" that navigates to `/produk/[id]`. On product detail (`ProductDetailClient`), block `addToCart` / `buyNow` when `selectedSize` is empty and surface an inline error. The server-side order API is NOT the place to enforce this — do it in the UI so users understand what's missing.
+- **Cart Item Identity**: The unique key of a cart line is `productId + selectedSize`, not `productId` alone. Two units of the same product in different sizes are two lines.
+- **Buy-Now Semantics**: "Beli Sekarang" bypasses the cart and jumps to `/checkout` with ONLY that item. It must NOT append to the shared cart. Confirm the checkout summary shows exactly one item.
 
