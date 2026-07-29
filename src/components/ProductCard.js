@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import styles from './ProductCard.module.css';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
+import SizePickerModal from './SizePickerModal';
 
 export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit, sizes }) {
     const { addToCart, buyNow } = useCart();
@@ -15,28 +17,43 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
     }).format(price);
 
     // Products with sizes require the buyer to pick a size before purchase.
-    // Card-level buttons can't collect a size, so we push them to the detail page.
+    // Instead of blocking on the card, open a Shopee-style size picker modal
+    // that collects the selection then completes the action inline.
     const hasSizes = Array.isArray(sizes) && sizes.length > 0;
+    // modalAction === 'cart' | 'buy' | null
+    const [modalAction, setModalAction] = useState(null);
+
+    const productPayload = { id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit, sizes };
+
+    const commitAddToCart = (selectedSize) => {
+        addToCart({ ...productPayload, selectedSize });
+    };
+
+    const commitBuyNow = (selectedSize) => {
+        if (isSold) return;
+        buyNow({ ...productPayload, selectedSize });
+        router.push('/checkout');
+    };
 
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        addToCart({ id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit });
+        if (hasSizes) { setModalAction('cart'); return; }
+        commitAddToCart(null);
     };
 
     const handleBuyNow = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isSold) {
-            buyNow({ id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit });
-            router.push('/checkout');
-        }
+        if (isSold) return;
+        if (hasSizes) { setModalAction('buy'); return; }
+        commitBuyNow(null);
     };
 
-    const handleGoToDetail = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        router.push(`/produk/${id}`);
+    const handleModalCommit = (selectedSize) => {
+        if (modalAction === 'buy') commitBuyNow(selectedSize);
+        else commitAddToCart(selectedSize);
+        setModalAction(null);
     };
 
     return (
@@ -102,19 +119,8 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
             {/* Actions (Isolated from card click) */}
             <div className={styles.actionsContainer}>
                 {isSold ? (
-                    <button
-                        className={styles.buyBtnSold}
-                        disabled
-                    >
+                    <button className={styles.buyBtnSold} disabled>
                         Lihat Arsip
-                    </button>
-                ) : hasSizes ? (
-                    <button
-                        onClick={handleGoToDetail}
-                        className={styles.buyBtnActive}
-                        title="Pilih ukuran di halaman produk"
-                    >
-                        Pilih Ukuran
                     </button>
                 ) : (
                     <>
@@ -138,6 +144,16 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                     </>
                 )}
             </div>
+
+            {/* Size picker (opens only when product has sizes and user clicks buy/cart) */}
+            {modalAction && (
+                <SizePickerModal
+                    product={productPayload}
+                    action={modalAction}
+                    onClose={() => setModalAction(null)}
+                    onCommit={handleModalCommit}
+                />
+            )}
         </div>
     );
 }

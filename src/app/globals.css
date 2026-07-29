@@ -1724,6 +1724,314 @@ h3 {
     }
 }
 
+/* Shipping / courier picker */
+.checkout-shipping-container {
+    padding: 2rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    margin-top: 1.5rem;
+}
+
+.checkout-shipping-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.checkout-shipping-refresh {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.checkout-shipping-refresh:hover:not(:disabled) {
+    background: var(--primary);
+    color: #fff;
+}
+
+.checkout-shipping-refresh:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.checkout-shipping-hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.checkout-shipping-error {
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.checkout-shipping-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.checkout-shipping-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+}
+
+.checkout-shipping-option:hover {
+    border-color: var(--primary);
+    background: var(--glass);
+}
+
+.checkout-shipping-option.active {
+    border-color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.checkout-shipping-option-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.checkout-shipping-courier {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+}
+
+.checkout-shipping-service {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.checkout-shipping-option-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    flex-shrink: 0;
+}
+
+.checkout-shipping-price {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.checkout-shipping-eta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* -------- Size picker modal (Shopee-style) -------- */
+.size-picker-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    animation: sizePickerFadeIn 0.15s ease-out;
+}
+
+@media (min-width: 640px) {
+    .size-picker-backdrop {
+        align-items: center;
+        padding: 2rem;
+    }
+}
+
+@keyframes sizePickerFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.size-picker-sheet {
+    background: var(--modal-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    box-shadow: 0 -25px 60px rgba(0, 0, 0, 0.35);
+    animation: sizePickerSlideUp 0.2s ease-out;
+}
+
+@media (min-width: 640px) {
+    .size-picker-sheet {
+        border-radius: 16px;
+    }
+}
+
+@keyframes sizePickerSlideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.size-picker-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.size-picker-thumb {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.size-picker-thumb-img {
+    object-fit: cover;
+}
+
+.size-picker-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.size-picker-price {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.size-picker-name {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+}
+
+.size-picker-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.size-picker-close:hover {
+    background: var(--bg-card);
+    color: var(--text-main);
+}
+
+.size-picker-section {
+    padding-top: 1.25rem;
+}
+
+.size-picker-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.75rem;
+}
+
+.size-picker-empty {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.size-picker-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.size-picker-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.65rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-main);
+    min-width: 5rem;
+}
+
+.size-picker-option:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+}
+
+.size-picker-option-out {
+    opacity: 0.4;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.size-picker-option-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.size-picker-option-stock {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.size-picker-footer-hint {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
 /* Profile avatar button & dropdown */
 .profile-menu-wrapper {
     position: relative;

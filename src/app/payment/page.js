@@ -64,12 +64,15 @@ export default function PaymentPage() {
 
     // 2. Inisiasi Doku Checkout
     const handleProceedToDoku = async () => {
+        if (!shipment?.shipping?.courier || !shipment?.shipping?.service) {
+            alert('Data ongkir hilang. Silakan kembali ke halaman checkout.');
+            router.push('/checkout');
+            return;
+        }
         setLoading(true);
         try {
             // Step 1: Create order as PENDING in database
             const orderPayload = {
-                total,
-                status: 'PENDING',
                 name: shipment.name,
                 email: shipment.email,
                 phone: shipment.phone,
@@ -83,9 +86,12 @@ export default function PaymentPage() {
                 items: cart.map(item => ({
                     productId: item.id,
                     quantity: item.quantity,
-                    price: item.price,
                     selectedSize: item.selectedSize
-                }))
+                })),
+                shipping: {
+                    courier: shipment.shipping.courier,
+                    service: shipment.shipping.service,
+                },
             };
 
             const orderRes = await fetch('/api/orders', {

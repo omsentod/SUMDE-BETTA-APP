@@ -71,11 +71,19 @@ model Product {
 
 model Order {
   id        String      @id @default(uuid())
-  userId    String?     
+  userId    String?
   user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  total     Float
+  // Money breakdown: subtotal = sum of item prices, shippingFee = courier cost,
+  // total = subtotal + shippingFee. All authoritative from the server.
+  subtotal        Float   @default(0)
+  shippingFee     Float   @default(0)
+  total           Float
+  // Courier snapshot (immutable per order — Biteship code + service tier)
+  shippingCourier String? // e.g. "jne", "jnt", "sicepat", "gosend"
+  shippingService String? // e.g. "REG", "YES", "SAME_DAY"
+  shippingEta     String? // e.g. "1-2 hari"
   status    String      @default("PENDING") // "PENDING" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED"
-  name      String      
+  name      String
   email     String
   phone         String
   streetAddress String

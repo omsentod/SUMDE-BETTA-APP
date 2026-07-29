@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession, requireUser } from '@/lib/auth';
+import { findAndValidateRate } from '@/lib/shipping';
 
 export async function GET(request) {
   try {
@@ -20,9 +21,12 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items } = await request.json();
+    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items, shipping } = await request.json();
     if (!name || !email || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode || !items || items.length === 0) {
       return NextResponse.json({ error: 'Detail pesanan tidak lengkap.' }, { status: 400 });
+    }
+    if (!shipping?.courier || !shipping?.service) {
+      return NextResponse.json({ error: 'Pilih kurir pengiriman terlebih dahulu.' }, { status: 400 });
     }
 
     // Normalize incoming items — client only supplies productId, quantity, and
@@ -51,12 +55,31 @@ export async function POST(request) {
       }
     }
 
-    // Compute the authoritative total server-side. The client's total is
+    // Compute the authoritative subtotal server-side. The client's total is
     // ignored — trusting it would let a caller pay any amount they want.
-    const serverTotal = normalized.reduce((sum, item) => {
+    const subtotal = normalized.reduce((sum, item) => {
       const product = productById.get(item.productId);
       return sum + product.price * item.quantity;
     }, 0);
+
+    // Re-quote shipping from RajaOngkir right now, using the same courier+service
+    // the client picked. The fee we store is what RajaOngkir says NOW — never
+    // what the client sent — so a tampered shippingFee in the body is ignored.
+    const rate = await findAndValidateRate({
+      destinationPostal: postalCode,
+      destinationCity: city,
+      items: normalized,
+      courier: shipping.courier,
+      service: shipping.service,
+    });
+    if (!rate) {
+      return NextResponse.json(
+        { error: 'Layanan kurir yang dipilih tidak lagi tersedia. Pilih ulang ongkir.' },
+        { status: 400 }
+      );
+    }
+    const shippingFee = Number(rate.price) || 0;
+    const total = subtotal + shippingFee;
 
     // Attribute the order to the logged-in user (guest checkout => null).
     // userId is taken from the session, never trusted from the request body.
@@ -67,7 +90,15 @@ export async function POST(request) {
     // successful payment. selectedSize is persisted for the webhook.
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
-        data: { userId, total: serverTotal, status: 'PENDING', name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode }
+        data: {
+          userId, status: 'PENDING',
+          subtotal, shippingFee, total,
+          shippingCourier: rate.courier_code,
+          shippingService: rate.courier_service_code,
+          shippingEta: rate.duration || null,
+          name, email, phone, streetAddress, rtRw,
+          province, city, district, village, postalCode,
+        },
       });
       for (const item of normalized) {
         const product = productById.get(item.productId);

@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import SearchableSelect from '@/components/SearchableSelect';
 import styles from './checkout.module.css';
 
@@ -43,6 +43,13 @@ export default function CheckoutPage() {
     const [savingAddress, setSavingAddress] = useState(false);
 
     const [selectAlert, setSelectAlert] = useState({ field: '', message: '' });
+
+    // Shipping / courier state — populated once the buyer's postal code is set
+    const [rates, setRates] = useState([]);
+    const [ratesLoading, setRatesLoading] = useState(false);
+    const [ratesError, setRatesError] = useState('');
+    // selectedRate = { courier_code, courier_service_code, price, courier_service_name, duration }
+    const [selectedRate, setSelectedRate] = useState(null);
 
     const triggerSelectAlert = (field, message) => {
         setSelectAlert({ field, message });
@@ -236,6 +243,67 @@ export default function CheckoutPage() {
         }));
     };
 
+    // Stable fingerprint of cart contents. The cart array reference from context
+    // is re-created on every parent render — if we put `cart` directly into the
+    // effect deps below, the effect fires every render, launches infinite
+    // fetches, and eventually OOMs the Node process.
+    const cartFingerprint = useMemo(
+        () => cart.map((i) => `${i.id}:${i.quantity}`).join('|'),
+        [cart]
+    );
+
+    // Manual + auto trigger for rate lookup. Extracted so a "Cek Ongkir" button
+    // can call the same code path.
+    const fetchShippingRates = useCallback(async () => {
+        const postal = formData.postalCode;
+        if (!/^\d{5}$/.test(postal)) {
+            setRatesError('Isi kode pos 5 digit dulu.');
+            return;
+        }
+        if (cart.length === 0) return;
+        setRatesLoading(true);
+        setRatesError('');
+        try {
+            const res = await fetch('/api/shipping/rates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    destinationPostal: postal,
+                    destinationCity: formData.city,
+                    items: cart.map((i) => ({ productId: i.id, quantity: i.quantity })),
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Gagal mengambil ongkir.');
+            setRates(data.rates || []);
+            setSelectedRate((prev) => {
+                if (!prev) return null;
+                return (data.rates || []).find(
+                    (r) => r.courier_code === prev.courier_code && r.courier_service_code === prev.courier_service_code
+                ) || null;
+            });
+        } catch (err) {
+            setRatesError(err.message);
+            setRates([]);
+        } finally {
+            setRatesLoading(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.postalCode, formData.city, cartFingerprint]);
+
+    // Auto-fetch when postal code or cart contents actually change.
+    useEffect(() => {
+        const postal = formData.postalCode;
+        if (!/^\d{5}$/.test(postal) || cart.length === 0) {
+            setRates([]);
+            setSelectedRate(null);
+            setRatesError('');
+            return;
+        }
+        fetchShippingRates();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.postalCode, cartFingerprint]);
+
     // Save the currently-entered form as a new entry in the address book
     const handleSaveAddress = async () => {
         const { name, phone, streetAddress, rtRw, province, city, district, village, postalCode } = formData;
@@ -275,7 +343,18 @@ export default function CheckoutPage() {
             alert('Mohon lengkapi seluruh detail pengiriman.');
             return;
         }
-        localStorage.setItem('temp-shipment', JSON.stringify(formData));
+        if (!selectedRate) {
+            alert('Pilih kurir pengiriman terlebih dahulu.');
+            return;
+        }
+        const shipping = {
+            courier: selectedRate.courier_code,
+            service: selectedRate.courier_service_code,
+            serviceName: selectedRate.courier_service_name,
+            fee: Number(selectedRate.price) || 0,
+            eta: selectedRate.duration || null,
+        };
+        localStorage.setItem('temp-shipment', JSON.stringify({ ...formData, shipping }));
         router.push('/payment');
     };
 
@@ -467,6 +546,68 @@ export default function CheckoutPage() {
                                     <button type="submit" id="submit-shipment" className="hidden"></button>
                                 </form>
                             </div>
+
+                            {/* Shipping / courier picker */}
+                            <div className="checkout-shipping-container">
+                                <div className="checkout-shipping-header">
+                                    <h3 className={styles.sectionTitle}>Pilih Kurir Pengiriman</h3>
+                                    <button
+                                        type="button"
+                                        onClick={fetchShippingRates}
+                                        disabled={ratesLoading || !/^\d{5}$/.test(formData.postalCode) || cart.length === 0}
+                                        className="checkout-shipping-refresh"
+                                        title="Cek ulang ongkir dengan alamat sekarang"
+                                    >
+                                        {ratesLoading ? 'Memuat...' : 'Cek Ongkir'}
+                                    </button>
+                                </div>
+                                {!/^\d{5}$/.test(formData.postalCode) ? (
+                                    <p className="checkout-shipping-hint">
+                                        Isi kode pos untuk melihat opsi ongkir, atau klik "Cek Ongkir" setelah ganti alamat.
+                                    </p>
+                                ) : ratesLoading ? (
+                                    <p className="checkout-shipping-hint">Mengambil ongkir...</p>
+                                ) : ratesError ? (
+                                    <p className="checkout-shipping-error">{ratesError}</p>
+                                ) : rates.length === 0 ? (
+                                    <p className="checkout-shipping-hint">
+                                        Tidak ada layanan kurir tersedia ke lokasi ini.
+                                    </p>
+                                ) : (
+                                    <div className="checkout-shipping-list">
+                                        {rates.map((r) => {
+                                            const active =
+                                                selectedRate?.courier_code === r.courier_code &&
+                                                selectedRate?.courier_service_code === r.courier_service_code;
+                                            return (
+                                                <button
+                                                    key={`${r.courier_code}-${r.courier_service_code}`}
+                                                    type="button"
+                                                    onClick={() => setSelectedRate(r)}
+                                                    className={`checkout-shipping-option ${active ? 'active' : ''}`}
+                                                >
+                                                    <div className="checkout-shipping-option-main">
+                                                        <span className="checkout-shipping-courier">
+                                                            {(r.courier_name || r.courier_code).toUpperCase()}
+                                                        </span>
+                                                        <span className="checkout-shipping-service">
+                                                            {r.courier_service_name}
+                                                        </span>
+                                                    </div>
+                                                    <div className="checkout-shipping-option-side">
+                                                        <span className="checkout-shipping-price">
+                                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(r.price)}
+                                                        </span>
+                                                        {r.duration && (
+                                                            <span className="checkout-shipping-eta">{r.duration}</span>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="checkout-summary-card">
@@ -476,12 +617,18 @@ export default function CheckoutPage() {
                                 <span>{formattedTotal}</span>
                             </div>
                             <div className={styles.summaryRowLarge}>
-                                <span>Penanganan Aman</span>
-                                <span className="color-secondary">Gratis</span>
+                                <span>Ongkir {selectedRate ? `(${(selectedRate.courier_code || '').toUpperCase()} ${selectedRate.courier_service_code})` : ''}</span>
+                                <span>
+                                    {selectedRate
+                                        ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(selectedRate.price)
+                                        : <span className="color-secondary">Pilih kurir</span>}
+                                </span>
                             </div>
                             <div className={styles.summaryTotalRow}>
                                 <span>Total</span>
-                                <span>{formattedTotal}</span>
+                                <span>
+                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(total + (Number(selectedRate?.price) || 0))}
+                                </span>
                             </div>
                             <button
                                 onClick={() => document.getElementById('submit-shipment').click()}
