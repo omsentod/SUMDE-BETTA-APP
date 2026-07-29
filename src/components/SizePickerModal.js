@@ -1,5 +1,6 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
 // Shopee-style size picker: opens when a buyer clicks "Beli Sekarang" or the
@@ -13,7 +14,11 @@ import Image from 'next/image';
 //   onCommit  — (selectedSize) => void  runs after user picks + confirms
 
 export default function SizePickerModal({ product, action, onClose, onCommit }) {
-    // Escape to close
+    // Portal target = document.body — see note below.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+
+    // Escape to close + body scroll lock
     useEffect(() => {
         const onKey = (e) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', onKey);
@@ -24,7 +29,7 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
         };
     }, [onClose]);
 
-    if (!product) return null;
+    if (!product || !mounted) return null;
     const sizes = Array.isArray(product.sizes) ? product.sizes : [];
 
     const priceFormatted = new Intl.NumberFormat('id-ID', {
@@ -33,7 +38,12 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
 
     const ctaLabel = action === 'buy' ? 'Beli Sekarang' : 'Tambah ke Keranjang';
 
-    return (
+    // Render into document.body via a portal. Without this, any ancestor with
+    // `transform` / `filter` / `will-change` (Tailwind's `transform` utility
+    // on ProductCard.card is the culprit) creates a stacking context that
+    // traps `position: fixed`. Result before portal: modal appears INSIDE the
+    // card, clipped by `overflow: hidden` — looking like a "second UI".
+    return createPortal(
         <div
             className="size-picker-backdrop"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -95,7 +105,8 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
                     Klik ukuran di atas untuk langsung {ctaLabel.toLowerCase()}.
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

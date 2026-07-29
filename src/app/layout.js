@@ -2,6 +2,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
+import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import { CartProvider } from "@/context/CartContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
                                 <CartSidebar />
                                 <main>{children}</main>
                                 <Footer />
+                                <WhatsAppFloatingButton />
                             </CartProvider>
                         </ProductProvider>
                     </AuthProvider>

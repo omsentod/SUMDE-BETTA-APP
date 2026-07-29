@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import SizePickerModal from './SizePickerModal';
 
 export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit, sizes }) {
-    const { addToCart, buyNow } = useCart();
+    const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -35,10 +35,17 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
         router.push('/checkout');
     };
 
+    // Open size picker AND close the cart sidebar first — otherwise both
+    // overlays coexist (the "2 modal crash" the user reported).
+    const openSizePicker = (action) => {
+        if (isCartOpen) toggleCart();
+        setModalAction(action);
+    };
+
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (hasSizes) { setModalAction('cart'); return; }
+        if (hasSizes) { openSizePicker('cart'); return; }
         commitAddToCart(null);
     };
 
@@ -46,7 +53,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
         e.preventDefault();
         e.stopPropagation();
         if (isSold) return;
-        if (hasSizes) { setModalAction('buy'); return; }
+        if (hasSizes) { openSizePicker('buy'); return; }
         commitBuyNow(null);
     };
 

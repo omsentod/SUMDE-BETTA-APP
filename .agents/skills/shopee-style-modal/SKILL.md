@@ -98,8 +98,21 @@ const [modalAction, setModalAction] = useState(null);
 - **Placeholder empty state as illustration**: keep text simple ("Produk ini tidak punya varian ukuran."). Avoid stock imagery.
 - **Sizes as radio buttons + separate commit button**: too many taps. Click size → commit directly (like Shopee).
 - **Emoji in modal** (⚠️ / ✕ / 🐟): use inline SVG (violates AGENTS.md rule 4)
-- **Modal inside a scrollable card**: `position: fixed` on the backdrop escapes the card. Ensure the wrapper isn't `position: relative` with `overflow: hidden` swallowing it.
-- **Reusing `z-index` values from other overlays**: use `z-index: 2000` for content modals so they sit above admin sidebar (1000) and header (100).
+- **Modal inside a scrollable card**: `position: fixed` on the backdrop escapes the card — **UNLESS the card (or any ancestor) has `transform`, `filter`, `perspective`, `will-change`, `backdrop-filter`, or `contain`**. Those create a new stacking context and TRAP `position: fixed` inside them. `overflow: hidden` on the ancestor then clips the "escaped" modal — the classic "why does my modal look half-cut inside a card" bug. Real case: `ProductCard.module.css .card` used Tailwind `transform` utility → modal appeared clipped inside the card, looked like a second UI element.
+- **Solution: always use `createPortal` to render into `document.body`**. This escapes every ancestor regardless of what stacking context they create. Boilerplate:
+  ```js
+  'use client';
+  import { createPortal } from 'react-dom';
+  import { useEffect, useState } from 'react';
+
+  export default function Modal({ children }) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+    if (!mounted) return null; // SSR guard — document.body doesn't exist server-side
+    return createPortal(<div className="backdrop">{children}</div>, document.body);
+  }
+  ```
+- **Reusing `z-index` values from other overlays**: use `z-index: 2100` for content modals so they sit above cart sidebar (2001) and admin sidebar (1000) and header (100). Past bug: modal `z-index: 2000` = cart-overlay `z-index: 2000`, cart-sidebar `z-index: 2001` — modal appeared BEHIND cart.
 
 ## a11y minimums
 - `role="dialog"` `aria-modal="true"` on sheet

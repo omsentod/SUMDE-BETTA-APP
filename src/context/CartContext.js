@@ -1,44 +1,87 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+    const { currentUser } = useAuth();
+    const userId = currentUser?.id || 'guest';
+
+    const [activeUserId, setActiveUserId] = useState(null);
     const [cart, setCart] = useState([]);
     const [directCheckoutItem, setDirectCheckoutItem] = useState(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    // Hydrate from localStorage. See CartContext original comment for why
-    // this is deliberately an effect (SSR-safe first render).
+    // Hydrate cart from localStorage whenever the active user changes.
+    // Includes migration from legacy global 'sumde-cart' key if guest cart is empty.
     useEffect(() => {
-        try {
-            const savedCart = localStorage.getItem('sumde-cart');
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe localStorage hydration
-            if (savedCart) setCart(JSON.parse(savedCart));
-        } catch {
-            localStorage.removeItem('sumde-cart');
-        }
-        try {
-            const savedDirect = localStorage.getItem('sumde-direct-checkout');
-            if (savedDirect) setDirectCheckoutItem(JSON.parse(savedDirect));
-        } catch {
-            localStorage.removeItem('sumde-direct-checkout');
-        }
-    }, []);
+        let initialCart = [];
+        let initialDirect = null;
 
-    // Persist cart on any change
-    useEffect(() => {
-        localStorage.setItem('sumde-cart', JSON.stringify(cart));
-    }, [cart]);
+        const cartKey = `sumde-cart-${userId}`;
+        const directKey = `sumde-direct-${userId}`;
 
-    // Persist directCheckout on any change
-    useEffect(() => {
-        if (directCheckoutItem) {
-            localStorage.setItem('sumde-direct-checkout', JSON.stringify(directCheckoutItem));
-        } else {
-            localStorage.removeItem('sumde-direct-checkout');
+        try {
+            const savedCart = localStorage.getItem(cartKey);
+            if (savedCart) {
+                initialCart = JSON.parse(savedCart);
+            } else if (userId === 'guest') {
+                // Backward compatibility: fallback to legacy key for guest
+                const legacyCart = localStorage.getItem('sumde-cart');
+                if (legacyCart) {
+                    initialCart = JSON.parse(legacyCart);
+                    localStorage.setItem(cartKey, legacyCart);
+                }
+            }
+        } catch {
+            localStorage.removeItem(cartKey);
         }
-    }, [directCheckoutItem]);
+
+        try {
+            const savedDirect = localStorage.getItem(directKey);
+            if (savedDirect) {
+                initialDirect = JSON.parse(savedDirect);
+            } else if (userId === 'guest') {
+                const legacyDirect = localStorage.getItem('sumde-direct-checkout');
+                if (legacyDirect) {
+                    initialDirect = JSON.parse(legacyDirect);
+                    localStorage.setItem(directKey, legacyDirect);
+                }
+            }
+        } catch {
+            localStorage.removeItem(directKey);
+        }
+
+        setCart(initialCart);
+        setDirectCheckoutItem(initialDirect);
+        setActiveUserId(userId);
+    }, [userId]);
+
+    // Persist cart changes ONLY when activeUserId matches the current userId (hydration completed)
+    useEffect(() => {
+        if (activeUserId !== userId) return;
+        try {
+            localStorage.setItem(`sumde-cart-${userId}`, JSON.stringify(cart));
+        } catch {
+            // Ignore quota errors
+        }
+    }, [cart, userId, activeUserId]);
+
+    // Persist directCheckout changes ONLY when activeUserId matches current userId
+    useEffect(() => {
+        if (activeUserId !== userId) return;
+        try {
+            const directKey = `sumde-direct-${userId}`;
+            if (directCheckoutItem) {
+                localStorage.setItem(directKey, JSON.stringify(directCheckoutItem));
+            } else {
+                localStorage.removeItem(directKey);
+            }
+        } catch {
+            // Ignore storage errors
+        }
+    }, [directCheckoutItem, userId, activeUserId]);
 
     // ---- Handlers: all stable across renders (no state in deps; use setter
     //      functional-updates to read current state safely). ----
