@@ -1,5 +1,9 @@
 # Project Rules for SUMDE-BETTA-APP
 
+**Companion docs** (read when relevant, do NOT re-derive from codebase):
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — target folder map, module inventory, API shape decision, naming, import order
+- [TECH-DEBT.md](./TECH-DEBT.md) — current debt inventory, refactor targets, why-not-yet, priority order
+
 ## 1. React & State Management (Next.js App Router)
 - **Avoid Synchronous setState in Effects**: Do not call `setState()` directly inside `useEffect()` without proper condition checks or render-phase handling to prevent cascading re-renders.
 - **Client Components**: Mark interactive client-side files explicitly with `'use client';` at the top.
