@@ -203,7 +203,8 @@ export default function CheckoutPage() {
             province: id ? name : '',
             city: '',
             district: '',
-            village: ''
+            village: '',
+            postalCode: ''
         }));
         setCityId('');
         setDistrictId('');
@@ -219,7 +220,8 @@ export default function CheckoutPage() {
             ...prev,
             city: id ? name : '',
             district: '',
-            village: ''
+            village: '',
+            postalCode: ''
         }));
         setDistrictId('');
         setVillages([]);
@@ -232,7 +234,8 @@ export default function CheckoutPage() {
         setFormData(prev => ({
             ...prev,
             district: id ? name : '',
-            village: ''
+            village: '',
+            postalCode: ''
         }));
     };
 
