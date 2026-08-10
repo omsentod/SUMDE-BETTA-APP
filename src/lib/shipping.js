@@ -16,13 +16,17 @@
 //   SHIPPING_ORIGIN_CITY_ID   — required, numeric destination id where you
 //                               ship FROM. Find it with GET /api/shipping/cities?q=<yourcity>
 //   RAJAONGKIR_BASE           — optional override; default is the Komerce URL
-//   SHIPPING_COURIERS         — optional comma-separated (default: jne,pos,tiki)
+//   SHIPPING_COURIERS         — optional comma-separated (default: jnt).
+//                               Layanan trucking (JNE JTR) selalu di-filter — tidak cocok untuk ikan hidup.
 //   SHIPPING_ITEM_WEIGHT_G    — optional grams per item incl. packaging (default 1000)
 
 const DEFAULT_BASE = 'https://rajaongkir.komerce.id/api/v1';
-const DEFAULT_COURIERS = 'jne,pos,tiki';
+const DEFAULT_COURIERS = 'jnt';
 // Berapa ekor ikan per 1 kg paket. 10 ikan = 1 kg, 11 ikan = 2 kg, dst.
 const DEFAULT_ITEMS_PER_KG = 10;
+// Kode layanan yang tidak cocok untuk ikan hidup — kirim via truk cargo
+// bisa 3-7 hari, ikan bakal mati. Filter sebelum dikirim ke client.
+const EXCLUDED_SERVICES = new Set(['jtr', 'jtr250', 'jtr<250', 'trucking']);
 
 // Base config — only needs the API key. Used by the city-search endpoint,
 // which the merchant hits BEFORE they know their origin id (that's the whole
@@ -163,7 +167,11 @@ export async function fetchRates({ destinationPostal, destinationCity, items }) 
       weight, courier,
     }))
   );
-  return perCourier.flat();
+  return perCourier.flat().filter((r) => {
+    const svc = String(r.courier_service_code || '').toLowerCase().replace(/\s+/g, '');
+    const name = String(r.courier_service_name || '').toLowerCase();
+    return !EXCLUDED_SERVICES.has(svc) && !name.includes('trucking');
+  });
 }
 
 /** Re-quote at order creation and confirm the client's chosen service still
