@@ -7,6 +7,16 @@ import {
 } from '@/lib/googleAuth';
 import { signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth';
 
+// Base URL untuk membangun redirect balik ke browser. Wajib pakai APP_URL
+// karena `request.url` di belakang reverse proxy Hostinger mengembalikan
+// alamat internal `http://0.0.0.0:3000/...` — kalau dipakai sebagai base,
+// browser akan di-redirect ke IP internal yang tidak bisa dijangkau.
+function baseUrl(request) {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  // Fallback untuk local dev: reconstruct dari request.url origin.
+  try { return new URL(request.url).origin; } catch { return 'http://localhost:3000'; }
+}
+
 // GET /api/auth/google/callback?code=...&state=...
 // 1. Verify state (CSRF check terhadap cookie)
 // 2. Exchange code → tokens
@@ -14,6 +24,7 @@ import { signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth';
 // 4. Cari user by googleId OR email → link/create/login
 // 5. Issue session cookie + redirect ke `next` path
 export async function GET(request) {
+  const base = baseUrl(request);
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const stateParam = searchParams.get('state');
@@ -22,18 +33,18 @@ export async function GET(request) {
 
   // User klik "cancel" di consent screen — kembali ke login dengan info.
   if (errorParam) {
-    return NextResponse.redirect(new URL(`/login?googleError=${encodeURIComponent(errorParam)}`, request.url));
+    return NextResponse.redirect(new URL(`/login?googleError=${encodeURIComponent(errorParam)}`, base));
   }
 
   if (!code || !stateParam) {
-    return NextResponse.redirect(new URL('/login?googleError=missing_params', request.url));
+    return NextResponse.redirect(new URL('/login?googleError=missing_params', base));
   }
 
   // State format: "<random>:<nextPath>". Bandingkan random dengan cookie.
   const [state, nextPathRaw] = stateParam.split(':');
   if (!cookieState || state !== cookieState) {
     // Kemungkinan CSRF attempt atau state cookie kedaluwarsa.
-    return NextResponse.redirect(new URL('/login?googleError=state_mismatch', request.url));
+    return NextResponse.redirect(new URL('/login?googleError=state_mismatch', base));
   }
   const next = nextPathRaw && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextPathRaw) ? nextPathRaw : '/customer/dashboard';
 
@@ -80,7 +91,7 @@ export async function GET(request) {
     }
 
     const token = await signSession({ id: user.id, role: user.role });
-    const res = NextResponse.redirect(new URL(next, request.url));
+    const res = NextResponse.redirect(new URL(next, base));
     res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
     // Hapus state cookie — sudah dipakai.
     res.cookies.set(OAUTH_STATE_COOKIE, '', { path: '/', maxAge: 0 });
@@ -88,7 +99,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('Google OAuth callback error:', error);
     return NextResponse.redirect(
-      new URL(`/login?googleError=${encodeURIComponent(error.message || 'unknown')}`, request.url)
+      new URL(`/login?googleError=${encodeURIComponent(error.message || 'unknown')}`, base)
     );
   }
 }

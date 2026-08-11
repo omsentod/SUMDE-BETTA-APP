@@ -49,6 +49,7 @@
 - **`prompt=select_account`**: Google authorize URL selalu tampilkan account picker (biar user tidak stuck di akun Google salah yang lagi login di browser).
 - **Whitelist `next` Path**: Query `?next=...` cuma boleh internal path (`/xxx`). Tolak URL external — cegah open redirect ke phishing site. Regex `/^\/[a-zA-Z0-9/\-_?=&]*$/`.
 - **Never Trust `email_verified: false`**: Kalau Google response `email_verified: false` (jarang, tapi bisa terjadi kalau Google Workspace admin belum verify domain user), TOLAK login — tidak sama kepercayaan dengan email_verified: true.
+- **Redirect Base = APP_URL, Bukan `request.url`**: Di belakang reverse proxy Hostinger, `request.url` mengembalikan alamat internal `http://0.0.0.0:3000/...` — kalau dipakai sebagai base untuk `new URL('/path', request.url)`, browser akan di-redirect ke IP internal yang tidak bisa dijangkau. Semua `NextResponse.redirect` di callback pakai `process.env.APP_URL` sebagai base (dengan fallback ke `request.url` origin untuk local dev).
 
 ## 6. Email (SMTP via `src/lib/email.js`)
 
