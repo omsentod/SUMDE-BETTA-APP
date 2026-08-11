@@ -74,6 +74,26 @@ Run per HTTP handler in the file. Note N/A inline (comment) if a rule doesn't ap
 - [ ] POST/PUT/DELETE for mutations only
 - [ ] CSRF covered by `sameSite: 'lax'` cookie + JSON body (browsers won't send `Content-Type: application/json` from a form). If accepting form-encoded, need CSRF token.
 
+## Auth endpoints (per AGENTS.md §5-6)
+
+Auth endpoints punya class of bugs sendiri. Checklist tambahan kalau route menyentuh auth:
+
+- [ ] **Register**: user dibuat dengan `emailVerified: null`; login akan diblokir sampai OTP di-verify
+- [ ] **Register**: OTP di-hash sebelum simpan (scrypt/bcrypt), jangan plaintext
+- [ ] **Register**: kalau email send gagal, JANGAN rollback user create — log error, biarkan user retry via resend-otp
+- [ ] **Login**: return 403 `{code: 'EMAIL_NOT_VERIFIED', email}` untuk unverified, BUKAN generic 401 (UI perlu redirect)
+- [ ] **Login**: admin di-whitelist dari verify-check (biar seeded admin tetap bisa manage)
+- [ ] **Verify OTP**: cek `attempts < MAX_ATTEMPTS`, increment on fail, delete row on success (jangan cuma mark used)
+- [ ] **Verify OTP**: pakai `crypto.timingSafeEqual` untuk compare hash (bukan `===` — timing attack)
+- [ ] **Verify OTP**: set session cookie DALAM response — auto-login supaya UX smooth
+- [ ] **Resend OTP**: rate limit DUA lapis (per IP + per email); response sukses palsu kalau user tidak ada / sudah verified (anti-enumeration)
+- [ ] **Forgot Password**: response 200 identik apakah email exists atau tidak (anti-enumeration); email dikirim best-effort dengan log kalau gagal
+- [ ] **Forgot Password**: token di-hash (SHA-256) sebelum simpan; raw token cuma di URL email
+- [ ] **Forgot Password**: invalidate token lama untuk user tsb yang belum dipakai — cuma token terakhir yang valid
+- [ ] **Reset Password**: cek `expiresAt`, `usedAt`, mark used ATOMIC dengan update password (prisma.$transaction) — jangan setengah jadi
+- [ ] **Change Password (logged-in)**: rate limit `change-pw:<userId>` per user (bukan IP), karena session cookie dicuri
+- [ ] **Change Password / Reset Password**: reject kalau new === current
+
 ## Historic bugs — never reintroduce
 | Bug | Where | Fix |
 |-----|-------|-----|

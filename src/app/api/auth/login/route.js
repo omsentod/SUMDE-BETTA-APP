@@ -25,6 +25,21 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Username atau password salah.' }, { status: 401 });
     }
 
+    // Block login sampai email diverifikasi (AGENTS.md §Auth). Kode 403 +
+    // shape khusus supaya UI tahu redirect ke /verify-email dengan email.
+    // Admin di-whitelist supaya seeded/legacy admin tetap bisa login untuk
+    // manage — production admin sebaiknya tetap verify manual via UI.
+    if (!user.emailVerified && user.role !== 'admin') {
+      return NextResponse.json(
+        {
+          error: 'Email belum diverifikasi. Cek inbox untuk kode OTP atau minta kode baru.',
+          code: 'EMAIL_NOT_VERIFIED',
+          email: user.email,
+        },
+        { status: 403 }
+      );
+    }
+
     // Seamlessly upgrade a legacy plaintext password to a hash on first login
     if (isLegacyPassword(user.password)) {
       await prisma.user.update({ where: { id: user.id }, data: { password: hashPassword(password) } });

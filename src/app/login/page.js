@@ -25,6 +25,13 @@ export default function LoginPage() {
                 router.push('/customer/dashboard');
             }
         } catch (err) {
+            // Backend kirim code=EMAIL_NOT_VERIFIED kalau user harus verifikasi.
+            // Redirect ke /verify-email dengan email prefill supaya user
+            // tinggal masukkan OTP (atau klik "Kirim ulang").
+            if (err.code === 'EMAIL_NOT_VERIFIED' && err.email) {
+                router.push(`/verify-email?email=${encodeURIComponent(err.email)}`);
+                return;
+            }
             setError(err.message || 'Email atau password salah.');
         } finally {
             setIsLoading(false);
@@ -65,9 +72,12 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                        <label className="auth-label">
-                            Password
-                        </label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label className="auth-label">Password</label>
+                            <Link href="/forgot-password" className="auth-link" style={{ fontSize: '0.8rem' }}>
+                                Lupa password?
+                            </Link>
+                        </div>
                         <input
                             type="password"
                             className="search-input auth-input-full"

@@ -13,6 +13,9 @@ model User {
   password  String
   name      String
   role      String   @default("customer") // "customer" | "admin"
+  // Null = belum verifikasi email. Timestamp = kapan berhasil verifikasi via OTP.
+  // Login diblokir sampai verifikasi (lihat AGENTS.md §Auth).
+  emailVerified DateTime?
   phone         String?
   streetAddress String?
   rtRw          String?
@@ -25,6 +28,30 @@ model User {
   updatedAt     DateTime @updatedAt
   orders        Order[]
   addresses     Address[]
+  passwordResets PasswordReset[]
+}
+
+// OTP satu-per-email. Register / resend timpa row lama. Verifikasi sukses hapus row.
+model EmailVerification {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  otp        String   // 6-digit, disimpan hashed via scrypt
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+// Token satu-shot untuk reset password. Disimpan hashed. Setelah dipakai, usedAt di-set.
+model PasswordReset {
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Address {

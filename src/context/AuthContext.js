@@ -24,7 +24,14 @@ export function AuthProvider({ children }) {
             body: JSON.stringify({ email, password }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Login gagal.');
+        if (!response.ok) {
+            const err = new Error(data.error || 'Login gagal.');
+            // Preserve backend code/email supaya UI login bisa redirect ke
+            // /verify-email saat EMAIL_NOT_VERIFIED (bukan hanya show error).
+            if (data.code) err.code = data.code;
+            if (data.email) err.email = data.email;
+            throw err;
+        }
         setCurrentUser(data);
         return data;
     }, []);
@@ -107,6 +114,10 @@ export function AuthProvider({ children }) {
 
     const value = useMemo(() => ({
         currentUser, isLoading,
+        setCurrentUser, // Di-expose untuk verify-otp: setelah OTP valid, session
+                        // cookie sudah di-set server-side + endpoint balikin user data.
+                        // Update state langsung supaya /customer/dashboard tidak
+                        // race dengan /api/auth/me.
         login, register, logout,
         updateUserProfile,
         fetchMyOrders, fetchMyAddresses,

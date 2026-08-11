@@ -58,10 +58,16 @@ export default function CustomerDashboard() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
         </svg>
     );
+    const iconLock = (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" width="28" height="28">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+    );
 
     const shortcuts = [
-        { href: '/customer/addresses', icon: iconPin,     title: 'Alamat Saya',  desc: 'Kelola alamat pengiriman tersimpan' },
-        { href: '/customer/orders',    icon: iconPackage, title: 'Pesanan Saya', desc: 'Lacak status pesanan kamu' },
+        { href: '/customer/addresses',        icon: iconPin,     title: 'Alamat Saya',  desc: 'Kelola alamat pengiriman tersimpan' },
+        { href: '/customer/orders',           icon: iconPackage, title: 'Pesanan Saya', desc: 'Lacak status pesanan kamu' },
+        { href: '/customer/settings/password', icon: iconLock,   title: 'Ubah Password', desc: 'Ganti password akun kamu' },
     ];
 
     return (
