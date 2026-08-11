@@ -33,6 +33,7 @@ npm run build
 ```
 - [ ] No new deprecation warnings
 - [ ] New routes in output list
+- [ ] **CSS Modules `pure` mode traps** — Next.js webpack build rejects top-level global selectors (`body`, `html`, `*`, standalone `@page`) inside `.module.css`, even wrapped in `:global {}` blocks. `eslint` and `next dev` DO NOT catch this; only `next build` does. If you need a global rule from a page (typical for `@media print` resets, `@page` size, `body` background override), put it in an inline `<style dangerouslySetInnerHTML>` in the (server) page component — not in the module CSS. Past bug: label.module.css shipped `body { background: white; }` inside `@media print`, Hostinger build failed with `Selector "body" is not pure`, downstream webhook fix couldn't deploy.
 
 ### 4. DB migration state
 - [ ] Compare local `prisma/schema.prisma` vs production DB — any column added/removed/renamed?

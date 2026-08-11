@@ -18,6 +18,14 @@ export default async function ShippingLabelPage({ params }) {
 
   return (
     <div className={styles.viewport}>
+      {/* Truly global print resets — can't live in label.module.css because
+          CSS Modules `pure` mode rejects `body` and standalone `@page`. */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: 100mm 150mm; margin: 0; }
+          body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+        }
+      `}} />
       <div className={styles.actionBar}>
         <span className={styles.actionBarLabel}>Format: Thermal (100×150 mm)</span>
         <PrintButton />

@@ -241,17 +241,12 @@
   filter: brightness(1.1);
 }
 
-/* Print stylesheet — 100mm x 150mm thermal roll */
+/* Print stylesheet — only rules that reference local class selectors.
+ * Truly global print resets (`@page` size, `body` background) live in an
+ * inline <style> in the page component — CSS Modules `pure` mode refuses
+ * top-level selectors like `body` and standalone `@page`, even inside
+ * :global {} blocks. */
 @media print {
-  @page {
-    size: 100mm 150mm;
-    margin: 0;
-  }
-  body {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
   .viewport {
     background: white !important;
     padding: 0 !important;
