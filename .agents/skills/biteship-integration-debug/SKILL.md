@@ -112,7 +112,9 @@ Headers: Authorization: <API_KEY>
 Response includes `history: [{ updated_at, note, status }]` — passed through by `/api/shipping/track` to customer orders page.
 
 ### 5. Webhook (Biteship → us)
-Biteship POSTs to `/api/shipping/webhook` with:
+Biteship POSTs to `/api/shipping/webhook`. Two events are handled:
+
+**`order.status`** — status transitions:
 ```json
 {
   "event": "order.status",
@@ -121,7 +123,23 @@ Biteship POSTs to `/api/shipping/webhook` with:
   "waybill_id": "JP0000123456"
 }
 ```
+
+**`order.waybill_id`** — AWB assigned by courier (arrives separately, often minutes after `POST /orders` returned with `courier.waybill_id: null`):
+```json
+{
+  "event": "order.waybill_id",
+  "order_id": "62f4b8d9c0a1e00012ab3cde",
+  "waybill_id": "JP0000123456"
+}
+```
+
+Enable **both** events in the Biteship dashboard. Without `order.waybill_id`, orders whose AWB is async-allocated will stay in `PROCESSING` forever — the customer never sees a tracking number.
+
+Also available but **NOT** enabled: `order.price` (fires when Biteship finalizes actual shipping price post-weighing). Enable only if you want accounting alerts on quote-vs-actual drift — needs a new handler.
+
 Header: `biteship-signature: <HMAC>`.
+
+**Install-time probe**: at "Save Webhook" in the Biteship dashboard, they POST to the URL with an **empty body and no signature header** to check the URL is reachable. If the endpoint 401s, the dashboard shows: *"Webhook URL doesn't respond with ok response. Please make sure it respond with ok upon installation, by disabling validation, and accepting empty request body for application/json."* Handler must return 200 for empty body BEFORE the signature check — safe because no body means no state mutation.
 
 Verification (currently NOT implemented — HIGH-severity gap, see `audit-new-api-route`):
 ```js
