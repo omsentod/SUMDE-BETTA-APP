@@ -3,3 +3,13 @@
   background: var(--bg-dark);
   color: var(--text-main);
 }
+
+.adminBody {
+  display: flex;
+  align-items: flex-start;
+}
+
+.adminMain {
+  flex: 1;
+  min-width: 0; /* mencegah overflow content lebar */
+}

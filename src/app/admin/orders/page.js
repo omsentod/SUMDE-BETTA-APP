@@ -1,36 +1,46 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-// Cross-route CSS import for card/list styling shared with the admin
-// dashboard. Owned classes for this page live in `orders.module.css`.
-import dashStyles from '../dashboard/adminDashboard.module.css';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './orders.module.css';
 
-const formattedCurrency = (v) =>
+const formatIDR = (v) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
 
 const STATUS_OPTIONS = [
   { value: 'All', label: 'Semua Status' },
-  { value: 'PROCESSING', label: 'Lunas / Diproses (PROCESSING)' },
-  { value: 'SHIPPED', label: 'Dikirim (SHIPPED)' },
-  { value: 'COMPLETED', label: 'Selesai (COMPLETED)' },
-  { value: 'PENDING', label: 'Menunggu Pembayaran (PENDING)' },
-  { value: 'CANCELLED', label: 'Dibatalkan (CANCELLED)' },
-  { value: 'RETURNED', label: 'Dikembalikan (RETURNED)' },
+  { value: 'PENDING', label: 'Menunggu Bayar' },
+  { value: 'PROCESSING', label: 'Diproses' },
+  { value: 'SHIPPED', label: 'Dikirim' },
+  { value: 'COMPLETED', label: 'Selesai' },
+  { value: 'CANCELLED', label: 'Dibatalkan' },
+  { value: 'RETURNED', label: 'Retur' },
 ];
 
-function statusBadgeClass(status) {
-  if (status === 'PROCESSING' || status === 'COMPLETED') return dashStyles.badgeSuccess;
-  if (status === 'PENDING' || status === 'SHIPPED') return dashStyles.badgeWarning;
-  return dashStyles.badgeDanger; // CANCELLED, RETURNED, or unknown
-}
+const VALID_STATUSES = new Set(['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
 
-export default function AdminOrdersPage() {
+const STATUS_BADGE_CLASS = {
+  PENDING: styles.badgePending,
+  PROCESSING: styles.badgeProcessing,
+  SHIPPED: styles.badgeShipped,
+  COMPLETED: styles.badgeCompleted,
+  CANCELLED: styles.badgeCancelled,
+  RETURNED: styles.badgeReturned,
+};
+
+function AdminOrdersPageInner() {
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get('status');
+  const initialStatus = urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All';
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [pickingUpId, setPickingUpId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [expandedId, setExpandedId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [busy, setBusy] = useState(false);
+  const [statusModal, setStatusModal] = useState({ open: false, target: '' });
 
   const loadOrders = async () => {
     setLoading(true);
@@ -45,9 +55,14 @@ export default function AdminOrdersPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load
     loadOrders();
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync from URL param
+    setStatusFilter(urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All');
+  }, [urlStatus]);
 
   const filteredOrders = useMemo(() => {
     const q = search.toLowerCase();
@@ -61,28 +76,93 @@ export default function AdminOrdersPage() {
     });
   }, [orders, search, statusFilter]);
 
-  const handleRequestPickup = async (order) => {
+  const allFilteredSelected = filteredOrders.length > 0 && filteredOrders.every((o) => selectedIds.has(o.id));
+
+  const toggleRowSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllSelect = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredOrders.map((o) => o.id)));
+    }
+  };
+
+  const selectedOrders = useMemo(
+    () => orders.filter((o) => selectedIds.has(o.id)),
+    [orders, selectedIds]
+  );
+
+  const eligiblePickup = selectedOrders.filter((o) => o.status === 'PROCESSING' && !o.biteshipShipmentId).length;
+  const eligiblePrint = selectedOrders.filter((o) => o.trackingNumber).length;
+
+  const handleBulkPickup = async () => {
+    if (eligiblePickup === 0) {
+      alert('Tidak ada order yang bisa di-pickup. Hanya order PROCESSING tanpa shipment yang eligible.');
+      return;
+    }
     const confirmed = window.confirm(
-      `Panggil kurir untuk pesanan #${order.id.slice(0, 8)}?\n` +
-      `Biteship akan generate AWB otomatis. Aksi ini akan menyalakan tarif kurir.`
+      `Panggil kurir untuk ${eligiblePickup} order?\n` +
+      'Order non-PROCESSING atau yang sudah punya shipment akan di-skip.'
     );
     if (!confirmed) return;
 
-    setPickingUpId(order.id);
+    setBusy(true);
     try {
-      const res = await fetch(`/api/admin/orders/${order.id}/shipment`, { method: 'POST' });
+      const res = await fetch('/api/admin/orders/bulk/pickup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: Array.from(selectedIds) }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal memanggil kurir');
-      if (data._meta?.awaitingWaybill) {
-        alert('Pickup dibuat. AWB belum keluar dari Biteship — akan otomatis muncul saat kurir alokasi paket.');
-      } else {
-        alert('Pickup berhasil dijadwalkan!\nAWB: ' + data.trackingNumber);
-      }
+      if (!res.ok) throw new Error(data.error || 'Gagal bulk pickup');
+      const ok = data.results.filter((r) => r.ok).length;
+      const failed = data.results.filter((r) => !r.ok).length;
+      alert(`Selesai: ${ok} sukses, ${failed} gagal.\n${failed > 0 ? 'Cek order gagal di daftar (status tidak berubah).' : ''}`);
+      setSelectedIds(new Set());
       loadOrders();
     } catch (err) {
       alert(err.message);
     } finally {
-      setPickingUpId(null);
+      setBusy(false);
+    }
+  };
+
+  const handleBulkPrint = () => {
+    const ids = selectedOrders.filter((o) => o.trackingNumber).map((o) => o.id);
+    if (ids.length === 0) {
+      alert('Tidak ada order dengan AWB yang bisa dicetak resinya.');
+      return;
+    }
+    window.open(`/admin/orders/labels-batch?ids=${ids.join(',')}`, '_blank');
+  };
+
+  const handleBulkStatus = async () => {
+    if (!statusModal.target) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/orders/bulk/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: Array.from(selectedIds), status: statusModal.target }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal update status');
+      const ok = data.results.filter((r) => r.ok).length;
+      alert(`Selesai: ${ok} order status di-update ke ${statusModal.target}.`);
+      setStatusModal({ open: false, target: '' });
+      setSelectedIds(new Set());
+      loadOrders();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -90,118 +170,224 @@ export default function AdminOrdersPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Manajemen Pesanan</h1>
-        <p className={styles.subtitle}>Kelola pengiriman, panggil kurir, cetak resi.</p>
+        <p className={styles.subtitle}>Klik baris untuk lihat detail. Pilih multiple untuk bulk action.</p>
       </div>
 
-      <div className={dashStyles.controlBar}>
-        <div className={dashStyles.searchBox}>
-          <svg className={dashStyles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Cari ID Pesanan, Nama, atau Email Pembeli..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={dashStyles.searchInput}
-          />
-        </div>
+      <div className={styles.controlBar}>
+        <input
+          type="text"
+          placeholder="Cari ID Pesanan, Nama, atau Email Pembeli..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={styles.searchInput}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className={styles.selectInput}
+        >
+          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
 
-        <div className={dashStyles.filterGroup}>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={dashStyles.selectInput}
+      {selectedIds.size > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkBarCount}>{selectedIds.size} terpilih</span>
+          <button
+            className={styles.bulkBtn}
+            onClick={handleBulkPickup}
+            disabled={busy || eligiblePickup === 0}
+            title={eligiblePickup === 0 ? 'Tidak ada order eligible untuk pickup' : ''}
           >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            Panggil Kurir ({eligiblePickup})
+          </button>
+          <button
+            className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
+            onClick={handleBulkPrint}
+            disabled={busy || eligiblePrint === 0}
+          >
+            Cetak Resi ({eligiblePrint})
+          </button>
+          <button
+            className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
+            onClick={() => setStatusModal({ open: true, target: '' })}
+            disabled={busy}
+          >
+            Ubah Status
+          </button>
+          <button
+            className={`${styles.bulkBtn} ${styles.bulkBtnGhost}`}
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Batal
+          </button>
         </div>
-      </div>
+      )}
 
       {loading ? (
-        <p className={styles.loading}>Memuat transaksi...</p>
+        <div className={styles.loading}>Memuat pesanan...</div>
       ) : filteredOrders.length === 0 ? (
-        <div className={`${dashStyles.tableCard} ${styles.emptyState}`}>
-          {statusFilter === 'All'
-            ? 'Belum ada transaksi.'
-            : `Tidak ada pesanan berstatus ${statusFilter}.`}
+        <div className={styles.empty}>
+          {statusFilter === 'All' ? 'Belum ada pesanan.' : `Tidak ada pesanan berstatus ${statusFilter}.`}
         </div>
       ) : (
-        <div className={dashStyles.orderList}>
-          {filteredOrders.map((order) => (
-            <div key={order.id} className={dashStyles.orderCard}>
-              <div className={dashStyles.orderHeader}>
-                <div>
-                  <h4 className={dashStyles.orderId}>Pesanan #{order.id.slice(0, 8)}</h4>
-                  <span className={dashStyles.orderDate}>{new Date(order.createdAt).toLocaleString('id-ID')}</span>
-                </div>
-                <div>
-                  <span className={`${dashStyles.badge} ${statusBadgeClass(order.status)}`}>{order.status}</span>
-                </div>
-              </div>
-
-              <div className={dashStyles.orderInnerGrid}>
-                <div>
-                  <h5 className={dashStyles.orderSectionTitle}>Produk Dibeli</h5>
-                  {order.items.map((item) => (
-                    <div key={item.id} className={dashStyles.orderItemRow}>
-                      <span>{item.product?.name || 'Produk dihapus'} (x{item.quantity})</span>
-                      <span>{formattedCurrency(item.price * item.quantity)}</span>
-                    </div>
-                  ))}
-                  <div className={dashStyles.orderTotalRow}>
-                    <span>Total Tagihan</span>
-                    <span className={styles.totalHighlight}>{formattedCurrency(order.total)}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className={dashStyles.orderSectionTitle}>Pelanggan &amp; Tujuan Pengiriman</h5>
-                  <div className={dashStyles.customerInfo}>
-                    <div className={dashStyles.customerName}>{order.name}</div>
-                    <div>Email: {order.email}</div>
-                    <div>Telp: {order.phone}</div>
-                    <div className={styles.addressLine}>
-                      Alamat: {order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province}, {order.postalCode}
-                    </div>
-                    {order.trackingNumber && (
-                      <div className={styles.trackingLine}>
-                        AWB: <strong>{order.trackingNumber}</strong>
-                        {order.biteshipStatus && <span className={styles.biteshipHint}> · {order.biteshipStatus}</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.actionsRow}>
-                    {order.status === 'PROCESSING' && !order.biteshipShipmentId && (
-                      <button
-                        onClick={() => handleRequestPickup(order)}
-                        className={`btn btn-primary ${styles.smallBtn}`}
-                        disabled={pickingUpId === order.id}
+        <div className={styles.tableWrap}>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.tdCheck}>
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      onChange={toggleAllSelect}
+                      aria-label="Pilih semua"
+                    />
+                  </th>
+                  <th>ID</th>
+                  <th>Tanggal</th>
+                  <th>Customer</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.map((order) => {
+                  const isExpanded = expandedId === order.id;
+                  const isSelected = selectedIds.has(order.id);
+                  return (
+                    <>
+                      <tr
+                        key={order.id}
+                        className={`${isSelected ? styles.rowSelected : ''} ${isExpanded ? styles.rowExpanded : ''}`.trim()}
+                        onClick={() => setExpandedId(isExpanded ? null : order.id)}
                       >
-                        {pickingUpId === order.id ? 'Memanggil...' : 'Panggil Kurir'}
-                      </button>
-                    )}
-                    {order.trackingNumber && (
-                      <a
-                        href={`/admin/orders/${order.id}/label`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`btn btn-outline ${styles.smallBtn}`}
-                      >
-                        Cetak Resi
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
+                        <td className={styles.tdCheck} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleRowSelect(order.id)}
+                            aria-label={`Pilih order ${order.id.slice(0, 8)}`}
+                          />
+                        </td>
+                        <td className={styles.tdId}>#{order.id.slice(0, 8)}</td>
+                        <td className={styles.tdDate}>{new Date(order.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        <td className={styles.tdCustomer}>
+                          <div className={styles.tdCustomerName}>{order.name}</div>
+                          <div className={styles.tdCustomerEmail}>{order.email}</div>
+                        </td>
+                        <td className={styles.tdTotal}>{formatIDR(order.total)}</td>
+                        <td>
+                          <span className={`${styles.badge} ${STATUS_BADGE_CLASS[order.status] || styles.badgeCancelled}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
+                          {order.trackingNumber && (
+                            <a
+                              href={`/admin/orders/${order.id}/label`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={styles.actionBtn}
+                            >
+                              Resi
+                            </a>
+                          )}
+                          <button className={styles.actionBtn} onClick={() => setExpandedId(isExpanded ? null : order.id)}>
+                            {isExpanded ? 'Tutup' : 'Detail'}
+                          </button>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr className={styles.expandRow} key={`${order.id}-expand`}>
+                          <td colSpan={7}>
+                            <div className={styles.expandGrid}>
+                              <div className={styles.expandSection}>
+                                <h5>Produk</h5>
+                                {order.items.map((it) => (
+                                  <div key={it.id} className={styles.itemRow}>
+                                    <span>{it.product?.name || 'Produk dihapus'} {it.selectedSize ? `(${it.selectedSize})` : ''} × {it.quantity}</span>
+                                    <span>{formatIDR(it.price * it.quantity)}</span>
+                                  </div>
+                                ))}
+                                <div className={styles.itemRow} style={{ marginTop: '0.5rem', fontWeight: 700 }}>
+                                  <span>Total</span>
+                                  <span style={{ color: 'var(--primary)' }}>{formatIDR(order.total)}</span>
+                                </div>
+                              </div>
+                              <div className={styles.expandSection}>
+                                <h5>Pengiriman</h5>
+                                <div className={styles.customerDetail}>
+                                  <div><strong>{order.name}</strong></div>
+                                  <div>{order.phone}</div>
+                                  <div>{order.streetAddress}, {order.rtRw}</div>
+                                  <div>Kel. {order.village}, Kec. {order.district}</div>
+                                  <div>{order.city}, {order.province} {order.postalCode}</div>
+                                </div>
+                                {order.trackingNumber && (
+                                  <div className={styles.awbRow}>
+                                    <span className={styles.awbLabel}>AWB:</span>
+                                    <strong>{order.trackingNumber}</strong>
+                                    {order.biteshipStatus && <span style={{ color: 'var(--text-muted)' }}> · {order.biteshipStatus}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {statusModal.open && (
+        <div className={styles.modalBackdrop} onClick={() => setStatusModal({ open: false, target: '' })}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalTitle}>Ubah Status Bulk</div>
+            <div className={styles.modalDesc}>
+              {selectedIds.size} order akan diubah statusnya. Aksi ini <b>admin override</b> —
+              tidak trigger restock atau notifikasi. Untuk cancel dengan restock, gunakan flow webhook.
             </div>
-          ))}
+            <select
+              value={statusModal.target}
+              onChange={(e) => setStatusModal({ ...statusModal, target: e.target.value })}
+              className={styles.selectInput}
+              style={{ width: '100%' }}
+            >
+              <option value="">— pilih status —</option>
+              {STATUS_OPTIONS.filter((o) => o.value !== 'All').map((o) => (
+                <option key={o.value} value={o.value}>{o.label} ({o.value})</option>
+              ))}
+            </select>
+            <div className={styles.modalActions}>
+              <button className={`${styles.bulkBtn} ${styles.bulkBtnGhost}`} onClick={() => setStatusModal({ open: false, target: '' })}>
+                Batal
+              </button>
+              <button
+                className={styles.bulkBtn}
+                onClick={handleBulkStatus}
+                disabled={!statusModal.target || busy}
+              >
+                {busy ? 'Menyimpan...' : 'Ubah Status'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense fallback={<div className={styles.page}><p className={styles.loading}>Memuat...</p></div>}>
+      <AdminOrdersPageInner />
+    </Suspense>
   );
 }
