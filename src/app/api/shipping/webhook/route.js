@@ -82,6 +82,17 @@ async function restockOrder(tx, order) {
 export async function POST(request) {
   try {
     const rawBody = await request.text();
+    const trimmed = rawBody.trim();
+
+    // Biteship (and most vendors) POSTs an empty body at webhook install time
+    // to probe that the URL is reachable, without a signature header. Accept
+    // it — no body means no state mutation is possible, so skipping signature
+    // check here is safe. Real webhooks always carry a body.
+    if (!trimmed || trimmed === '{}') {
+      console.log('Biteship webhook: install probe / empty body — acknowledging.');
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     const signatureHeader = request.headers.get('biteship-signature');
     const secret = process.env.BITESHIP_WEBHOOK_SECRET;
 
@@ -101,6 +112,45 @@ export async function POST(request) {
     }
 
     const body = JSON.parse(rawBody);
+
+    // Biteship emits `order.waybill_id` as a separate event when the courier
+    // finally assigns the real AWB — often minutes after `POST /orders`
+    // returned with `courier.waybill_id: null`. Without handling it, orders
+    // get stuck in PROCESSING and the customer never sees a tracking number.
+    if (body.event === 'order.waybill_id') {
+      if (!body.order_id) {
+        return NextResponse.json({ error: 'Missing order_id.' }, { status: 400 });
+      }
+      const incomingWaybill =
+        body.waybill_id || body.courier?.waybill_id || body.courier?.tracking_id || null;
+      if (!incomingWaybill) {
+        return NextResponse.json({ error: 'Missing waybill_id in payload.' }, { status: 400 });
+      }
+      const targetOrder = await prisma.order.findFirst({
+        where: { biteshipShipmentId: body.order_id },
+      });
+      if (!targetOrder) {
+        console.warn(`Biteship webhook: no order matches biteshipShipmentId=${body.order_id} for waybill event.`);
+        return NextResponse.json({ message: 'Order not found.' }, { status: 200 });
+      }
+      // Idempotent: skip if we already have a waybill. Also never overwrite
+      // once trackingNumber is set — waybill numbers do not change once issued.
+      if (targetOrder.trackingNumber) {
+        console.log(`Biteship webhook: order ${targetOrder.id} already has waybill (${targetOrder.trackingNumber}), ignoring duplicate.`);
+        return NextResponse.json({ success: true }, { status: 200 });
+      }
+      await prisma.order.update({
+        where: { id: targetOrder.id },
+        data: {
+          trackingNumber: incomingWaybill,
+          // AWB assigned → package effectively out the door. Advance status
+          // only from PROCESSING; never move backward from SHIPPED/COMPLETED.
+          ...(targetOrder.status === 'PROCESSING' ? { status: 'SHIPPED' } : {}),
+        },
+      });
+      console.log(`Biteship webhook: waybill assigned to order ${targetOrder.id} (${incomingWaybill}).`);
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
 
     if (body.event !== 'order.status' || !body.order_id) {
       return NextResponse.json({ message: 'Event ignored.' }, { status: 200 });
