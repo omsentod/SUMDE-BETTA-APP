@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+import { createNotification, notifyAllAdmins } from '@/lib/notification';
+import { sendMail, orderShippedEmailTemplate } from '@/lib/email';
 
 // Ordered rank so we can refuse backward state transitions from replayed
 // or out-of-order Biteship events.
@@ -149,6 +151,41 @@ export async function POST(request) {
         },
       });
       console.log(`Biteship webhook: waybill assigned to order ${targetOrder.id} (${incomingWaybill}).`);
+
+      // Notif: customer (bell + email dengan AWB) + admin (bell).
+      try {
+        if (targetOrder.userId) {
+          await createNotification({
+            userId: targetOrder.userId,
+            type: 'order.shipped',
+            title: 'Pesanan sudah dikirim',
+            body: `Order #${targetOrder.id.slice(0, 8)} — AWB ${incomingWaybill}`,
+            link: '/customer/orders',
+          });
+        }
+        await notifyAllAdmins({
+          type: 'order.shipped',
+          title: 'AWB tersedia',
+          body: `Order #${targetOrder.id.slice(0, 8)} — ${incomingWaybill}`,
+          link: '/admin/orders?status=SHIPPED',
+        });
+        if (targetOrder.email) {
+          const appUrl = process.env.APP_URL || 'https://sumdebetta.com';
+          await sendMail({
+            to: targetOrder.email,
+            subject: `Pesanan Dikirim — Order #${targetOrder.id.slice(0, 8)}`,
+            html: orderShippedEmailTemplate({
+              name: targetOrder.name,
+              orderId: targetOrder.id,
+              courier: targetOrder.shippingCourier,
+              waybill: incomingWaybill,
+              orderUrl: `${appUrl}/customer/orders`,
+            }),
+          });
+        }
+      } catch (notifErr) {
+        console.error('Order shipped notification fanout failed:', notifErr.message);
+      }
       return NextResponse.json({ success: true }, { status: 200 });
     }
 

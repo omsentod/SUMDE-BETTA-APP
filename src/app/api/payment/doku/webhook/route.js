@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { generateDigest, generateSignature } from '@/lib/doku';
+import { createNotification, notifyAllAdmins } from '@/lib/notification';
+import { sendMail, orderPaidEmailTemplate } from '@/lib/email';
 
 const requestTarget = '/api/payment/doku/webhook';
 
@@ -145,6 +147,41 @@ export async function POST(request) {
         await tx.order.update({ where: { id: actualOrderId }, data: { status: 'PROCESSING' } });
       });
       console.log(`Doku Webhook: Order ${actualOrderId} paid → PROCESSING, stock updated.`);
+
+      // Notif: customer (bell + email) + admin (bell). Best-effort — jangan
+      // gagalkan webhook kalau notif error, order sudah paid di DB.
+      try {
+        if (order.userId) {
+          await createNotification({
+            userId: order.userId,
+            type: 'order.paid',
+            title: 'Pembayaran diterima',
+            body: `Pesanan #${order.id.slice(0, 8)} sedang kami siapkan untuk pengiriman.`,
+            link: '/customer/orders',
+          });
+        }
+        await notifyAllAdmins({
+          type: 'order.paid',
+          title: 'Order dibayar',
+          body: `Order #${order.id.slice(0, 8)} lunas — perlu dikirim.`,
+          link: '/admin/orders?status=PROCESSING',
+        });
+        if (order.email) {
+          const appUrl = process.env.APP_URL || 'https://sumdebetta.com';
+          await sendMail({
+            to: order.email,
+            subject: `Pembayaran Diterima — Order #${order.id.slice(0, 8)}`,
+            html: orderPaidEmailTemplate({
+              name: order.name,
+              orderId: order.id,
+              total: order.total,
+              orderUrl: `${appUrl}/customer/orders`,
+            }),
+          });
+        }
+      } catch (notifErr) {
+        console.error('Order paid notification fanout failed:', notifErr.message);
+      }
     } else if (FAILED_STATUSES.includes(paymentStatus)) {
       // Failed / expired / cancelled → cancel the order. No stock was decremented
       // at creation, so there is nothing to restore.

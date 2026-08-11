@@ -36,6 +36,43 @@ model User {
   orders        Order[]
   addresses     Address[]
   passwordResets PasswordReset[]
+  notifications      Notification[]
+  pushSubscriptions  PushSubscription[]
+}
+
+// Bell inbox — 1 row per event yang perlu dilihat user.
+// Type contoh: 'order.new' (admin), 'order.paid', 'order.shipped', 'order.delivered'.
+// readAt null = belum dibaca (badge merah aktif).
+// link = deep link ke halaman relevan (misal /admin/orders?status=PENDING atau /customer/orders).
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String    // 'order.new' | 'order.paid' | 'order.shipped' | ...
+  title      String
+  body       String    @db.Text
+  link       String?
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+// Simpan browser push subscription per user (bisa >1 kalau user pakai
+// multiple browser / device). Endpoint unik per browser.
+model PushSubscription {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // FCM/Web Push endpoint biasanya 150-400 char. VarChar(500) supaya bisa
+  // di-index @unique (MySQL tidak boleh unique index di TEXT tanpa prefix).
+  endpoint   String   @unique @db.VarChar(500)
+  p256dh     String   @db.VarChar(255)
+  auth       String   @db.VarChar(255)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 // OTP satu-per-email. Register / resend timpa row lama. Verifikasi sukses hapus row.

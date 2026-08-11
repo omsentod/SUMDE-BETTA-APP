@@ -1,0 +1,179 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.trigger:hover {
+  background: color-mix(in oklab, var(--primary) 6%, transparent);
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #EF4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdownHeader {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dropdownTitle {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.readAllBtn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.readAllBtn:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+
+.empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.item {
+  display: block;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.item:hover {
+  background: color-mix(in oklab, var(--primary) 6%, transparent);
+}
+
+.itemUnread {
+  background: color-mix(in oklab, var(--primary) 4%, transparent);
+}
+
+.itemTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.unreadDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.itemBody {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  line-height: 1.35;
+}
+
+.itemTime {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 499;
+  background: transparent;
+}
+
+.pushToggle {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--border-color);
+  background: color-mix(in oklab, var(--text-muted) 6%, transparent);
+  font-size: 0.8rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pushToggleBtn {
+  background: var(--primary);
+  color: #1a1a1a;
+  border: none;
+  padding: 0.3rem 0.7rem;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pushToggleBtn.enabled {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}

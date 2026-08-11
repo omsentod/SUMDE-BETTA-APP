@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession, requireUser } from '@/lib/auth';
 import { findAndValidateRate } from '@/lib/shipping';
+import { notifyAllAdmins } from '@/lib/notification';
 
 export async function GET(request) {
   try {
@@ -114,6 +115,20 @@ export async function POST(request) {
       }
       return newOrder;
     });
+
+    // Notif admin: pesanan baru masuk (status PENDING, belum bayar).
+    // Best-effort — jangan gagalkan order create kalau notif error.
+    try {
+      await notifyAllAdmins({
+        type: 'order.new',
+        title: 'Pesanan baru masuk',
+        body: `${name} — ${order.items?.length || 0} item — menunggu pembayaran`,
+        link: '/admin/orders?status=PENDING',
+      });
+    } catch (notifErr) {
+      console.error('New order notification fanout failed:', notifErr.message);
+    }
+
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });

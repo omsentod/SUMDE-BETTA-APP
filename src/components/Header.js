@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
+import NotificationBell from '@/components/NotificationBell';
 import { useAuth } from '@/context/AuthContext';
 
 function ThemeIcon({ theme }) {
@@ -80,6 +81,13 @@ export default function Header() {
 
                     {/* Desktop Actions */}
                     <div className="header-actions">
+                        {/* Notification bell (only when logged in) */}
+                        {currentUser && (
+                            <div className="hide-on-mobile">
+                                <NotificationBell />
+                            </div>
+                        )}
+
                         {/* Theme toggle */}
                         <button
                             onClick={toggleTheme}

@@ -92,7 +92,25 @@
 - **Eligibility Count di Button**: Tombol bulk action tampilkan eligible count di label, misal "Panggil Kurir (5)" — supaya admin tahu berapa yang akan diproses sebelum klik.
 - **Confirm Sebelum Aksi Non-Trivial**: Bulk pickup + bulk status wajib `window.confirm()` — mudah salah pilih, aksi burn quota Biteship / mutasi DB masif.
 
-## 11. Cart & Purchase Flow
+## 11. Notification System (Bell + Ably + Push + Email)
+
+- **Fanout via `src/lib/notification.js`**: Trigger point (webhook, order create) HARUS panggil `createNotification({userId, type, title, body, link})` — bukan tulis langsung ke `prisma.notification`. Dispatcher yang atur fanout ke DB → Ably → Push → Email flag.
+- **Best-Effort per Channel**: Kalau Ably gagal, Push gagal, atau email gagal — jangan gagalkan trigger. DB write adalah SATU-SATUNYA yang required. Sisanya log warning tapi lanjut.
+- **DB = Source of Truth**: Bell inbox baca dari tabel `Notification`, bukan trust payload realtime. Kalau Ably push masuk, client tetap fetch ulang dari `/api/notifications` — jangan render dari payload langsung (menghindari drift kalau ada race condition).
+- **Ably Token Auth — Never Expose Root Key**: `ABLY_API_KEY` server-only. Client subscribe via `/api/ably/auth` yang issue token per user + capability restricted ke `user:<userId>` channel. User A TIDAK bisa subscribe channel user B.
+- **Ably Optional**: `/api/ably/status` return `{enabled: false}` kalau env belum diset. Client silent fallback ke polling 30s. Deploy tanpa Ably tetap jalan (badge + bell polling).
+- **notifyAllAdmins untuk Event Operasional**: Order baru, cancel, retur — broadcast ke semua admin (role='admin'), bukan per-admin manual. Loop di helper.
+- **Per-User Channel `user:<userId>`**: Isolasi supaya notif customer ke customer, admin ke admin. Jangan bikin channel `admin` shared — tidak scalable + susah revoke per user.
+
+## 12. Browser Push (Web Push + VAPID + Service Worker)
+
+- **VAPID Keys**: `VAPID_PUBLIC_KEY` + `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (identik value — public key aman expose) + `VAPID_PRIVATE_KEY` (server-only). Generate: `npx web-push generate-vapid-keys`.
+- **Service Worker at `/public/sw.js`**: Registered dari NotificationBell saat user klik "Aktifkan". Handle `push` event → `showNotification()`, `notificationclick` → focus+navigate atau `openWindow()`.
+- **Subscribe Persist per Endpoint**: 1 user = N subscription (browser + device berbeda). `endpoint` unique. Cleanup 404/410 subscription otomatis waktu push gagal (mati / user unsub di browser).
+- **User-Initiated Only**: Notification.requestPermission() hanya dipanggil dari user gesture (klik "Aktifkan"), bukan pageload. Firefox/Chrome block otherwise + spam UX.
+- **Payload Kecil**: `{title, body, link}` cukup. Web Push punya limit ~4kb per message. Jangan kirim payload besar — simpan detail di DB, client fetch on click.
+
+## 13. Cart & Purchase Flow
 - **Size Selection Gating**: A product with a non-empty `sizes` JSON array MUST NOT be purchasable without a `selectedSize`. On `ProductCard`, if `sizes.length > 0`, disable "Beli Sekarang" and the cart icon and swap the CTA to "Pilih Ukuran" that navigates to `/produk/[id]`. On product detail (`ProductDetailClient`), block `addToCart` / `buyNow` when `selectedSize` is empty and surface an inline error. The server-side order API is NOT the place to enforce this — do it in the UI so users understand what's missing.
 - **Cart Item Identity**: The unique key of a cart line is `productId + selectedSize`, not `productId` alone. Two units of the same product in different sizes are two lines.
 - **Buy-Now Semantics**: "Beli Sekarang" bypasses the cart and jumps to `/checkout` with ONLY that item. It must NOT append to the shared cart. Confirm the checkout summary shows exactly one item.

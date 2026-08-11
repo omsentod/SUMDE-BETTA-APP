@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import NotificationBell from '@/components/NotificationBell';
 import styles from './AdminHeader.module.css';
 
 export default function AdminHeader() {
@@ -29,6 +30,8 @@ export default function AdminHeader() {
           </svg>
           Lihat Toko
         </Link>
+
+        <NotificationBell />
 
         <button
           onClick={toggleTheme}
