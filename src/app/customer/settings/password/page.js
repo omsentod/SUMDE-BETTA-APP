@@ -85,6 +85,24 @@ export default function ChangePasswordPage() {
     );
   }
 
+  // User yang daftar via Google tidak punya password di sistem kita.
+  // Suruh mereka manage password lewat Google Account, bukan di sini.
+  if (currentUser.hasPassword === false) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Ubah Password</h1>
+          <p className={styles.subtitle}>
+            Akun kamu login lewat Google. Kelola password di{' '}
+            <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>
+              Google Account Settings
+            </a>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>

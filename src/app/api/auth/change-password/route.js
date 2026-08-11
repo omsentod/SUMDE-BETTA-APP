@@ -28,7 +28,18 @@ export async function POST(request) {
     }
 
     const user = await prisma.user.findUnique({ where: { id: session.id } });
-    if (!user || !verifyPassword(currentPassword, user.password)) {
+    if (!user) {
+      return NextResponse.json({ error: 'Akun tidak ditemukan.' }, { status: 404 });
+    }
+    // User via Google OAuth tidak punya password di sistem kita.
+    // Suruh mereka ganti password di Google Account Settings.
+    if (!user.password) {
+      return NextResponse.json(
+        { error: 'Akun kamu login lewat Google. Ganti password di Google Account Settings.' },
+        { status: 400 }
+      );
+    }
+    if (!verifyPassword(currentPassword, user.password)) {
       return NextResponse.json({ error: 'Password lama salah.' }, { status: 401 });
     }
 

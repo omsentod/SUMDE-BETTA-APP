@@ -13,7 +13,17 @@ export async function GET(request) {
   if (!user) {
     return NextResponse.json({ user: null });
   }
-  const { password: _, ...userData } = user;
-  return NextResponse.json({ user: userData });
+  const { password, ...userData } = user;
+  // Expose flags derived dari kolom sensitif — client butuh tahu tapi tidak
+  // boleh lihat nilai actual.
+  // - hasPassword: user bisa login pakai email/password (kalau false → cuma Google)
+  // - hasGoogle: user sudah link akun Google
+  return NextResponse.json({
+    user: {
+      ...userData,
+      hasPassword: !!password,
+      hasGoogle: !!user.googleId,
+    },
+  });
 }
 

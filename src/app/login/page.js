@@ -1,16 +1,33 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
-export default function LoginPage() {
+function LoginPageInner() {
     const { login } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Pesan error dari flow Google OAuth (redirect balik dari /callback dengan
+    // ?googleError=...). Tampilkan di banner error.
+    useEffect(() => {
+        const gErr = searchParams.get('googleError');
+        if (gErr) {
+            const map = {
+                state_mismatch: 'Sesi login Google kedaluwarsa. Coba lagi.',
+                missing_params: 'Login Google terputus. Coba lagi.',
+                access_denied: 'Kamu batalkan login Google.',
+            };
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- read one-shot query param
+            setError(map[gErr] || 'Login Google gagal: ' + gErr);
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,6 +72,10 @@ export default function LoginPage() {
                         {error}
                     </div>
                 )}
+
+                <GoogleSignInButton next="/customer/dashboard" label="Masuk dengan Google" />
+
+                <div className="auth-divider">atau login dengan email</div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div>
@@ -105,5 +126,19 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="pageContainer auth-page-container">
+                <div className="auth-card">
+                    <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Memuat...</p>
+                </div>
+            </div>
+        }>
+            <LoginPageInner />
+        </Suspense>
     );
 }

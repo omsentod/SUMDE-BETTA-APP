@@ -10,11 +10,18 @@ generator client {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String
+  // Nullable karena user yang daftar via Google OAuth tidak punya password
+  // di sistem kita — mereka login lewat Google. User email/password punya
+  // password ini terisi. Kalau salah satu ada = auth punya minimal 1 metode.
+  password  String?
   name      String
   role      String   @default("customer") // "customer" | "admin"
+  // Google Sub Claim (id user di Google). Unique — 1 akun Google = 1 user.
+  // Null berarti user belum pernah link Google, cuma pakai password.
+  googleId  String?  @unique
   // Null = belum verifikasi email. Timestamp = kapan berhasil verifikasi via OTP.
-  // Login diblokir sampai verifikasi (lihat AGENTS.md §Auth).
+  // Login email/password diblokir sampai verifikasi (lihat AGENTS.md §Auth).
+  // User via Google auto-set timestamp saat register (Google sudah verify email).
   emailVerified DateTime?
   phone         String?
   streetAddress String?

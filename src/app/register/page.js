@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function RegisterPage() {
     const { register } = useAuth();
@@ -64,6 +65,10 @@ export default function RegisterPage() {
                         Registrasi berhasil! Mengarahkan ke halaman verifikasi email...
                     </div>
                 )}
+
+                <GoogleSignInButton next="/customer/dashboard" label="Daftar dengan Google" />
+
+                <div className="auth-divider">atau daftar dengan email</div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div>

@@ -40,6 +40,16 @@
 - **Password Baru != Password Lama**: Endpoint change-password + reset-password wajib tolak kalau new === current (setelah verify current). Rule ini di UI DAN server — client-side untuk UX, server-side untuk security.
 - **Auto-login after OTP verify**: Endpoint `POST /api/auth/verify-otp` set session cookie DALAM response verify (bukan minta login lagi). UI panggil `setCurrentUser(data)` dari `AuthContext` supaya `/customer/dashboard` tidak race dengan `/api/auth/me`.
 
+## 5b. Google OAuth (`src/lib/googleAuth.js`)
+
+- **State CSRF Wajib**: Endpoint `/api/auth/google` generate random state, simpan di httpOnly cookie (`sumde-oauth-state`), sertakan di query `state`. Callback verifikasi cookie state === URL state — TOLAK kalau tidak match (kemungkinan CSRF).
+- **Auto-Link on Email Match**: Kalau Google email sama dengan email user existing di DB, LINK googleId ke user itu (bukan bikin user baru). Sekaligus set `emailVerified = now()` kalau belum verified (Google sudah verify email — trusted).
+- **Auto-Verify for Google-first User**: User baru yang daftar via Google langsung `emailVerified = now()` tanpa OTP. Google sudah verify email di sisi mereka.
+- **Password Nullable**: User via Google tidak punya password (`user.password === null`). Endpoint `POST /api/auth/change-password` cek: kalau `user.password === null`, tolak 400 dengan pesan "akun kamu login lewat Google". `/api/auth/me` expose `hasPassword: boolean` supaya UI bisa sembunyikan tombol Ubah Password.
+- **`prompt=select_account`**: Google authorize URL selalu tampilkan account picker (biar user tidak stuck di akun Google salah yang lagi login di browser).
+- **Whitelist `next` Path**: Query `?next=...` cuma boleh internal path (`/xxx`). Tolak URL external — cegah open redirect ke phishing site. Regex `/^\/[a-zA-Z0-9/\-_?=&]*$/`.
+- **Never Trust `email_verified: false`**: Kalau Google response `email_verified: false` (jarang, tapi bisa terjadi kalau Google Workspace admin belum verify domain user), TOLAK login — tidak sama kepercayaan dengan email_verified: true.
+
 ## 6. Email (SMTP via `src/lib/email.js`)
 
 - **Never Fail Register on Email Send Error**: Kalau SMTP down saat register, tetap create user, log error, dan tetap kembalikan 201 dengan pesan sukses. User bisa retry via `/api/auth/resend-otp` nanti. JANGAN rollback create — bikin user stuck tanpa akun.
