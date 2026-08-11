@@ -82,6 +82,9 @@ model Order {
   shippingCourier String? // e.g. "jne", "jnt", "sicepat", "gosend"
   shippingService String? // e.g. "REG", "YES", "SAME_DAY"
   shippingEta     String? // e.g. "1-2 hari"
+  trackingNumber  String? // e.g. "JB000111222333" (AWB from courier)
+  biteshipShipmentId String? // e.g. "62f4b..." (Biteship internal ID)
+  biteshipStatus  String? // e.g. "allocated", "picking_up", "picked", "dropped", "delivered"
   status    String      @default("PENDING") // "PENDING" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED"
   name      String
   email     String

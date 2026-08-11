@@ -39,6 +39,29 @@ export default function OrdersPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ALL');
     const [payingOrderId, setPayingOrderId] = useState(null);
+    const [trackingData, setTrackingData] = useState({});
+    const [trackingLoading, setTrackingLoading] = useState({});
+
+    const handleTrack = async (order) => {
+        if (!order.trackingNumber || !order.shippingCourier) return;
+        
+        if (trackingData[order.id]) {
+            setTrackingData(prev => ({...prev, [order.id]: null}));
+            return;
+        }
+
+        setTrackingLoading(prev => ({...prev, [order.id]: true}));
+        try {
+            const res = await fetch(`/api/shipping/track?waybill=${order.trackingNumber}&courier=${order.shippingCourier}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setTrackingData(prev => ({...prev, [order.id]: data}));
+        } catch (err) {
+            alert(err.message || 'Gagal melacak pesanan');
+        } finally {
+            setTrackingLoading(prev => ({...prev, [order.id]: false}));
+        }
+    };
 
     const handlePayNow = async (orderId) => {
         setPayingOrderId(orderId);
@@ -174,8 +197,8 @@ export default function OrdersPage() {
                                     </div>
                                     
                                     {/* Actions */}
-                                    {order.status === 'PENDING' && (
-                                        <div className="order-actions-bar">
+                                    <div className="order-actions-bar" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                                        {order.status === 'PENDING' && (
                                             <button 
                                                 className="btn btn-primary text-[0.9rem] px-6 py-2" 
                                                 onClick={() => handlePayNow(order.id)}
@@ -183,6 +206,33 @@ export default function OrdersPage() {
                                             >
                                                 {payingOrderId === order.id ? 'Memproses...' : 'Bayar Sekarang'}
                                             </button>
+                                        )}
+                                        {order.trackingNumber && (
+                                            <button 
+                                                className="btn btn-outline text-[0.9rem] px-6 py-2" 
+                                                onClick={() => handleTrack(order)}
+                                                disabled={trackingLoading[order.id]}
+                                            >
+                                                {trackingLoading[order.id] ? 'Melacak...' : trackingData[order.id] ? 'Tutup Pelacakan' : 'Lacak Pesanan'}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {trackingData[order.id] && (
+                                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                                            <h5 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>
+                                                Resi: {order.trackingNumber} 
+                                                <span className="text-[var(--primary)] ml-2 text-sm uppercase">({order.shippingCourier})</span>
+                                            </h5>
+                                            {trackingData[order.id].history && trackingData[order.id].history.map((h, idx) => (
+                                                <div key={idx} style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                                                    <div style={{ color: 'var(--text-muted)' }}>{new Date(h.updated_at).toLocaleString('id-ID')}</div>
+                                                    <div>{h.note}</div>
+                                                </div>
+                                            ))}
+                                            {(!trackingData[order.id].history || trackingData[order.id].history.length === 0) && (
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Belum ada riwayat pelacakan.</div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

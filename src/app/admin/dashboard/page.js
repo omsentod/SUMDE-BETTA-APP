@@ -209,6 +209,8 @@ export default function AdminDashboard() {
         isOpen: false,
         title: '',
         desc: '',
+        confirmText: 'Hapus Data',
+        isDanger: true,
         onConfirm: null
     });
 
@@ -290,6 +292,29 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleRequestPickup = async (orderId) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Konfirmasi Pickup',
+            desc: 'Apakah Anda yakin ingin memanggil kurir untuk pesanan ini? AWB akan di-generate otomatis.',
+            confirmText: 'Ya, Panggil Kurir',
+            isDanger: false,
+            onConfirm: async () => {
+                setConfirmModal({ isOpen: false, title: '', desc: '', confirmText: 'Hapus Data', isDanger: true, onConfirm: null });
+                try {
+                    const res = await fetch(`/api/admin/orders/${orderId}/shipment`, { method: 'POST' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Gagal memanggil kurir');
+                    alert('Pickup berhasil dijadwalkan! AWB: ' + data.trackingNumber);
+                    loadOrders();
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+        });
+    };
+
+
     const loadEvents = async () => {
         setEventsLoading(true);
         try {
@@ -313,7 +338,7 @@ export default function AdminDashboard() {
     // KPI Metrics calculation
     const kpiMetrics = useMemo(() => {
         const totalRevenue = orders
-            .filter(o => o.status === 'PAID')
+            .filter(o => o.status === 'PROCESSING' || o.status === 'SHIPPED' || o.status === 'COMPLETED')
             .reduce((sum, o) => sum + (o.total || 0), 0);
 
         const pendingOrdersCount = orders.filter(o => o.status === 'PENDING').length;
@@ -674,7 +699,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                         <div className={styles.kpiValue}>{formattedCurrency(kpiMetrics.totalRevenue)}</div>
-                        <div className={styles.kpiSubtext}>Dari transaksi berstatus PAID</div>
+                        <div className={styles.kpiSubtext}>Dari transaksi berstatus diproses/selesai</div>
                     </div>
 
                     <div className={styles.kpiCard}>
@@ -1063,7 +1088,9 @@ export default function AdminDashboard() {
                                     className={styles.selectInput}
                                 >
                                     <option value="All">Semua Status</option>
-                                    <option value="PAID">Lunas (PAID)</option>
+                                    <option value="PROCESSING">Lunas / Diproses (PROCESSING)</option>
+                                    <option value="SHIPPED">Dikirim (SHIPPED)</option>
+                                    <option value="COMPLETED">Selesai (COMPLETED)</option>
                                     <option value="PENDING">Menunggu Pembayaran (PENDING)</option>
                                     <option value="CANCELLED">Dibatalkan (CANCELLED)</option>
                                 </select>
@@ -1087,7 +1114,7 @@ export default function AdminDashboard() {
                                                 <span className={styles.orderDate}>{new Date(order.createdAt).toLocaleString('id-ID')}</span>
                                             </div>
                                             <div>
-                                                <span className={`${styles.badge} ${order.status === 'PAID' ? styles.badgeSuccess : order.status === 'PENDING' ? styles.badgeWarning : styles.badgeDanger}`}>
+                                                <span className={`${styles.badge} ${order.status === 'PROCESSING' ? styles.badgeSuccess : order.status === 'PENDING' ? styles.badgeWarning : styles.badgeDanger}`}>
                                                     {order.status}
                                                 </span>
                                             </div>
@@ -1116,6 +1143,28 @@ export default function AdminDashboard() {
                                                     <div style={{ marginTop: '0.4rem' }}>
                                                         Alamat: {order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province}, {order.postalCode}
                                                     </div>
+                                                </div>
+                                                
+                                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                    {order.status === 'PROCESSING' && !order.biteshipShipmentId && (
+                                                        <button 
+                                                            onClick={() => handleRequestPickup(order.id)}
+                                                            className="btn btn-primary"
+                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                                                        >
+                                                            Panggil Kurir
+                                                        </button>
+                                                    )}
+                                                    {order.trackingNumber && (
+                                                        <a 
+                                                            href={`/admin/orders/${order.id}/label`} 
+                                                            target="_blank" 
+                                                            className="btn btn-outline"
+                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                                                        >
+                                                            Cetak Resi
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -1676,9 +1725,16 @@ export default function AdminDashboard() {
                                     setConfirmModal({ ...confirmModal, isOpen: false });
                                 }}
                                 className="btn btn-primary"
-                                style={{ flex: 1, borderRadius: '30px', padding: '0.75rem', background: '#EF4444', borderColor: '#EF4444', color: '#fff' }}
+                                style={{ 
+                                    flex: 1, 
+                                    borderRadius: '30px', 
+                                    padding: '0.75rem', 
+                                    background: confirmModal.isDanger !== false ? '#EF4444' : 'var(--primary)', 
+                                    borderColor: confirmModal.isDanger !== false ? '#EF4444' : 'var(--primary)', 
+                                    color: '#fff' 
+                                }}
                             >
-                                Hapus Data
+                                {confirmModal.confirmText || 'Hapus Data'}
                             </button>
                         </div>
                     </div>
