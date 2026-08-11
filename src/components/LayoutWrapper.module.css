@@ -1,0 +1,5 @@
+.adminShell {
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: var(--text-main);
+}

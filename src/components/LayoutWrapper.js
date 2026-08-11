@@ -6,11 +6,11 @@ import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 import AdminHeader from '@/components/AdminHeader';
+import styles from './LayoutWrapper.module.css';
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname() || '';
 
-  // Check if current route is under /admin
   const isAdminRoute = pathname.startsWith('/admin');
   const isLabelRoute = pathname.includes('/admin/orders/') && pathname.endsWith('/label');
 
@@ -20,16 +20,14 @@ export default function LayoutWrapper({ children }) {
   }
 
   if (isAdminRoute) {
-    // Dedicated Admin Area layout
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)' }}>
+      <div className={styles.adminShell}>
         <AdminHeader />
         <main>{children}</main>
       </div>
     );
   }
 
-  // Customer facing layout
   return (
     <>
       <Header />

@@ -85,7 +85,7 @@ model Order {
   trackingNumber  String? // e.g. "JB000111222333" (AWB from courier)
   biteshipShipmentId String? // e.g. "62f4b..." (Biteship internal ID)
   biteshipStatus  String? // e.g. "allocated", "picking_up", "picked", "dropped", "delivered"
-  status    String      @default("PENDING") // "PENDING" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED"
+  status    String      @default("PENDING") // "PENDING" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED" | "RETURNED"
   name      String
   email     String
   phone         String

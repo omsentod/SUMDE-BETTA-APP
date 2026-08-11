@@ -1,0 +1,37 @@
+/* Colored code-badge substitute for a full courier logo image.
+ * Approach chosen deliberately over hosting real courier PNGs/SVGs:
+ * - no external URL dependency (Wikipedia previously used — fragile)
+ * - no trademark grey-area from copying vendor logos into /public
+ * - identifies the courier at a glance via brand color + code text
+ * - renders identically on screen and thermal printer (label reuses this) */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  min-width: 48px;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Sizing variants used across the app */
+.sm { padding: 3px 8px; font-size: 0.7rem; min-width: 40px; }
+.lg { padding: 8px 14px; font-size: 1rem; min-width: 80px; }
+
+/* Brand colors — approximations chosen for identification, not exact matches */
+.jnt      { background: #E31E24; }
+.jne      { background: #C8102E; }
+.sicepat  { background: #E31E24; }
+.anteraja { background: #FF6B00; }
+.gojek    { background: #00AA13; }
+.grab     { background: #00AA13; }
+.pos      { background: #F58220; }
+
+.default { background: #4b5563; }

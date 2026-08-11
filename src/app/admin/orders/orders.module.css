@@ -1,0 +1,64 @@
+.page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: var(--text-main);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.loading {
+  color: var(--text-muted);
+}
+
+/* Extras layered on top of imported dashboard card styles */
+.trackingLine {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.trackingLine strong {
+  font-weight: 700;
+}
+
+.biteshipHint {
+  color: var(--text-muted);
+}
+
+.actionsRow {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.smallBtn {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.totalHighlight {
+  color: var(--primary);
+}
+
+.addressLine {
+  margin-top: 0.4rem;
+}

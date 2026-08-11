@@ -6,26 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import SearchableSelect from '@/components/SearchableSelect';
+import CourierLogo from '@/components/CourierLogo';
 import styles from './checkout.module.css';
-
-const CourierLogo = ({ code }) => {
-    const c = (code || '').toLowerCase();
-    let url = '';
-    if (c === 'jnt' || c === 'j&t') url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/J%26T_Express_logo.svg/512px-J%26T_Express_logo.svg.png';
-    else if (c === 'jne') url = 'https://upload.wikimedia.org/wikipedia/commons/9/92/New_Logo_JNE.png';
-    else if (c === 'sicepat') url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/SiCepat_Express_logo.svg/512px-SiCepat_Express_logo.svg.png';
-    else if (c === 'anteraja') url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Logo_Anteraja.png/512px-Logo_Anteraja.png';
-    else if (c === 'gojek' || c === 'gosend') url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gojek_logo_2019.svg/512px-Gojek_logo_2019.svg.png';
-    else if (c === 'grab' || c === 'grabexpress') url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Grab_Logo.svg/512px-Grab_Logo.svg.png';
-    else if (c === 'pos') url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Pos_Indonesia_2012.svg/512px-Pos_Indonesia_2012.svg.png';
-    
-    if (!url) return null;
-    return (
-        <div style={{ width: '48px', height: '24px', position: 'relative', flexShrink: 0, marginRight: '12px' }}>
-            <Image src={url} alt={code} fill style={{ objectFit: 'contain', objectPosition: 'left center' }} unoptimized />
-        </div>
-    );
-};
 
 export default function CheckoutPage() {
     const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart } = useCart();
@@ -608,9 +590,9 @@ export default function CheckoutPage() {
                                                     onClick={() => setSelectedRate(r)}
                                                     className={`checkout-shipping-option ${active ? 'active' : ''}`}
                                                 >
-                                                    <div className="checkout-shipping-option-main" style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <div className="checkout-shipping-option-main">
                                                         <CourierLogo code={r.courier_code} />
-                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <div className="checkout-shipping-option-text">
                                                             <span className="checkout-shipping-courier">
                                                                 {(r.courier_name || r.courier_code).toUpperCase()}
                                                             </span>

@@ -1,0 +1,272 @@
+/* Thermal shipping label — screen preview + print stylesheet.
+ *
+ * Screen: outer wrapper respects site theme (var(--bg-main)) so dark-mode
+ * preview isn't blinding. The label surface itself stays white-on-black so
+ * it matches printed output.
+ *
+ * Print: 100mm x 150mm thermal roll (JNT/JNE/SiCepat standard). Removes
+ * viewport padding and hides the top action bar.
+ */
+
+.viewport {
+  background: var(--bg-main);
+  min-height: 100vh;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.actionBar {
+  width: 100%;
+  max-width: 100mm;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actionBarLabel {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+/* Print-target label — deliberately locked to black/white (thermal ink). */
+.label {
+  width: 100mm;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 2px solid #000000;
+  padding: 12px;
+  color: #000000;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.serviceTag {
+  font-size: 18px;
+  font-weight: 900;
+  background: #000;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.codBadge {
+  border: 2px solid #000;
+  padding: 4px 8px;
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.waybillRow {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.barcodeWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.barcodeImg {
+  height: 48px;
+  max-width: 100%;
+}
+
+.waybillNumber {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.addressGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.destination {
+  padding-right: 6px;
+  border-right: 1px solid #000;
+}
+
+.sectionLabel {
+  font-weight: 900;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.personName {
+  font-weight: 900;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.personPhone {
+  font-weight: bold;
+}
+
+.addressBlock {
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.cityLine {
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.postalTag {
+  font-weight: 900;
+  font-size: 14px;
+  margin-top: 4px;
+  background: #eee;
+  padding: 2px 4px;
+  display: inline-block;
+}
+
+.shipperName {
+  font-weight: 900;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.shipperDate {
+  margin-top: 10px;
+  font-size: 10px;
+  color: #444;
+}
+
+.itemsSection {
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.itemsHeader {
+  font-weight: 900;
+  font-size: 10px;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.itemsTable td {
+  padding: 2px 0;
+  vertical-align: top;
+}
+
+.itemsTable tr + tr td {
+  border-top: 1px dashed #ccc;
+}
+
+.itemsQty {
+  font-weight: bold;
+  width: 20px;
+}
+
+.warning {
+  border: 2px dashed #000;
+  padding: 6px;
+  text-align: center;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.warningIcon {
+  flex-shrink: 0;
+}
+
+.warningTitle {
+  font-weight: 900;
+  font-size: 12px;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.warningBody {
+  font-size: 10px;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+.printButton {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.printButton:hover {
+  filter: brightness(1.1);
+}
+
+/* Print stylesheet — 100mm x 150mm thermal roll */
+@media print {
+  @page {
+    size: 100mm 150mm;
+    margin: 0;
+  }
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .viewport {
+    background: white !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+  .actionBar {
+    display: none !important;
+  }
+  .label {
+    border: none !important;
+    width: 100mm !important;
+    height: 148mm !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    page-break-after: always;
+  }
+}

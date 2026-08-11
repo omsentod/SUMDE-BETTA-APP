@@ -188,7 +188,6 @@ export default function AdminDashboard() {
     const [orders, setOrders] = useState([]);
     const [events, setEvents] = useState([]);
     const [usersLoading, setUsersLoading] = useState(false);
-    const [ordersLoading, setOrdersLoading] = useState(false);
     const [eventsLoading, setEventsLoading] = useState(false);
 
     // Search & Filtering states
@@ -198,9 +197,6 @@ export default function AdminDashboard() {
 
     const [userSearch, setUserSearch] = useState('');
     const [userRoleFilter, setUserRoleFilter] = useState('All');
-
-    const [orderSearch, setOrderSearch] = useState('');
-    const [orderStatusFilter, setOrderStatusFilter] = useState('All');
 
     const [eventSearch, setEventSearch] = useState('');
 
@@ -281,39 +277,13 @@ export default function AdminDashboard() {
     };
 
     const loadOrders = async () => {
-        setOrdersLoading(true);
         try {
             const res = await fetch('/api/orders');
             if (res.ok) setOrders(await res.json());
         } catch (err) {
             console.error(err);
-        } finally {
-            setOrdersLoading(false);
         }
     };
-
-    const handleRequestPickup = async (orderId) => {
-        setConfirmModal({
-            isOpen: true,
-            title: 'Konfirmasi Pickup',
-            desc: 'Apakah Anda yakin ingin memanggil kurir untuk pesanan ini? AWB akan di-generate otomatis.',
-            confirmText: 'Ya, Panggil Kurir',
-            isDanger: false,
-            onConfirm: async () => {
-                setConfirmModal({ isOpen: false, title: '', desc: '', confirmText: 'Hapus Data', isDanger: true, onConfirm: null });
-                try {
-                    const res = await fetch(`/api/admin/orders/${orderId}/shipment`, { method: 'POST' });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Gagal memanggil kurir');
-                    alert('Pickup berhasil dijadwalkan! AWB: ' + data.trackingNumber);
-                    loadOrders();
-                } catch (err) {
-                    alert(err.message);
-                }
-            }
-        });
-    };
-
 
     const loadEvents = async () => {
         setEventsLoading(true);
@@ -329,6 +299,7 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         if (currentUser && currentUser.role === 'admin') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load when session resolves
             loadUsers();
             loadOrders();
             loadEvents();
@@ -377,16 +348,6 @@ export default function AdminDashboard() {
             return matchSearch && matchRole;
         });
     }, [users, userSearch, userRoleFilter]);
-
-    const filteredOrders = useMemo(() => {
-        return orders.filter(o => {
-            const matchSearch = o.id.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                                (o.name && o.name.toLowerCase().includes(orderSearch.toLowerCase())) ||
-                                (o.email && o.email.toLowerCase().includes(orderSearch.toLowerCase()));
-            const matchStatus = orderStatusFilter === 'All' || o.status === orderStatusFilter;
-            return matchSearch && matchStatus;
-        });
-    }, [orders, orderSearch, orderStatusFilter]);
 
     const filteredEvents = useMemo(() => {
         return events.filter(e => e.title.toLowerCase().includes(eventSearch.toLowerCase()));
@@ -816,7 +777,13 @@ export default function AdminDashboard() {
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => {
+                                if (tab.id === 'transactions') {
+                                    router.push('/admin/orders');
+                                    return;
+                                }
+                                setActiveTab(tab.id);
+                            }}
                             className={`${styles.tabButton} ${activeTab === tab.id ? styles.tabActive : ''}`}
                         >
                             {tab.icon}
@@ -1063,118 +1030,6 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Tab: Transactions */}
-                {activeTab === 'transactions' && (
-                    <div>
-                        {/* Controls */}
-                        <div className={styles.controlBar}>
-                            <div className={styles.searchBox}>
-                                <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="Cari ID Pesanan, Nama, atau Email Pembeli..."
-                                    value={orderSearch}
-                                    onChange={(e) => setOrderSearch(e.target.value)}
-                                    className={styles.searchInput}
-                                />
-                            </div>
-
-                            <div className={styles.filterGroup}>
-                                <select
-                                    value={orderStatusFilter}
-                                    onChange={(e) => setOrderStatusFilter(e.target.value)}
-                                    className={styles.selectInput}
-                                >
-                                    <option value="All">Semua Status</option>
-                                    <option value="PROCESSING">Lunas / Diproses (PROCESSING)</option>
-                                    <option value="SHIPPED">Dikirim (SHIPPED)</option>
-                                    <option value="COMPLETED">Selesai (COMPLETED)</option>
-                                    <option value="PENDING">Menunggu Pembayaran (PENDING)</option>
-                                    <option value="CANCELLED">Dibatalkan (CANCELLED)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Transactions List */}
-                        {ordersLoading ? (
-                            <p style={{ color: 'var(--text-muted)' }}>Memuat transaksi...</p>
-                        ) : filteredOrders.length === 0 ? (
-                            <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                Belum ada transaksi yang sesuai.
-                            </div>
-                        ) : (
-                            <div className={styles.orderList}>
-                                {filteredOrders.map(order => (
-                                    <div key={order.id} className={styles.orderCard}>
-                                        <div className={styles.orderHeader}>
-                                            <div>
-                                                <h4 className={styles.orderId}>Pesanan #{order.id.slice(0, 8)}</h4>
-                                                <span className={styles.orderDate}>{new Date(order.createdAt).toLocaleString('id-ID')}</span>
-                                            </div>
-                                            <div>
-                                                <span className={`${styles.badge} ${order.status === 'PROCESSING' ? styles.badgeSuccess : order.status === 'PENDING' ? styles.badgeWarning : styles.badgeDanger}`}>
-                                                    {order.status}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.orderInnerGrid}>
-                                            <div>
-                                                <h5 className={styles.orderSectionTitle}>Produk Dibeli</h5>
-                                                {order.items.map(item => (
-                                                    <div key={item.id} className={styles.orderItemRow}>
-                                                        <span>{item.product?.name || 'Produk dihapus'} (x{item.quantity})</span>
-                                                        <span>{formattedCurrency(item.price * item.quantity)}</span>
-                                                    </div>
-                                                ))}
-                                                <div className={styles.orderTotalRow}>
-                                                    <span>Total Tagihan</span>
-                                                    <span style={{ color: 'var(--primary)' }}>{formattedCurrency(order.total)}</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h5 className={styles.orderSectionTitle}>Pelanggan & Tujuan Pengiriman</h5>
-                                                <div className={styles.customerInfo}>
-                                                    <div className={styles.customerName}>{order.name}</div>
-                                                    <div>Email: {order.email}</div>
-                                                    <div>Telp: {order.phone}</div>
-                                                    <div style={{ marginTop: '0.4rem' }}>
-                                                        Alamat: {order.streetAddress}, {order.rtRw}, Kel. {order.village}, Kec. {order.district}, {order.city}, {order.province}, {order.postalCode}
-                                                    </div>
-                                                </div>
-                                                
-                                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                    {order.status === 'PROCESSING' && !order.biteshipShipmentId && (
-                                                        <button 
-                                                            onClick={() => handleRequestPickup(order.id)}
-                                                            className="btn btn-primary"
-                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                                                        >
-                                                            Panggil Kurir
-                                                        </button>
-                                                    )}
-                                                    {order.trackingNumber && (
-                                                        <a 
-                                                            href={`/admin/orders/${order.id}/label`} 
-                                                            target="_blank" 
-                                                            className="btn btn-outline"
-                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                                                        >
-                                                            Cetak Resi
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-
                 {/* Tab: Events */}
                 {activeTab === 'events' && (
                     <div>
