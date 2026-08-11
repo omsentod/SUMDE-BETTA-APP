@@ -197,7 +197,7 @@ export default function OrdersPage() {
                                     </div>
                                     
                                     {/* Actions */}
-                                    <div className="order-actions-bar" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                                    <div className="order-actions-bar" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                                         {order.status === 'PENDING' && (
                                             <button 
                                                 className="btn btn-primary text-[0.9rem] px-6 py-2" 
@@ -219,7 +219,7 @@ export default function OrdersPage() {
                                     </div>
 
                                     {trackingData[order.id] && (
-                                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                                             <h5 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>
                                                 Resi: {order.trackingNumber} 
                                                 <span className="text-[var(--primary)] ml-2 text-sm uppercase">({order.shippingCourier})</span>

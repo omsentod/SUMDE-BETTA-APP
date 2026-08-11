@@ -1,6 +1,6 @@
 /* Thermal shipping label — screen preview + print stylesheet.
  *
- * Screen: outer wrapper respects site theme (var(--bg-main)) so dark-mode
+ * Screen: outer wrapper respects site theme (var(--bg-dark)) so dark-mode
  * preview isn't blinding. The label surface itself stays white-on-black so
  * it matches printed output.
  *
@@ -9,7 +9,7 @@
  */
 
 .viewport {
-  background: var(--bg-main);
+  background: var(--bg-dark);
   min-height: 100vh;
   padding: 20px 10px;
   display: flex;

@@ -11,9 +11,9 @@
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--bg-main);
+  background: var(--bg-dark);
   color: var(--text-main);
   font-variant-numeric: tabular-nums;
 }
