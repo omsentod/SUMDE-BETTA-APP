@@ -56,6 +56,15 @@ export default function PaymentPage() {
         }
     }, [router, autoCheckPayment]);
 
+    // 1b. Interval polling while waiting for payment
+    useEffect(() => {
+        if (status !== 'checkout_created' || !activePayment?.orderId) return;
+        const interval = setInterval(() => {
+            autoCheckPayment(activePayment.orderId);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [status, activePayment?.orderId, autoCheckPayment]);
+
     const formattedTotal = new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
