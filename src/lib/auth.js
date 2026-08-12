@@ -6,7 +6,7 @@ import { SignJWT, jwtVerify } from 'jose';
 // issues a signed JWT stored in an httpOnly cookie that JS cannot read or forge.
 
 export const SESSION_COOKIE = 'sumde-session';
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+export const SESSION_TTL_SECONDS = 60 * 60 * 24; // 1 day
 
 function getSecret() {
   const s = process.env.AUTH_SECRET;
