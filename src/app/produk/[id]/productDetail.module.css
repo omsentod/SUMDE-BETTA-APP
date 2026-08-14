@@ -253,10 +253,6 @@
     transition: all 0.15s;
 }
 
-.sizeBtn:hover:not(:disabled) {
-    border-color: var(--primary);
-    background: color-mix(in oklab, var(--primary) 8%, transparent);
-}
 
 .sizeBtnSelected {
     border-color: var(--primary);
@@ -265,7 +261,7 @@
 }
 
 .sizeBtnSelected:hover {
-    background: var(--primary);
+border-color: var(--primary);  
 }
 
 .sizeBtnOut {
