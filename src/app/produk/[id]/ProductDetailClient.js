@@ -97,14 +97,14 @@ export default function ProductDetailClient() {
                             </div>
                         </div>
 
-                        {/* Info */}
-                        <div>
+                        {/* Info — punya class `infoColumn` supaya mobile bisa jadi flex + reorder */}
+                        <div className={styles.infoColumn}>
                             <span className={styles.eyebrow}>
                                 Edisi #{product.id.slice(0, 8).toUpperCase()} — {product.category}
                             </span>
                             <h1 className={styles.title}>{product.name}</h1>
 
-                            {/* Price block — prominent, style Shopee/Tokopedia */}
+
                             <div className={styles.priceBlock}>
                                 <span className={styles.priceCurrency}>Rp</span>
                                 <span className={styles.priceAmount}>

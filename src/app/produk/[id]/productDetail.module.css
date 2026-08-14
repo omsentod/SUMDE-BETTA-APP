@@ -150,6 +150,25 @@
     .priceCurrency {
         font-size: 0.85rem;
     }
+
+    /* Mobile: kolom info jadi flex column supaya bisa pakai `order` untuk
+     * reposition anak-anaknya. Desktop tetap block flow default. */
+    .infoColumn {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Harga geser ke posisi paling atas info column — visually tepat di bawah
+     * gambar (karena image ada di kolom atasnya saat stacked). */
+    .infoColumn > .priceBlock {
+        order: -1;
+        margin-top: 1rem;
+    }
+
+    /* Hide badge "Edisi #xxx — Category" di mobile; langsung nama produk saja. */
+    .infoColumn > .eyebrow {
+        display: none;
+    }
 }
 
 .description {
