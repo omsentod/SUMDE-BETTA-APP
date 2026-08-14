@@ -63,22 +63,33 @@ export default function NotificationBell() {
 
     const setupAbly = async () => {
       try {
-        // Cek dulu apakah Ably enabled via endpoint status ringan.
-        // Kalau tidak, silent fallback ke polling.
         const statusRes = await fetch('/api/ably/status');
         if (!statusRes.ok || cancelled) return;
         const { enabled } = await statusRes.json();
-        if (!enabled) return;
+        if (!enabled || cancelled) return;
 
-        // Dynamic import supaya bundle awal tidak berat kalau Ably tidak dipakai.
         const Ably = await import('ably');
-        ablyClient = new Ably.Realtime({
+        if (cancelled) return;
+
+        const client = new Ably.Realtime({
           authUrl: '/api/ably/auth',
           authMethod: 'GET',
         });
+
+        // Swallow async connection errors (HMR teardown, failed handshake).
+        // Ably throws these as unhandled rejections during dev restarts.
+        client.connection.on(['failed', 'suspended', 'disconnected', 'closed'], () => {
+          // silent — fallback to polling remains active
+        });
+
+        if (cancelled) {
+          try { client.close(); } catch { /* ignore */ }
+          return;
+        }
+
+        ablyClient = client;
         channel = ablyClient.channels.get(`user:${currentUser.id}`);
         channel.subscribe('notification', () => {
-          // Reload dari server (source of truth) daripada trust payload realtime.
           load();
         });
       } catch (err) {
@@ -90,8 +101,10 @@ export default function NotificationBell() {
 
     return () => {
       cancelled = true;
-      if (channel) channel.unsubscribe();
-      if (ablyClient) ablyClient.close();
+      try { if (channel) channel.unsubscribe(); } catch { /* ignore */ }
+      try { if (ablyClient) ablyClient.close(); } catch { /* ignore */ }
+      channel = null;
+      ablyClient = null;
     };
   }, [currentUser?.id]);
 
