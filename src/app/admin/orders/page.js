@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Fragment, Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './orders.module.css';
 
@@ -26,6 +26,15 @@ const STATUS_BADGE_CLASS = {
   COMPLETED: styles.badgeCompleted,
   CANCELLED: styles.badgeCancelled,
   RETURNED: styles.badgeReturned,
+};
+
+const STATUS_SHORT_LABEL = {
+  PENDING: 'BAYAR',
+  PROCESSING: 'PROSES',
+  SHIPPED: 'KIRIM',
+  COMPLETED: 'SELESAI',
+  CANCELLED: 'BATAL',
+  RETURNED: 'RETUR',
 };
 
 function AdminOrdersPageInner() {
@@ -245,11 +254,11 @@ function AdminOrdersPageInner() {
                     />
                   </th>
                   <th>ID</th>
-                  <th>Tanggal</th>
+                  <th className={styles.hideOnMobile}>Tanggal</th>
                   <th>Customer</th>
                   <th style={{ textAlign: 'right' }}>Total</th>
                   <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Aksi</th>
+                  <th className={styles.hideOnMobile} style={{ textAlign: 'right' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,9 +266,8 @@ function AdminOrdersPageInner() {
                   const isExpanded = expandedId === order.id;
                   const isSelected = selectedIds.has(order.id);
                   return (
-                    <>
+                    <Fragment key={order.id}>
                       <tr
-                        key={order.id}
                         className={`${isSelected ? styles.rowSelected : ''} ${isExpanded ? styles.rowExpanded : ''}`.trim()}
                         onClick={() => setExpandedId(isExpanded ? null : order.id)}
                       >
@@ -280,7 +288,8 @@ function AdminOrdersPageInner() {
                         <td className={styles.tdTotal}>{formatIDR(order.total)}</td>
                         <td>
                           <span className={`${styles.badge} ${STATUS_BADGE_CLASS[order.status] || styles.badgeCancelled}`}>
-                            {order.status}
+                            <span className={styles.hideOnMobile}>{order.status}</span>
+                            <span className={styles.showOnlyMobile}>{STATUS_SHORT_LABEL[order.status] || order.status}</span>
                           </span>
                         </td>
                         <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
@@ -300,7 +309,7 @@ function AdminOrdersPageInner() {
                         </td>
                       </tr>
                       {isExpanded && (
-                        <tr className={styles.expandRow} key={`${order.id}-expand`}>
+                        <tr className={styles.expandRow}>
                           <td colSpan={7}>
                             <div className={styles.expandGrid}>
                               <div className={styles.expandSection}>
@@ -337,7 +346,7 @@ function AdminOrdersPageInner() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>

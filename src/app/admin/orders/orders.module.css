@@ -357,6 +357,99 @@
   margin-bottom: 1rem;
 }
 
+.hideOnMobile {}
+.showOnlyMobile { display: none; }
+
+@media (max-width: 767px) {
+  .page {
+    padding: 1rem 0.75rem;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .controlBar {
+    gap: 0.4rem;
+  }
+
+  .searchInput,
+  .selectInput {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .table {
+    table-layout: fixed;
+    font-size: 0.75rem;
+  }
+
+  .table thead th {
+    padding: 0.45rem 0.4rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+  }
+
+  .table tbody td {
+    padding: 0.5rem 0.4rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .hideOnMobile,
+  .tdDate,
+  .tdActions {
+    display: none;
+  }
+
+  .showOnlyMobile {
+    display: inline;
+  }
+
+  .tdCheck {
+    width: 22px;
+  }
+
+  .tdId {
+    font-size: 0.7rem;
+  }
+
+  .tdCustomer {
+    min-width: 0;
+  }
+
+  .tdCustomerEmail {
+    font-size: 0.65rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .badge {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.6rem;
+  }
+
+  .bulkBar {
+    top: 60px;
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .bulkBtn {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.7rem;
+  }
+
+  .expandRow td {
+    padding: 0.75rem;
+  }
+}
+
 .modalActions {
   display: flex;
   gap: 0.5rem;
