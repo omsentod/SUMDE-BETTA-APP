@@ -104,3 +104,43 @@
 .logoutButton:hover {
   filter: brightness(1.05);
 }
+
+@media (max-width: 767px) {
+  .header {
+    padding: 0 0.75rem;
+    height: 60px;
+  }
+
+  .brandLink {
+    gap: 0.5rem;
+  }
+
+  .brandName {
+    font-size: 1rem;
+    letter-spacing: 0.3px;
+  }
+
+  .brandTagline,
+  .storefrontLink,
+  .profileMeta {
+    display: none;
+  }
+
+  .actions {
+    gap: 0.5rem;
+  }
+
+  .themeButton {
+    padding: 0.35rem;
+  }
+
+  .profileGroup {
+    padding-left: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .logoutButton {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.72rem;
+  }
+}
