@@ -1,0 +1,95 @@
+/* Bottom nav mobile — mirip pola aplikasi (Tokopedia/Shopee).
+ * Fixed di bawah, hanya muncul di viewport <768px.
+ * Body diberi padding-bottom lewat globals.css supaya content tak tertutup bar. */
+
+.bar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 4px 6px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.15s;
+    min-height: 56px;
+  }
+
+  .item:hover,
+  .item:active {
+    color: var(--primary);
+  }
+
+  .active {
+    color: var(--primary);
+  }
+
+  .active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 32px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 0 0 3px 3px;
+    transform: translateY(0);
+  }
+
+  .item {
+    position: relative;
+  }
+
+  .label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+
+  .iconWrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+}

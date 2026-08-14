@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   serverExternalPackages: ['@prisma/client', '.prisma/client'],
   async headers() {
+    // Di dev Turbopack pakai URL chunk yg stabil (nama sama walau isi berubah);
+    // kalau kita apply cache 1-year immutable, browser serve JS lama selamanya
+    // dan setiap edit tidak muncul. Rules hanya aktif di production build.
+    if (process.env.NODE_ENV !== 'production') return [];
     return [
       {
         // HTML pages — jangan di-cache CDN/browser. HTML refer ke chunk hash

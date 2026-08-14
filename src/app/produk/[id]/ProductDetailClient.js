@@ -103,6 +103,15 @@ export default function ProductDetailClient() {
                                 Edisi #{product.id.slice(0, 8).toUpperCase()} — {product.category}
                             </span>
                             <h1 className={styles.title}>{product.name}</h1>
+
+                            {/* Price block — prominent, style Shopee/Tokopedia */}
+                            <div className={styles.priceBlock}>
+                                <span className={styles.priceCurrency}>Rp</span>
+                                <span className={styles.priceAmount}>
+                                    {new Intl.NumberFormat('id-ID').format(product.price)}
+                                </span>
+                            </div>
+
                             <p className={styles.description}>{product.description}</p>
 
                             <div className={styles.metaCard}>
@@ -162,22 +171,27 @@ export default function ProductDetailClient() {
                             )}
 
                             <div className={styles.actionBar}>
-                                <span className={styles.price}>{formattedPrice}</span>
                                 {canBuy ? (
                                     <>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddToCart}
+                                            className={styles.cartIconBtn}
+                                            aria-label="Tambah ke Keranjang"
+                                            title="Tambah ke Keranjang"
+                                        >
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                            </svg>
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={handleAcquire}
                                             className={styles.buyBtn}
                                         >
-                                            Beli Sekarang
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleAddToCart}
-                                            className={styles.cartBtn}
-                                        >
-                                            Tambah ke Keranjang
+                                            <span className={styles.buyBtnPrice}>{formattedPrice}</span>
+                                            <span className={styles.buyBtnLabel}>Beli Sekarang</span>
                                         </button>
                                     </>
                                 ) : (
@@ -189,6 +203,32 @@ export default function ProductDetailClient() {
                     </div>
                 </div>
             </section>
+
+            {/* Mobile-only sticky bottom action bar — menggantikan MobileBottomNav di halaman ini */}
+            {canBuy && (
+                <div className={styles.mobileActionBar}>
+                    <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        className={styles.mobileCartBtn}
+                        aria-label="Tambah ke Keranjang"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                        </svg>
+                        <span>Keranjang</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleAcquire}
+                        className={styles.mobileBuyBtn}
+                    >
+                        <span className={styles.mobileBuyLabel}>Beli Sekarang</span>
+                        <span className={styles.mobileBuyPrice}>{formattedPrice}</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

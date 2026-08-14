@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/context/ProductContext";
 
@@ -45,6 +45,23 @@ export default function GalleryPage() {
         priceMax: 5000000,
     });
     const [sortBy, setSortBy] = useState('newest');
+
+    // Lock body scroll while mobile filter sheet is open — prevents background
+    // page scroll leaking through when user drags inside the sheet.
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        const prev = document.body.style.overflow;
+        if (isMobileFiltersOpen) document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prev; };
+    }, [isMobileFiltersOpen]);
+
+    // Count active filters — untuk badge di action bar dan tombol Reset visibility.
+    const activeFilterCount =
+        filters.genders.length +
+        filters.forms.length +
+        filters.colors.length +
+        (Number(filters.priceMin) > 0 ? 1 : 0) +
+        (Number(filters.priceMax) < 5000000 ? 1 : 0);
 
     // Filter Logic — must be before any conditional return (Rules of Hooks)
     const filteredProducts = useMemo(() => {
@@ -115,16 +132,58 @@ export default function GalleryPage() {
         <div className="pageContainer">
             <div className="innerContainer">
 
-                {/* Header */}
+                {/* Header — compact di mobile, hero penuh di desktop */}
                 <div className="produkHero">
                     <h1 className="produkHeroTitle">Premium Collection</h1>
                     <p className="produkHeroSubtitle">Finest Betta Genetics Ready for Acquisition</p>
+                    <p className="produkHeroCountMobile">
+                        <span className="topBarHighlight">{filteredProducts.length}</span> ikan tersedia
+                    </p>
+                </div>
+
+                {/* Mobile action bar — Filter + Sort sejajar (mobile only) */}
+                <div className="mobileActionBar">
+                    <button
+                        type="button"
+                        className="mobileActionBtn"
+                        onClick={() => setIsMobileFiltersOpen(true)}
+                        aria-label="Buka filter"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                            <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                            <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        </svg>
+                        <span>Filter</span>
+                        {activeFilterCount > 0 && <span className="mobileActionBadge">{activeFilterCount}</span>}
+                    </button>
+
+                    <div className="mobileActionDivider" aria-hidden="true" />
+
+                    <label className="mobileActionBtn mobileActionSort">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h13M3 12h9M3 18h5"/><path d="M17 3v18l4-4M17 21l-4-4"/>
+                        </svg>
+                        <span>{SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Urutkan'}</span>
+                        {/* Native select — picker OS lebih ergonomis di mobile */}
+                        <select
+                            className="mobileActionSelect"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            aria-label="Urutkan"
+                        >
+                            {SORT_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </label>
                 </div>
 
                 {/* Main Content Area */}
                 <div className="mainLayout">
 
-                    {/* Mobile Filter Toggle */}
+                    {/* Mobile Filter Toggle (desktop hide via CSS; mobile pakai action bar di atas) */}
                     <button
                         className="mobileFilterBtn"
                         onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
@@ -135,14 +194,37 @@ export default function GalleryPage() {
                         Filters
                     </button>
 
-                    {/* Sidebar */}
+                    {/* Backdrop (mobile bottom-sheet only) */}
+                    {isMobileFiltersOpen && (
+                        <div
+                            className="filterBackdrop"
+                            onClick={() => setIsMobileFiltersOpen(false)}
+                            aria-hidden="true"
+                        />
+                    )}
+
+                    {/* Sidebar / bottom-sheet */}
                     <aside className={`sidebar ${isMobileFiltersOpen ? "sidebarVisible" : "sidebarHidden"}`}>
                         <div className="filterHeader">
-                            <h2 className="filterHeaderTitle">Filters</h2>
-                            {(filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin !== '' || filters.priceMax !== '') && (
-                                <button onClick={clearFilters} className="clearFiltersBtn">Clear All</button>
+                            <h2 className="filterHeaderTitle">Filter</h2>
+                            {/* Desktop: Clear All di header (mobile: pakai Reset di footer) */}
+                            {activeFilterCount > 0 && (
+                                <button onClick={clearFilters} className="clearFiltersBtn hide-on-mobile">Clear All</button>
                             )}
+                            {/* Mobile: close X (desktop: hidden via CSS) */}
+                            <button
+                                type="button"
+                                className="filterCloseBtn"
+                                onClick={() => setIsMobileFiltersOpen(false)}
+                                aria-label="Tutup filter"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
                         </div>
+
+                        <div className="filterSheetBody">
 
                         {/* Gender Filter */}
                         <div className="filterSection">
@@ -245,12 +327,31 @@ export default function GalleryPage() {
                                 <span className="rangeValue">Rp {Number(filters.priceMax || 5000000).toLocaleString()}</span>
                             </div>
                         </div>
+                        </div>{/* /filterSheetBody */}
+
+                        <div className="filterSheetFooter">
+                            <button
+                                type="button"
+                                className="filterResetBtn"
+                                onClick={clearFilters}
+                                disabled={activeFilterCount === 0}
+                            >
+                                Reset
+                            </button>
+                            <button
+                                type="button"
+                                className="filterApplyBtn"
+                                onClick={() => setIsMobileFiltersOpen(false)}
+                            >
+                                Terapkan ({filteredProducts.length})
+                            </button>
+                        </div>
                     </aside>
 
                     {/* Products Grid Area */}
                     <div className="contentArea">
-                        {/* Top Bar */}
-                        <div className="topBar">
+                        {/* Top Bar — desktop only; mobile pakai action bar + hero count */}
+                        <div className="topBar hide-on-mobile">
                             <p className="topBarText">
                                 Showing <span className="topBarHighlight">{filteredProducts.length}</span> results
                             </p>

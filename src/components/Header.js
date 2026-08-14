@@ -79,16 +79,16 @@ export default function Header() {
                         <Link href="/tentang">Tentang Kami</Link>
                     </nav>
 
-                    {/* Desktop Actions */}
+                    {/* Header Actions — bell/cart/avatar/Masuk desktop only; mobile pakai MobileBottomNav */}
                     <div className="header-actions">
-                        {/* Notification bell (only when logged in) */}
+                        {/* Notification bell (desktop only — mobile ada di bottom nav) */}
                         {currentUser && (
                             <div className="hide-on-mobile">
                                 <NotificationBell />
                             </div>
                         )}
 
-                        {/* Theme toggle */}
+                        {/* Theme toggle — desktop only; mobile ada di hamburger */}
                         <button
                             onClick={toggleTheme}
                             className="header-action-btn hide-on-mobile"
@@ -97,17 +97,17 @@ export default function Header() {
                             <ThemeIcon theme={theme} />
                         </button>
 
-                        {/* Cart */}
+                        {/* Cart (desktop only — mobile ada di bottom nav) */}
                         <button
                             onClick={toggleCart}
-                            className="header-action-btn"
+                            className="header-action-btn hide-on-mobile"
                             aria-label="Keranjang Belanja"
                         >
                             <CartIcon />
                             {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
                         </button>
 
-                        {/* Auth: Profile dropdown or Masuk */}
+                        {/* Auth: Profile dropdown or Masuk (desktop only — mobile ada di bottom nav) */}
                         {currentUser ? (
                             <div className="profile-menu-wrapper hide-on-mobile" ref={profileRef}>
                                 <button
@@ -161,7 +161,7 @@ export default function Header() {
                                 </div>
                             </div>
                         ) : (
-                            <Link href="/login" className="btn btn-primary hide-on-mobile header-login-btn">
+                            <Link href="/login" className="btn btn-primary header-login-btn hide-on-mobile">
                                 Masuk
                             </Link>
                         )}
@@ -190,41 +190,20 @@ export default function Header() {
                     </button>
                 </div>
 
+                {/* Hamburger = menu sekunder saja; primary nav sudah di MobileBottomNav */}
                 <nav className="mobile-nav-links">
-                    <Link href="/" className="mobile-nav-link" onClick={closeMenu}>Beranda</Link>
-                    <Link href="/produk" className="mobile-nav-link" onClick={closeMenu}>Produk</Link>
                     <Link href="/event" className="mobile-nav-link" onClick={closeMenu}>Event</Link>
                     <Link href="/tentang" className="mobile-nav-link" onClick={closeMenu}>Tentang Kami</Link>
-                    {isCustomer && (
-                        <>
-                            <Link href="/customer/dashboard" className="mobile-nav-link" onClick={closeMenu}>Edit Profil</Link>
-                            <Link href="/customer/addresses" className="mobile-nav-link" onClick={closeMenu}>Alamat Saya</Link>
-                            <Link href="/customer/orders" className="mobile-nav-link" onClick={closeMenu}>Pesanan Saya</Link>
-                        </>
-                    )}
-                    {isAdmin && (
-                        <Link href="/admin/dashboard" className="mobile-nav-link mobile-admin-link" onClick={closeMenu}>Admin Dashboard</Link>
-                    )}
+                    <button
+                        type="button"
+                        onClick={() => { toggleTheme(); }}
+                        className="mobile-nav-link mobile-nav-theme-btn"
+                        aria-label="Ubah tema"
+                    >
+                        <span className="mobile-nav-theme-icon"><ThemeIcon theme={theme} /></span>
+                        <span>{theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}</span>
+                    </button>
                 </nav>
-
-                <div className="mobile-nav-actions">
-                    {currentUser ? (
-                        <button onClick={() => { logout(); closeMenu(); }} className="btn btn-outline mobile-btn-flex">
-                            Logout
-                        </button>
-                    ) : (
-                        <Link href="/login" className="btn btn-primary mobile-btn-flex" onClick={closeMenu}>
-                            Masuk
-                        </Link>
-                    )}
-                    <button onClick={toggleTheme} className="btn btn-outline mobile-icon-btn" aria-label="Toggle Theme">
-                        <ThemeIcon theme={theme} />
-                    </button>
-                    <button onClick={() => { toggleCart(); closeMenu(); }} className="btn btn-outline mobile-icon-btn">
-                        <CartIcon />
-                        {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
-                    </button>
-                </div>
             </div>
         </>
     );

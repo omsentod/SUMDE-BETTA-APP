@@ -667,7 +667,7 @@ h3 {
     font-family: var(--font-serif);
     font-weight: 800;
     font-style: normal;
-    color: #F5F5F7;
+    color: var(--text-main);
     margin-bottom: 1rem;
 }
 
@@ -679,7 +679,7 @@ h3 {
 }
 
 .produkHeroSubtitle {
-    color: #8E8E93;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-size: 0.875rem;
@@ -688,6 +688,32 @@ h3 {
 @media (min-width: 768px) {
     .produkHeroSubtitle {
         font-size: 1rem;
+    }
+}
+
+/* Hero count (mobile only) — tampil di bawah title menggantikan subtitle uppercase */
+.produkHeroCountMobile {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .produkHero {
+        margin-bottom: 1rem;
+        text-align: left;
+    }
+    .produkHeroTitle {
+        font-size: 1.4rem;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+    }
+    .produkHeroSubtitle {
+        display: none;
+    }
+    .produkHeroCountMobile {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0;
     }
 }
 
@@ -711,25 +737,94 @@ h3 {
     }
 }
 
+/* Old full-width Filters button — replaced by .mobileActionBar; keep hidden. */
 .mobileFilterBtn {
-    display: flex;
-    width: 100%;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-radius: 0.75rem;
-    font-weight: 700;
-    color: var(--text-main);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
+    display: none;
 }
 
-@media (min-width: 768px) {
-    .mobileFilterBtn {
-        display: none;
+/* Mobile-only action bar: [Filter] | [Sort ▾] */
+.mobileActionBar {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .mobileActionBar {
+        display: flex;
+        align-items: stretch;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .mobileActionBtn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: none;
+        border: none;
+        padding: 0.75rem 0.5rem;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-main);
+        cursor: pointer;
+        position: relative;
+        min-height: 44px;
+    }
+
+    .mobileActionBtn svg {
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+
+    .mobileActionBadge {
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        margin-left: 0.2rem;
+    }
+
+    .mobileActionDivider {
+        width: 1px;
+        background: var(--border-color);
+    }
+
+    /* Sort — pakai native select overlay supaya picker OS muncul */
+    .mobileActionSort {
+        position: relative;
+    }
+
+    .mobileActionSort span {
+        max-width: 130px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobileActionSelect {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        font-size: 16px; /* iOS anti-zoom */
+        border: none;
+        background: none;
     }
 }
 
@@ -763,6 +858,187 @@ h3 {
 
 .sidebarVisible {
     display: block;
+}
+
+/* Mobile: sidebar → bottom-sheet modal
+ * - Fixed di bawah, slide-up saat open
+ * - Header sticky + body scrollable + footer sticky (Reset + Terapkan)
+ * - Backdrop click to close (dari page.js) */
+.filterBackdrop {
+    display: none;
+}
+
+.filterCloseBtn {
+    display: none;
+}
+
+.filterSheetBody {
+    /* Desktop: unwrap — children flow biasa di dalam sidebar */
+    display: contents;
+}
+
+.filterSheetFooter {
+    /* Desktop: hide (Reset/Terapkan tak relevan; Clear All ada di header) */
+    display: none;
+}
+
+@keyframes filterFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 767px) {
+    .filterBackdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        animation: filterFadeIn 0.2s ease;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100%;
+        max-height: 85vh;
+        z-index: 2001;
+        border-radius: 1.25rem 1.25rem 0 0;
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
+        /* Grab handle di atas */
+    }
+    .sidebar::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border-color);
+        transform: translateX(-50%);
+    }
+
+    /* Keep DOM tapi fully hidden. Pakai !important — Turbopack CSS ordering
+     * kadang aneh dengan cascading @media rules pada class yg sama. */
+    .sidebar.sidebarHidden {
+        display: flex !important;
+        transform: translateY(100%) !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                    opacity 0.2s ease,
+                    visibility 0s linear 0.3s;
+    }
+    .sidebar.sidebarVisible {
+        display: flex !important;
+        transform: translateY(0) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                    opacity 0.2s ease,
+                    visibility 0s;
+    }
+
+    /* Filter header di mobile — pakai grab-handle spacing */
+    .filterHeader {
+        padding: 1.5rem 1.25rem 0.75rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        background: var(--sidebar-bg);
+        z-index: 2;
+    }
+
+    .filterCloseBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--qty-bg);
+        border: none;
+        color: var(--text-main);
+        cursor: pointer;
+    }
+
+    .filterSheetBody {
+        display: block;
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        padding: 1rem 1.25rem;
+        min-height: 0; /* penting supaya flex child bisa scroll */
+    }
+
+    .filterSheetFooter {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
+        border-top: 1px solid var(--border-color);
+        background: var(--sidebar-bg);
+    }
+
+    .filterResetBtn {
+        flex: 1;
+        background: none;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .filterResetBtn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .filterApplyBtn {
+        flex: 2;
+        background: var(--primary);
+        border: none;
+        color: #fff;
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .filterApplyBtn:hover {
+        filter: brightness(1.05);
+    }
+
+    /* Filter section spacing — kompress margin di mobile supaya body cukup luas */
+    .filterSection {
+        margin-bottom: 1rem;
+    }
+
+    .checkboxGroupScrollable {
+        max-height: none; /* biar tak double-scroll di dalam sheet */
+    }
+
+    /* Range slider tak butuh margin atas raksasa di mobile */
+    .rangeSliderContainer {
+        margin: 1.25rem 0 0.5rem;
+    }
 }
 
 .filterHeader {
@@ -1520,15 +1796,9 @@ h3 {
 }
 
 @media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        inset: 0;
-        z-index: 50;
-        border-radius: 0;
-        width: 100%;
-        height: 100%;
-        overflow-y: auto;
-    }
+    /* .sidebar mobile fullscreen override REMOVED — konflik dengan bottom-sheet
+     * modal styles di @media (max-width: 767px) di atas. Bottom-sheet baru pakai
+     * position:fixed bottom:0 + transform slide-up. */
 
     .heroMainTitle {
         font-size: 2.5rem !important;
@@ -1969,14 +2239,20 @@ h3 {
     transform: scale(0.98);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+    /* Raise WA button above bottom nav (bottom nav ~56-60px + safe area) */
     .wa-floating-btn {
-        bottom: 1rem;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0));
         right: 1rem;
         width: 52px;
         height: 52px;
     }
     .wa-floating-btn svg { width: 26px; height: 26px; }
+
+    /* Content padding-bottom supaya main tak tertutup bottom nav */
+    .has-mobile-bottom-nav {
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
+    }
 }
 
 /* Footer inline contact links */
@@ -2321,6 +2597,52 @@ h3 {
     .header-actions .header-user-greeting {
         display: none;
     }
+
+    /* Mobile top bar: bell + avatar + cart + hamburger crowded — tighten spacing */
+    .header-actions {
+        gap: 0.4rem;
+    }
+
+    /* Avatar sedikit lebih kecil supaya muat + tak dominate */
+    .profile-avatar-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.75rem;
+    }
+
+    /* Profile dropdown: jangan overflow layar sempit, kasih scroll kalau kepanjangan */
+    .profile-dropdown {
+        min-width: 200px;
+        max-width: calc(100vw - 24px);
+        max-height: calc(100vh - 90px);
+        overflow-y: auto;
+    }
+
+    /* Login button lebih compact di mobile — avoid crowding top bar */
+    .header-login-btn {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.78rem;
+    }
+}
+
+/* Ekstra tight untuk device sangat kecil (<380px) — iPhone SE dll */
+@media (max-width: 380px) {
+    .header-actions {
+        gap: 0.3rem;
+    }
+    .header-action-btn,
+    .mobile-menu-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0.4rem;
+    }
+    .profile-avatar-btn {
+        width: 32px;
+        height: 32px;
+    }
+    .logo-text {
+        font-size: 0.9rem;
+    }
 }
 
 /* Mobile fullscreen nav overlay */
@@ -2331,9 +2653,12 @@ h3 {
     z-index: 1500;
     display: flex;
     flex-direction: column;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1.25rem;
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .mobile-nav-overlay.open {
@@ -2344,8 +2669,8 @@ h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
-    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -2358,8 +2683,8 @@ h3 {
 
 .mobile-nav-link {
     display: block;
-    padding: 1.25rem 0;
-    font-size: 1.5rem;
+    padding: 0.9rem 0;
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--text-main);
     border-bottom: 1px solid var(--border-color);
@@ -2371,10 +2696,32 @@ h3 {
     color: var(--primary);
 }
 
+/* Theme toggle di dalam hamburger — pakai style nav-link biar konsisten */
+.mobile-nav-theme-btn {
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mobile-nav-theme-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
 .mobile-nav-actions {
     display: flex;
-    gap: 1rem;
-    margin-top: 2.5rem;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-bottom: env(safe-area-inset-bottom, 0);
     align-items: center;
 }
 
