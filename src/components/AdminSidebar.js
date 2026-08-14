@@ -125,13 +125,13 @@ function AdminSidebarInner() {
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>Master Data</div>
-          <Link href="/admin/dashboard" className={styles.link}>
+          <Link href="/admin/products" className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
             <span className={styles.linkContent}>{iconProducts}<span className={styles.linkLabel}>Produk</span></span>
           </Link>
-          <Link href="/admin/dashboard" className={styles.link}>
+          <Link href="/admin/users" className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
             <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User</span></span>
           </Link>
-          <Link href="/admin/dashboard" className={styles.link}>
+          <Link href="/admin/events" className={`${styles.link} ${isActive('/admin/events') ? styles.linkActive : ''}`.trim()}>
             <span className={styles.linkContent}>{iconEvents}<span className={styles.linkLabel}>Event</span></span>
           </Link>
         </div>
