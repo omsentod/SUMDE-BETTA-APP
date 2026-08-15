@@ -145,9 +145,14 @@ model Order {
   userId    String?
   user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   // Money breakdown: subtotal = sum of item prices, shippingFee = courier cost,
-  // total = subtotal + shippingFee. All authoritative from the server.
+  // paymentFee = DOKU admin fee for the chosen method,
+  // total = subtotal + shippingFee + paymentFee. All authoritative from the server.
   subtotal        Float   @default(0)
   shippingFee     Float   @default(0)
+  paymentFee      Float   @default(0)
+  // Payment method key from src/lib/paymentFee.js (e.g. "QRIS", "VA_BCA").
+  // Null for orders created before the picker existed.
+  paymentMethod   String?
   total           Float
   // Courier snapshot (immutable per order — Biteship code + service tier)
   shippingCourier String? // e.g. "jne", "jnt", "sicepat", "gosend"

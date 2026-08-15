@@ -1,7 +1,9 @@
 'use client';
 import { useCart } from '@/context/CartContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import PaymentMethodPicker from '@/components/PaymentMethodPicker';
+import { calcPaymentFee, getMethodLabel, isValidPaymentMethod } from '@/lib/paymentFee';
 import styles from './payment.module.css';
 
 export default function PaymentPage() {
@@ -11,7 +13,8 @@ export default function PaymentPage() {
     const [shipment, setShipment] = useState(null);
     const [loading, setLoading] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(false);
-    
+    const [paymentMethod, setPaymentMethod] = useState(null);
+
     // Sesi Checkout Details
     const [activePayment, setActivePayment] = useState(null);
     const [status, setStatus] = useState('pending'); // 'pending' | 'checkout_created' | 'success'
@@ -65,17 +68,30 @@ export default function PaymentPage() {
         return () => clearInterval(interval);
     }, [status, activePayment?.orderId, autoCheckPayment]);
 
-    const formattedTotal = new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-    }).format(total);
+    const formatIDR = (v) => new Intl.NumberFormat('id-ID', {
+        style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
+    }).format(v || 0);
+
+    // Money breakdown for the pending summary card. Recompute on every render
+    // so picking a payment method updates the fee + grand total live.
+    const breakdown = useMemo(() => {
+        const subtotal = total || 0;
+        const shippingFee = Number(shipment?.shipping?.fee) || 0;
+        const paymentFee = isValidPaymentMethod(paymentMethod)
+            ? calcPaymentFee(paymentMethod, subtotal + shippingFee)
+            : 0;
+        return { subtotal, shippingFee, paymentFee, grandTotal: subtotal + shippingFee + paymentFee };
+    }, [total, shipment, paymentMethod]);
 
     // 2. Inisiasi Doku Checkout
     const handleProceedToDoku = async () => {
         if (!shipment?.shipping?.courier || !shipment?.shipping?.service) {
             alert('Data ongkir hilang. Silakan kembali ke halaman checkout.');
             router.push('/checkout');
+            return;
+        }
+        if (!isValidPaymentMethod(paymentMethod)) {
+            alert('Pilih metode pembayaran terlebih dahulu.');
             return;
         }
         setLoading(true);
@@ -101,6 +117,7 @@ export default function PaymentPage() {
                     courier: shipment.shipping.courier,
                     service: shipment.shipping.service,
                 },
+                paymentMethod,
             };
 
             const orderRes = await fetch('/api/orders', {
@@ -223,29 +240,31 @@ export default function PaymentPage() {
                     {/* Step 1: Pending landing page */}
                     {status === 'pending' && (
                         <div className={styles.gridTwoCol}>
-                            {/* Actions Card */}
+                            {/* Actions Card — payment method picker */}
                             <div className={styles.actionsCard}>
                                 <div>
-                                    <h3 className={styles.cardSectionTitle}>DOKU CHECKOUT</h3>
-                                    
-                                    <div className={styles.cardDescription}>
-                                        <p>Anda akan dialihkan ke halaman aman <b>DOKU Checkout</b> untuk menyelesaikan transaksi.</p>
-                                        <p className="mt-2">Metode yang didukung di portal Doku Sandbox:</p>
-                                        <ul className={styles.methodList}>
-                                            <li>Virtual Account (BCA, Mandiri, BNI, BRI, Permata)</li>
-                                            <li>QRIS (Pindai Barcode dinamis)</li>
-                                            <li>Credit Card (Uji coba CC Sandbox)</li>
-                                            <li>O2O / Convenience Store (Alfamart / Indomaret)</li>
-                                        </ul>
-                                    </div>
+                                    <h3 className={styles.cardSectionTitle}>PILIH METODE PEMBAYARAN</h3>
+                                    <p className={styles.cardDescription} style={{ marginBottom: '1rem' }}>
+                                        Biaya admin sudah termasuk di total tagihan sesuai metode yang dipilih.
+                                        Setelah bayar, kamu akan diarahkan ke halaman <b>DOKU</b> untuk metode itu saja.
+                                    </p>
+                                    <PaymentMethodPicker
+                                        value={paymentMethod}
+                                        onChange={setPaymentMethod}
+                                        base={breakdown.subtotal + breakdown.shippingFee}
+                                    />
                                 </div>
 
                                 <button
                                     onClick={handleProceedToDoku}
                                     className={`btn btn-primary ${styles.dokuBtn}`}
-                                    disabled={loading}
+                                    disabled={loading || !isValidPaymentMethod(paymentMethod)}
                                 >
-                                    {loading ? 'Menghubungkan ke DOKU...' : 'Bayar Sekarang via DOKU Checkout'}
+                                    {loading
+                                        ? 'Menghubungkan ke DOKU...'
+                                        : !isValidPaymentMethod(paymentMethod)
+                                            ? 'Pilih metode pembayaran'
+                                            : `Bayar ${formatIDR(breakdown.grandTotal)} via DOKU`}
                                 </button>
                             </div>
 
@@ -256,12 +275,29 @@ export default function PaymentPage() {
                                     {cart.map(item => (
                                         <div key={`${item.id}-${item.selectedSize}`} className={styles.summaryItemRow}>
                                             <span className="text-[var(--text-muted)]">{item.name} x {item.quantity}</span>
-                                            <span>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}</span>
+                                            <span>{formatIDR(item.price * item.quantity)}</span>
                                         </div>
                                     ))}
+
+                                    <div className={styles.summaryItemRow} style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--border-color)' }}>
+                                        <span className="text-[var(--text-muted)]">Subtotal</span>
+                                        <span>{formatIDR(breakdown.subtotal)}</span>
+                                    </div>
+                                    <div className={styles.summaryItemRow}>
+                                        <span className="text-[var(--text-muted)]">
+                                            Ongkir {shipment?.shipping?.serviceName ? `(${shipment.shipping.serviceName})` : ''}
+                                        </span>
+                                        <span>{formatIDR(breakdown.shippingFee)}</span>
+                                    </div>
+                                    <div className={styles.summaryItemRow}>
+                                        <span className="text-[var(--text-muted)]">
+                                            Biaya Admin {isValidPaymentMethod(paymentMethod) ? `(${getMethodLabel(paymentMethod)})` : ''}
+                                        </span>
+                                        <span>{formatIDR(breakdown.paymentFee)}</span>
+                                    </div>
                                     <div className={styles.summaryTotalRow}>
                                         <span>Total Tagihan</span>
-                                        <span className="color-secondary">{formattedTotal}</span>
+                                        <span className="color-secondary">{formatIDR(breakdown.grandTotal)}</span>
                                     </div>
                                 </div>
 

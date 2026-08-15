@@ -2,6 +2,7 @@
 
 import { Fragment, Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { getMethodLabel } from '@/lib/paymentFee';
 import styles from './orders.module.css';
 
 const formatIDR = (v) =>
@@ -320,6 +321,20 @@ function AdminOrdersPageInner() {
                                     <span>{formatIDR(it.price * it.quantity)}</span>
                                   </div>
                                 ))}
+                                <div className={styles.itemRow} style={{ marginTop: '0.5rem' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Subtotal</span>
+                                  <span>{formatIDR(order.subtotal)}</span>
+                                </div>
+                                <div className={styles.itemRow}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Ongkir</span>
+                                  <span>{formatIDR(order.shippingFee)}</span>
+                                </div>
+                                <div className={styles.itemRow}>
+                                  <span style={{ color: 'var(--text-muted)' }}>
+                                    Biaya Admin {order.paymentMethod ? `(${getMethodLabel(order.paymentMethod)})` : ''}
+                                  </span>
+                                  <span>{formatIDR(order.paymentFee)}</span>
+                                </div>
                                 <div className={styles.itemRow} style={{ marginTop: '0.5rem', fontWeight: 700 }}>
                                   <span>Total</span>
                                   <span style={{ color: 'var(--primary)' }}>{formatIDR(order.total)}</span>

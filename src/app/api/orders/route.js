@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getSession, requireUser } from '@/lib/auth';
 import { findAndValidateRate } from '@/lib/shipping';
 import { notifyAllAdmins } from '@/lib/notification';
+import { calcPaymentFee, isValidPaymentMethod } from '@/lib/paymentFee';
 
 export async function GET(request) {
   try {
@@ -22,12 +23,15 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items, shipping } = await request.json();
+    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items, shipping, paymentMethod } = await request.json();
     if (!name || !email || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode || !items || items.length === 0) {
       return NextResponse.json({ error: 'Detail pesanan tidak lengkap.' }, { status: 400 });
     }
     if (!shipping?.courier || !shipping?.service) {
       return NextResponse.json({ error: 'Pilih kurir pengiriman terlebih dahulu.' }, { status: 400 });
+    }
+    if (!isValidPaymentMethod(paymentMethod)) {
+      return NextResponse.json({ error: 'Pilih metode pembayaran terlebih dahulu.' }, { status: 400 });
     }
 
     // Normalize incoming items — client only supplies productId, quantity, and
@@ -80,7 +84,11 @@ export async function POST(request) {
       );
     }
     const shippingFee = Number(rate.price) || 0;
-    const total = subtotal + shippingFee;
+    // Payment gateway admin fee — calculated server-side on subtotal + shipping.
+    // Percent methods (QRIS 0.7%, e-wallet 1.5%, paylater 1.5%) round up.
+    // Flat methods (VA Rp 4.000, Alfa Rp 5.000, Indomaret Rp 6.500) use nominal.
+    const paymentFee = calcPaymentFee(paymentMethod, subtotal + shippingFee);
+    const total = subtotal + shippingFee + paymentFee;
 
     // Attribute the order to the logged-in user (guest checkout => null).
     // userId is taken from the session, never trusted from the request body.
@@ -93,7 +101,7 @@ export async function POST(request) {
       const newOrder = await tx.order.create({
         data: {
           userId, status: 'PENDING',
-          subtotal, shippingFee, total,
+          subtotal, shippingFee, paymentFee, paymentMethod, total,
           shippingCourier: rate.courier_code,
           shippingService: rate.courier_service_code,
           shippingEta: rate.duration || null,

@@ -30,7 +30,7 @@ export function generateSignature(clientId, requestId, timestamp, requestTarget,
 /**
  * Request Checkout URL from Doku Sandbox
  */
-export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl }) {
+export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl, paymentMethodTypes }) {
   const clientId = process.env.DOKU_CLIENT_ID;
   const secretKey = process.env.DOKU_SECRET_KEY;
   const baseUrl = process.env.DOKU_BASE_URL || 'https://api-sandbox.doku.com';
@@ -43,18 +43,25 @@ export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl
   const requestId = crypto.randomUUID();
   const timestamp = new Date().toISOString().split('.')[0] + 'Z'; // UTC ISO 8601 e.g. 2026-06-21T16:50:00Z
 
-  // Construct request payload for Doku Checkout
+  const paymentBlock = {
+    payment_due_date: 60, // Expiration time in minutes (1 hour)
+  };
+  // If we pass a specific type (e.g. ["VIRTUAL_ACCOUNT_BCA"]), DOKU hosted
+  // checkout restricts the page to just that channel. Omitting it shows the
+  // full merchant catalog picker.
+  if (Array.isArray(paymentMethodTypes) && paymentMethodTypes.length > 0) {
+    paymentBlock.payment_method_types = paymentMethodTypes;
+  }
+
   const payload = {
     order: {
       invoice_number: invoiceNumber,
       amount: Math.round(amount), // Doku requires integer for IDR amount
       callback_url: callbackUrl,
       callback_url_result: callbackUrl,
-      auto_redirect: true
+      auto_redirect: true,
     },
-    payment: {
-      payment_due_date: 60 // Expiration time in minutes (1 hour)
-    }
+    payment: paymentBlock,
   };
 
   const bodyString = JSON.stringify(payload);

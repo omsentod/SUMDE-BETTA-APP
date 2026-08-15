@@ -4,11 +4,11 @@
 //   BITESHIP_API_KEY              - API Key from Biteship Dashboard
 //   BITESHIP_ORIGIN_POSTAL_CODE   - Numeric postal code of merchant
 //   BITESHIP_BASE                 - default: https://api.biteship.com/v1
-//   SHIPPING_COURIERS             - comma separated (default: jnt)
+//   SHIPPING_COURIERS             - comma separated (default: pos)
 //   SHIPPING_ITEMS_PER_KG         - default 10
 
 const DEFAULT_BASE = 'https://api.biteship.com/v1';
-const DEFAULT_COURIERS = 'jnt';
+const DEFAULT_COURIERS = 'pos';
 // Berapa ekor ikan per 1 kg paket. 10 ikan = 1 kg, 11 ikan = 2 kg, dst.
 const DEFAULT_ITEMS_PER_KG = 10;
 // Kode layanan yang tidak cocok untuk ikan hidup — kirim via truk cargo
@@ -163,8 +163,8 @@ export async function createShipment(order, totalQty) {
     destination_address: `${order.streetAddress}, ${order.rtRw}, Kel. ${order.village}, Kec. ${order.district}, Kota/Kab. ${order.city}, Prov. ${order.province}`,
     destination_postal_code: parseInt(order.postalCode || cfg.originPostal),
 
-    courier_company: order.shippingCourier || "jnt",
-    courier_type: order.shippingService || "ez",
+    courier_company: order.shippingCourier || "pos",
+    courier_type: order.shippingService || "pos_reguler",
     delivery_type: "now",
 
     items: [
