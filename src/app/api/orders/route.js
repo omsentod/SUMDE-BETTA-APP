@@ -100,13 +100,14 @@ export async function POST(request) {
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
-          userId, status: 'PENDING',
+          status: 'PENDING',
           subtotal, shippingFee, paymentFee, paymentMethod, total,
           shippingCourier: rate.courier_code,
           shippingService: rate.courier_service_code,
           shippingEta: rate.duration || null,
           name, email, phone, streetAddress, rtRw,
           province, city, district, village, postalCode,
+          ...(userId ? { user: { connect: { id: userId } } } : {}),
         },
       });
       for (const item of normalized) {

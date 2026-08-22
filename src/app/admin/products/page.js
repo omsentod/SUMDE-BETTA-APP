@@ -381,7 +381,7 @@ export default function AdminProductsPage() {
                     <label htmlFor="product-image-upload" className="btn btn-outline" style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}>
                       {isUploading ? 'Mengunggah...' : 'Pilih Foto dari Komputer'}
                     </label>
-                    {uploadError && <p style={{ fontSize: '0.75rem', color: '#EF4444' }}>Error: {uploadError}</p>}
+                    {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
                   </div>
                 </div>
               </div>
@@ -458,7 +458,7 @@ export default function AdminProductsPage() {
                       <button
                         type="button"
                         className="btn btn-outline"
-                        style={{ color: '#EF4444', borderColor: '#EF4444', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}
+                        style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}
                         onClick={() => {
                           const newSizes = form.sizes.filter((_, idx) => idx !== index);
                           const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);

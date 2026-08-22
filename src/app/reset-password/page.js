@@ -80,13 +80,13 @@ function ResetPasswordForm() {
         )}
         {status.kind === 'success' && (
           <div style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            color: '#10B981',
+            background: 'var(--status-success-bg)',
+            color: 'var(--status-success)',
             padding: '0.75rem',
             borderRadius: '8px',
             fontSize: '0.9rem',
             marginBottom: '1rem',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
+            border: '1px solid color-mix(in oklab, var(--status-success) 20%, transparent)',
           }}>
             {status.message}
           </div>

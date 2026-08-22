@@ -92,7 +92,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: #EF4444;
+  background: var(--status-error);
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 700;

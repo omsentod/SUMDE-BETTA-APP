@@ -87,13 +87,13 @@
 
 .profileRole {
   font-size: 0.7rem;
-  color: var(--success, #10B981);
+  color: var(--status-success);
 }
 
 .logoutButton {
-  background: var(--danger-bg, rgba(239, 68, 68, 0.1));
-  color: var(--danger, #EF4444);
-  border: 1px solid var(--danger-border, rgba(239, 68, 68, 0.2));
+  background: var(--status-error-bg);
+  color: var(--status-error);
+  border: 1px solid color-mix(in oklab, var(--status-error) 20%, transparent);
   padding: 0.45rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;

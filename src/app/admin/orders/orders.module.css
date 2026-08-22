@@ -187,12 +187,12 @@
   white-space: nowrap;
 }
 
-.badgePending    { background: #F59E0B; }
-.badgeProcessing { background: #3B82F6; }
-.badgeShipped    { background: #8B5CF6; }
-.badgeCompleted  { background: #10B981; }
-.badgeCancelled  { background: #6B7280; }
-.badgeReturned   { background: #EF4444; }
+.badgePending    { background: var(--status-warning); }
+.badgeProcessing { background: var(--status-info); }
+.badgeShipped    { background: var(--status-neutral); }
+.badgeCompleted  { background: var(--status-success); }
+.badgeCancelled  { background: var(--text-muted); }
+.badgeReturned   { background: var(--status-error); }
 
 .tdActions {
   text-align: right;

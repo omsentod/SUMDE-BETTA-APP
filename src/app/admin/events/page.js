@@ -400,7 +400,7 @@ export default function AdminEventsPage() {
                     <label htmlFor="event-image-upload" className="btn btn-outline" style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}>
                       {isUploading ? 'Mengunggah...' : 'Pilih Banner dari Komputer'}
                     </label>
-                    {uploadError && <p style={{ fontSize: '0.75rem', color: '#EF4444' }}>Error: {uploadError}</p>}
+                    {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
                   </div>
                 </div>
               </div>

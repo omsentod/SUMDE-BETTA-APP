@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const STATUS_CONFIG = {
-    PENDING:    { label: 'Belum Dibayar', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)',  border: '#F59E0B' },
-    PROCESSING: { label: 'Dalam Proses',  color: '#3B82F6', bg: 'rgba(59,130,246,0.1)',  border: '#3B82F6' },
-    SHIPPED:    { label: 'Dikirim',       color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',  border: '#8B5CF6' },
-    COMPLETED:  { label: 'Selesai',       color: '#10B981', bg: 'rgba(16,185,129,0.1)',  border: '#10B981' },
-    CANCELLED:  { label: 'Dibatalkan',    color: '#EF4444', bg: 'rgba(239,68,68,0.1)',   border: '#EF4444' },
+    PENDING:    { label: 'Belum Dibayar', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', border: 'var(--status-warning)' },
+    PROCESSING: { label: 'Dalam Proses',  color: 'var(--status-info)',    bg: 'var(--status-info-bg)',    border: 'var(--status-info)' },
+    SHIPPED:    { label: 'Dikirim',       color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', border: 'var(--status-neutral)' },
+    COMPLETED:  { label: 'Selesai',       color: 'var(--status-success)', bg: 'var(--status-success-bg)', border: 'var(--status-success)' },
+    CANCELLED:  { label: 'Dibatalkan',    color: 'var(--status-error)',   bg: 'var(--status-error-bg)',   border: 'var(--status-error)' },
 };
 
 const TABS = [

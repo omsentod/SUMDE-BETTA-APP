@@ -83,14 +83,24 @@ export const CATEGORY_LABEL = {
 
 /**
  * Calculate the fee in rupiah for a chosen method against a base amount
- * (subtotal + shippingFee). Percent-based fees are rounded UP.
+ * (subtotal + shippingFee). Rounded UP to the nearest rupiah.
+ *
+ * Percent methods use the exact break-even formula:
+ *   fee = ceil(base × percent / (1 − percent))
+ * Because DOKU cuts their percent from the TOTAL charged (base + fee), a
+ * naive `base × percent` leaves the merchant short by roughly `base × percent²`.
+ * The break-even formula makes customer_pay − doku_cut = base exactly, so
+ * merchant nets the full subtotal + shipping regardless of transaction size.
+ *
  * Throws if the method key is unknown so we fail loud on typos.
  */
 export function calcPaymentFee(methodKey, base) {
   const method = PAYMENT_METHODS[methodKey];
   if (!method) throw new Error(`Unknown payment method: ${methodKey}`);
   if (method.fee.flat != null) return method.fee.flat;
-  if (method.fee.percent != null) return Math.ceil(base * method.fee.percent);
+  if (method.fee.percent != null) {
+    return Math.ceil((base * method.fee.percent) / (1 - method.fee.percent));
+  }
   return 0;
 }
 

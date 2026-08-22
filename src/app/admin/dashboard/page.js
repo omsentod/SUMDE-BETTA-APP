@@ -132,7 +132,7 @@ export default function AdminDashboard() {
             <div className={styles.kpiValue}>{kpi.totalOrders}</div>
             <div className={styles.kpiSubtext}>
               {kpi.pendingOrdersCount > 0 ? (
-                <span style={{ color: '#F59E0B', fontWeight: '600' }}>
+                <span style={{ color: 'var(--status-warning)', fontWeight: '600' }}>
                   ⚠️ {kpi.pendingOrdersCount} Pesanan PENDING
                 </span>
               ) : (
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
             <div className={styles.kpiValue}>{kpi.totalProducts}</div>
             <div className={styles.kpiSubtext}>
               {kpi.lowStockCount > 0 ? (
-                <span style={{ color: '#EF4444', fontWeight: '600' }}>
+                <span style={{ color: 'var(--status-error)', fontWeight: '600' }}>
                   {kpi.lowStockCount} Produk Stok Menipis/Habis
                 </span>
               ) : (

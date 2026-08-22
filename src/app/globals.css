@@ -41,6 +41,18 @@
     --dropdown-hover-bg: rgba(0, 0, 0, 0.03);
     --dropdown-input-bg: rgba(0, 0, 0, 0.03);
     --dropdown-footer-bg: rgba(0, 0, 0, 0.05);
+
+    /* Semantic status colors — for badges, alerts, and state indicators */
+    --status-success: #10B981;
+    --status-success-bg: rgba(16, 185, 129, 0.12);
+    --status-warning: #F59E0B;
+    --status-warning-bg: rgba(245, 158, 11, 0.12);
+    --status-error: #EF4444;
+    --status-error-bg: rgba(239, 68, 68, 0.12);
+    --status-info: #3B82F6;
+    --status-info-bg: rgba(59, 130, 246, 0.12);
+    --status-neutral: #8B5CF6;
+    --status-neutral-bg: rgba(139, 92, 246, 0.12);
 }
 
 /* Dark Mode Overrides */
@@ -70,6 +82,18 @@
     --dropdown-hover-bg: rgba(255, 255, 255, 0.03);
     --dropdown-input-bg: rgba(255, 255, 255, 0.03);
     --dropdown-footer-bg: rgba(0, 0, 0, 0.2);
+
+    /* Semantic status colors — slightly brighter for dark backgrounds */
+    --status-success: #34D399;
+    --status-success-bg: rgba(52, 211, 153, 0.18);
+    --status-warning: #FBBF24;
+    --status-warning-bg: rgba(251, 191, 36, 0.18);
+    --status-error: #F87171;
+    --status-error-bg: rgba(248, 113, 113, 0.18);
+    --status-info: #60A5FA;
+    --status-info-bg: rgba(96, 165, 250, 0.18);
+    --status-neutral: #A78BFA;
+    --status-neutral-bg: rgba(167, 139, 250, 0.18);
 }
 
 /* Smooth theme transitions */
@@ -250,7 +274,7 @@ h3 {
 
 .header-action-btn:hover {
     border-color: var(--text-main);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--glass);
     transform: translateY(-1px);
 }
 
@@ -1330,9 +1354,9 @@ h3 {
 }
 
 .emptyState {
-    background-color: #111111;
+    background-color: var(--bg-card);
     border-radius: 1rem;
-    border: 1px solid #222222;
+    border: 1px solid var(--border-color);
     padding: 4rem;
     text-align: center;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -1340,35 +1364,35 @@ h3 {
 
 .emptyStateIcon {
     font-size: 3.75rem;
-    color: #333333;
+    color: var(--text-muted);
     margin-bottom: 1rem;
 }
 
 .emptyStateTitle {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #F5F5F7;
+    color: var(--text-main);
     margin-bottom: 0.5rem;
 }
 
 .emptyStateDesc {
-    color: #8E8E93;
+    color: var(--text-muted);
 }
 
 .emptyStateBtn {
     margin-top: 1.5rem;
     padding: 0.5rem 1.5rem;
-    background-color: #FF6B35;
+    background-color: var(--primary);
     color: white;
     border-radius: 0.75rem;
     font-weight: 600;
     transition: all 0.2s;
-    box-shadow: 0 0 15px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 0 15px var(--primary-glow);
 }
 
 .emptyStateBtn:hover {
-    background-color: #e65c2b;
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+    background-color: color-mix(in oklab, var(--primary) 88%, black);
+    box-shadow: 0 0 20px var(--primary-glow);
 }
 
 /* Home Page Styles (Consolidated from page.module.css) */
@@ -3078,7 +3102,7 @@ h3 {
     display: flex;
     gap: 2rem;
     padding: 2rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
     align-items: center;
 }
 
@@ -3143,10 +3167,10 @@ h3 {
 }
 
 .checkout-form-container {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass);
     padding: 3rem;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
 }
 
 @media (max-width: 768px) {
@@ -3187,7 +3211,7 @@ h3 {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-top: 1px dashed rgba(255, 255, 255, 0.05);
+        border-top: 1px dashed var(--border-color);
         padding-top: 0.75rem;
     }
 

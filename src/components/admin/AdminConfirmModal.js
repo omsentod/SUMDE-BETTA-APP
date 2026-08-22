@@ -64,8 +64,8 @@ export default function AdminConfirmModal({ state, onClose }) {
               flex: 1,
               borderRadius: '30px',
               padding: '0.75rem',
-              background: state.isDanger !== false ? '#EF4444' : 'var(--primary)',
-              borderColor: state.isDanger !== false ? '#EF4444' : 'var(--primary)',
+              background: state.isDanger !== false ? 'var(--status-error)' : 'var(--primary)',
+              borderColor: state.isDanger !== false ? 'var(--status-error)' : 'var(--primary)',
               color: '#fff',
             }}
           >

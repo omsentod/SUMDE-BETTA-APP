@@ -54,20 +54,20 @@
 
 .successAlert {
     padding: 0.75rem 1rem;
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid #10B981;
+    background: var(--status-success-bg);
+    border: 1px solid var(--status-success);
     border-radius: 8px;
-    color: #10B981;
+    color: var(--status-success);
     font-size: 0.85rem;
     margin-bottom: 1.25rem;
 }
 
 .errorAlert {
     padding: 0.75rem 1rem;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid #EF4444;
+    background: var(--status-error-bg);
+    border: 1px solid var(--status-error);
     border-radius: 8px;
-    color: #EF4444;
+    color: var(--status-error);
     font-size: 0.85rem;
     margin-bottom: 1.25rem;
 }

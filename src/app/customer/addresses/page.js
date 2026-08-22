@@ -8,10 +8,10 @@ import styles from './addresses.module.css';
 const LABELS = ['Rumah', 'Kantor', 'Kos', 'Lainnya'];
 
 const LABEL_COLORS = {
-    Rumah:   { color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
-    Kantor:  { color: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
-    Kos:     { color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
-    Lainnya: { color: '#6B7280', bg: 'rgba(107,114,128,0.1)' },
+    Rumah:   { color: 'var(--status-success)', bg: 'var(--status-success-bg)' },
+    Kantor:  { color: 'var(--status-info)',    bg: 'var(--status-info-bg)' },
+    Kos:     { color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)' },
+    Lainnya: { color: 'var(--text-muted)',     bg: 'var(--glass)' },
 };
 
 const emptyForm = { label: 'Rumah', recipientName: '', phone: '', streetAddress: '', rtRw: '', province: '', city: '', district: '', village: '', postalCode: '', isDefault: false };
