@@ -4,8 +4,7 @@
  * preview isn't blinding. The label surface itself stays white-on-black so
  * it matches printed output.
  *
- * Print: 100mm x 150mm thermal roll (JNT/JNE/SiCepat standard). Removes
- * viewport padding and hides the top action bar.
+ * Print: 100mm x 150mm thermal roll (JNT/JNE/SiCepat standard).
  */
 
 .viewport {
@@ -38,48 +37,61 @@
   width: 100mm;
   box-sizing: border-box;
   background: #ffffff;
-  border: 2px solid #000000;
-  padding: 12px;
+  border: 2px solid #000;
   color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.2;
 }
 
+/* 1. Header */
 .headerRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #000;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
+  padding: 8px 12px;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-.serviceTag {
-  font-size: 18px;
-  font-weight: 900;
-  background: #000;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 3px;
+.courierImageLogo {
+  height: 28px;
+  max-width: 100px;
+  object-fit: contain;
 }
 
-.codBadge {
-  border: 2px solid #000;
-  padding: 4px 8px;
-  font-weight: 900;
-  font-size: 13px;
-  text-transform: uppercase;
+.headerRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
+.brandLogoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brandImageLogo {
+  height: 36px;
+  max-width: 140px;
+  object-fit: contain;
+}
+
+.brandSubtext {
+  font-size: 10px;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+/* 2. Main Waybill Barcode */
 .waybillRow {
   text-align: center;
-  border-bottom: 2px solid #000;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
+  border-bottom: 1px solid #000;
+  padding: 12px 0;
 }
 
 .barcodeWrap {
@@ -89,142 +101,137 @@
 }
 
 .barcodeImg {
-  height: 48px;
-  max-width: 100%;
+  height: 56px;
+  max-width: 90%;
 }
 
 .waybillNumber {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 1px;
+  font-size: 12px;
 }
 
+.pendingAwbBadge {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 6px;
+  margin-bottom: 4px;
+}
+
+/* 3. Info Bar (Ongkir & Layanan) */
+.infoBar {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  padding: 8px 0;
+  font-size: 11px;
+}
+
+/* 4. Reference & Stats Grid */
+.refGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid #000;
+}
+
+.refLeft {
+  border-right: 2px solid #000;
+  padding: 8px;
+}
+
+.refTitle {
+  font-size: 11px;
+}
+
+.miniBarcodeWrap {
+  display: flex;
+  margin: 4px 0;
+}
+
+.miniBarcodeImg {
+  height: 32px;
+  max-width: 100%;
+}
+
+.refIdText {
+  font-size: 10px;
+}
+
+.refRight {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  font-size: 11px;
+}
+
+/* 5. Address Grid */
 .addressGrid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1fr 1fr;
   border-bottom: 2px solid #000;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  gap: 8px;
-  font-size: 11px;
-  line-height: 1.35;
 }
 
-.destination {
-  padding-right: 6px;
-  border-right: 1px solid #000;
-}
-
-.sectionLabel {
-  font-weight: 900;
+.addressLeft, .addressRight {
+  padding: 8px;
   font-size: 10px;
-  text-transform: uppercase;
-  color: #333;
+  line-height: 1.3;
 }
 
-.personName {
-  font-weight: 900;
-  font-size: 13px;
-  margin-top: 2px;
+.addressLeft {
+  border-right: 2px solid #000;
 }
 
-.personPhone {
-  font-weight: bold;
+.addressTitle {
+  margin-bottom: 2px;
 }
 
-.addressBlock {
-  margin-top: 4px;
-  word-break: break-word;
-}
-
-.cityLine {
-  font-weight: 900;
-  font-size: 12px;
-}
-
-.postalTag {
-  font-weight: 900;
-  font-size: 14px;
-  margin-top: 4px;
-  background: #eee;
-  padding: 2px 4px;
-  display: inline-block;
-}
-
-.shipperName {
-  font-weight: 900;
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.shipperDate {
-  margin-top: 10px;
-  font-size: 10px;
-  color: #444;
-}
-
+/* 6. Item List */
 .itemsSection {
   border-bottom: 2px solid #000;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  font-size: 11px;
-}
-
-.itemsHeader {
-  font-weight: 900;
+  padding: 8px;
   font-size: 10px;
-  margin-bottom: 4px;
+}
+
+.itemsRow {
   display: flex;
-  justify-content: space-between;
 }
 
-.itemsTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-}
-
-.itemsTable td {
-  padding: 2px 0;
-  vertical-align: top;
-}
-
-.itemsTable tr + tr td {
-  border-top: 1px dashed #ccc;
-}
-
-.itemsQty {
-  font-weight: bold;
-  width: 20px;
-}
-
-.warning {
-  border: 2px dashed #000;
-  padding: 6px;
-  text-align: center;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.warningIcon {
+.itemsLabel {
+  width: 80px;
   flex-shrink: 0;
 }
 
-.warningTitle {
-  font-weight: 900;
-  font-size: 12px;
-  color: #000;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.itemsList {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.warningBody {
+/* 7. Notes Section */
+.notesSection {
+  border-bottom: 2px solid #000;
+  padding: 8px;
   font-size: 10px;
-  font-weight: bold;
-  margin-top: 2px;
+}
+
+.notesRow {
+  display: flex;
+}
+
+.notesLabel {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.notesBody {
+  flex-grow: 1;
+}
+
+/* 8. Footer */
+.footerBox {
+  text-align: center;
+  padding: 8px;
+  font-size: 10px;
 }
 
 .printButton {
@@ -241,16 +248,28 @@
   filter: brightness(1.1);
 }
 
-/* Print stylesheet — only rules that reference local class selectors.
- * Truly global print resets (`@page` size, `body` background) live in an
- * inline <style> in the page component — CSS Modules `pure` mode refuses
- * top-level selectors like `body` and standalone `@page`, even inside
- * :global {} blocks. */
+/* Print target: A4 portrait, zero page margin, thermal label (100mm x 150mm)
+ * anchored at the top-left corner — matches the Biteship reference PDF, so
+ * downloaded PDFs come out with the same physical dimensions. */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
 @media print {
+  html, body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm;
+    height: 297mm;
+  }
   .viewport {
     background: white !important;
     padding: 0 !important;
+    margin: 0 !important;
     min-height: auto !important;
+    align-items: flex-start !important;
   }
   .actionBar {
     display: none !important;
@@ -258,10 +277,11 @@
   .label {
     border: none !important;
     width: 100mm !important;
-    height: 148mm !important;
+    height: 150mm !important;
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 8mm !important;
+    padding: 0 !important;
     page-break-after: always;
   }
 }
+

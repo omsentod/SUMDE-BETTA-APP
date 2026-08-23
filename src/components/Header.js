@@ -67,7 +67,7 @@ export default function Header() {
 
                     {/* Logo */}
                     <Link href="/" className="logo-link">
-                        <Image src="/logo.png" alt="Sumde Betta Logo" width={44} height={44} className="logo-img" />
+                        <Image src="/img/logo.png" alt="Sumde Betta Logo" width={44} height={44} className="logo-img" />
                         <div className="logo-text">SUMDE <span className="logo-highlight">BETTA</span></div>
                     </Link>
 
@@ -180,7 +180,7 @@ export default function Header() {
             <div className={`mobile-nav-overlay${menuOpen ? ' open' : ''}`}>
                 <div className="mobile-nav-header">
                     <Link href="/" onClick={closeMenu} className="logo-link">
-                        <Image src="/logo.png" alt="Logo" width={40} height={40} className="logo-img" />
+                        <Image src="/img/logo.png" alt="Logo" width={40} height={40} className="logo-img" />
                         <div className="logo-text">SUMDE <span className="logo-highlight">BETTA</span></div>
                     </Link>
                     <button onClick={closeMenu} className="mobile-close-btn">

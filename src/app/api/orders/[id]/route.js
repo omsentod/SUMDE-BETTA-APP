@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession, requireAdmin } from '@/lib/auth';
 
-const VALID_STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+const VALID_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED'];
 
 export async function GET(request, { params }) {
   try {
@@ -41,11 +41,12 @@ export async function PUT(request, { params }) {
     const { id } = await params;
     const { status } = await request.json();
 
-    // PROCESSING = "paid" and is set exclusively by the DOKU webhook after
-    // signature verification — never from a client, not even an admin.
-    if (status === 'PROCESSING') {
+    // PAID = "uang masuk" — hanya boleh di-set oleh DOKU webhook setelah
+    // signature verification. Admin tidak boleh set PAID manual (untuk itu
+    // pakai flow webhook manual atau bulk status override yang log warning).
+    if (status === 'PAID') {
       return NextResponse.json(
-        { error: 'Status PROCESSING hanya dapat ditetapkan oleh webhook pembayaran DOKU.' },
+        { error: 'Status PAID hanya dapat ditetapkan oleh webhook pembayaran DOKU.' },
         { status: 403 }
       );
     }

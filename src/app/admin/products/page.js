@@ -21,7 +21,7 @@ const emptyProductForm = () => ({
   form: 'Plakat',
   coloration: 'Multicolor',
   description: '',
-  image: '/betta-1.png',
+  image: '/img/betta-1.png',
   isPremium: false,
   statsForm: 'COMP',
   age: '4 Month',

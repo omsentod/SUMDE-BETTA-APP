@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import NotificationBell from '@/components/NotificationBell';
@@ -10,11 +11,18 @@ import styles from './AdminHeader.module.css';
 export default function AdminHeader() {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/');
+    router.refresh();
+  };
 
   return (
     <header className={styles.header}>
       <Link href="/admin/dashboard" className={styles.brandLink}>
-        <Image src="/logo.png" alt="SUMDE BETTA" width={38} height={38} className={styles.brandLogo} />
+        <Image src="/img/logo.png" alt="SUMDE BETTA" width={38} height={38} className={styles.brandLogo} />
         <div>
           <div className={styles.brandName}>SUMDE BETTA</div>
           <div className={styles.brandTagline}>ADMIN CONTROL CENTER</div>
@@ -60,7 +68,7 @@ export default function AdminHeader() {
             <div className={styles.profileRole}>● System Admin</div>
           </div>
 
-          <button onClick={logout} className={styles.logoutButton}>
+          <button onClick={handleLogout} className={styles.logoutButton}>
             Keluar
           </button>
         </div>

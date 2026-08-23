@@ -11,7 +11,7 @@ const emptyEventForm = () => ({
   title: '',
   subtitle: '',
   description: '',
-  image: '/betta-2.png',
+  image: '/img/betta-2.png',
   targetUrl: '',
   buttonText: 'Lihat Event',
   isActive: true,

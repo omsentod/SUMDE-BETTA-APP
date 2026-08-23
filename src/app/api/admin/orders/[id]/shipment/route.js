@@ -18,8 +18,9 @@ export async function POST(request, { params }) {
     }
 
     // Only bookable once payment succeeded and stock has been reserved.
-    // Prevents burning Biteship quota on PENDING (unpaid) or CANCELLED orders.
-    if (order.status !== 'PROCESSING') {
+    // PAID = uang masuk, belum panggil kurir. Prevents burning Biteship quota
+    // on PENDING (unpaid) or CANCELLED orders.
+    if (order.status !== 'PAID') {
       return NextResponse.json(
         { error: `Pesanan tidak bisa dibuat pickup (status saat ini: ${order.status}).` },
         { status: 409 }
@@ -64,16 +65,17 @@ export async function POST(request, { params }) {
     // Only write trackingNumber when it came from a fresh Biteship response.
     // Prior code fell back to `TEST-<truncated-id>` which would overwrite a
     // real waybill once the webhook filled one in.
+    // Status → PROCESSING (arti: resi sudah dipanggil). SHIPPED transition
+    // dilakukan oleh shipping webhook saat Biteship report 'picked' /
+    // 'dropping_off' atau saat `order.waybill_id` event fire (AWB baru
+    // ter-assign beberapa menit setelah booking).
     const data = {
       biteshipShipmentId: shipmentData.id,
       biteshipStatus: shipmentData.status || 'allocated',
+      status: 'PROCESSING',
     };
     if (freshWaybill) {
       data.trackingNumber = freshWaybill;
-      // We only flip to SHIPPED when we actually have a waybill to show the
-      // customer. Otherwise leave the order as PROCESSING and let the webhook
-      // move it forward.
-      data.status = 'SHIPPED';
     }
 
     const updated = await prisma.order.update({

@@ -226,6 +226,12 @@
     border-color: var(--primary);
 }
 
+/* Legacy class name — kolom sekarang tetap tampil di mobile via horizontal
+ * scroll (.tableCard overflow-x:auto + .dataTable min-width). Empty rule
+ * dipertahankan supaya `styles.hideOnMobile` tetap resolve untuk JSX yang
+ * masih reference-nya. */
+.hideOnMobile {}
+
 /* Table Card & Styles */
 .tableCard {
     overflow-x: auto;
@@ -240,6 +246,10 @@
     border-collapse: collapse;
     text-align: left;
     color: var(--text-main);
+    /* Lock floor supaya kolom tidak ke-crunch di viewport sempit — user
+     * swipe horizontal via .tableCard (overflow-x:auto). Cukup untuk muat
+     * 6 kolom tanpa nama customer wrap huruf-per-huruf. */
+    min-width: 720px;
 }
 
 .dataTable th {
@@ -774,19 +784,9 @@
         line-height: 1.25;
     }
 
-    .hideOnMobile {
-        display: none;
-    }
-
-    .dataTable {
-        table-layout: fixed;
-    }
-
     .dataTable th,
     .dataTable td {
-        padding: 0.4rem 0.45rem;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
+        padding: 0.5rem 0.6rem;
     }
 
     .dataTable th {

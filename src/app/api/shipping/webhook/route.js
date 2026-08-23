@@ -8,9 +8,10 @@ import { sendMail, orderShippedEmailTemplate } from '@/lib/email';
 // or out-of-order Biteship events.
 const STATUS_RANK = {
   PENDING: 0,
-  PROCESSING: 1,
-  SHIPPED: 2,
-  COMPLETED: 3,
+  PAID: 1,       // uang masuk, belum panggil kurir
+  PROCESSING: 2, // resi sudah dipanggil, menunggu kurir ambil paket
+  SHIPPED: 3,
+  COMPLETED: 4,
   RETURNED: 98, // terminal — item was delivered and came back
   CANCELLED: 99, // terminal — never delivered
 };

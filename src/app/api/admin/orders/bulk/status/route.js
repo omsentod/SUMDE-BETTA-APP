@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 
-const VALID_STATUSES = new Set(['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
+const VALID_STATUSES = new Set(['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
 
 // PUT /api/admin/orders/bulk/status
 // Body: { orderIds: string[], status: string }

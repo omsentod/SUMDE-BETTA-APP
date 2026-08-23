@@ -9,7 +9,7 @@ const HERO_SLIDES = [
         title: "Seni dari",
         highlight: "Betta Splendens",
         subtitle: "Temukan kurasi koleksi kehidupan akuatik elit kami. Setiap ikan adalah mahakarya hidup, dikembangkan untuk bentuk yang luar biasa.",
-        image: "/betta-1.png",
+        image: "/img/betta-1.png",
         accent: "var(--primary)"
     },
     {
@@ -17,7 +17,7 @@ const HERO_SLIDES = [
         title: "Genetik",
         highlight: "Koi Galaxy",
         subtitle: "Perpaduan warna nebula yang langka dan menakjubkan. Koleksi terbatas bagi kolektor spesimen eksklusif.",
-        image: "/betta-2.png",
+        image: "/img/betta-2.png",
         accent: "var(--secondary)"
     },
     {
@@ -25,7 +25,7 @@ const HERO_SLIDES = [
         title: "Kualitas",
         highlight: "Grade Kontes",
         subtitle: "Simetri sempurna dan mental petarung. Spesimen yang kami pilih secara khusus untuk standar kompetisi global.",
-        image: "/betta-3.png",
+        image: "/img/betta-3.png",
         accent: "var(--accent)"
     }
 ];
@@ -35,19 +35,19 @@ const FARM_DOCS = [
         id: 1,
         title: "Sistem Filtrasi Mandiri",
         desc: "Menjaga kualitas air tetap jernih dan bebas patogen 24/7 dengan teknologi biological filtration tercanggih yang menjamin kesehatan ekosistem.",
-        image: "/farm-1.png"
+        image: "/img/farm-1.png"
     },
     {
         id: 2,
         title: "Ruang Karantina & Lab",
         desc: "Proses seleksi dan sterilisasi ketat sebelum ikan siap dilepas ke pasar. Kami memastikan setiap spesimen dalam kondisi puncak.",
-        image: "/farm-2.png"
+        image: "/img/farm-2.png"
     },
     {
         id: 3,
         title: "Packaging Eksklusif",
         desc: "Sistem pengemasan oksigen murni dengan kotak isolasi termal premium untuk keamanan pengiriman maksimal ke seluruh penjuru dunia.",
-        image: "/farm-3.png"
+        image: "/img/farm-3.png"
     }
 ];
 
@@ -128,12 +128,12 @@ export default function TentangPage() {
 
                     <div className="visualGallery">
                         {[
-                            { id: 1, name: "Halfmoon Rosetail Elite", desc: "Simetri sirip sempurna dengan gradasi warna nebula.", img: "/betta-1.png" },
-                            { id: 2, name: "Plakat Koi Galaxy Multi", desc: "Mutasi warna langka hasil seleksi genetik ketat.", img: "/betta-2.png" },
-                            { id: 3, name: "Crowntail King Black", desc: "Karakter kuat dengan mental juara kontes.", img: "/betta-3.png" },
-                            { id: 4, name: "Avatar Gordon Copper", desc: "Kilau metalik yang berpendar dalam kegelapan.", img: "/betta-1.png" },
-                            { id: 5, name: "HMPK Blue Rim High Grade", desc: "Kebersihan warna putih dengan garis rim presisi.", img: "/betta-2.png" },
-                            { id: 6, name: "Hellboy Red Dragon", desc: "Warna merah pekat yang dominan dan agresif.", img: "/betta-3.png" }
+                            { id: 1, name: "Halfmoon Rosetail Elite", desc: "Simetri sirip sempurna dengan gradasi warna nebula.", img: "/img/betta-1.png" },
+                            { id: 2, name: "Plakat Koi Galaxy Multi", desc: "Mutasi warna langka hasil seleksi genetik ketat.", img: "/img/betta-2.png" },
+                            { id: 3, name: "Crowntail King Black", desc: "Karakter kuat dengan mental juara kontes.", img: "/img/betta-3.png" },
+                            { id: 4, name: "Avatar Gordon Copper", desc: "Kilau metalik yang berpendar dalam kegelapan.", img: "/img/betta-1.png" },
+                            { id: 5, name: "HMPK Blue Rim High Grade", desc: "Kebersihan warna putih dengan garis rim presisi.", img: "/img/betta-2.png" },
+                            { id: 6, name: "Hellboy Red Dragon", desc: "Warna merah pekat yang dominan dan agresif.", img: "/img/betta-3.png" }
                         ].map((item) => (
                             <div key={item.id} className="galleryItem">
                                 <Image src={item.img} alt={item.name} fill style={{ objectFit: 'cover' }} />
@@ -222,7 +222,7 @@ export default function TentangPage() {
                             </div>
                         </div>
                         <div style={{ position: 'relative', height: '600px', borderRadius: '2rem', overflow: 'hidden' }}>
-                            <Image src="/betta-2.png" alt="Origins" fill style={{ objectFit: 'cover' }} />
+                            <Image src="/img/betta-2.png" alt="Origins" fill style={{ objectFit: 'cover' }} />
                             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, var(--bg-dark) 0%, transparent 40%)' }}></div>
                         </div>
                     </div>
@@ -304,7 +304,7 @@ export default function TentangPage() {
                         </ul>
                     </div>
                     <div style={{ flex: 1, position: 'relative', height: '500px', borderRadius: '2rem', overflow: 'hidden' }}>
-                        <Image src="/betta-1.png" alt="QC Process" fill style={{ objectFit: 'cover' }} />
+                        <Image src="/img/betta-1.png" alt="QC Process" fill style={{ objectFit: 'cover' }} />
                         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
                                 <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>Proses QC 24 Jam</p>

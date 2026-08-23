@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 
-// Revenue-generating statuses. PENDING (belum bayar), CANCELLED, RETURNED
+// Revenue-generating statuses. PAID = uang masuk (webhook DOKU sudah verifikasi).
+// PENDING (belum bayar), CANCELLED, RETURNED
 // dianggap tidak menghasilkan revenue.
-const REVENUE_STATUSES = ['PROCESSING', 'SHIPPED', 'COMPLETED'];
+const REVENUE_STATUSES = ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'];
 
 // Parse ISO date from query. Fallback 30 hari terakhir kalau tidak ada.
 function parseRange(searchParams) {
@@ -92,7 +93,7 @@ export async function GET(request) {
 
     // Breakdown status — semua order termasuk PENDING/CANCELLED/RETURNED.
     const statusBreakdown = {
-      PENDING: 0, PROCESSING: 0, SHIPPED: 0, COMPLETED: 0, CANCELLED: 0, RETURNED: 0,
+      PENDING: 0, PAID: 0, PROCESSING: 0, SHIPPED: 0, COMPLETED: 0, CANCELLED: 0, RETURNED: 0,
     };
     for (const o of orders) {
       if (statusBreakdown[o.status] !== undefined) statusBreakdown[o.status] += 1;

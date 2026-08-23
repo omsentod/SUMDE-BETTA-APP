@@ -97,6 +97,10 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
+  /* Lock a floor so kolom tidak ke-crunch di viewport sempit — user swipe
+   * horizontal (via .tableScroll overflow-x:auto). Cukup untuk muat 7 kolom
+   * dengan padding wajar tanpa nama customer wrap huruf-per-huruf. */
+  min-width: 780px;
 }
 
 .table thead th {
@@ -188,6 +192,7 @@
 }
 
 .badgePending    { background: var(--status-warning); }
+.badgePaid       { background: var(--secondary); }
 .badgeProcessing { background: var(--status-info); }
 .badgeShipped    { background: var(--status-neutral); }
 .badgeCompleted  { background: var(--status-success); }
@@ -358,7 +363,6 @@
 }
 
 .hideOnMobile {}
-.showOnlyMobile { display: none; }
 
 @media (max-width: 767px) {
   .page {
@@ -396,18 +400,6 @@
 
   .table tbody td {
     padding: 0.5rem 0.4rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .hideOnMobile,
-  .tdDate,
-  .tdActions {
-    display: none;
-  }
-
-  .showOnlyMobile {
-    display: inline;
   }
 
   .tdCheck {

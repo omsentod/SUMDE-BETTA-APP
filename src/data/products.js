@@ -8,7 +8,7 @@ export const products = [
         form: 'Halfmoon',
         coloration: 'Super Red',
         description: 'Mahakarya hidup dari spesies Betta Splendens. Menampilkan sisik naga merah yang pekat dengan ekor halfmoon yang sempurna.',
-        image: '/betta-1.png',
+        image: '/img/betta-1.png',
         isSold: false,
         isPremium: true,
         stats: { form: '9.8/10', color: '9.5/10', spirit: 'Agresif' }
@@ -22,7 +22,7 @@ export const products = [
         form: 'Plakat',
         coloration: 'Koi',
         description: 'Genetik Koi Galaxy yang sangat langka. Perpaduan warna nebula yang menampilkan bintik biru, merah, dan kuning.',
-        image: '/betta-2.png',
+        image: '/img/betta-2.png',
         isSold: false,
         isPremium: true,
         stats: { form: '9.5/10', color: '9.9/10', spirit: 'Pemberani' }
@@ -36,7 +36,7 @@ export const products = [
         form: 'Plakat',
         coloration: 'Black Samurai',
         description: 'Ksatria kegelapan dunia akuatik. Sisik beludru hitam pekat dengan sisik naga perak tebal di atas tubuh.',
-        image: '/betta-3.png',
+        image: '/img/betta-3.png',
         isSold: true,
         isPremium: false,
         stats: { form: '9.2/10', color: '9.8/10', spirit: 'Tenang' }
@@ -50,7 +50,7 @@ export const products = [
         form: 'Plakat',
         coloration: 'Copper',
         description: 'Kemilau tembaga metalik. Spesimen betina siap pijah yang sangat sehat dengan aktivitas tinggi.',
-        image: '/betta-2.png',
+        image: '/img/betta-2.png',
         isSold: false,
         isPremium: false,
         stats: { form: '9.0/10', color: '9.4/10', spirit: 'Agresif' }
@@ -64,7 +64,7 @@ export const products = [
         form: 'Halfmoon',
         coloration: 'Multicolor',
         description: 'Palet warna yang sangat langka. Gradasi lavender dan violet yang lembut pada ekor halfmoon yang lebar.',
-        image: '/betta-1.png',
+        image: '/img/betta-1.png',
         isSold: false,
         isPremium: true,
         stats: { form: '9.9/10', color: '10/10', spirit: 'Anggun' }
@@ -78,7 +78,7 @@ export const products = [
         form: 'Plakat',
         coloration: 'Solid',
         description: 'Sepasang indukan Blue Rim siap pijah. Tubuh putih bersih dengan garis biru tua yang sempurna di tepian sirip.',
-        image: '/betta-2.png',
+        image: '/img/betta-2.png',
         isSold: false,
         isPremium: true,
         stats: { form: '9.7/10', color: '9.5/10', spirit: 'Waspada' }
@@ -92,7 +92,7 @@ export const products = [
         form: 'Plakat',
         coloration: 'Avatar',
         description: 'Mutasi avatar gordon dengan rintik bintang yang menyebar rata. Warna dasar dominan gelap dengan sisik mutiara terang.',
-        image: '/betta-3.png',
+        image: '/img/betta-3.png',
         isSold: false,
         isPremium: true,
         stats: { form: '9.4/10', color: '9.7/10', spirit: 'Aktif' }
@@ -106,7 +106,7 @@ export const products = [
         form: 'Crowntail',
         coloration: 'Super Red',
         description: 'Warna merah darah yang menyala penuh tanpa bocor. Ekor serit yang kokoh dan menyilang sempurna.',
-        image: '/betta-1.png',
+        image: '/img/betta-1.png',
         isSold: false,
         isPremium: false,
         stats: { form: '8.9/10', color: '9.2/10', spirit: 'Ganas' }

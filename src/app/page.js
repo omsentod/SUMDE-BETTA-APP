@@ -15,7 +15,7 @@ export default function CatalogHome() {
 
     // Extract unique categories dynamically and find an image for each
     const categoriesWithImages = useMemo(() => {
-        const list = [{ name: 'Semua', image: '/logo.png' }]; // Use logo for Semua
+        const list = [{ name: 'Semua', image: '/img/logo.png' }]; // Use logo for Semua
 
         const seen = new Set();
         products.forEach(p => {
@@ -23,7 +23,7 @@ export default function CatalogHome() {
                 seen.add(p.form.toLowerCase());
                 list.push({
                     name: p.form,
-                    image: p.image || '/betta-1.png'
+                    image: p.image || '/img/betta-1.png'
                 });
             }
         });
@@ -156,7 +156,7 @@ export default function CatalogHome() {
                         <div className="hero-slide hero-slide-active">
                             {/* Background Image */}
                             <Image
-                                src={featuredProduct ? featuredProduct.image : "/betta-2.png"}
+                                src={featuredProduct ? featuredProduct.image : "/img/betta-2.png"}
                                 alt={featuredProduct ? featuredProduct.name : "Featured Koi Galaxy"}
                                 fill
                                 sizes="(max-width: 1400px) 100vw, 1400px"

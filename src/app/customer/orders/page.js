@@ -5,17 +5,19 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const STATUS_CONFIG = {
-    PENDING:    { label: 'Belum Dibayar', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', border: 'var(--status-warning)' },
-    PROCESSING: { label: 'Dalam Proses',  color: 'var(--status-info)',    bg: 'var(--status-info-bg)',    border: 'var(--status-info)' },
-    SHIPPED:    { label: 'Dikirim',       color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', border: 'var(--status-neutral)' },
-    COMPLETED:  { label: 'Selesai',       color: 'var(--status-success)', bg: 'var(--status-success-bg)', border: 'var(--status-success)' },
-    CANCELLED:  { label: 'Dibatalkan',    color: 'var(--status-error)',   bg: 'var(--status-error-bg)',   border: 'var(--status-error)' },
+    PENDING:    { label: 'Belum Dibayar',  color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', border: 'var(--status-warning)' },
+    PAID:       { label: 'Lunas',          color: 'var(--secondary)',      bg: 'var(--secondary-glow)',    border: 'var(--secondary)' },
+    PROCESSING: { label: 'Sedang Diproses',color: 'var(--status-info)',    bg: 'var(--status-info-bg)',    border: 'var(--status-info)' },
+    SHIPPED:    { label: 'Dikirim',        color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', border: 'var(--status-neutral)' },
+    COMPLETED:  { label: 'Selesai',        color: 'var(--status-success)', bg: 'var(--status-success-bg)', border: 'var(--status-success)' },
+    CANCELLED:  { label: 'Dibatalkan',     color: 'var(--status-error)',   bg: 'var(--status-error-bg)',   border: 'var(--status-error)' },
 };
 
 const TABS = [
     { key: 'ALL',       label: 'Semua' },
     { key: 'PENDING',   label: 'Belum Dibayar' },
-    { key: 'PROCESSING',label: 'Dalam Proses' },
+    { key: 'PAID',      label: 'Lunas' },
+    { key: 'PROCESSING',label: 'Diproses' },
     { key: 'SHIPPED',   label: 'Dikirim' },
     { key: 'COMPLETED', label: 'Selesai' },
 ];
@@ -25,7 +27,8 @@ const TABS = [
 const EMPTY_STATES = {
     ALL:        { title: 'Belum ada pesanan',                desc: 'Mulai belanja koleksi ikan betta eksklusif kami.', showCta: true  },
     PENDING:    { title: 'Tidak ada tagihan menunggu bayar', desc: 'Semua pesanan sudah dibayar, atau kamu belum membuat pesanan baru.', showCta: false },
-    PROCESSING: { title: 'Belum ada pesanan diproses',       desc: 'Pesanan yang sudah dibayar akan muncul di sini.', showCta: false },
+    PAID:       { title: 'Belum ada pesanan lunas',          desc: 'Pesanan yang sudah dibayar dan menunggu diproses admin akan muncul di sini.', showCta: false },
+    PROCESSING: { title: 'Belum ada pesanan diproses',       desc: 'Pesanan yang resi kurirnya sudah dipanggil akan muncul di sini.', showCta: false },
     SHIPPED:    { title: 'Belum ada pesanan dikirim',        desc: 'Pesanan yang sedang dalam perjalanan akan muncul di sini.', showCta: false },
     COMPLETED:  { title: 'Belum ada pesanan selesai',        desc: 'Pesanan yang sudah diterima akan muncul di sini.', showCta: false },
 };

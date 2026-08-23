@@ -141,12 +141,14 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Amount mismatch.' }, { status: 400 });
       }
 
-      // Payment confirmed → mark PROCESSING and decrement stock atomically (P2-b).
+      // Payment confirmed → mark PAID and decrement stock atomically (P2-b).
+      // PAID = uang masuk, belum di-pickup kurir. Status berpindah ke PROCESSING
+      // saat admin menekan "Panggil Kurir".
       await prisma.$transaction(async (tx) => {
         await decrementStockForOrder(tx, order);
-        await tx.order.update({ where: { id: actualOrderId }, data: { status: 'PROCESSING' } });
+        await tx.order.update({ where: { id: actualOrderId }, data: { status: 'PAID' } });
       });
-      console.log(`Doku Webhook: Order ${actualOrderId} paid → PROCESSING, stock updated.`);
+      console.log(`Doku Webhook: Order ${actualOrderId} paid → PAID, stock updated.`);
 
       // Notif: customer (bell + email) + admin (bell). Best-effort — jangan
       // gagalkan webhook kalau notif error, order sudah paid di DB.
@@ -164,7 +166,7 @@ export async function POST(request) {
           type: 'order.paid',
           title: 'Order dibayar',
           body: `Order #${order.id.slice(0, 8)} lunas — perlu dikirim.`,
-          link: '/admin/orders?status=PROCESSING',
+          link: '/admin/orders?status=PAID',
         });
         if (order.email) {
           const appUrl = process.env.APP_URL || 'https://sumdebetta.com';

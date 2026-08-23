@@ -39,7 +39,7 @@ function AdminSidebarInner() {
   const searchParams = useSearchParams();
   const activeStatus = searchParams.get('status');
 
-  const [counts, setCounts] = useState({ pendingOrders: 0, needsPickup: 0, awaitingWaybill: 0, returned: 0 });
+  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0 });
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -67,8 +67,10 @@ function AdminSidebarInner() {
 
   const orderStatusItems = [
     { label: 'Semua', href: '/admin/orders', active: isOrdersAll() },
-    { label: 'Pesanan Baru', href: '/admin/orders?status=PENDING', active: isOrdersStatus('PENDING'), badge: counts.pendingOrders },
-    { label: 'Diproses', href: '/admin/orders?status=PROCESSING', active: isOrdersStatus('PROCESSING'), badge: counts.needsPickup },
+    // "NEW" pseudo-status di halaman /admin/orders di-map ke PENDING + PAID
+    // (belum bayar + sudah bayar tapi belum panggil kurir).
+    { label: 'Pesanan Baru', href: '/admin/orders?status=NEW', active: isOrdersStatus('NEW'), badge: counts.pendingOrders },
+    { label: 'Diproses', href: '/admin/orders?status=PROCESSING', active: isOrdersStatus('PROCESSING'), badge: counts.processing },
     { label: 'Dikirim', href: '/admin/orders?status=SHIPPED', active: isOrdersStatus('SHIPPED') },
     { label: 'Selesai', href: '/admin/orders?status=COMPLETED', active: isOrdersStatus('COMPLETED') },
     { label: 'Dibatalkan', href: '/admin/orders?status=CANCELLED', active: isOrdersStatus('CANCELLED') },

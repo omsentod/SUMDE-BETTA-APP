@@ -161,7 +161,7 @@ model Order {
   trackingNumber  String? // e.g. "JB000111222333" (AWB from courier)
   biteshipShipmentId String? // e.g. "62f4b..." (Biteship internal ID)
   biteshipStatus  String? // e.g. "allocated", "picking_up", "picked", "dropped", "delivered"
-  status    String      @default("PENDING") // "PENDING" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED" | "RETURNED"
+  status    String      @default("PENDING") // "PENDING" (belum bayar) | "PAID" (webhook DOKU confirmed, stock decremented) | "PROCESSING" (Panggil Kurir done, resi dipanggil) | "SHIPPED" | "COMPLETED" | "CANCELLED" | "RETURNED"
   name      String
   email     String
   phone         String
@@ -193,7 +193,7 @@ model PromoEvent {
   title       String
   subtitle    String?
   description String    @db.Text
-  image       String    @default("/betta-2.png")
+  image       String    @default("/img/betta-2.png")
   targetUrl   String
   buttonText  String    @default("Lihat Event")
   isActive    Boolean   @default(true)

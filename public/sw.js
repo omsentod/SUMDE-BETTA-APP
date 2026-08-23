@@ -20,8 +20,8 @@ self.addEventListener('push', (event) => {
   const title = payload.title || 'SUMDE BETTA';
   const options = {
     body: payload.body || '',
-    icon: '/logo.png',
-    badge: '/logo.png',
+    icon: '/img/logo.png',
+    badge: '/img/logo.png',
     data: { link: payload.link || '/' },
   };
   event.waitUntil(self.registration.showNotification(title, options));

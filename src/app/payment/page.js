@@ -26,7 +26,7 @@ export default function PaymentPage() {
             const res = await fetch(`/api/orders/${orderId}/status`);
             if (res.ok) {
                 const { status: orderStatus } = await res.json();
-                if (orderStatus === 'PROCESSING') {
+                if (orderStatus === 'PAID') {
                     setStatus('success');
                     clearCart();
                     localStorage.removeItem('temp-shipment');

@@ -2,16 +2,21 @@
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import styles from './CartSidebar.module.css';
 
 export default function CartSidebar() {
-    const { 
-        cart, 
-        cartCheckedTotal, 
-        isCartOpen, 
-        toggleCart, 
-        updateQuantity, 
+    const {
+        cart,
+        cartCheckedTotal,
+        checkedCount,
+        allChecked,
+        isCartOpen,
+        toggleCart,
+        updateQuantity,
         removeFromCart,
         toggleItemCheck,
+        toggleAllChecked,
+        removeCheckedItems,
         setDirectCheckoutItem
     } = useCart();
     const router = useRouter();
@@ -23,6 +28,14 @@ export default function CartSidebar() {
         setDirectCheckoutItem(null);
         toggleCart();
         router.push('/checkout');
+    };
+
+    const handleBulkDelete = () => {
+        if (checkedCount === 0) return;
+        const confirmed = window.confirm(
+            `Hapus ${checkedCount} item terpilih dari keranjang?`
+        );
+        if (confirmed) removeCheckedItems();
     };
 
     const formattedCurrency = (value) => {
@@ -37,6 +50,47 @@ export default function CartSidebar() {
                     <h2 className="cart-header-title">Keranjang</h2>
                     <button onClick={toggleCart} className="cart-header-close">×</button>
                 </div>
+
+                {cart.length > 0 && (
+                    <div className={styles.bulkBar}>
+                        <label className={styles.selectAllLabel}>
+                            <input
+                                type="checkbox"
+                                checked={allChecked}
+                                onChange={toggleAllChecked}
+                                aria-label="Pilih semua item"
+                            />
+                            <span>Pilih Semua</span>
+                            <span className={styles.selectAllCount}>
+                                ({checkedCount}/{cart.length})
+                            </span>
+                        </label>
+                        <button
+                            type="button"
+                            onClick={handleBulkDelete}
+                            className={styles.bulkDeleteBtn}
+                            disabled={checkedCount === 0}
+                        >
+                            <svg
+                                className={styles.bulkDeleteIcon}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                            Hapus Terpilih ({checkedCount})
+                        </button>
+                    </div>
+                )}
 
                 <div className="cart-items-list">
                     {cart.length === 0 ? (

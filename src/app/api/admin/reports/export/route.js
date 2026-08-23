@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 
-const REVENUE_STATUSES = new Set(['PROCESSING', 'SHIPPED', 'COMPLETED']);
+const REVENUE_STATUSES = new Set(['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED']);
 
 function parseRange(searchParams) {
   const fromRaw = searchParams.get('from');
@@ -53,7 +53,7 @@ export async function GET(request) {
       ['Rata-rata per Pesanan', avgOrderValue],
       ['Pelanggan Unik', uniqueCustomers],
       [],
-      ['Catatan: pendapatan hanya menghitung status PROCESSING, SHIPPED, COMPLETED. PENDING/CANCELLED/RETURNED dieksklusi.'],
+      ['Catatan: pendapatan hanya menghitung status PAID, PROCESSING, SHIPPED, COMPLETED. PENDING/CANCELLED/RETURNED dieksklusi.'],
     ];
 
     // Sheet 2: Detail transaksi

@@ -1,0 +1,77 @@
+/*
+ * Bulk-action bar shown at the top of the cart items list when the cart is
+ * non-empty. Lets the user select/deselect every item at once and bulk-delete
+ * the currently selected ones. All colors resolve to CSS variables so the bar
+ * flips cleanly between light and dark themes.
+ */
+
+.bulkBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    background: var(--glass);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.selectAllLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    user-select: none;
+}
+
+.selectAllLabel input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.selectAllCount {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 0.15rem;
+}
+
+.bulkDeleteBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1px solid color-mix(in oklab, var(--status-error) 35%, transparent);
+    color: var(--status-error);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.bulkDeleteBtn:hover:not(:disabled) {
+    background: var(--status-error-bg);
+    border-color: var(--status-error);
+}
+
+.bulkDeleteBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.bulkDeleteIcon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}

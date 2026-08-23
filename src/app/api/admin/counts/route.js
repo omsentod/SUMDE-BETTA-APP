@@ -11,17 +11,14 @@ export async function GET(request) {
 
     // Jalankan 4 count query paralel supaya total latency ≈ query terlambat,
     // bukan sum semua.
-    const [pendingOrders, needsPickup, awaitingWaybill, returned] = await Promise.all([
-      // Pesanan baru — belum bayar.
-      prisma.order.count({ where: { status: 'PENDING' } }),
+    const [pendingOrders, processing, awaitingWaybill, returned] = await Promise.all([
+      // Pesanan Baru — belum bayar (PENDING) + sudah bayar tapi belum panggil
+      // kurir (PAID). Keduanya actionable untuk admin (verifikasi/proses).
+      prisma.order.count({ where: { status: { in: ['PENDING', 'PAID'] } } }),
 
-      // Perlu book kurir — sudah bayar, belum ada shipmentId di Biteship.
-      prisma.order.count({
-        where: {
-          status: 'PROCESSING',
-          biteshipShipmentId: null,
-        },
-      }),
+      // Diproses — sudah panggil kurir, menunggu kurir pickup / AWB.
+      // Aligned dengan link sidebar `/admin/orders?status=PROCESSING`.
+      prisma.order.count({ where: { status: 'PROCESSING' } }),
 
       // Menunggu waybill — shipment sudah dibuat tapi AWB belum turun dari Biteship.
       prisma.order.count({
@@ -37,7 +34,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       pendingOrders,
-      needsPickup,
+      processing,
       awaitingWaybill,
       returned,
     });

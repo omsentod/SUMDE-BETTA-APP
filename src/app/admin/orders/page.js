@@ -10,18 +10,47 @@ const formatIDR = (v) =>
 
 const STATUS_OPTIONS = [
   { value: 'All', label: 'Semua Status' },
+  // "NEW" adalah pseudo-status yang menggabungkan PENDING + PAID — dipakai
+  // untuk halaman "Pesanan Baru" di sidebar.
+  { value: 'NEW', label: 'Pesanan Baru (Pending + Lunas)' },
   { value: 'PENDING', label: 'Menunggu Bayar' },
-  { value: 'PROCESSING', label: 'Diproses' },
+  { value: 'PAID', label: 'Lunas (Belum Diproses)' },
+  { value: 'PROCESSING', label: 'Diproses (Resi Dipanggil)' },
   { value: 'SHIPPED', label: 'Dikirim' },
   { value: 'COMPLETED', label: 'Selesai' },
   { value: 'CANCELLED', label: 'Dibatalkan' },
   { value: 'RETURNED', label: 'Retur' },
 ];
 
-const VALID_STATUSES = new Set(['PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
+// Subset dropdown untuk halaman "Pesanan Baru" — hanya izinkan zoom antara
+// NEW (gabungan) atau salah satu sub-status-nya.
+const NEW_PAGE_OPTIONS = [
+  { value: 'NEW', label: 'Semua Pesanan Baru' },
+  { value: 'PENDING', label: 'Menunggu Bayar' },
+  { value: 'PAID', label: 'Lunas' },
+];
+
+// Kalau URL sudah membawa status spesifik (dari klik sidebar), dropdown
+// tidak perlu tampil — konteks sudah jelas dari halaman.
+const SINGLE_STATUS_PAGES = new Set(['PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
+
+const VALID_STATUSES = new Set([
+  'NEW', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED',
+]);
+
+// Pseudo-status "NEW" → real statuses yang di-include saat filter.
+const NEW_ORDER_STATUSES = new Set(['PENDING', 'PAID']);
+
+// Statuses where the shipping label still represents an active shipment.
+// PAID / PROCESSING: admin sering perlu cetak label lebih dulu untuk prep
+// packaging — labelnya render badge "MENUNGGU NOMOR RESI" kalau AWB belum
+// ada. Admin akan cetak ulang begitu AWB turun. CANCELLED / RETURNED
+// dieksklusi karena reprint label bekas cancel bisa nyasar paket.
+const PRINTABLE_STATUSES = new Set(['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED']);
 
 const STATUS_BADGE_CLASS = {
   PENDING: styles.badgePending,
+  PAID: styles.badgePaid,
   PROCESSING: styles.badgeProcessing,
   SHIPPED: styles.badgeShipped,
   COMPLETED: styles.badgeCompleted,
@@ -29,13 +58,16 @@ const STATUS_BADGE_CLASS = {
   RETURNED: styles.badgeReturned,
 };
 
-const STATUS_SHORT_LABEL = {
-  PENDING: 'BAYAR',
-  PROCESSING: 'PROSES',
-  SHIPPED: 'KIRIM',
-  COMPLETED: 'SELESAI',
-  CANCELLED: 'BATAL',
-  RETURNED: 'RETUR',
+// Human-readable label untuk badge status, dipakai konsisten di
+// tampilan desktop DAN mobile — hindari mismatch enum vs short label.
+const STATUS_LABEL = {
+  PENDING: 'Belum Bayar',
+  PAID: 'Lunas',
+  PROCESSING: 'Diproses',
+  SHIPPED: 'Dikirim',
+  COMPLETED: 'Selesai',
+  CANCELLED: 'Dibatalkan',
+  RETURNED: 'Retur',
 };
 
 function AdminOrdersPageInner() {
@@ -81,7 +113,10 @@ function AdminOrdersPageInner() {
         o.id.toLowerCase().includes(q) ||
         (o.name && o.name.toLowerCase().includes(q)) ||
         (o.email && o.email.toLowerCase().includes(q));
-      const matchStatus = statusFilter === 'All' || o.status === statusFilter;
+      let matchStatus;
+      if (statusFilter === 'All') matchStatus = true;
+      else if (statusFilter === 'NEW') matchStatus = NEW_ORDER_STATUSES.has(o.status);
+      else matchStatus = o.status === statusFilter;
       return matchSearch && matchStatus;
     });
   }, [orders, search, statusFilter]);
@@ -109,17 +144,21 @@ function AdminOrdersPageInner() {
     [orders, selectedIds]
   );
 
-  const eligiblePickup = selectedOrders.filter((o) => o.status === 'PROCESSING' && !o.biteshipShipmentId).length;
-  const eligiblePrint = selectedOrders.filter((o) => o.trackingNumber).length;
+  // Only PAID orders can call the courier — status advances to PROCESSING
+  // once pickup is booked, so PROCESSING is the "already called" state.
+  const eligiblePickup = selectedOrders.filter((o) => o.status === 'PAID' && !o.biteshipShipmentId).length;
+  // Label bisa dicetak selama status aktif (PAID+). Tidak wajib punya AWB —
+  // LabelContent otomatis tampilkan badge "MENUNGGU NOMOR RESI" saat kosong.
+  const eligiblePrint = selectedOrders.filter((o) => PRINTABLE_STATUSES.has(o.status)).length;
 
   const handleBulkPickup = async () => {
     if (eligiblePickup === 0) {
-      alert('Tidak ada order yang bisa di-pickup. Hanya order PROCESSING tanpa shipment yang eligible.');
+      alert('Tidak ada order yang bisa di-pickup. Hanya order LUNAS (PAID) tanpa shipment yang eligible.');
       return;
     }
     const confirmed = window.confirm(
       `Panggil kurir untuk ${eligiblePickup} order?\n` +
-      'Order non-PROCESSING atau yang sudah punya shipment akan di-skip.'
+      'Order non-PAID atau yang sudah punya shipment akan di-skip.'
     );
     if (!confirmed) return;
 
@@ -145,9 +184,11 @@ function AdminOrdersPageInner() {
   };
 
   const handleBulkPrint = () => {
-    const ids = selectedOrders.filter((o) => o.trackingNumber).map((o) => o.id);
+    const ids = selectedOrders
+      .filter((o) => PRINTABLE_STATUSES.has(o.status))
+      .map((o) => o.id);
     if (ids.length === 0) {
-      alert('Tidak ada order dengan AWB yang bisa dicetak resinya.');
+      alert('Tidak ada order yang bisa dicetak resinya. Hanya order PAID, PROCESSING, SHIPPED, atau COMPLETED yang eligible.');
       return;
     }
     window.open(`/admin/orders/labels-batch?ids=${ids.join(',')}`, '_blank');
@@ -191,13 +232,22 @@ function AdminOrdersPageInner() {
           onChange={(e) => setSearch(e.target.value)}
           className={styles.searchInput}
         />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className={styles.selectInput}
-        >
-          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        {/* Dropdown status: konteks halaman menentukan opsi yang muncul.
+         *  - `?status=NEW`     → hanya PENDING/PAID (dan reset ke NEW)
+         *  - single-status page → tidak render (redundant)
+         *  - "Semua"/default  → full options
+         */}
+        {SINGLE_STATUS_PAGES.has(urlStatus) ? null : (
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className={styles.selectInput}
+          >
+            {(urlStatus === 'NEW' ? NEW_PAGE_OPTIONS : STATUS_OPTIONS).map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {selectedIds.size > 0 && (
@@ -289,12 +339,11 @@ function AdminOrdersPageInner() {
                         <td className={styles.tdTotal}>{formatIDR(order.total)}</td>
                         <td>
                           <span className={`${styles.badge} ${STATUS_BADGE_CLASS[order.status] || styles.badgeCancelled}`}>
-                            <span className={styles.hideOnMobile}>{order.status}</span>
-                            <span className={styles.showOnlyMobile}>{STATUS_SHORT_LABEL[order.status] || order.status}</span>
+                            {STATUS_LABEL[order.status] || order.status}
                           </span>
                         </td>
                         <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                          {order.trackingNumber && (
+                          {PRINTABLE_STATUSES.has(order.status) && (
                             <a
                               href={`/admin/orders/${order.id}/label`}
                               target="_blank"

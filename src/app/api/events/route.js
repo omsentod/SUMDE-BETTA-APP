@@ -85,7 +85,7 @@ export async function POST(request) {
         title,
         subtitle: subtitle || null,
         description,
-        image: image || '/betta-2.png',
+        image: image || '/img/betta-2.png',
         targetUrl,
         buttonText: buttonText || 'Lihat Event',
         isActive: isActive !== undefined ? Boolean(isActive) : true,

@@ -117,6 +117,21 @@ export function CartProvider({ children }) {
         );
     }, []);
 
+    // Bulk action: flip every item's checked flag based on current all-checked state.
+    // If everything is already checked, uncheck all; otherwise check all.
+    const toggleAllChecked = useCallback(() => {
+        setCart((prev) => {
+            if (prev.length === 0) return prev;
+            const allChecked = prev.every((item) => item.checked !== false);
+            return prev.map((item) => ({ ...item, checked: !allChecked }));
+        });
+    }, []);
+
+    // Bulk action: remove every item whose checkbox is currently on.
+    const removeCheckedItems = useCallback(() => {
+        setCart((prev) => prev.filter((item) => item.checked === false));
+    }, []);
+
     const updateQuantity = useCallback((id, delta, selectedSize) => {
         // Prefer directCheckoutItem when it matches; otherwise mutate cart.
         // We read state via the setter's `prev` so the handler stays stable.
@@ -170,6 +185,16 @@ export function CartProvider({ children }) {
         [cart]
     );
 
+    const checkedCount = useMemo(
+        () => cart.filter((i) => i.checked !== false).length,
+        [cart]
+    );
+
+    const allChecked = useMemo(
+        () => cart.length > 0 && cart.every((i) => i.checked !== false),
+        [cart]
+    );
+
     const checkoutItems = useMemo(
         () => directCheckoutItem ? [directCheckoutItem] : cart.filter((i) => i.checked !== false),
         [cart, directCheckoutItem]
@@ -198,6 +223,8 @@ export function CartProvider({ children }) {
         addToCart,
         buyNow,
         toggleItemCheck,
+        toggleAllChecked,
+        removeCheckedItems,
         updateQuantity,
         removeFromCart,
         clearCart,
@@ -205,6 +232,8 @@ export function CartProvider({ children }) {
         total,
         itemCount,
         cartCheckedTotal,
+        checkedCount,
+        allChecked,
         isCartOpen,
         toggleCart,
         directCheckoutItem,
@@ -214,8 +243,10 @@ export function CartProvider({ children }) {
         checkoutCount,
     }), [
         cart, directCheckoutItem, isCartOpen,
-        total, itemCount, cartCheckedTotal, checkoutItems, checkoutTotal, checkoutCount,
-        addToCart, buyNow, toggleItemCheck, updateQuantity, removeFromCart,
+        total, itemCount, cartCheckedTotal, checkedCount, allChecked,
+        checkoutItems, checkoutTotal, checkoutCount,
+        addToCart, buyNow, toggleItemCheck, toggleAllChecked, removeCheckedItems,
+        updateQuantity, removeFromCart,
         clearCart, clearCheckout, toggleCart,
     ]);
 

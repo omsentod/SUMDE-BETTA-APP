@@ -17,6 +17,8 @@ const statusBadge = (status) => {
   switch (status) {
     case 'PENDING':
       return { label: 'Menunggu', cls: styles.badgeWarning };
+    case 'PAID':
+      return { label: 'Lunas', cls: styles.badgeInfo };
     case 'PROCESSING':
       return { label: 'Diproses', cls: styles.badgeInfo };
     case 'SHIPPED':
@@ -63,10 +65,13 @@ export default function AdminDashboard() {
   }, [currentUser]);
 
   const kpi = useMemo(() => {
+    // Revenue = uang masuk (PAID) + tahap fulfilment (PROCESSING, SHIPPED, COMPLETED).
+    // PENDING/CANCELLED/RETURNED dieksklusi.
     const totalRevenue = orders
-      .filter((o) => o.status === 'PROCESSING' || o.status === 'SHIPPED' || o.status === 'COMPLETED')
+      .filter((o) => o.status === 'PAID' || o.status === 'PROCESSING' || o.status === 'SHIPPED' || o.status === 'COMPLETED')
       .reduce((sum, o) => sum + (o.total || 0), 0);
-    const pendingOrdersCount = orders.filter((o) => o.status === 'PENDING').length;
+    // "Pesanan Baru" = PENDING (belum bayar) + PAID (belum panggil kurir).
+    const pendingOrdersCount = orders.filter((o) => o.status === 'PENDING' || o.status === 'PAID').length;
     const lowStockCount = products.filter((p) => p.quantity <= 2).length;
     return {
       totalRevenue,
@@ -133,7 +138,7 @@ export default function AdminDashboard() {
             <div className={styles.kpiSubtext}>
               {kpi.pendingOrdersCount > 0 ? (
                 <span style={{ color: 'var(--status-warning)', fontWeight: '600' }}>
-                  ⚠️ {kpi.pendingOrdersCount} Pesanan PENDING
+                  ⚠️ {kpi.pendingOrdersCount} Pesanan Baru
                 </span>
               ) : (
                 <span>Semua transaksi diproses</span>

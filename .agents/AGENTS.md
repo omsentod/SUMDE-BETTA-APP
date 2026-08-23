@@ -17,7 +17,8 @@
 
 ## 3. Database & Stock Integrity (Prisma ORM)
 - **Atomic Stock Operations**: Stock updates (decrementing product quantity and variant sizes) must execute inside `prisma.$transaction`.
-- **Deferred Stock Reduction**: Stock is **never** decremented when an order is created (`PENDING`). Stock is only decremented upon receiving a verified `SUCCESS` status from the DOKU webhook.
+- **Deferred Stock Reduction**: Stock is **never** decremented when an order is created (`PENDING`). Stock is only decremented upon receiving a verified `SUCCESS` status from the DOKU webhook — the same transaction flips status `PENDING` → `PAID`.
+- **Order Status Lifecycle**: `PENDING` (belum bayar) → `PAID` (webhook DOKU SUCCESS, stock decremented) → `PROCESSING` (admin klik "Panggil Kurir", Biteship shipment booked) → `SHIPPED` (Biteship webhook 'picked'/'dropping_off' atau `order.waybill_id` event) → `COMPLETED` (Biteship 'delivered'). Terminal branches: `CANCELLED` (webhook 'cancelled' — auto restock), `RETURNED` (webhook 'returned' — manual admin review, no auto restock).
 
 ## 4. UI Aesthetics & Theme System
 - **No Inline Styles in JSX**: Do NOT write inline styles (`style={{ ... }}`) inside JSX components. All styling MUST be placed in dedicated CSS files (`.css` or `.module.css`) using clean BEM/semantic CSS class names.
@@ -61,14 +62,15 @@
 ## 7. Admin ERP Shell (Sidebar + Badge)
 
 - **Sidebar Kiri Fixed 240px**: `AdminSidebar` render di kiri semua route `/admin/**` (kecuali label print). Menu grouping: Ringkasan → Operasional → Master Data. Mobile <768px: sembunyikan default, buka via hamburger toggle.
-- **Badge = Actionable Only**: Angka badge hanya untuk items yang butuh action admin: `Pesanan Baru (PENDING)`, `Diproses tanpa shipment`, `Menunggu Waybill`, `Retur`. Item lain (Selesai, Dibatalkan, Dikirim) TIDAK pakai badge — noise tanpa value.
+- **Badge = Actionable Only**: Angka badge hanya untuk items yang butuh action admin: `Pesanan Baru (PENDING + PAID)`, `Diproses (PROCESSING)`, `Menunggu Waybill`, `Retur`. Item lain (Selesai, Dibatalkan, Dikirim) TIDAK pakai badge — noise tanpa value.
+- **Badge = Filter Alignment**: Angka badge WAJIB match dengan jumlah row yang muncul saat sidebar link di-klik. Contoh: badge "Diproses" count `status === 'PROCESSING'` karena link ke `?status=PROCESSING`. Jangan pernah count status A sedangkan link filter status B — user akan bingung kenapa badge N tapi isi 0.
 - **Badge Auto-Refresh 30s**: `GET /api/admin/counts` di-poll dari sidebar client tiap 30 detik. Return kecil (4 integer), dapat scale. Kalau volume order tinggi (>1000/hari), pindah ke SSE atau infrequent polling.
-- **Active State via URL**: Sidebar link ke `/admin/orders?status=PENDING` dsb. Halaman orders baca `searchParams.get('status')` untuk initial filter. Active state di sidebar: pathname + searchParams — bukan cuma pathname.
+- **Active State via URL**: Sidebar link ke `/admin/orders?status=PENDING` dsb. Halaman orders baca `searchParams.get('status')` untuk initial filter. Active state di sidebar: pathname + searchParams — bukan cuma pathname. **Pseudo-status `NEW`**: link `/admin/orders?status=NEW` di-map ke filter `PENDING + PAID` di halaman orders (untuk item "Pesanan Baru"). Real DB status tidak pernah `NEW` — hanya UI filter convenience.
 - **Wrap Suspense untuk `useSearchParams`**: Setiap komponen `AdminSidebar` + `/admin/orders/page.js` yang pakai `useSearchParams()` wajib di-wrap Suspense di top-level export (Next.js requirement).
 
 ## 8. Laporan Penjualan (`/admin/reports`)
 
-- **Revenue Definition**: Sum `Order.total` WHERE `status IN (PROCESSING, SHIPPED, COMPLETED)`. PENDING (belum bayar) + CANCELLED + RETURNED **dieksklusi**. Definisi ini konsisten di aggregate endpoint dan Excel export.
+- **Revenue Definition**: Sum `Order.total` WHERE `status IN (PAID, PROCESSING, SHIPPED, COMPLETED)`. PENDING (belum bayar) + CANCELLED + RETURNED **dieksklusi**. PAID masuk revenue karena uang sudah confirmed via DOKU webhook — meski belum di-shipping. Definisi ini konsisten di aggregate endpoint dan Excel export.
 - **Unique Customers = Email OR UserId**: Guest order tanpa `userId` tetap dihitung sebagai unique via `email`. Fallback urutan: `email || userId`.
 - **Date Range Semantics**: `from` = awal hari, `to` = akhir hari (23:59:59.999). Server yang normalize supaya klien tidak perlu urus timezone edge.
 - **Revenue By Day Filled**: Semua tanggal dalam range diisi array, order 0 di hari kosong. Grafik jadi tidak putus-putus.
@@ -79,7 +81,7 @@
 
 - **Partial Success Semantics**: Endpoint bulk (`POST /api/admin/orders/bulk/pickup`, `PUT /api/admin/orders/bulk/status`) **JANGAN abort saat 1 item gagal** — process semua, return array `results: [{orderId, ok, error?}]`. UI tampilkan summary "N sukses, M gagal" + detail per order.
 - **Cap per Batch**: pickup max 50, status max 100. Cegah runaway request yang burn Biteship quota / lock table.
-- **Bulk Pickup Eligibility Guard**: hanya `status === 'PROCESSING' && !biteshipShipmentId`. Order status lain di-skip dengan error message spesifik — jangan double-book.
+- **Bulk Pickup Eligibility Guard**: hanya `status === 'PAID' && !biteshipShipmentId`. Order status lain di-skip dengan error message spesifik — jangan double-book. Setelah pickup sukses, status pindah ke `PROCESSING` (arti: resi sudah dipanggil). Transisi ke `SHIPPED` dilakukan oleh shipping webhook (biteship 'picked'/'dropping_off' atau `order.waybill_id` event), BUKAN oleh endpoint pickup.
 - **Bulk Status = Admin Override, NO Side Effects**: `PUT /api/admin/orders/bulk/status` cuma ubah field `status`. TIDAK trigger restock, TIDAK kirim email notif, TIDAK panggil Biteship. Untuk cancel dengan restock, pakai flow webhook. Endpoint ini untuk emergency (webhook missed, koreksi manual). Log warning per override.
 - **Batch Label Print via Query String**: `/admin/orders/labels-batch?ids=id1,id2,id3` render banyak label dengan `page-break-after: always` per label. Print sekali → semua keluar. Max 50 label per request.
 - **Reusable Label Component**: `LabelContent` di `[id]/label/` folder dipakai single page + batch page. Jangan duplikasi JSX — perubahan design label wajib satu tempat.

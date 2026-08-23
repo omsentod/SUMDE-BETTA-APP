@@ -33,8 +33,8 @@ export async function POST(request) {
         results.push({ orderId, ok: false, error: 'Pesanan tidak ditemukan.' });
         continue;
       }
-      if (order.status !== 'PROCESSING') {
-        results.push({ orderId, ok: false, error: `Status ${order.status} — hanya PROCESSING yang bisa di-pickup.` });
+      if (order.status !== 'PAID') {
+        results.push({ orderId, ok: false, error: `Status ${order.status} — hanya PAID yang bisa di-pickup.` });
         continue;
       }
       if (order.biteshipShipmentId) {
@@ -51,13 +51,17 @@ export async function POST(request) {
           shipmentData.waybill_id ||
           null;
 
+        // Panggil Kurir sukses → status PROCESSING (arti: resi sudah dipanggil).
+        // SHIPPED transition dilakukan oleh shipping webhook saat Biteship
+        // report status 'picked'/'dropping_off' atau `order.waybill_id` event
+        // (untuk kasus AWB baru muncul beberapa menit kemudian).
         const data = {
           biteshipShipmentId: shipmentData.id,
           biteshipStatus: shipmentData.status || 'allocated',
+          status: 'PROCESSING',
         };
         if (freshWaybill) {
           data.trackingNumber = freshWaybill;
-          data.status = 'SHIPPED';
         }
 
         await prisma.order.update({ where: { id: order.id }, data });
