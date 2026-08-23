@@ -257,14 +257,6 @@
 }
 
 @media print {
-  :global(html),
-  :global(body) {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 210mm;
-    height: 297mm;
-  }
   .viewport {
     background: white !important;
     padding: 0 !important;
