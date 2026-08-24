@@ -172,8 +172,17 @@ function AdminOrdersPageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal bulk pickup');
       const ok = data.results.filter((r) => r.ok).length;
-      const failed = data.results.filter((r) => !r.ok).length;
-      alert(`Selesai: ${ok} sukses, ${failed} gagal.\n${failed > 0 ? 'Cek order gagal di daftar (status tidak berubah).' : ''}`);
+      const failedResults = data.results.filter((r) => !r.ok);
+      // Alasan gagal per order datang dari Biteship (lihat bulk/pickup/route.js)
+      // — tampilkan langsung di sini, jangan dibuang, supaya admin tidak perlu
+      // buka DevTools tiap kali booking gagal.
+      const failReasons = failedResults
+        .map((r) => `- #${r.orderId.slice(0, 8)}: ${r.error}`)
+        .join('\n');
+      alert(
+        `Selesai: ${ok} sukses, ${failedResults.length} gagal.` +
+        (failedResults.length > 0 ? `\n\n${failReasons}` : '')
+      );
       setSelectedIds(new Set());
       loadOrders();
     } catch (err) {
