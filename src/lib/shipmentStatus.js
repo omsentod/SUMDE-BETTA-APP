@@ -31,7 +31,12 @@ export const STATUS_RANK = {
 // dead fish; admin decides case by case).
 export function mapBiteshipStatus(bs) {
   switch (bs) {
+    // Every "package has left origin and is moving toward the customer" state
+    // is SHIPPED. `in_transit` ("Item is on the way to destination") sits
+    // between `picked` and `dropping_off` — missing it made an order polled by
+    // the cron mid-transit fall through to null and stay stuck at PROCESSING.
     case 'picked':
+    case 'in_transit':
     case 'dropping_off':
       return 'SHIPPED';
     case 'delivered':
