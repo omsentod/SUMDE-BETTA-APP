@@ -4,6 +4,18 @@ import { useAuth } from '@/context/AuthContext';
 
 const CartContext = createContext();
 
+// "Beli Sekarang" cuma boleh hidup selama satu sesi checkout wajar — bukan
+// selamanya. Tanpa ini, directCheckoutItem yang ditinggal begitu saja (mis.
+// user klik Beli Sekarang lalu kabur sebelum bayar) nyangkut di localStorage
+// dan MEMBAJAK checkout berikutnya: karena ia selalu menang atas cart asli
+// (lihat checkoutItems di bawah), refresh /payment kapan pun bisa tiba-tiba
+// menampilkan produk lama itu sebagai "default" — termasuk saat order
+// beneran dikirim ke server. TTL disamakan dengan payment_due_date DOKU (60
+// menit, lihat createCheckoutSession di src/lib/doku.js) — kalau sesi DOKU
+// sendiri sudah pasti expired, niat Beli Sekarang di client juga tidak masuk
+// akal bertahan lebih lama dari itu.
+const BUY_NOW_TTL_MS = 60 * 60 * 1000;
+
 export function CartProvider({ children }) {
     const { currentUser } = useAuth();
     const userId = currentUser?.id || 'guest';
@@ -48,6 +60,13 @@ export function CartProvider({ children }) {
                     initialDirect = JSON.parse(legacyDirect);
                     localStorage.setItem(directKey, legacyDirect);
                 }
+            }
+            // Legacy entries (migrated pre-TTL, no _buyNowAt) dan entry yang
+            // sudah lewat TTL dianggap basi — buang supaya tidak membajak
+            // checkout session yang sedang berjalan sekarang.
+            if (initialDirect && Date.now() - (initialDirect._buyNowAt || 0) > BUY_NOW_TTL_MS) {
+                initialDirect = null;
+                localStorage.removeItem(directKey);
             }
         } catch {
             localStorage.removeItem(directKey);
@@ -104,7 +123,7 @@ export function CartProvider({ children }) {
     }, []);
 
     const buyNow = useCallback((product) => {
-        setDirectCheckoutItem({ ...product, quantity: 1, checked: true });
+        setDirectCheckoutItem({ ...product, quantity: 1, checked: true, _buyNowAt: Date.now() });
     }, []);
 
     const toggleItemCheck = useCallback((id, selectedSize) => {
