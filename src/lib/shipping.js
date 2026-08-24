@@ -148,7 +148,18 @@ export async function createShipment(order, totalQty) {
   const cfg = config();
   const packagesKg = Math.max(1, Math.ceil(totalQty / cfg.itemsPerKg));
   const weightGrams = packagesKg * 1000;
-  
+
+  // POS Indonesia's pickup collection method rejects the order without a
+  // precise origin coordinate ("coordinate is required for pickup collection
+  // method for pos indonesia") — the postal code alone isn't enough for them
+  // to route a courier to the exact pickup point. Only required here, not in
+  // config()/fetchRates(), since /rates/couriers works fine without it.
+  const originLat = process.env.BITESHIP_ORIGIN_LATITUDE;
+  const originLng = process.env.BITESHIP_ORIGIN_LONGITUDE;
+  if (!originLat || !originLng) {
+    throw configError('BITESHIP_ORIGIN_LATITUDE / BITESHIP_ORIGIN_LONGITUDE belum di-set di .env.');
+  }
+
   const payload = {
     shipper_contact_name: "Sumde Betta",
     shipper_contact_phone: "081234567890", // Ganti dengan nomor asli
@@ -156,6 +167,10 @@ export async function createShipment(order, totalQty) {
     origin_contact_phone: "081234567890",
     origin_address: "Markas Sumde Betta, Tulungagung",
     origin_postal_code: parseInt(cfg.originPostal),
+    origin_coordinate: {
+      latitude: parseFloat(originLat),
+      longitude: parseFloat(originLng),
+    },
 
     destination_contact_name: order.name,
     destination_contact_phone: order.phone,
