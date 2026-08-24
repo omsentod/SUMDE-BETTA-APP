@@ -9,8 +9,8 @@ export default function LabelContent({ order }) {
   const totalQty = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   const weightKg = Math.max(1, Math.ceil(totalQty / 10));
-  const shippingCostFormatted = order.shippingCost
-    ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.shippingCost)
+  const shippingCostFormatted = order.shippingFee
+    ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.shippingFee)
     : 'Rp. 0';
 
   return (
