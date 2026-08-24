@@ -1,0 +1,439 @@
+.pickerContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* Fallback saat tidak ada channel pembayaran yang aktif sama sekali */
+.emptyChannels {
+  padding: 1rem 1.25rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+  background: var(--glass);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* =========================================================
+   FEATURED / RECOMMENDED COVER CARD (Top Choice)
+   ========================================================= */
+.recommendedWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.recommendedCoverCard {
+  position: relative;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.recommendedCoverCard:hover {
+  border-color: rgba(255, 107, 53, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.recommendedCoverCardSelected {
+  border-color: var(--primary) !important;
+  background: color-mix(in oklab, var(--primary) 4%, var(--bg-card));
+  box-shadow: 0 0 0 1px var(--primary), 0 4px 16px var(--primary-glow) !important;
+}
+
+/* Top Cover Banner */
+.coverRibbon {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  padding: 0.35rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.coverRibbonLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coverRibbonNote {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.coverBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  gap: 1rem;
+}
+
+.coverLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.coverTitleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.coverTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.coverSubtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.coverRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.coverFee {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.coverFeeSub {
+  font-size: 0.72rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* =========================================================
+   OTHER PAYMENT METHODS ACCORDION & CARDS
+   ========================================================= */
+.otherMethodsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.categoryCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.categoryCard:hover {
+  border-color: rgba(255, 107, 53, 0.4);
+}
+
+.categoryCardActive {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-glow);
+}
+
+/* Header Trigger */
+.categoryHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.95rem 1.15rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 1rem;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.categoryHeader:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .categoryHeader:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.categoryLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.categoryIconWrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.categoryTitleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.categoryTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.categorySubtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.selectedBadgeText {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.categoryRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.previewLogos {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.previewMore {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.chevronIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+/* =========================================================
+   ACCORDION BODY & OPTION ITEMS
+   ========================================================= */
+.accordionBody {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, padding 0.25s ease;
+  padding: 0 1.15rem;
+}
+
+.accordionBodyOpen {
+  max-height: 1200px;
+  opacity: 1;
+  padding: 0.25rem 1.15rem 1.15rem 1.15rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.optionItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.optionItem:hover {
+  border-color: var(--primary);
+  background: rgba(255, 107, 53, 0.03);
+}
+
+.optionItemSelected {
+  border-color: var(--primary) !important;
+  background: color-mix(in oklab, var(--primary) 8%, var(--bg-card)) !important;
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.optionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.optionName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.optionFee {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   SINGLE DIRECT CARD (For E-Wallet, Paylater)
+   ========================================================= */
+.singleCard {
+  cursor: pointer;
+}
+
+.singleCardSelected {
+  border-color: var(--primary) !important;
+  background: color-mix(in oklab, var(--primary) 6%, var(--bg-card)) !important;
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* =========================================================
+   ROCK-SOLID CUSTOM RADIO CONTROLS
+   ========================================================= */
+.radioCircle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--input-border, #d1d1d6);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.radioCircleActive {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+}
+
+.radioDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0;
+  transform: scale(0.3);
+  transition: all 0.2s ease;
+}
+
+.radioCircleActive .radioDot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* =========================================================
+   RESPONSIVENESS
+   ========================================================= */
+@media (max-width: 768px) {
+  .coverBody {
+    padding: 0.95rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .coverLeft {
+    gap: 0.75rem;
+  }
+
+  .coverTitle {
+    font-size: 0.92rem;
+  }
+
+  .coverSubtitle {
+    font-size: 0.74rem;
+  }
+
+  .coverRight {
+    display: none; /* Keep super clean on mobile header */
+  }
+
+  .categoryHeader {
+    padding: 0.85rem 1rem;
+  }
+
+  .previewLogos {
+    display: none;
+  }
+
+  .optionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .accordionBodyOpen {
+    padding: 0.25rem 0.85rem 0.85rem 0.85rem;
+  }
+}

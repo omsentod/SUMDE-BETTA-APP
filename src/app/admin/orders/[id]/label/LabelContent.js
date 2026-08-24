@@ -3,15 +3,11 @@
 import CourierLogo from '@/components/CourierLogo';
 import styles from './label.module.css';
 
-// Isi 1 label (100mm x 150mm thermal) dengan layout rapi ala Biteship & branding SUMDE BETTA.
-// Digunakan oleh:
-// - /admin/orders/[id]/label/page.js — single label print
-// - /admin/orders/labels-batch/page.js — multi label print (page-break per label)
+
 export default function LabelContent({ order }) {
   const waybill = order.trackingNumber || null;
   const totalQty = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
-  // Perkiran berat paket (default 10 ekor ikan = 1 kg)
   const weightKg = Math.max(1, Math.ceil(totalQty / 10));
   const shippingCostFormatted = order.shippingCost
     ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.shippingCost)
@@ -20,8 +16,10 @@ export default function LabelContent({ order }) {
   return (
     <div className={styles.label}>
       
-      {/* 1. Header: Courier Logo (Left) vs Store Branding (Right) */}
+      {/* 1. Header: Courier Logo (Left) | Brand Center | Spacer (Right) */}
       <div className={styles.headerRow}>
+
+        {/* Kiri: logo kurir mepet pojok kiri atas */}
         <div className={styles.headerLeft}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
@@ -35,22 +33,35 @@ export default function LabelContent({ order }) {
               }
             }}
           />
-          {/* Fallback component jika logo tidak ada */}
           <div style={{ display: 'none' }}>
             <CourierLogo code={order.shippingCourier || ''} size="lg" />
           </div>
         </div>
-        <div className={styles.headerRight}>
+
+        {/* Tengah: logo bulat + teks SUMDE BETTA, lalu sumdebetta.com berdempet di bawah teks */}
+        <div className={styles.headerCenter}>
           <div className={styles.brandLogoContainer}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/img/logo.png" 
-              alt="SUMDE BETTA" 
-              className={styles.brandImageLogo} 
-            />
-            <div className={styles.brandSubtext}>SUMDE BETTA</div>
+            <div className={styles.brandTopRow}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/img/logo.png"
+                alt="SUMDE BETTA"
+                className={styles.brandImageLogo}
+              />
+              {/* Teks dan subtext di-stack vertikal agar sumdebetta.com mepet di bawah SUMDE BETTA */}
+              <div className={styles.brandTextStack}>
+                <div className={styles.brandLogoTextRow}>
+                  <span className={styles.brandLogoText}>SUMDE</span>
+                  <span className={`${styles.brandLogoText} ${styles.brandLogoHighlight}`}>BETTA</span>
+                </div>
+                <div className={styles.brandSubtext}>sumdebetta.com</div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Kanan: kosong sebagai penyeimbang grid */}
+        <div className={styles.headerRight}></div>
       </div>
 
       {/* 2. Main Barcode AWB */}
@@ -146,7 +157,7 @@ export default function LabelContent({ order }) {
 
       {/* 8. Footer */}
       <div className={styles.footerBox}>
-        <div>Pengiriman Resmi via SUMDE BETTA Logistics</div>
+        <div>Pengiriman Resmi SUMDE BETTA</div>
         <div>sumdebetta.com</div>
       </div>
     </div>

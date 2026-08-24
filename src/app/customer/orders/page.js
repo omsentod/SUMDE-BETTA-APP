@@ -42,6 +42,7 @@ export default function OrdersPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ALL');
     const [payingOrderId, setPayingOrderId] = useState(null);
+    const [cancellingOrderId, setCancellingOrderId] = useState(null);
     const [trackingData, setTrackingData] = useState({});
     const [trackingLoading, setTrackingLoading] = useState({});
 
@@ -63,6 +64,23 @@ export default function OrdersPage() {
             alert(err.message || 'Gagal melacak pesanan');
         } finally {
             setTrackingLoading(prev => ({...prev, [order.id]: false}));
+        }
+    };
+
+    const handleCancelOrder = async (orderId) => {
+        if (!confirm('Batalkan pesanan ini? Tindakan ini tidak dapat diurungkan.')) return;
+        setCancellingOrderId(orderId);
+        try {
+            const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Gagal membatalkan pesanan.');
+            // Update state lokal langsung dari response server — hindari refetch
+            // penuh supaya scroll position & tab aktif tidak reset.
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: data.order.status } : o));
+        } catch (err) {
+            alert(err.message || 'Gagal membatalkan pesanan.');
+        } finally {
+            setCancellingOrderId(null);
         }
     };
 
@@ -202,13 +220,22 @@ export default function OrdersPage() {
                                     {/* Actions */}
                                     <div className="order-actions-bar" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                                         {order.status === 'PENDING' && (
-                                            <button 
-                                                className="btn btn-primary text-[0.9rem] px-6 py-2" 
-                                                onClick={() => handlePayNow(order.id)}
-                                                disabled={payingOrderId === order.id}
-                                            >
-                                                {payingOrderId === order.id ? 'Memproses...' : 'Bayar Sekarang'}
-                                            </button>
+                                            <>
+                                                <button
+                                                    className="btn btn-primary text-[0.9rem] px-6 py-2"
+                                                    onClick={() => handlePayNow(order.id)}
+                                                    disabled={payingOrderId === order.id || cancellingOrderId === order.id}
+                                                >
+                                                    {payingOrderId === order.id ? 'Memproses...' : 'Bayar Sekarang'}
+                                                </button>
+                                                <button
+                                                    className="btn btn-outline text-[0.9rem] px-6 py-2"
+                                                    onClick={() => handleCancelOrder(order.id)}
+                                                    disabled={payingOrderId === order.id || cancellingOrderId === order.id}
+                                                >
+                                                    {cancellingOrderId === order.id ? 'Membatalkan...' : 'Batalkan Pesanan'}
+                                                </button>
+                                            </>
                                         )}
                                         {order.trackingNumber && (
                                             <button 

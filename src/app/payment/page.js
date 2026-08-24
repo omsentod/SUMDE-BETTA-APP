@@ -1,4 +1,5 @@
 'use client';
+
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -12,8 +13,13 @@ export default function PaymentPage() {
 
     const [shipment, setShipment] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [resuming, setResuming] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState(null);
+    // True saat user klik "Ganti Metode Pembayaran" dari waiting screen —
+    // menampilkan ulang picker tapi tetap reuse order PENDING yang sama
+    // (bukan bikin order baru).
+    const [isChangingMethod, setIsChangingMethod] = useState(false);
 
     // Sesi Checkout Details
     const [activePayment, setActivePayment] = useState(null);
@@ -26,7 +32,7 @@ export default function PaymentPage() {
             const res = await fetch(`/api/orders/${orderId}/status`);
             if (res.ok) {
                 const { status: orderStatus } = await res.json();
-                if (orderStatus === 'PAID') {
+                if (orderStatus === 'PAID' || orderStatus === 'PROCESSING') {
                     setStatus('success');
                     clearCart();
                     localStorage.removeItem('temp-shipment');
@@ -42,17 +48,24 @@ export default function PaymentPage() {
     useEffect(() => {
         const shipData = localStorage.getItem('temp-shipment');
         if (shipData) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setShipment(JSON.parse(shipData));
+            try {
+                setShipment(JSON.parse(shipData));
+            } catch (e) {
+                console.error('Failed to parse temp-shipment', e);
+            }
         }
 
         const activePayData = localStorage.getItem('active-payment');
         if (activePayData) {
-            const parsed = JSON.parse(activePayData);
-            setActivePayment(parsed);
-            setStatus('checkout_created');
-            // Auto check status immediately on load (in case they just redirected back)
-            autoCheckPayment(parsed.orderId);
+            try {
+                const parsed = JSON.parse(activePayData);
+                setActivePayment(parsed);
+                setStatus('checkout_created');
+                // Auto check status immediately on load (in case they just redirected back)
+                autoCheckPayment(parsed.orderId);
+            } catch (e) {
+                console.error('Failed to parse active-payment', e);
+            }
         } else if (!shipData && !activePayData) {
             // Redirect to checkout if no shipping context
             router.push('/checkout');
@@ -72,8 +85,7 @@ export default function PaymentPage() {
         style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
     }).format(v || 0);
 
-    // Money breakdown for the pending summary card. Recompute on every render
-    // so picking a payment method updates the fee + grand total live.
+   
     const breakdown = useMemo(() => {
         const subtotal = total || 0;
         const shippingFee = Number(shipment?.shipping?.fee) || 0;
@@ -83,9 +95,30 @@ export default function PaymentPage() {
         return { subtotal, shippingFee, paymentFee, grandTotal: subtotal + shippingFee + paymentFee };
     }, [total, shipment, paymentMethod]);
 
-    // 2. Inisiasi Doku Checkout
+    // Minta sesi DOKU Checkout baru untuk order yang sudah ada. Dipakai untuk
+    // order baru, retry dengan metode sama (URL lama bisa saja sudah expired
+    // / channel jadi inactive), maupun setelah ganti metode pembayaran.
+    const requestFreshDokuSession = async (orderId) => {
+        const callbackUrl = window.location.origin + '/payment';
+        const dokuRes = await fetch('/api/payment/doku', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, callbackUrl })
+        });
+        if (!dokuRes.ok) {
+            const errData = await dokuRes.json();
+            throw new Error(errData.error || 'Gagal membuat link pembayaran Doku.');
+        }
+        return dokuRes.json();
+    };
+
+    // 2. Inisiasi Doku Checkout — dipakai untuk order baru (status 'pending')
+    // maupun retry dengan metode baru pada order PENDING yang sudah ada
+    // (isChangingMethod). Pada kasus kedua, order TIDAK dibuat ulang — hanya
+    // field paymentMethod di-update — supaya tidak muncul order duplikat
+    // untuk cart yang sama.
     const handleProceedToDoku = async () => {
-        if (!shipment?.shipping?.courier || !shipment?.shipping?.service) {
+        if (!isChangingMethod && (!shipment?.shipping?.courier || !shipment?.shipping?.service)) {
             alert('Data ongkir hilang. Silakan kembali ke halaman checkout.');
             router.push('/checkout');
             return;
@@ -96,63 +129,64 @@ export default function PaymentPage() {
         }
         setLoading(true);
         try {
-            // Step 1: Create order as PENDING in database
-            const orderPayload = {
-                name: shipment.name,
-                email: shipment.email,
-                phone: shipment.phone,
-                streetAddress: shipment.streetAddress,
-                rtRw: shipment.rtRw,
-                province: shipment.province,
-                city: shipment.city,
-                district: shipment.district,
-                village: shipment.village,
-                postalCode: shipment.postalCode,
-                items: cart.map(item => ({
-                    productId: item.id,
-                    quantity: item.quantity,
-                    selectedSize: item.selectedSize
-                })),
-                shipping: {
-                    courier: shipment.shipping.courier,
-                    service: shipment.shipping.service,
-                },
-                paymentMethod,
-            };
+            let orderId;
 
-            const orderRes = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderPayload)
-            });
+            if (isChangingMethod && activePayment?.orderId) {
+                orderId = activePayment.orderId;
+                const methodRes = await fetch(`/api/orders/${orderId}/payment-method`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentMethod }),
+                });
+                if (!methodRes.ok) {
+                    const errData = await methodRes.json();
+                    throw new Error(errData.error || 'Gagal mengubah metode pembayaran.');
+                }
+            } else {
+                // Step 1: Create order as PENDING in database
+                const orderPayload = {
+                    name: shipment.name,
+                    email: shipment.email,
+                    phone: shipment.phone,
+                    streetAddress: shipment.streetAddress,
+                    rtRw: shipment.rtRw,
+                    province: shipment.province,
+                    city: shipment.city,
+                    district: shipment.district,
+                    village: shipment.village,
+                    postalCode: shipment.postalCode,
+                    items: cart.map(item => ({
+                        productId: item.id,
+                        quantity: item.quantity,
+                        selectedSize: item.selectedSize
+                    })),
+                    shipping: {
+                        courier: shipment.shipping.courier,
+                        service: shipment.shipping.service,
+                    },
+                    paymentMethod,
+                };
 
-            if (!orderRes.ok) {
-                const errData = await orderRes.json();
-                throw new Error(errData.error || 'Gagal membuat pesanan.');
+                const orderRes = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderPayload)
+                });
+
+                if (!orderRes.ok) {
+                    const errData = await orderRes.json();
+                    throw new Error(errData.error || 'Gagal membuat pesanan.');
+                }
+
+                const createdOrder = await orderRes.json();
+                orderId = createdOrder.id;
             }
 
-            const createdOrder = await orderRes.json();
-
-            // Step 2: Request Doku Checkout session
-            const callbackUrl = window.location.origin + '/payment';
-            const dokuRes = await fetch('/api/payment/doku', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    orderId: createdOrder.id,
-                    callbackUrl
-                })
-            });
-
-            if (!dokuRes.ok) {
-                const errData = await dokuRes.json();
-                throw new Error(errData.error || 'Gagal membuat link pembayaran Doku.');
-            }
-
-            const data = await dokuRes.json();
+            // Step 2: Request Doku Checkout session (selalu fresh)
+            const data = await requestFreshDokuSession(orderId);
 
             const payDetails = {
-                orderId: createdOrder.id,
+                orderId,
                 paymentUrl: data.paymentUrl,
                 amount: data.amount
             };
@@ -160,7 +194,8 @@ export default function PaymentPage() {
             // Save details to state & local storage
             setActivePayment(payDetails);
             localStorage.setItem('active-payment', JSON.stringify(payDetails));
-            
+            setIsChangingMethod(false);
+
             // Redirect to Doku Hosted Checkout Page
             window.location.href = data.paymentUrl;
 
@@ -170,6 +205,39 @@ export default function PaymentPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // "Lanjutkan Ke DOKU" pada waiting screen — regenerate sesi baru (bukan
+    // reuse activePayment.paymentUrl lama) supaya tidak kena expired
+    // session/channel inactive saat retry dengan metode yang sama.
+    const handleResumeToDoku = async () => {
+        if (!activePayment?.orderId) return;
+        setResuming(true);
+        try {
+            const data = await requestFreshDokuSession(activePayment.orderId);
+            const payDetails = {
+                orderId: activePayment.orderId,
+                paymentUrl: data.paymentUrl,
+                amount: data.amount,
+            };
+            setActivePayment(payDetails);
+            localStorage.setItem('active-payment', JSON.stringify(payDetails));
+            window.location.href = data.paymentUrl;
+        } catch (err) {
+            console.error('Error resuming Doku payment:', err);
+            alert(err.message || 'Gagal membuat ulang sesi pembayaran.');
+        } finally {
+            setResuming(false);
+        }
+    };
+
+    const handleOpenChangeMethod = () => {
+        setPaymentMethod(null); // reset pilihan biar user pilih ulang secara sadar
+        setIsChangingMethod(true);
+    };
+
+    const handleCancelChangeMethod = () => {
+        setIsChangingMethod(false);
     };
 
     // 3. Manual Check Status
@@ -184,7 +252,7 @@ export default function PaymentPage() {
             }
 
             const { status: orderStatus } = await res.json();
-            if (orderStatus === 'PROCESSING') {
+            if (orderStatus === 'PAID' || orderStatus === 'PROCESSING') {
                 setStatus('success');
                 clearCart();
                 localStorage.removeItem('temp-shipment');
@@ -200,24 +268,56 @@ export default function PaymentPage() {
         }
     };
 
-    const handleCancelPayment = () => {
-        if (confirm('Apakah Anda ingin membatalkan transaksi pembayaran aktif ini?')) {
-            localStorage.removeItem('active-payment');
-            setStatus('pending');
-            setActivePayment(null);
+    const handleCancelPayment = async () => {
+        if (!confirm('Apakah Anda ingin membatalkan transaksi pembayaran aktif ini? Pesanan akan ditandai dibatalkan.')) return;
+        // Mark order CANCELLED di server DULU. Kalau gagal, jangan clear local
+        // state — supaya user tahu pesanan belum ter-cancel (admin masih lihat
+        // PENDING). Cegah drift UI vs DB.
+        if (activePayment?.orderId) {
+            let ok = false;
+            try {
+                const res = await fetch(`/api/orders/${activePayment.orderId}/cancel`, { method: 'POST' });
+                if (res.ok) {
+                    ok = true;
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(`Gagal membatalkan pesanan: ${errData.error || res.statusText}. Coba lagi atau hubungi admin.`);
+                }
+            } catch (err) {
+                console.error('Cancel order network error:', err);
+                alert('Gagal menghubungi server untuk membatalkan pesanan. Cek koneksi lalu coba lagi.');
+            }
+            if (!ok) return; // pertahankan state lokal — biar user retry
         }
+        localStorage.removeItem('active-payment');
+        setStatus('pending');
+        setActivePayment(null);
     };
 
     // SUCCESS SCREEN
     if (status === 'success') {
         return (
-            <div className="container" style={{ padding: '10rem 0', textAlign: 'center' }}>
-                <div style={{ fontSize: '6rem', color: '#00b4d8', marginBottom: '2rem' }}>✓</div>
-                <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '4rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Akuisisi Dikonfirmasi</h1>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '3rem', fontSize: '1.1rem' }}>
-                    Pembayaran Anda telah sukses diverifikasi oleh DOKU. Spesimen elit Anda sedang kami proses untuk pengiriman.
-                </p>
-                <button onClick={() => router.push('/')} className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>Kembali ke Beranda</button>
+            <div className="payment-page">
+                <section className={styles.sectionPadding}>
+                    <div className={styles.successContainer}>
+                        <div className={styles.successIconCircle}>
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <h1 className={styles.successTitle}>Akuisisi Dikonfirmasi</h1>
+                        <p className={styles.successDesc}>
+                            Pembayaran Anda telah sukses diverifikasi oleh DOKU. Spesimen elit pilihan Anda sedang kami persiapkan untuk proses kurasi dan pengiriman bergaransi.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => router.push('/')}
+                            className={`btn btn-primary ${styles.homeBtn}`}
+                        >
+                            Kembali ke Beranda
+                        </button>
+                    </div>
+                </section>
             </div>
         );
     }
@@ -229,24 +329,36 @@ export default function PaymentPage() {
                     
                     {/* Header */}
                     <div className={styles.headerText}>
-                        <h1 className={styles.headerTitle}>Penyelesaian Aman</h1>
-                        <p className="text-[var(--text-muted)]">
-                            {status === 'pending' 
-                                ? 'Konfirmasi akuisisi Anda menggunakan portal pembayaran terenkripsi DOKU Checkout.' 
+                        <h1 className={styles.headerTitle}>Penyelesaian Pembayaran</h1>
+                        <p className={styles.headerDesc}>
+                            {isChangingMethod
+                                ? 'Pilih metode pembayaran baru untuk pesanan yang sama.'
+                                : status === 'pending'
+                                ? 'Pilih metode pembayaran Anda untuk menyelesaikan pesanan.'
                                 : 'Pembayaran Anda sedang berjalan. Segera selesaikan transaksi Anda di portal DOKU.'}
                         </p>
                     </div>
 
-                    {/* Step 1: Pending landing page */}
-                    {status === 'pending' && (
+                    {/* Step 1: Pending landing page (juga dipakai saat ganti metode) */}
+                    {(status === 'pending' || (status === 'checkout_created' && isChangingMethod)) && (
                         <div className={styles.gridTwoCol}>
                             {/* Actions Card — payment method picker */}
                             <div className={styles.actionsCard}>
                                 <div>
-                                    <h3 className={styles.cardSectionTitle}>PILIH METODE PEMBAYARAN</h3>
-                                    <p className={styles.cardDescription} style={{ marginBottom: '1rem' }}>
-                                        Biaya admin sudah termasuk di total tagihan sesuai metode yang dipilih.
-                                        Setelah bayar, kamu akan diarahkan ke halaman <b>DOKU</b> untuk metode itu saja.
+                                    {isChangingMethod && (
+                                        <button
+                                            type="button"
+                                            onClick={handleCancelChangeMethod}
+                                            className={styles.backToWaitingBtn}
+                                        >
+                                            ← Kembali ke Status Pembayaran
+                                        </button>
+                                    )}
+                                    <div className={styles.cardSectionHeader}>
+                                        <h3 className={styles.cardSectionTitle}>PILIH METODE PEMBAYARAN</h3>
+                                    </div>
+                                    <p className={styles.cardDescription}>
+                                        Biaya admin otomatis terhitung transparan. Anda akan diarahkan ke portal resmi <b>DOKU</b>.
                                     </p>
                                     <PaymentMethodPicker
                                         value={paymentMethod}
@@ -254,81 +366,137 @@ export default function PaymentPage() {
                                         base={breakdown.subtotal + breakdown.shippingFee}
                                     />
                                 </div>
-
-                                <button
-                                    onClick={handleProceedToDoku}
-                                    className={`btn btn-primary ${styles.dokuBtn}`}
-                                    disabled={loading || !isValidPaymentMethod(paymentMethod)}
-                                >
-                                    {loading
-                                        ? 'Menghubungkan ke DOKU...'
-                                        : !isValidPaymentMethod(paymentMethod)
-                                            ? 'Pilih metode pembayaran'
-                                            : `Bayar ${formatIDR(breakdown.grandTotal)} via DOKU`}
-                                </button>
                             </div>
 
                             {/* Summary Card */}
                             <div className={styles.summaryCard}>
-                                <h3 className={styles.cardSectionTitle}>RINGKASAN TAGIHAN</h3>
-                                <div className="mb-8">
-                                    {cart.map(item => (
-                                        <div key={`${item.id}-${item.selectedSize}`} className={styles.summaryItemRow}>
-                                            <span className="text-[var(--text-muted)]">{item.name} x {item.quantity}</span>
-                                            <span>{formatIDR(item.price * item.quantity)}</span>
-                                        </div>
-                                    ))}
-
-                                    <div className={styles.summaryItemRow} style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--border-color)' }}>
-                                        <span className="text-[var(--text-muted)]">Subtotal</span>
-                                        <span>{formatIDR(breakdown.subtotal)}</span>
-                                    </div>
-                                    <div className={styles.summaryItemRow}>
-                                        <span className="text-[var(--text-muted)]">
-                                            Ongkir {shipment?.shipping?.serviceName ? `(${shipment.shipping.serviceName})` : ''}
-                                        </span>
-                                        <span>{formatIDR(breakdown.shippingFee)}</span>
-                                    </div>
-                                    <div className={styles.summaryItemRow}>
-                                        <span className="text-[var(--text-muted)]">
-                                            Biaya Admin {isValidPaymentMethod(paymentMethod) ? `(${getMethodLabel(paymentMethod)})` : ''}
-                                        </span>
-                                        <span>{formatIDR(breakdown.paymentFee)}</span>
-                                    </div>
-                                    <div className={styles.summaryTotalRow}>
-                                        <span>Total Tagihan</span>
-                                        <span className="color-secondary">{formatIDR(breakdown.grandTotal)}</span>
-                                    </div>
+                                <div className={styles.cardSectionHeader}>
+                                    <h3 className={styles.cardSectionTitle}>RINGKASAN TAGIHAN</h3>
                                 </div>
 
-                                <h3 className={styles.cardSectionTitle}>PENGIRIMAN</h3>
-                                <div className={styles.shippingInfoBox}>
-                                    <p className="text-white font-medium mb-1">{shipment?.name}</p>
-                                    <p className="mb-1">{shipment?.phone}</p>
-                                    <p className="m-0">{shipment?.streetAddress}, Kel. {shipment?.village}, {shipment?.city}, {shipment?.province}</p>
+                                {/* Destination Address Box (Top) */}
+                                <div className={styles.shippingInfoBoxTop}>
+                                    <div className={styles.shippingInfoTopHeader}>
+                                        <div className={styles.shippingInfoTitleRow}>
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                <circle cx="12" cy="10" r="3" />
+                                            </svg>
+                                            <span>Kirim Ke</span>
+                                        </div>
+                                        {shipment?.shipping?.serviceName && (
+                                            <span className={styles.courierChip}>{shipment.shipping.serviceName}</span>
+                                        )}
+                                    </div>
+                                    <div className={styles.recipientRow}>
+                                        <p className={styles.recipientName}>{shipment?.name || 'Penerima'}</p>
+                                        <p className={styles.recipientPhone}>{shipment?.phone || '-'}</p>
+                                    </div>
+                                    <p className={styles.recipientAddress}>
+                                        {shipment?.streetAddress}
+                                        {shipment?.village ? `, Kel. ${shipment.village}` : ''}
+                                        {shipment?.city ? `, ${shipment.city}` : ''}
+                                        {shipment?.province ? `, ${shipment.province}` : ''}
+                                    </p>
+                                </div>
+
+                                <div className={styles.summaryItemsList}>
+                                    {cart.map(item => (
+                                        <div key={`${item.id}-${item.selectedSize}`} className={styles.summaryItemRow}>
+                                            <span className={styles.itemDesc} title={item.name}>
+                                                {item.name} {item.selectedSize ? `(${item.selectedSize})` : ''} × {item.quantity}
+                                            </span>
+                                            <span className={styles.itemPrice}>{formatIDR(item.price * item.quantity)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <hr className={styles.breakdownDivider} />
+
+                                <div>
+                                    <div className={styles.summaryCalcRow}>
+                                        <span className={styles.calcLabel}>Subtotal Produk</span>
+                                        <span className={styles.calcValue}>{formatIDR(breakdown.subtotal)}</span>
+                                    </div>
+
+                                    <div className={styles.summaryCalcRow}>
+                                        <span className={styles.calcLabel}>
+                                            Ongkos Kirim {shipment?.shipping?.serviceName ? `(${shipment.shipping.serviceName})` : ''}
+                                        </span>
+                                        <span className={styles.calcValue}>{formatIDR(breakdown.shippingFee)}</span>
+                                    </div>
+
+                                    <div className={styles.summaryCalcRow}>
+                                        <span className={styles.calcLabel}>
+                                            Biaya Admin {isValidPaymentMethod(paymentMethod) ? `(${getMethodLabel(paymentMethod)})` : ''}
+                                        </span>
+                                        <span className={styles.calcValue}>
+                                            {breakdown.paymentFee === 0 && isValidPaymentMethod(paymentMethod) ? (
+                                                <span className={styles.freeFeeBadge}>Gratis</span>
+                                            ) : (
+                                                formatIDR(breakdown.paymentFee)
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    <div className={styles.summaryTotalRow}>
+                                        <span>Total Tagihan</span>
+                                        <span className={styles.totalHighlight}>{formatIDR(breakdown.grandTotal)}</span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleProceedToDoku}
+                                        className={`btn btn-primary ${styles.dokuBtn}`}
+                                        disabled={loading || !isValidPaymentMethod(paymentMethod)}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.btnSpinner}>
+                                                    <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
+                                                </svg>
+                                                {isChangingMethod ? 'Menyimpan metode...' : 'Menghubungkan ke DOKU...'}
+                                            </>
+                                        ) : !isValidPaymentMethod(paymentMethod) ? (
+                                            'Pilih Metode Pembayaran'
+                                        ) : (
+                                            `Bayar ${formatIDR(breakdown.grandTotal)} via DOKU`
+                                        )}
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {/* Step 2: Waiting/Callback state */}
-                    {status === 'checkout_created' && activePayment && (
+                    {status === 'checkout_created' && activePayment && !isChangingMethod && (
                         <div className={styles.waitingCard}>
                             <div className={styles.spinner}></div>
-                            
+
                             <h2 className={styles.waitingTitle}>Menunggu Pembayaran</h2>
                             <p className={styles.waitingText}>
-                                Halaman pembayaran DOKU Checkout telah berhasil dibuat. Silakan selesaikan pembayaran di jendela baru, lalu kembali ke sini untuk memeriksa status pembayaran Anda.
+                                Sesi pembayaran DOKU Checkout telah berhasil dibuat. Silakan selesaikan transaksi Anda di jendela DOKU, lalu klik periksa status di bawah. Kalau Anda kembali dari DOKU tanpa membayar, lanjutkan sesi ini atau ganti metode pembayaran.
                             </p>
 
                             <div className={styles.btnGroup}>
                                 <button
-                                    onClick={() => window.location.href = activePayment.paymentUrl}
+                                    type="button"
+                                    onClick={handleResumeToDoku}
                                     className={`btn btn-primary ${styles.continueBtn}`}
+                                    disabled={resuming}
                                 >
-                                    Lanjutkan Ke DOKU
+                                    {resuming ? 'Menyiapkan...' : 'Lanjutkan Ke DOKU'}
                                 </button>
                                 <button
+                                    type="button"
+                                    onClick={handleOpenChangeMethod}
+                                    className={styles.changeMethodBtn}
+                                    disabled={resuming}
+                                >
+                                    Ganti Metode Pembayaran
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={handleCheckStatus}
                                     className={styles.checkStatusBtn}
                                     disabled={checkingStatus}
@@ -336,6 +504,7 @@ export default function PaymentPage() {
                                     {checkingStatus ? 'Memeriksa...' : 'Cek Status Pembayaran'}
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleCancelPayment}
                                     className={styles.cancelBtn}
                                 >

@@ -30,7 +30,7 @@ export function generateSignature(clientId, requestId, timestamp, requestTarget,
 /**
  * Request Checkout URL from Doku Sandbox
  */
-export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl, paymentMethodTypes }) {
+export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl, paymentMethodTypes, customer }) {
   const clientId = process.env.DOKU_CLIENT_ID;
   const secretKey = process.env.DOKU_SECRET_KEY;
   const baseUrl = process.env.DOKU_BASE_URL || 'https://api-sandbox.doku.com';
@@ -63,6 +63,18 @@ export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl
     },
     payment: paymentBlock,
   };
+
+  // DOKU sandbox mensyaratkan `customer` object (min. id) di payload
+  // Checkout v1 — kalau tidak ada, response: "Required object 'customer.id'
+  // is missing or null". Kita pass field yang tersedia dari order.
+  if (customer && customer.id) {
+    payload.customer = {
+      id: String(customer.id),
+      ...(customer.name && { name: customer.name }),
+      ...(customer.email && { email: customer.email }),
+      ...(customer.phone && { phone: customer.phone }),
+    };
+  }
 
   const bodyString = JSON.stringify(payload);
   const digest = generateDigest(bodyString);

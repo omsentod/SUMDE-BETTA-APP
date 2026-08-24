@@ -14,6 +14,16 @@
  * so the hosted page only shows the picked method. If DOKU responds with
  * "invalid payment method type", the enum name here is wrong for that channel
  * — check the DOKU dashboard/API docs and update.
+ *
+ * `inactive: true` marks a channel that this merchant account does NOT have
+ * enabled (DOKU replies "PAYMENT CHANNEL IS INACTIVE"). Such entries are kept
+ * in the registry — not deleted — because historical orders still reference
+ * their key, and `getMethodLabel` / `calcPaymentFee` must keep resolving for
+ * order history. The picker hides them via `getSelectableMethods()`.
+ *
+ * Channel enums verified against the DOKU sandbox account on 2026-08-24.
+ * Several VA channels need the `_BANK_` infix — without it DOKU reports the
+ * channel as inactive even though the bank is enabled.
  */
 
 export const PAYMENT_METHODS = {
@@ -23,20 +33,21 @@ export const PAYMENT_METHODS = {
     category: 'QRIS',
     dokuType: 'QRIS',
     fee: { percent: 0.007 },
+    inactive: true, // belum di-enable di merchant account
   },
 
   // ---------- Virtual Account (SNAP) ----------
   VA_BCA: { label: 'BCA Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BCA', fee: { flat: 4000 } },
   VA_BNI: { label: 'BNI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BNI', fee: { flat: 4000 } },
   VA_BRI: { label: 'BRI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BRI', fee: { flat: 4000 } },
-  VA_MANDIRI: { label: 'Mandiri Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_MANDIRI', fee: { flat: 4000 } },
-  VA_BSI: { label: 'BSI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BSI', fee: { flat: 4000 } },
-  VA_PERMATA: { label: 'Permata Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_PERMATA', fee: { flat: 4000 } },
-  VA_CIMB: { label: 'CIMB Niaga Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_CIMB', fee: { flat: 4000 } },
-  VA_DANAMON: { label: 'Danamon Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_DANAMON', fee: { flat: 4000 } },
+  VA_MANDIRI: { label: 'Mandiri Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_MANDIRI', fee: { flat: 4000 } },
+  VA_BSI: { label: 'BSI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BSI', fee: { flat: 4000 }, inactive: true },
+  VA_PERMATA: { label: 'Permata Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_PERMATA', fee: { flat: 4000 } },
+  VA_CIMB: { label: 'CIMB Niaga Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_CIMB', fee: { flat: 4000 } },
+  VA_DANAMON: { label: 'Danamon Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_DANAMON', fee: { flat: 4000 } },
   VA_MAYBANK: { label: 'Maybank Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_MAYBANK', fee: { flat: 4000 } },
   VA_BTN: { label: 'BTN Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BTN', fee: { flat: 4000 } },
-  VA_BJB: { label: 'BJB Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BJB', fee: { flat: 4000 } },
+  VA_BJB: { label: 'BJB Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_BJB', fee: { flat: 4000 } },
   VA_SINARMAS: { label: 'Sinarmas Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_SINARMAS', fee: { flat: 4000 } },
   VA_DOKU: { label: 'DOKU Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_DOKU', fee: { flat: 4000 } },
 
@@ -46,6 +57,7 @@ export const PAYMENT_METHODS = {
     category: 'E-Wallet',
     dokuType: 'EMONEY_DOKU',
     fee: { percent: 0.015 },
+    inactive: true, // belum di-enable di merchant account
   },
 
   // ---------- Paylater ----------
@@ -54,6 +66,10 @@ export const PAYMENT_METHODS = {
     category: 'Paylater',
     dokuType: 'PEER_TO_PEER_AKULAKU',
     fee: { percent: 0.015 },
+    // Channel-nya hidup, tapi DOKU mewajibkan customer.address/city/state/
+    // postcode di payload Checkout. Aktifkan lagi setelah field itu dikirim
+    // dari data alamat order.
+    inactive: true,
   },
 
   // ---------- Retail (Bayar di Toko) ----------
@@ -108,6 +124,22 @@ export function isValidPaymentMethod(methodKey) {
   return methodKey != null && Object.prototype.hasOwnProperty.call(PAYMENT_METHODS, methodKey);
 }
 
+/** True kalau channel-nya hidup di merchant account (bisa ditawarkan ke user). */
+export function isSelectablePaymentMethod(methodKey) {
+  return isValidPaymentMethod(methodKey) && !PAYMENT_METHODS[methodKey].inactive;
+}
+
+/**
+ * Registry tanpa channel yang inactive — dipakai UI picker. Entry inactive
+ * tetap ada di PAYMENT_METHODS supaya order lama yang menyimpan key tersebut
+ * masih bisa di-resolve label & fee-nya.
+ */
+export function getSelectableMethods() {
+  return Object.entries(PAYMENT_METHODS)
+    .filter(([, m]) => !m.inactive)
+    .map(([key, m]) => ({ key, ...m }));
+}
+
 export function getMethodLabel(methodKey) {
   return PAYMENT_METHODS[methodKey]?.label || methodKey || '-';
 }
@@ -115,9 +147,9 @@ export function getMethodLabel(methodKey) {
 export function getMethodsByCategory() {
   const out = {};
   for (const cat of CATEGORY_ORDER) out[cat] = [];
-  for (const [key, m] of Object.entries(PAYMENT_METHODS)) {
+  for (const m of getSelectableMethods()) {
     if (!out[m.category]) out[m.category] = [];
-    out[m.category].push({ key, ...m });
+    out[m.category].push(m);
   }
   return out;
 }

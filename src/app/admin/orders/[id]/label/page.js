@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import PrintButton from './PrintButton';
+import BatchPrintSidebar from './BatchPrintSidebar';
 import LabelContent from './LabelContent';
 import styles from './label.module.css';
 
@@ -15,18 +15,20 @@ export default async function ShippingLabelPage({ params }) {
 
   return (
     <div className={styles.viewport}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          @page { size: 100mm 150mm; margin: 0; }
-          body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-        }
-      `}} />
-      <div className={styles.actionBar}>
-        <span className={styles.actionBarLabel}>Format: Thermal (100×150 mm)</span>
-        <PrintButton />
-      </div>
+      <div className={styles.previewLayout}>
+        <div className={styles.labelStream}>
+          <div id={`label-${order.id}`} className={styles.labelWrapper}>
+            <div className={styles.labelSequenceBadge}>
+              Pratinjau Resi • {order.shippingCourier || 'Kurir'} • ID: {order.id.slice(0, 8)}
+            </div>
+            <LabelContent order={order} />
+          </div>
+        </div>
 
-      <LabelContent order={order} />
+        <div className={styles.sidebarColumn}>
+          <BatchPrintSidebar orders={[order]} single={true} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -86,6 +86,38 @@
   font-weight: 400;
 }
 
+.groupToggle {
+  user-select: none;
+}
+
+.groupToggleRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.chevronWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.chevron {
+  display: block;
+}
+
+.submenu {
+  display: flex;
+  flex-direction: column;
+}
+
 .badge {
   flex-shrink: 0;
   min-width: 20px;

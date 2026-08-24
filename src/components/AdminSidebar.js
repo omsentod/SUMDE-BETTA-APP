@@ -23,6 +23,11 @@ const iconEvents = <Icon path={<><rect x="3" y="4" width="18" height="18" rx="2"
 const iconReports = <Icon path={<><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>} />;
 const iconMenu = <Icon path={<><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>} />;
 const iconClose = <Icon path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />;
+const iconChevron = (
+  <svg className={styles.chevron} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
 
 // Badge: merah kalau count > 0, hilangkan kalau 0. Optional variant "muted".
 function Badge({ count, muted }) {
@@ -41,6 +46,8 @@ function AdminSidebarInner() {
 
   const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0 });
   const [open, setOpen] = useState(false);
+  const isOnOrdersRoute = pathname.startsWith('/admin/orders');
+  const [ordersOpen, setOrdersOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +55,7 @@ function AdminSidebarInner() {
       fetch('/api/admin/counts')
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => { if (data && !cancelled) setCounts(data); })
-        .catch(() => {});
+        .catch(() => { });
     };
     load();
     const timer = setInterval(load, REFRESH_MS);
@@ -107,22 +114,37 @@ function AdminSidebarInner() {
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>Operasional</div>
-          <Link href="/admin/orders" className={`${styles.link} ${isActive('/admin/orders') && !activeStatus ? styles.linkActive : ''}`.trim()}>
+          <button
+            type="button"
+            className={`${styles.link} ${styles.groupToggle} ${isOnOrdersRoute ? styles.linkActive : ''}`.trim()}
+            onClick={() => setOrdersOpen((v) => !v)}
+            aria-expanded={ordersOpen}
+            aria-controls="admin-orders-submenu"
+          >
             <span className={styles.linkContent}>{iconOrders}<span className={styles.linkLabel}>Pesanan</span></span>
-            {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
-          </Link>
-          {orderStatusItems.map((it) => (
-            <Link
-              key={it.href}
-              href={it.href}
-              className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
-            >
-              <span className={styles.linkContent}>
-                <span className={styles.linkLabel}>{it.label}</span>
+            <span className={styles.groupToggleRight}>
+              {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
+              <span className={`${styles.chevronWrap} ${ordersOpen ? styles.chevronOpen : ''}`.trim()}>
+                {iconChevron}
               </span>
-              <Badge count={it.badge} />
-            </Link>
-          ))}
+            </span>
+          </button>
+          {ordersOpen && (
+            <div id="admin-orders-submenu" className={styles.submenu}>
+              {orderStatusItems.map((it) => (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
+                >
+                  <span className={styles.linkContent}>
+                    <span className={styles.linkLabel}>{it.label}</span>
+                  </span>
+                  <Badge count={it.badge} />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className={styles.section}>

@@ -1,0 +1,180 @@
+.actionsBar {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.payBtn {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #121212;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  padding: 0.6rem 1.35rem;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(255, 107, 53, 0.25);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.payBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Elegant Destructive / Cancel Button in Red */
+.cancelBtn {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--status-error, #ef4444);
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  padding: 0.6rem 1.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme="dark"] .cancelBtn {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="dark"] .cancelBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border-color: #f87171;
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trackBtn {
+  background: transparent;
+  border: 1px solid var(--secondary);
+  color: var(--secondary);
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  padding: 0.6rem 1.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trackBtn:hover:not(:disabled) {
+  background: rgba(0, 180, 216, 0.12);
+  border-color: var(--secondary);
+  transform: translateY(-1px);
+}
+
+.trackBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tracking History Box */
+.trackingCard {
+  margin-top: 1rem;
+  padding: 1.15rem;
+  background: var(--bg-card);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.trackingTitle {
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trackingCourierBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(255, 107, 53, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.trackingTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border-color);
+}
+
+.trackingEvent {
+  position: relative;
+  padding-left: 0.75rem;
+  font-size: 0.84rem;
+}
+
+.trackingEvent::before {
+  content: '';
+  position: absolute;
+  left: -1.05rem;
+  top: 0.25rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-card);
+}
+
+.trackingDate {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.trackingNote {
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.emptyTrackingText {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}

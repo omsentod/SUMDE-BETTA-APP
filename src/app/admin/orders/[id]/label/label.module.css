@@ -10,26 +10,227 @@
 .viewport {
   background: var(--bg-dark);
   min-height: 100vh;
-  padding: 20px 10px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-main, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  color: var(--text-main);
 }
 
-.actionBar {
-  width: 100%;
-  max-width: 100mm;
-  margin-bottom: 15px;
+/* Container 2-kolom: Kiri preview resi, Kanan sticky control panel */
+.previewLayout {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 32px;
+  width: 100%;
+  max-width: 1100px;
+  padding: 28px 16px 60px 16px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Kolom kiri: tumpukan label thermal */
+.labelStream {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
-.actionBarLabel {
-  font-size: 14px;
+/* Screen-only Label Header Bar dengan warna-warni pembeda */
+.labelScreenHeader {
+  width: 100mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.labelHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.labelHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.labelRecipientName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.labelOrderSub {
+  font-size: 10.5px;
   color: var(--text-muted);
-  font-weight: bold;
+}
+
+.labelHeaderDetails {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+/* Number Pills dengan warna rotasi berurutan */
+.orderNumberPill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.colorTheme0 {
+  background: rgba(0, 180, 216, 0.15);
+  color: #0096C7;
+  border: 1px solid rgba(0, 180, 216, 0.35);
+}
+.colorTheme1 {
+  background: rgba(255, 107, 53, 0.15);
+  color: #EA580C;
+  border: 1px solid rgba(255, 107, 53, 0.35);
+}
+.colorTheme2 {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.colorTheme3 {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7C3AED;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+.colorTheme4 {
+  background: rgba(236, 72, 153, 0.15);
+  color: #DB2777;
+  border: 1px solid rgba(236, 72, 153, 0.35);
+}
+.colorTheme5 {
+  background: rgba(245, 158, 11, 0.15);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+/* Courier Badges */
+.courierBadge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badgeCourierJne {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.badgeCourierJnt {
+  background: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+
+.badgeCourierSicepat {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.badgeCourierPos {
+  background: rgba(234, 88, 12, 0.12);
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.3);
+}
+
+.badgeCourierAnteraja {
+  background: rgba(192, 38, 211, 0.12);
+  color: #c026d3;
+  border: 1px solid rgba(192, 38, 211, 0.3);
+}
+
+.badgeCourierTiki {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.badgeCourierInstant {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.3);
+}
+
+.badgeCourierDefault {
+  background: var(--primary-glow);
+  color: var(--primary);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.qtyBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.itemCountBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.labelSequenceBadge {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
 
 /* Print-target label — deliberately locked to black/white (thermal ink). */
@@ -41,50 +242,403 @@
   color: #000000;
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.2;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* Kolom kanan: Sticky Control Sidebar */
+.sidebarColumn {
+  width: 360px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 24px;
+  align-self: flex-start;
+}
+
+.controlSidebar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.sidebarTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebarIcon {
+  color: var(--primary);
+}
+
+.sidebarTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.batchCountBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-glow);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Action Button Group */
+.actionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mainPrintButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--primary-glow);
+  transition: var(--transition-luxe);
+}
+
+.mainPrintButton:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.mainPrintButton:active {
+  transform: translateY(0);
+}
+
+.backOrdersLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 14px;
+  background: var(--glass);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition-luxe);
+  box-sizing: border-box;
+}
+
+.backOrdersLink:hover {
+  color: var(--text-main);
+  background: var(--glass-border);
+}
+
+/* Sections */
+.sectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.sectionSubtitle {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Stats 2x2 Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.statCard {
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statValue {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Courier Breakdown Chips */
+.courierChipsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Scrollable Order Checklist */
+.ordersListContainer {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.ordersListContainer::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ordersListContainer::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.orderListItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 10px;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-luxe);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.orderListItem:hover {
+  background: var(--glass-border);
+  border-color: var(--primary);
+}
+
+.orderItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.orderIndexBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.orderItemDetails {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.orderItemRecipient {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderItemId {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Thermal Tips Box */
+.tipsBox {
+  background: var(--glass);
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tipsHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.tipsList {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.tipsList strong {
+  color: var(--text-main);
+}
+
+/* Responsive: Jika layar < 900px, jadikan 1 kolom */
+@media (max-width: 900px) {
+  .previewLayout {
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 8px;
+  }
+  .sidebarColumn {
+    width: 100%;
+    max-width: 100mm;
+    position: static;
+  }
 }
 
 /* 1. Header */
 .headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: flex-start;
   border-bottom: 2px solid #000;
-  padding: 8px 12px;
+  padding: 2px 3px 4px 3px; /* Benar-benar mepet di siku-siku outline pojok kiri atas */
 }
 
 .headerLeft {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0;
+  margin: 0;
 }
 
 .courierImageLogo {
-  height: 28px;
-  max-width: 100px;
+  height: 20px;
+  width: 32px; /* Proporsional 3:2, ukuran lebih kecil & ramping */
   object-fit: contain;
+}
+
+.headerCenter {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .headerRight {
   display: flex;
-  align-items: center;
   justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .brandLogoContainer {
   display: flex;
   flex-direction: column;
+  align-items: center; /* Rata tengah di dalam containernya sendiri */
+}
+
+.brandTopRow {
+  display: flex;
   align-items: center;
+  gap: 2px; /* Dibuat lebih dekat dengan gambar logo */
 }
 
 .brandImageLogo {
-  height: 36px;
-  max-width: 140px;
+  width: 60px; /* 3x lipat dari tinggi courierImageLogo (20px) */
+  height: 60px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brandLogoTextRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  line-height: 1;
+}
+
+/* Stack teks SUMDE BETTA + sumdebetta.com secara vertikal berdempetan */
+.brandTextStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Tepat di tengah tulisan SUMDE BETTA (di antara MDEBET) */
+  text-align: center;
+  gap: 0; /* Tidak ada jarak antara baris teks */
+}
+
+.brandLogoText {
+  font-size: 1.35rem; /* Samakan dengan responsive mobile nav globals.css */
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #000;
+  white-space: nowrap;
+  line-height: 1; /* Menghilangkan spasi bawaan font agar mepet atas-bawah */
+}
+
+.brandLogoHighlight {
+  color: var(--primary, #FF6B35);
 }
 
 .brandSubtext {
   font-size: 10px;
   font-weight: bold;
-  margin-top: 2px;
+  margin-top: 1px; /* Super mepet */
+  color: #333;
+  line-height: 1; /* Menghilangkan spasi bawaan font */
+  text-align: center;
 }
 
 /* 2. Main Waybill Barcode */
@@ -119,76 +673,78 @@
 /* 3. Info Bar (Ongkir & Layanan) */
 .infoBar {
   text-align: center;
-  border-bottom: 2px solid #000;
-  padding: 8px 0;
-  font-size: 11px;
+  border-bottom: 1.5px solid #000;
+  padding: 4px 0;
+  font-size: 9px;
 }
 
 /* 4. Reference & Stats Grid */
 .refGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 2px solid #000;
+  border-bottom: 1.5px solid #000;
 }
 
 .refLeft {
-  border-right: 2px solid #000;
-  padding: 8px;
+  border-right: 1.5px solid #000;
+  padding: 4px 6px;
 }
 
 .refTitle {
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .miniBarcodeWrap {
   display: flex;
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 .miniBarcodeImg {
-  height: 32px;
+  height: 22px;
   max-width: 100%;
 }
 
 .refIdText {
-  font-size: 10px;
+  font-size: 8px;
 }
 
 .refRight {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
-  padding: 8px;
-  font-size: 11px;
+  gap: 3px;
+  padding: 4px 6px;
+  font-size: 9px;
 }
 
 /* 5. Address Grid */
 .addressGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 2px solid #000;
+  border-bottom: 1.5px solid #000;
 }
 
-.addressLeft, .addressRight {
-  padding: 8px;
-  font-size: 10px;
-  line-height: 1.3;
+.addressLeft,
+.addressRight {
+  padding: 4px 6px;
+  font-size: 8px;
+  line-height: 1.25;
 }
 
 .addressLeft {
-  border-right: 2px solid #000;
+  border-right: 1.5px solid #000;
 }
 
 .addressTitle {
-  margin-bottom: 2px;
+  margin-bottom: 1px;
+  font-weight: bold;
 }
 
 /* 6. Item List */
 .itemsSection {
-  border-bottom: 2px solid #000;
-  padding: 8px;
-  font-size: 10px;
+  border-bottom: 1.5px solid #000;
+  padding: 4px 6px;
+  font-size: 8px;
 }
 
 .itemsRow {
@@ -196,22 +752,23 @@
 }
 
 .itemsLabel {
-  width: 80px;
+  width: 60px;
   flex-shrink: 0;
+  font-weight: bold;
 }
 
 .itemsList {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 /* 7. Notes Section */
 .notesSection {
-  border-bottom: 2px solid #000;
-  padding: 8px;
-  font-size: 10px;
+  border-bottom: 1.5px solid #000;
+  padding: 4px 6px;
+  font-size: 8px;
 }
 
 .notesRow {
@@ -219,8 +776,9 @@
 }
 
 .notesLabel {
-  width: 80px;
+  width: 60px;
   flex-shrink: 0;
+  font-weight: bold;
 }
 
 .notesBody {
@@ -230,8 +788,10 @@
 /* 8. Footer */
 .footerBox {
   text-align: center;
-  padding: 8px;
-  font-size: 10px;
+  padding: 2px 4px 3px 4px;
+  font-size: 8px;
+  line-height: 1.15;
+  margin: 0;
 }
 
 .printButton {
@@ -248,11 +808,11 @@
   filter: brightness(1.1);
 }
 
-/* Print target: A4 portrait, zero page margin, thermal label (100mm x 150mm)
- * anchored at the top-left corner — matches the Biteship reference PDF, so
- * downloaded PDFs come out with the same physical dimensions. */
+/* Print target: Thermal label (100mm x 150mm)
+ * matches the Biteship reference PDF, so downloaded PDFs
+ * come out with the exact physical dimensions. */
 @page {
-  size: A4 portrait;
+  size: 100mm 150mm;
   margin: 0;
 }
 
@@ -263,18 +823,55 @@
     margin: 0 !important;
     min-height: auto !important;
     align-items: flex-start !important;
+    display: block !important;
   }
+
+  .previewLayout {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    gap: 0 !important;
+  }
+
+  .labelStream {
+    display: block !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .labelWrapper {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .labelScreenHeader,
+  .labelSequenceBadge,
+  .sidebarColumn,
+  .controlSidebar,
   .actionBar {
     display: none !important;
   }
+
   .label {
-    border: none !important;
-    width: 100mm !important;
-    height: 150mm !important;
+    width: 96mm !important;
+    height: auto !important;
+    max-height: 146mm !important;
+    border: 2px solid #000 !important;
     box-shadow: none !important;
-    margin: 0 !important;
+    border-radius: 0 !important;
+    margin: 2mm auto 0 auto !important;
     padding: 0 !important;
     page-break-after: always;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-sizing: border-box !important;
+  }
+
+  .labelWrapper:last-child .label,
+  .label:last-child {
+    page-break-after: auto;
   }
 }
-

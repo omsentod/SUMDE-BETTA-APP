@@ -1,169 +1,468 @@
 .sectionPadding {
-    padding: 8rem 0;
+    padding: 8.5rem 0 6rem 0;
 }
 
 .paymentContainer {
-    max-width: 850px;
-}
-
-.headerTitle {
-    font-family: var(--font-serif);
-    font-size: 3rem;
-    margin-bottom: 0.8rem;
-    color: var(--text-main);
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
 }
 
 .headerText {
     text-align: center;
-    margin-bottom: 3.5rem;
+    margin-bottom: 2.25rem;
+}
+
+.headerTitle {
+    font-family: var(--font-serif);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.headerDesc {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.5;
 }
 
 .gridTwoCol {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 3rem;
+    grid-template-columns: 1.35fr 0.85fr;
+    gap: 2rem;
+    align-items: start;
 }
 
+/* Actions Card (Left Column) */
 .actionsCard {
-    background: rgba(255, 255, 255, 0.02);
-    padding: 2.5rem;
-    border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--bg-card);
+    padding: 1.75rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
+}
+
+.cardSectionHeader {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+    margin-bottom: 0.25rem;
 }
 
 .cardSectionTitle {
     font-size: 0.8rem;
+    font-weight: 800;
     color: var(--primary);
-    letter-spacing: 0.2rem;
-    margin-bottom: 2rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    margin: 0;
 }
 
 .cardDescription {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
-    line-height: 1.7;
-    margin-bottom: 3rem;
-}
-
-.methodList {
-    padding-left: 1.2rem;
-    margin: 0.5rem 0;
+    line-height: 1.5;
+    margin: 0 0 1.25rem 0;
 }
 
 .dokuBtn {
     width: 100%;
-    padding: 1.3rem;
+    margin-top: 1.25rem;
+    padding: 1.1rem 1.5rem;
     cursor: pointer;
     font-size: 1rem;
-    font-weight: bold;
+    font-weight: 700;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    transition: all 0.2s ease;
 }
 
+.dokuBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnSpinner {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    animation: spin 1s linear infinite;
+}
+
+.freeFeeBadge {
+    color: var(--status-success, #10b981);
+    font-weight: 700;
+}
+
+/* Summary Card (Right Column) */
 .summaryCard {
-    background: rgba(255, 255, 255, 0.02);
-    padding: 2rem;
-    border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    height: fit-content;
+    background: var(--bg-card);
+    padding: 1.75rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    position: sticky;
+    top: 90px;
+}
+
+.summaryItemsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .summaryItemRow {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    align-items: center;
     font-size: 0.85rem;
+    color: var(--text-main);
+}
+
+.itemDesc {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    max-width: 65%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.itemPrice {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.breakdownDivider {
+    margin: 0.75rem 0;
+    border: none;
+    border-top: 1px dashed var(--border-color);
+}
+
+.summaryCalcRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    margin-bottom: 0.45rem;
+}
+
+.calcLabel {
+    color: var(--text-muted);
+}
+
+.calcValue {
+    font-weight: 600;
+    color: var(--text-main);
 }
 
 .summaryTotalRow {
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 1.1rem;
-    font-weight: 600;
+    border-top: 1px solid var(--border-color);
+    font-size: 1.15rem;
+    font-weight: 800;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     color: var(--text-main);
 }
 
-.shippingInfoBox {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    line-height: 1.5;
+.totalHighlight {
+    color: var(--primary);
+    font-size: 1.25rem;
+    font-weight: 800;
 }
 
+/* Shipping Info Box (Top of Summary Card) */
+.shippingInfoBoxTop {
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.75rem 0.95rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 1.25rem;
+}
+
+.shippingInfoTopHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+}
+
+.shippingInfoTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.courierChip {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-main);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.recipientRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.recipientName {
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.recipientPhone {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+.recipientAddress {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+/* Waiting Card */
 .waitingCard {
-    background: rgba(255, 255, 255, 0.02);
-    padding: 3.5rem;
+    background: var(--bg-card);
+    padding: 3.5rem 2rem;
     border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
     text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .spinner {
-    width: 60px;
-    height: 60px;
-    border: 3px solid rgba(0, 180, 216, 0.2);
-    border-top: 3px solid #00b4d8;
+    width: 54px;
+    height: 54px;
+    border: 3px solid rgba(255, 107, 53, 0.2);
+    border-top: 3px solid var(--primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin: 0 auto 2.5rem auto;
+    margin: 0 auto 2rem auto;
 }
 
 .waitingTitle {
     font-family: var(--font-serif);
-    font-size: 2.2rem;
-    margin-bottom: 1rem;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
     color: var(--text-main);
 }
 
 .waitingText {
     color: var(--text-muted);
-    max-width: 500px;
-    margin: 0 auto 2.5rem auto;
+    max-width: 480px;
+    margin: 0 auto 2rem auto;
     line-height: 1.6;
+    font-size: 0.92rem;
 }
 
 .btnGroup {
     display: flex;
     justify-content: center;
-    gap: 1.5rem;
-    max-width: 500px;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    max-width: 480px;
     margin: 0 auto;
 }
 
 .continueBtn {
     flex: 1.2;
-    padding: 1.2rem;
+    padding: 0.95rem 1.25rem;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 10px;
+}
+
+.changeMethodBtn {
+    flex: 1.3;
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 0.95rem 1.25rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.changeMethodBtn:hover {
+    background: var(--primary-glow);
+}
+
+.changeMethodBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .checkStatusBtn {
     flex: 1.2;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 1.2rem;
-    border-radius: 0.8rem;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.95rem 1.25rem;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.checkStatusBtn:hover {
+    background: var(--bg-dark);
+    border-color: var(--primary);
+}
+
+/* "Kembali" link di atas picker saat mode ganti metode pembayaran */
+.backToWaitingBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 1.25rem;
+}
+
+.backToWaitingBtn:hover {
+    color: var(--primary);
 }
 
 .cancelBtn {
-    flex: 0.6;
-    background: rgba(255, 0, 0, 0.1);
-    border: 1px solid rgba(255, 0, 0, 0.2);
-    color: #ff6b6b;
-    padding: 1.2rem;
-    border-radius: 0.8rem;
+    flex: 0.7;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 0.95rem 1.25rem;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* Success Screen */
+.successContainer {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem;
+    text-align: center;
+}
+
+.successIconCircle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.successTitle {
+    font-family: var(--font-serif);
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    color: var(--text-main);
+}
+
+.successDesc {
+    color: var(--text-muted);
+    margin-bottom: 2.25rem;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.homeBtn {
+    padding: 0.95rem 2.25rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 12px;
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .gridTwoCol {
+        grid-template-columns: 1fr;
+    }
+
+    .summaryCard {
+        position: static;
+    }
+}
+
+@media (max-width: 600px) {
+    .sectionPadding {
+        padding: 6.5rem 0 4rem 0;
+    }
+
+    .headerTitle {
+        font-size: 1.8rem;
+    }
+
+    .actionsCard {
+        padding: 1.25rem;
+    }
+
+    .summaryCard {
+        padding: 1.25rem;
+    }
+
+    .btnGroup {
+        flex-direction: column;
+    }
 }
