@@ -358,7 +358,7 @@ export default function CheckoutPage() {
             fee: Number(selectedRate.price) || 0,
             eta: selectedRate.duration || null,
         };
-        localStorage.setItem('temp-shipment', JSON.stringify({ ...formData, shipping }));
+        localStorage.setItem('temp-shipment', JSON.stringify({ ...formData, shipping, createdAt: Date.now() }));
         router.push('/payment');
     };
 

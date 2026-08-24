@@ -7,6 +7,20 @@ import PaymentMethodPicker from '@/components/PaymentMethodPicker';
 import { calcPaymentFee, getMethodLabel, isValidPaymentMethod } from '@/lib/paymentFee';
 import styles from './payment.module.css';
 
+// Ambang basi untuk state checkout yang tersimpan di localStorage
+// (temp-shipment, active-payment), disamakan dengan payment_due_date DOKU
+// (60 menit, lihat createCheckoutSession di src/lib/doku.js). Tanpa ini,
+// checkout yang ditinggal begitu saja (tab ditutup sebelum bayar) bisa
+// nyangkut selamanya — dan karena active-payment SELALU menang begitu
+// mount effect membacanya, kunjungan berikutnya ke /payment (bahkan untuk
+// belanja lain sama sekali, bertahun kemudian) bisa langsung "sukses" atau
+// menampilkan alamat lama, alih-alih checkout yang sedang berjalan sekarang.
+const CHECKOUT_SESSION_TTL_MS = 60 * 60 * 1000;
+
+function isFresh(createdAt) {
+    return typeof createdAt === 'number' && Date.now() - createdAt <= CHECKOUT_SESSION_TTL_MS;
+}
+
 export default function PaymentPage() {
     const { checkoutTotal: total, clearCheckout: clearCart, checkoutItems: cart } = useCart();
     const router = useRouter();
@@ -46,27 +60,42 @@ export default function PaymentPage() {
 
     // 1. Load temp-shipment and check for active payment on mount
     useEffect(() => {
+        let hasFreshShipment = false;
         const shipData = localStorage.getItem('temp-shipment');
         if (shipData) {
             try {
-                setShipment(JSON.parse(shipData));
+                const parsed = JSON.parse(shipData);
+                if (isFresh(parsed.createdAt)) {
+                    setShipment(parsed);
+                    hasFreshShipment = true;
+                } else {
+                    localStorage.removeItem('temp-shipment');
+                }
             } catch (e) {
                 console.error('Failed to parse temp-shipment', e);
             }
         }
 
+        let hasFreshActivePayment = false;
         const activePayData = localStorage.getItem('active-payment');
         if (activePayData) {
             try {
                 const parsed = JSON.parse(activePayData);
-                setActivePayment(parsed);
-                setStatus('checkout_created');
-                // Auto check status immediately on load (in case they just redirected back)
-                autoCheckPayment(parsed.orderId);
+                if (isFresh(parsed.createdAt)) {
+                    setActivePayment(parsed);
+                    setStatus('checkout_created');
+                    // Auto check status immediately on load (in case they just redirected back)
+                    autoCheckPayment(parsed.orderId);
+                    hasFreshActivePayment = true;
+                } else {
+                    localStorage.removeItem('active-payment');
+                }
             } catch (e) {
                 console.error('Failed to parse active-payment', e);
             }
-        } else if (!shipData && !activePayData) {
+        }
+
+        if (!hasFreshShipment && !hasFreshActivePayment) {
             // Redirect to checkout if no shipping context
             router.push('/checkout');
         }
@@ -188,7 +217,8 @@ export default function PaymentPage() {
             const payDetails = {
                 orderId,
                 paymentUrl: data.paymentUrl,
-                amount: data.amount
+                amount: data.amount,
+                createdAt: Date.now()
             };
 
             // Save details to state & local storage
@@ -219,6 +249,7 @@ export default function PaymentPage() {
                 orderId: activePayment.orderId,
                 paymentUrl: data.paymentUrl,
                 amount: data.amount,
+                createdAt: Date.now(),
             };
             setActivePayment(payDetails);
             localStorage.setItem('active-payment', JSON.stringify(payDetails));
