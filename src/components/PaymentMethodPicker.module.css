@@ -122,11 +122,32 @@
   line-height: 1.3;
 }
 
+/* Header kartu rekomendasi saat kategorinya multi opsi: <button> yang
+   meng-expand daftar channel, jadi butuh reset default tombol. */
+.coverHeaderButton {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  user-select: none;
+}
+
 .coverRight {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+/* Sisi kanan versi multi opsi: preview logo + biaya + chevron sejajar. */
+.coverRightRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   flex-shrink: 0;
 }
 

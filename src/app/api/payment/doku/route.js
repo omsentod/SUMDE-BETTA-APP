@@ -33,11 +33,27 @@ export async function POST(request) {
     const dokuInvoiceNumber = `${order.id}_${Date.now()}`;
     // DOKU require customer.id — pakai userId (kalau login) atau order.id
     // sebagai fallback untuk guest checkout.
+    //
+    // address/city/state/postcode diambil dari alamat pengiriman order —
+    // channel Paylater (Akulaku) menolak sesi tanpa field ini.
+    const addressLine = [
+      order.streetAddress,
+      order.rtRw && `RT/RW ${order.rtRw}`,
+      order.village,
+      order.district,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
     const customer = {
       id: order.userId || order.id,
       name: order.name,
       email: order.email,
       phone: order.phone,
+      address: addressLine,
+      city: order.city,
+      state: order.province,
+      postcode: order.postalCode,
     };
     let dokuResponse;
     try {

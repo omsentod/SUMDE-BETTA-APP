@@ -24,6 +24,11 @@
  * Channel enums verified against the DOKU sandbox account on 2026-08-24.
  * Several VA channels need the `_BANK_` infix — without it DOKU reports the
  * channel as inactive even though the bank is enabled.
+ *
+ * The `inactive` flags track the PRODUCTION merchant account, not sandbox. A
+ * channel that is live in production but off in sandbox still shows in the
+ * picker during local dev; DOKU rejects it there, and the checkout route falls
+ * back to the full catalog rather than dead-ending the user.
  */
 
 export const PAYMENT_METHODS = {
@@ -33,7 +38,6 @@ export const PAYMENT_METHODS = {
     category: 'QRIS',
     dokuType: 'QRIS',
     fee: { percent: 0.007 },
-    inactive: true, // belum di-enable di merchant account
   },
 
   // ---------- Virtual Account (SNAP) ----------
@@ -66,10 +70,8 @@ export const PAYMENT_METHODS = {
     category: 'Paylater',
     dokuType: 'PEER_TO_PEER_AKULAKU',
     fee: { percent: 0.015 },
-    // Channel-nya hidup, tapi DOKU mewajibkan customer.address/city/state/
-    // postcode di payload Checkout. Aktifkan lagi setelah field itu dikirim
-    // dari data alamat order.
-    inactive: true,
+    // DOKU mewajibkan customer.address/city/state/postcode untuk channel ini;
+    // dikirim dari data alamat order lewat createCheckoutSession().
   },
 
   // ---------- Retail (Bayar di Toko) ----------

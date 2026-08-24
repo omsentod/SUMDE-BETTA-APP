@@ -67,12 +67,21 @@ export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl
   // DOKU sandbox mensyaratkan `customer` object (min. id) di payload
   // Checkout v1 — kalau tidak ada, response: "Required object 'customer.id'
   // is missing or null". Kita pass field yang tersedia dari order.
+  //
+  // address/city/state/postcode wajib untuk channel Paylater (Akulaku); DOKU
+  // menolak sesinya kalau kosong. Channel lain mengabaikannya, jadi selalu
+  // dikirim selama order punya datanya.
   if (customer && customer.id) {
     payload.customer = {
       id: String(customer.id),
       ...(customer.name && { name: customer.name }),
       ...(customer.email && { email: customer.email }),
       ...(customer.phone && { phone: customer.phone }),
+      ...(customer.address && { address: customer.address }),
+      ...(customer.city && { city: customer.city }),
+      ...(customer.state && { state: customer.state }),
+      ...(customer.postcode && { postcode: customer.postcode }),
+      ...(customer.address && { country: 'ID' }),
     };
   }
 

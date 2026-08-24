@@ -460,7 +460,7 @@ export default function PaymentPage() {
                                         ) : !isValidPaymentMethod(paymentMethod) ? (
                                             'Pilih Metode Pembayaran'
                                         ) : (
-                                            `Bayar ${formatIDR(breakdown.grandTotal)} via DOKU`
+                                            'Bayar Sekarang'
                                         )}
                                     </button>
                                 </div>

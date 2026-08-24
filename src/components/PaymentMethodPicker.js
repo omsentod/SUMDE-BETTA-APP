@@ -82,7 +82,21 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
   };
 
   const recommendedMethod = PAYMENT_METHODS[cheapestMethodKey] || selectable[0];
-  const isRecommendedSelected = value === cheapestMethodKey;
+
+  // Rekomendasi ditandai di level KATEGORI, bukan method. Channel dalam satu
+  // kategori sering ber-fee identik (12 bank VA sama-sama flat Rp4.000), jadi
+  // `cheapestMethodKey` cuma memenangkan yang pertama di-iterasi — menyorot
+  // "BCA" seolah-olah bank lain lebih mahal. Untuk kategori multi opsi kartu
+  // rekomendasi menampilkan kategorinya dan meng-expand daftar channel di
+  // tempat; kategorinya lalu dilewati di "Metode Lainnya" supaya tidak dobel.
+  const recommendedCategory = recommendedMethod?.category ?? null;
+  const recommendedItems = grouped[recommendedCategory] || [];
+  const isRecommendedMulti = recommendedItems.length > 1;
+  const isRecommendedOpen = openCategory === recommendedCategory;
+  const recommendedSelected = recommendedItems.find((m) => m.key === value) || null;
+  const isRecommendedSelected = isRecommendedMulti
+    ? Boolean(recommendedSelected)
+    : value === cheapestMethodKey;
 
   // Render category icon SVG
   const renderCategoryIcon = (cat) => {
@@ -141,15 +155,19 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
 
         <div
           className={`${styles.recommendedCoverCard} ${isRecommendedSelected ? styles.recommendedCoverCardSelected : ''}`}
-          onClick={() => onChange(cheapestMethodKey)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onChange(cheapestMethodKey);
-            }
-          }}
+          {...(isRecommendedMulti
+            ? {}
+            : {
+                onClick: () => onChange(cheapestMethodKey),
+                role: 'button',
+                tabIndex: 0,
+                onKeyDown: (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onChange(cheapestMethodKey);
+                  }
+                },
+              })}
         >
           {/* Top Banner Ribbon */}
           <div className={styles.coverRibbon}>
@@ -162,30 +180,122 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
             <span className={styles.coverRibbonNote}>Proses Otomatis</span>
           </div>
 
-          {/* Card Body */}
-          <div className={styles.coverBody}>
-            <div className={styles.coverLeft}>
-              <div className={`${styles.radioCircle} ${isRecommendedSelected ? styles.radioCircleActive : ''}`}>
-                <div className={styles.radioDot} />
+          {/* Card Body — kategori multi opsi jadi accordion di tempat supaya
+              yang ditandai kategorinya, bukan satu channel di dalamnya. */}
+          {isRecommendedMulti ? (
+            <>
+              <button
+                type="button"
+                className={`${styles.coverBody} ${styles.coverHeaderButton}`}
+                onClick={() => toggleCategory(recommendedCategory)}
+                aria-expanded={isRecommendedOpen}
+              >
+                <div className={styles.coverLeft}>
+                  <div className={styles.categoryIconWrap}>
+                    {renderCategoryIcon(recommendedCategory)}
+                  </div>
+
+                  <div className={styles.coverTitleBlock}>
+                    <h4 className={styles.coverTitle}>
+                      {CATEGORY_LABEL[recommendedCategory] || recommendedCategory}
+                    </h4>
+                    <p className={styles.coverSubtitle}>
+                      {recommendedSelected ? (
+                        <span className={styles.selectedBadgeText}>
+                          Terpilih: {recommendedSelected.label}
+                        </span>
+                      ) : (
+                        CATEGORY_SUBTITLES[recommendedCategory] ||
+                        `${recommendedItems.length} Opsi Tersedia`
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Sengaja tanpa preview logo seperti accordion di bawah: kolom
+                    kartu ini sempit, dan subtitle sudah menyebut nama banknya. */}
+                <div className={styles.coverRightRow}>
+                  <div className={styles.coverRight}>
+                    <span className={styles.coverFee}>
+                      {minFee === 0 ? 'Gratis Biaya Admin' : formatIDR(minFee)}
+                    </span>
+                    <span className={styles.coverFeeSub}>Mulai dari</span>
+                  </div>
+
+                  <svg
+                    className={`${styles.chevronIcon} ${isRecommendedOpen ? styles.chevronOpen : ''}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </button>
+
+              <div className={`${styles.accordionBody} ${isRecommendedOpen ? styles.accordionBodyOpen : ''}`}>
+                <div className={styles.optionsGrid}>
+                  {recommendedItems.map((m) => {
+                    const isSelected = value === m.key;
+
+                    return (
+                      <div
+                        key={m.key}
+                        className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
+                        onClick={() => onChange(m.key)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onChange(m.key);
+                          }
+                        }}
+                      >
+                        <div className={`${styles.radioCircle} ${isSelected ? styles.radioCircleActive : ''}`}>
+                          <div className={styles.radioDot} />
+                        </div>
+
+                        <PaymentLogo methodKey={m.key} size="md" />
+
+                        <div className={styles.optionDetails}>
+                          <span className={styles.optionName}>{m.label}</span>
+                          <span className={styles.optionFee}>{formatFeeHint(m, m.key, base)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className={styles.coverBody}>
+              <div className={styles.coverLeft}>
+                <div className={`${styles.radioCircle} ${isRecommendedSelected ? styles.radioCircleActive : ''}`}>
+                  <div className={styles.radioDot} />
+                </div>
+
+                <PaymentLogo methodKey={cheapestMethodKey} size="md" />
+
+                <div className={styles.coverTitleBlock}>
+                  <h4 className={styles.coverTitle}>{recommendedMethod.label}</h4>
+                  <p className={styles.coverSubtitle}>
+                    {CATEGORY_SUBTITLES[recommendedMethod.category] || 'Pilihan utama pembeli'}
+                  </p>
+                </div>
               </div>
 
-              <PaymentLogo methodKey={cheapestMethodKey} size="md" />
-
-              <div className={styles.coverTitleBlock}>
-                <h4 className={styles.coverTitle}>{recommendedMethod.label}</h4>
-                <p className={styles.coverSubtitle}>
-                  {CATEGORY_SUBTITLES[recommendedMethod.category] || 'Pilihan utama pembeli'}
-                </p>
+              <div className={styles.coverRight}>
+                <span className={styles.coverFee}>
+                  {minFee === 0 ? 'Gratis Biaya Admin' : formatIDR(minFee)}
+                </span>
+                <span className={styles.coverFeeSub}>Biaya Terendah</span>
               </div>
             </div>
-
-            <div className={styles.coverRight}>
-              <span className={styles.coverFee}>
-                {minFee === 0 ? 'Gratis Biaya Admin' : formatIDR(minFee)}
-              </span>
-              <span className={styles.coverFeeSub}>Biaya Terendah</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -194,14 +304,12 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
         <h4 className={styles.sectionLabel}>Metode Pembayaran Lainnya</h4>
 
         {CATEGORY_ORDER.map((cat) => {
-          // If this category only had the recommended item (e.g. QRIS), skip duplicating it
           const allItems = grouped[cat] || [];
           if (allItems.length === 0) return null;
 
-          // If the single item in this category is already the top recommendation, skip
-          if (allItems.length === 1 && allItems[0].key === cheapestMethodKey) {
-            return null;
-          }
+          // Kategori rekomendasi sudah dirender penuh di kartu atas — baik yang
+          // single (QRIS) maupun multi opsi (VA) — jadi jangan duplikat di sini.
+          if (cat === recommendedCategory) return null;
 
           const isMulti = allItems.length > 1;
           const isOpen = openCategory === cat;
