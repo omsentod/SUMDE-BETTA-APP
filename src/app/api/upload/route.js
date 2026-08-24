@@ -71,8 +71,15 @@ export async function POST(request) {
     const randomName = crypto.randomBytes(16).toString('hex');
     const safeFilename = `${randomName}${fileExt}`;
 
-    // Menentukan lokasi penyimpanan di public/uploads
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    // Hostinger clone ulang git ke direktori versi BARU setiap deploy —
+    // apa pun yang ditulis ke public/uploads relatif terhadap process.cwd()
+    // cuma hidup di direktori versi itu dan hilang begitu deploy berikutnya
+    // mengalihkan traffic ke direktori baru. UPLOADS_DIR (absolute path ke
+    // public_html/uploads, di luar hbuilds/versions) dipakai di production
+    // supaya file selamat lintas deploy — public_html sudah dikonfirmasi
+    // di-serve langsung oleh webserver, bukan lewat Next.js. Kalau env var
+    // ini tidak di-set (dev lokal), fallback ke public/uploads seperti biasa.
+    const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
     
     // Pastikan folder penyimpanan tersedia
     await fs.mkdir(uploadDir, { recursive: true });
