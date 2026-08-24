@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ShipmentTracker from './ShipmentTracker';
 
 const STATUS_CONFIG = {
     PENDING:    { label: 'Belum Dibayar',  color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', border: 'var(--status-warning)' },
@@ -249,21 +250,11 @@ export default function OrdersPage() {
                                     </div>
 
                                     {trackingData[order.id] && (
-                                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                            <h5 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>
-                                                Resi: {order.trackingNumber} 
-                                                <span className="text-[var(--primary)] ml-2 text-sm uppercase">({order.shippingCourier})</span>
-                                            </h5>
-                                            {trackingData[order.id].history && trackingData[order.id].history.map((h, idx) => (
-                                                <div key={idx} style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                                                    <div style={{ color: 'var(--text-muted)' }}>{new Date(h.updated_at).toLocaleString('id-ID')}</div>
-                                                    <div>{h.note}</div>
-                                                </div>
-                                            ))}
-                                            {(!trackingData[order.id].history || trackingData[order.id].history.length === 0) && (
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Belum ada riwayat pelacakan.</div>
-                                            )}
-                                        </div>
+                                        <ShipmentTracker
+                                            history={trackingData[order.id].history || []}
+                                            waybill={order.trackingNumber}
+                                            courier={order.shippingCourier}
+                                        />
                                     )}
                                 </div>
                             );
