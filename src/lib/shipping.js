@@ -223,3 +223,21 @@ export async function getTrackingDetails(waybillId, courierCode) {
   }
   return data;
 }
+
+// Fetch a Biteship order by its shipment id (the `biteshipShipmentId` we
+// stored at booking). Unlike getTrackingDetails, this works even before a
+// waybill is assigned — the response carries top-level `status` plus
+// `courier.waybill_id` / `courier.history`. Used by the reconcile cron to
+// catch orders whose status webhook never arrived.
+export async function getBiteshipOrder(biteshipOrderId) {
+  const cfg = config();
+  const res = await fetch(`${cfg.base}/orders/${biteshipOrderId}`, {
+    method: 'GET',
+    headers: { 'Authorization': cfg.apiKey },
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'Gagal mengambil detail order Biteship.');
+  }
+  return data;
+}
