@@ -334,6 +334,23 @@ h3 {
     background: rgba(0, 180, 216, 0.1);
 }
 
+/* Varian destruktif — batalkan pesanan, hapus, dsb. Sejajar .btn-outline
+ * tapi memakai token status error supaya tetap kontras di light & dark. */
+.btn-danger-outline {
+    background: transparent;
+    border: 1px solid var(--status-error);
+    color: var(--status-error);
+}
+
+.btn-danger-outline:hover {
+    background: var(--status-error-bg);
+}
+
+.btn-danger-outline:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 /* Product Card Gallery Style */
 .product-card {
     background: var(--bg-card);

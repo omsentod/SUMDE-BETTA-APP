@@ -229,7 +229,7 @@ export default function OrdersPage() {
                                                     {payingOrderId === order.id ? 'Memproses...' : 'Bayar Sekarang'}
                                                 </button>
                                                 <button
-                                                    className="btn btn-outline text-[0.9rem] px-6 py-2"
+                                                    className="btn btn-danger-outline text-[0.9rem] px-6 py-2"
                                                     onClick={() => handleCancelOrder(order.id)}
                                                     disabled={payingOrderId === order.id || cancellingOrderId === order.id}
                                                 >
