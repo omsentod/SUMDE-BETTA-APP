@@ -164,7 +164,7 @@ export async function createShipment(order, totalQty) {
     destination_postal_code: parseInt(order.postalCode || cfg.originPostal),
 
     courier_company: order.shippingCourier || "pos",
-    courier_type: order.shippingService || "pos_reguler",
+    courier_type: order.shippingService || "reg",
     delivery_type: "now",
 
     items: [
