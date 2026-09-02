@@ -4,13 +4,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
+// import { useTheme } from '@/context/ThemeContext'; // theme toggle dinonaktifkan sementara
 import NotificationBell from '@/components/NotificationBell';
 import styles from './AdminHeader.module.css';
 
 export default function AdminHeader() {
   const { currentUser, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  // const { theme, toggleTheme } = useTheme(); // theme toggle dinonaktifkan sementara
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -41,6 +41,8 @@ export default function AdminHeader() {
 
         <NotificationBell />
 
+        {/* Theme toggle (admin) DINONAKTIFKAN SEMENTARA — app dikunci mode terang.
+            Uncomment blok di bawah (+ import/binding di atas) untuk mengaktifkan lagi.
         <button
           onClick={toggleTheme}
           className={styles.themeButton}
@@ -59,6 +61,7 @@ export default function AdminHeader() {
             </svg>
           )}
         </button>
+        */}
 
         <div className={styles.profileGroup}>
           <div className={styles.profileMeta}>
