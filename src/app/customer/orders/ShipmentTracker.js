@@ -25,14 +25,22 @@ const STATUS_INFO = {
 };
 
 const BITESHIP_TRANSLATIONS = {
+  // Confirmed / allocated / pickup
   'courier order is confirmed': 'Pesanan pengiriman telah dikonfirmasi oleh kurir.',
   'courier is allocated and ready to pick up': 'Kurir siap menjemput paket dari penjual.',
   'courier is on the way to pick up location': 'Kurir sedang menuju lokasi penjemputan paket.',
   'item has been picked by courier': 'Paket telah diambil oleh kurir.',
+  // In transit / dropping off
   'item is on the way to destination': 'Paket sedang dalam perjalanan menuju alamat tujuan.',
+  'item is on the way to customer': 'Kurir sedang mengantar paket ke alamat tujuan.',
   'courier is dropping off item to destination': 'Kurir sedang mengantar paket ke alamat tujuan.',
+  // Delivered
   'order has been delivered': 'Paket telah sampai di alamat tujuan dan diterima.',
+  'item has been delivered': 'Paket telah sampai di alamat tujuan dan diterima.',
+  // On hold / problems
   'delivery is on hold': 'Pengiriman tertunda sementara karena kendala operasional.',
+  'your shipment is on hold': 'Pengiriman tertunda sementara karena kendala operasional.',
+  // Terminal
   'shipment is cancelled': 'Pengiriman telah dibatalkan.',
   'shipment is rejected': 'Pengiriman ditolak oleh pihak kurir.',
   'shipment is returned': 'Paket telah dikembalikan ke pengirim.',
