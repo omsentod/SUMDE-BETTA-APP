@@ -209,6 +209,33 @@ export async function createShipment(order, totalQty) {
   return data;
 }
 
+// Biteship's tracking history — terutama di API key sandbox/test — sering
+// mengembalikan status yang sama berulang puluhan/ratusan kali di timestamp
+// identik (mis. "dropping_off" di-spam), padahal timeline kurir yang normal
+// hanya punya satu baris per scan/drop-point. Gabungkan baris BERURUTAN yang
+// status + catatannya sama persis jadi satu, dan pertahankan timestamp
+// terbaru di run tersebut. Aman untuk data kurir asli: scan asli selalu punya
+// catatan (lokasi/drop-point) yang berbeda, jadi tidak ada langkah nyata yang
+// ikut ter-collapse.
+export function collapseTrackingHistory(history) {
+  if (!Array.isArray(history)) return [];
+  const out = [];
+  for (const h of history) {
+    if (!h) continue;
+    const prev = out[out.length - 1];
+    const sameStatus = prev && prev.status === h.status;
+    const sameNote =
+      prev && String(prev.note ?? '').trim() === String(h.note ?? '').trim();
+    if (sameStatus && sameNote) {
+      // Run identik — cukup majukan timestamp ke yang terbaru, jangan tambah baris.
+      if (h.updated_at) prev.updated_at = h.updated_at;
+      continue;
+    }
+    out.push({ ...h });
+  }
+  return out;
+}
+
 export async function getTrackingDetails(waybillId, courierCode) {
   const cfg = config();
   const res = await fetch(`${cfg.base}/trackings/${waybillId}/couriers/${courierCode}`, {
@@ -221,7 +248,9 @@ export async function getTrackingDetails(waybillId, courierCode) {
   if (!res.ok || !data.success) {
     throw new Error(data.error || 'Gagal melacak paket.');
   }
-  return data;
+  // Bersihkan history dari duplikat beruntun sebelum sampai ke UI (payload kecil
+  // + timeline terbaca seperti e-commerce normal, bukan tembok baris identik).
+  return { ...data, history: collapseTrackingHistory(data.history) };
 }
 
 // Fetch a Biteship order by its shipment id (the `biteshipShipmentId` we
