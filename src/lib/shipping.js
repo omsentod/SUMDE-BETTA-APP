@@ -209,30 +209,51 @@ export async function createShipment(order, totalQty) {
   return data;
 }
 
-// Biteship's tracking history — terutama di API key sandbox/test — sering
-// mengembalikan status yang sama berulang puluhan/ratusan kali di timestamp
-// identik (mis. "dropping_off" di-spam), padahal timeline kurir yang normal
-// hanya punya satu baris per scan/drop-point. Gabungkan baris BERURUTAN yang
-// status + catatannya sama persis jadi satu, dan pertahankan timestamp
-// terbaru di run tersebut. Aman untuk data kurir asli: scan asli selalu punya
-// catatan (lokasi/drop-point) yang berbeda, jadi tidak ada langkah nyata yang
-// ikut ter-collapse.
+function isSameTrackingStep(a, b) {
+  if (!a || !b) return false;
+  const statusSame = a.status === b.status;
+  const noteSame =
+    String(a.note ?? '').trim().toLowerCase() ===
+    String(b.note ?? '').trim().toLowerCase();
+  return statusSame && noteSame;
+}
+
+// Biteship's tracking history — terutama di sandbox/test atau retry kurir — sering
+// mengembalikan status berulang (mis. "dropping_off" dan "on_hold" ping-pong
+// bergantian di jam/menit yang sama), padahal timeline kurir yang normal
+// hanya punya satu baris per milestone/drop-point.
+// Gabungkan duplikat berurutan langsung (A -> A) maupun siklus bolak-balik (A -> B -> A -> B)
+// yang status + catatannya identik, serta pertahankan timestamp terbaru di run tersebut.
+// Aman untuk data kurir asli: scan asli selalu punya catatan lokasi/hub berbeda
+// (mis. "[Surabaya Gateway]" vs "[Jakarta Gateway]"), sehingga perpindahan drop-point
+// nyata tidak akan pernah ter-collapse.
 export function collapseTrackingHistory(history) {
   if (!Array.isArray(history)) return [];
   const out = [];
+
   for (const h of history) {
     if (!h) continue;
+
+    // 1. Duplikat berurutan langsung (A -> A)
     const prev = out[out.length - 1];
-    const sameStatus = prev && prev.status === h.status;
-    const sameNote =
-      prev && String(prev.note ?? '').trim() === String(h.note ?? '').trim();
-    if (sameStatus && sameNote) {
-      // Run identik — cukup majukan timestamp ke yang terbaru, jangan tambah baris.
+    if (isSameTrackingStep(prev, h)) {
       if (h.updated_at) prev.updated_at = h.updated_at;
       continue;
     }
+
+    // 2. Siklus selang-seling 2-langkah / ping-pong (A -> B -> A -> B)
+    // Sering terjadi pada simulator sandbox kurir yang bolak-balik dropping_off & on_hold
+    const prevPrev = out[out.length - 2];
+    if (prev && prevPrev && isSameTrackingStep(prevPrev, h)) {
+      if (h.updated_at) prevPrev.updated_at = h.updated_at;
+      out.splice(out.length - 2, 1);
+      out.push(prevPrev);
+      continue;
+    }
+
     out.push({ ...h });
   }
+
   return out;
 }
 
