@@ -7,7 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import SizePickerModal from './SizePickerModal';
 
-export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit, sizes }) {
+export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit, sizes, quantity }) {
     const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -16,6 +16,15 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
         minimumFractionDigits: 0
     }).format(price);
 
+    // Hitung total stok efektif baik dari varian sizes maupun base quantity
+    const totalStock = Array.isArray(sizes) && sizes.length > 0
+        ? sizes.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0)
+        : (Number(quantity) || 0);
+
+    const effectiveSold = Boolean(isSold || totalStock <= 0);
+    // Tampilkan label sisa sedikit apabila stok <= 5 dan belum terjual
+    const isLowStock = !effectiveSold && totalStock > 0 && totalStock <= 5;
+
     // Products with sizes require the buyer to pick a size before purchase.
     // Instead of blocking on the card, open a Shopee-style size picker modal
     // that collects the selection then completes the action inline.
@@ -23,14 +32,14 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
     // modalAction === 'cart' | 'buy' | null
     const [modalAction, setModalAction] = useState(null);
 
-    const productPayload = { id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit, sizes };
+    const productPayload = { id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit, sizes, quantity };
 
     const commitAddToCart = (selectedSize) => {
         addToCart({ ...productPayload, selectedSize });
     };
 
     const commitBuyNow = (selectedSize) => {
-        if (isSold) return;
+        if (effectiveSold) return;
         buyNow({ ...productPayload, selectedSize });
         router.push('/checkout');
     };
@@ -52,7 +61,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
     const handleBuyNow = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (isSold) return;
+        if (effectiveSold) return;
         if (hasSizes) { openSizePicker('buy'); return; }
         commitBuyNow(null);
     };
@@ -74,25 +83,32 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                             src={image}
                             alt={name}
                             fill
-                            className={`${styles.image} ${isSold ? styles.imageSold : ''}`}
+                            className={`${styles.image} ${effectiveSold ? styles.imageSold : ''}`}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                     ) : (
-                        <div className={styles.placeholderIcon}>🐟</div>
+                        <div className={styles.placeholderIcon}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.46-3.44 6-7 6s-7.56-2.54-8.5-6Z" />
+                                <path d="M18 12v.5" />
+                                <path d="M16 17.93a1 1 0 0 1-.5.07c-2.3 0-4.32-.97-5.5-2.5" />
+                                <path d="M2 9.5 6.5 12 2 14.5Z" />
+                            </svg>
+                        </div>
                     )}
 
                     {/* Badges container */}
                     <div className={styles.badgesContainer}>
-                        {isSold ? (
+                        {effectiveSold ? (
                             <span className={styles.badgeSold}>
                                 Terjual
                             </span>
-                        ) : (
-                            <span className={styles.badgeReady}>
-                                Ready Stock
+                        ) : isLowStock ? (
+                            <span className={styles.badgeLowStock}>
+                                Sisa {totalStock}
                             </span>
-                        )}
-                        {isPremium && !isSold && (
+                        ) : null}
+                        {isPremium && !effectiveSold && (
                             <span className={styles.badgePremium}>
                                 Premium
                             </span>
@@ -125,7 +141,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
 
             {/* Actions (Isolated from card click) */}
             <div className={styles.actionsContainer}>
-                {isSold ? (
+                {effectiveSold ? (
                     <button className={styles.buyBtnSold} disabled>
                         Lihat Arsip
                     </button>

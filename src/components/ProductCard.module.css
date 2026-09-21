@@ -46,8 +46,8 @@
     @apply bg-slate-800 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-sm;
 }
 
-.badgeReady {
-    @apply bg-emerald-500 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-sm;
+.badgeLowStock {
+    @apply bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm tracking-wide;
 }
 
 .badgePremium {
@@ -55,7 +55,7 @@
 }
 
 @media (min-width: 640px) {
-    .badgeSold, .badgeReady, .badgePremium {
+    .badgeSold, .badgeLowStock, .badgePremium {
         @apply text-xs px-3 py-1 shadow-md;
     }
 }
