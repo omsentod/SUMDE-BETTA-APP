@@ -1,13 +1,23 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styles from './ProductCard.module.css';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import SizePickerModal from './SizePickerModal';
 
-export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit, sizes }) {
+// Galeri kartu: array URL berurutan; fallback ke [image] untuk produk lama.
+function toGallery(images, image) {
+    let arr = [];
+    if (Array.isArray(images)) arr = images;
+    else if (typeof images === 'string') { try { const p = JSON.parse(images); if (Array.isArray(p)) arr = p; } catch { /* ignore */ } }
+    arr = arr.filter((u) => typeof u === 'string' && u);
+    if (arr.length === 0 && image) arr = [image];
+    return arr;
+}
+
+export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes }) {
     const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -22,6 +32,33 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
     const hasSizes = Array.isArray(sizes) && sizes.length > 0;
     // modalAction === 'cart' | 'buy' | null
     const [modalAction, setModalAction] = useState(null);
+
+    // Galeri foto pada kartu: hover (desktop) menggeser antar-zona, swipe (mobile)
+    // menggeser satu per satu. Urutan mengikuti yang di-set admin.
+    const gallery = toGallery(images, image);
+    const hasGallery = gallery.length > 1;
+    const [imgIdx, setImgIdx] = useState(0);
+    const touchStartX = useRef(null);
+    const safeImgIdx = gallery.length > 0 ? Math.min(imgIdx, gallery.length - 1) : 0;
+
+    const handleImgMouseMove = (e) => {
+        if (!hasGallery) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        const next = Math.min(gallery.length - 1, Math.max(0, Math.floor(ratio * gallery.length)));
+        setImgIdx((prev) => (prev === next ? prev : next));
+    };
+    const handleImgMouseLeave = () => { if (hasGallery) setImgIdx(0); };
+    const handleImgTouchStart = (e) => { touchStartX.current = e.touches[0]?.clientX ?? null; };
+    const handleImgTouchEnd = (e) => {
+        if (!hasGallery || touchStartX.current == null) return;
+        const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+        if (Math.abs(dx) > 40) {
+            const n = gallery.length;
+            setImgIdx((prev) => (prev + (dx < 0 ? 1 : -1) + n) % n);
+        }
+        touchStartX.current = null;
+    };
 
     const productPayload = { id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit, sizes };
 
@@ -68,10 +105,16 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
             {/* Card Body wrapped in Link for direct navigation to details */}
             <Link href={`/produk/${id}`} className={styles.cardLink}>
                 {/* Image Container */}
-                <div className={styles.imageContainer}>
-                    {image ? (
+                <div
+                    className={styles.imageContainer}
+                    onMouseMove={handleImgMouseMove}
+                    onMouseLeave={handleImgMouseLeave}
+                    onTouchStart={handleImgTouchStart}
+                    onTouchEnd={handleImgTouchEnd}
+                >
+                    {gallery.length > 0 ? (
                         <Image
-                            src={image}
+                            src={gallery[safeImgIdx]}
                             alt={name}
                             fill
                             className={`${styles.image} ${isSold ? styles.imageSold : ''}`}
@@ -79,6 +122,18 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                         />
                     ) : (
                         <div className={styles.placeholderIcon}>🐟</div>
+                    )}
+
+                    {/* Dot indikator galeri (muncul kalau foto > 1) */}
+                    {hasGallery && (
+                        <div className={styles.cardDots}>
+                            {gallery.map((_, i) => (
+                                <span
+                                    key={i}
+                                    className={`${styles.cardDot} ${i === safeImgIdx ? styles.cardDotActive : ''}`}
+                                />
+                            ))}
+                        </div>
                     )}
 
                     {/* Badges container */}

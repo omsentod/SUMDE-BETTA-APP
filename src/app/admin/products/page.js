@@ -54,6 +54,9 @@ export default function AdminProductsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  // Drag-and-drop urutan foto: index yang sedang ditarik & target hover.
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const confirm = useConfirmModal();
 
@@ -141,6 +144,19 @@ export default function AdminProductsPage() {
       const imgs = (prev.images || []).filter((_, i) => i !== index);
       return { ...prev, images: imgs, image: imgs[0] || '' };
     });
+  };
+
+  // Pindahkan foto dari posisi drag ke posisi target (tarik-lepas).
+  const handleImageDrop = (targetIndex) => {
+    setForm((prev) => {
+      if (dragIndex === null || dragIndex === targetIndex) return prev;
+      const imgs = [...(prev.images || [])];
+      const [moved] = imgs.splice(dragIndex, 1);
+      imgs.splice(targetIndex, 0, moved);
+      return { ...prev, images: imgs, image: imgs[0] || prev.image };
+    });
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const openAdd = () => {
@@ -415,9 +431,16 @@ export default function AdminProductsPage() {
                       {form.images.map((url, index) => (
                         <div
                           key={`${url}-${index}`}
-                          style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', border: `1px solid ${index === 0 ? 'var(--primary)' : 'var(--border-color)'}`, background: 'var(--bg-card)' }}
+                          draggable
+                          onDragStart={() => setDragIndex(index)}
+                          onDragOver={(e) => { e.preventDefault(); if (dragOverIndex !== index) setDragOverIndex(index); }}
+                          onDragLeave={() => setDragOverIndex((cur) => (cur === index ? null : cur))}
+                          onDrop={() => handleImageDrop(index)}
+                          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                          title="Seret untuk mengurutkan"
+                          style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${dragOverIndex === index ? 'var(--primary)' : (index === 0 ? 'var(--primary)' : 'var(--border-color)')}`, background: 'var(--bg-card)', cursor: 'grab', opacity: dragIndex === index ? 0.4 : 1, transition: 'opacity 0.15s ease, border-color 0.15s ease' }}
                         >
-                          <Image src={url} alt={`Foto ${index + 1}`} fill sizes="96px" style={{ objectFit: 'cover' }} />
+                          <Image src={url} alt={`Foto ${index + 1}`} fill sizes="96px" draggable={false} style={{ objectFit: 'cover' }} />
 
                           {index === 0 && (
                             <span style={{ position: 'absolute', top: '4px', left: '4px', background: 'var(--primary)', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px', letterSpacing: '0.03em' }}>
@@ -466,7 +489,7 @@ export default function AdminProductsPage() {
                     {isUploading ? 'Mengunggah...' : (form.images?.length > 0 ? '+ Tambah Foto Lagi' : 'Pilih Foto dari Komputer')}
                   </label>
                   <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, maxWidth: '340px' }}>
-                    Foto pertama (COVER) tampil sebagai thumbnail. Atur urutan dengan tombol ◀ ▶ — user bisa geser galeri sesuai urutan ini.
+                    Foto pertama (COVER) tampil sebagai thumbnail. Seret foto untuk mengurutkan (atau pakai tombol ◀ ▶) — user bisa geser galeri sesuai urutan ini.
                   </p>
                   {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
                 </div>

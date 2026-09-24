@@ -32,6 +32,21 @@
     @apply absolute inset-0 flex items-center justify-center text-6xl text-[var(--border-color)];
 }
 
+/* Dot indikator galeri kartu — non-interaktif supaya tidak ganggu klik/hover */
+.cardDots {
+    @apply absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-[2];
+    pointer-events: none;
+}
+
+.cardDot {
+    @apply w-1.5 h-1.5 rounded-full bg-white/60 transition-all duration-200;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.cardDotActive {
+    @apply w-3.5 bg-[var(--primary)];
+}
+
 .badgesContainer {
     @apply absolute top-2 left-2 flex flex-col gap-1;
 }
