@@ -126,7 +126,13 @@ model Product {
   form        String
   coloration  String
   description String  @db.Text
+  // Cover image (thumbnail dipakai di kartu produk, keranjang, snapshot order).
+  // Selalu = images[0] supaya kode lama yang baca `image` tetap jalan.
   image       String
+  // Galeri foto berurutan untuk halaman detail (array URL string). Urutan array
+  // = urutan tampil yang di-set admin; user bisa geser sesuai urutan ini.
+  // Nullable untuk kompatibilitas baris lama yang cuma punya `image`.
+  images      Json?
   isSold      Boolean  @default(false)
   isPremium   Boolean  @default(false)
   isArchived  Boolean  @default(false)

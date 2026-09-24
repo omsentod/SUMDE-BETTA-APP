@@ -30,46 +30,60 @@ function detectImageKind(buf) {
   return null;
 }
 
+// Batas jumlah file per request — cukup untuk galeri produk, sekaligus
+// membatasi penyalahgunaan (disk / bandwidth) walau endpoint sudah admin-only.
+const MAX_FILES_PER_REQUEST = 12;
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB per file
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const EXT_BY_KIND = { png: '.png', jpg: '.jpg', gif: '.gif', webp: '.webp' };
+
+// Validasi + simpan satu file. Lempar Error ber-`.status` kalau invalid.
+async function saveOneFile(file, uploadDir) {
+  // 1. Validasi tipe file (allowlist berdasarkan MIME yang di-supply klien).
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    const err = new Error('Format file tidak didukung. Hanya JPEG, PNG, GIF, dan WEBP yang diperbolehkan.');
+    err.status = 400; throw err;
+  }
+  // 2. Batasan ukuran file (5MB).
+  if (file.size > MAX_SIZE_BYTES) {
+    const err = new Error('Ukuran file terlalu besar. Maksimal 5MB per foto.');
+    err.status = 400; throw err;
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  // 3. Verifikasi isi file (magic bytes), bukan cuma MIME/ekstensi klien.
+  const detectedKind = detectImageKind(buffer);
+  if (!detectedKind) {
+    const err = new Error('Isi file bukan gambar yang valid.');
+    err.status = 400; throw err;
+  }
+
+  // 4. Nama file acak unik — cegah path traversal; ekstensi dari hasil deteksi.
+  const safeFilename = `${crypto.randomBytes(16).toString('hex')}${EXT_BY_KIND[detectedKind]}`;
+  await fs.writeFile(path.join(uploadDir, safeFilename), buffer);
+  return `/uploads/${safeFilename}`;
+}
+
 export async function POST(request) {
   try {
     await requireAdmin(request);
     const formData = await request.formData();
-    const file = formData.get('file');
 
-    if (!file) {
+    // Terima satu ATAU banyak file dari field "file". getAll menangkap semua
+    // entri berjudul "file" (form multi-select) — kompatibel dengan pemanggil
+    // lama yang mengirim satu file.
+    const files = formData.getAll('file').filter((f) => f && typeof f.arrayBuffer === 'function');
+
+    if (files.length === 0) {
       return NextResponse.json({ error: 'Tidak ada file yang diunggah.' }, { status: 400 });
     }
-
-    // 1. Validasi tipe file (allowlist)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Format file tidak didukung. Hanya JPEG, PNG, GIF, dan WEBP yang diperbolehkan.' }, { status: 400 });
+    if (files.length > MAX_FILES_PER_REQUEST) {
+      return NextResponse.json(
+        { error: `Maksimal ${MAX_FILES_PER_REQUEST} foto per unggahan.` },
+        { status: 400 }
+      );
     }
-
-    // 2. Batasan ukuran file (5MB — cukup untuk foto produk berkualitas, dan
-    //    tidak membebani hosting / bandwidth pengunjung).
-    const maxSizeBytes = 5 * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      return NextResponse.json({ error: 'Ukuran file terlalu besar. Maksimal 5MB.' }, { status: 400 });
-    }
-
-    // Membaca file bytes ke Buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // 3. Verifikasi isi file (magic bytes), bukan cuma MIME/ekstensi yang
-    //    di-supply klien. Menolak file yang bytes-nya bukan image asli.
-    const detectedKind = detectImageKind(buffer);
-    if (!detectedKind) {
-      return NextResponse.json({ error: 'Isi file bukan gambar yang valid.' }, { status: 400 });
-    }
-
-    // 4. Ubah nama file menjadi string acak unik untuk mencegah path traversal.
-    //    Ekstensi diambil dari hasil deteksi, bukan dari nama file klien.
-    const extByKind = { png: '.png', jpg: '.jpg', gif: '.gif', webp: '.webp' };
-    const fileExt = extByKind[detectedKind];
-    const randomName = crypto.randomBytes(16).toString('hex');
-    const safeFilename = `${randomName}${fileExt}`;
 
     // Hostinger clone ulang git ke direktori versi BARU setiap deploy —
     // apa pun yang ditulis ke public/uploads relatif terhadap process.cwd()
@@ -80,16 +94,16 @@ export async function POST(request) {
     // di-serve langsung oleh webserver, bukan lewat Next.js. Kalau env var
     // ini tidak di-set (dev lokal), fallback ke public/uploads seperti biasa.
     const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
-    
-    // Pastikan folder penyimpanan tersedia
     await fs.mkdir(uploadDir, { recursive: true });
 
-    // Menyimpan file
-    const filePath = path.join(uploadDir, safeFilename);
-    await fs.writeFile(filePath, buffer);
+    // Simpan berurutan supaya `urls` menjaga urutan sesuai file yang dipilih.
+    const urls = [];
+    for (const file of files) {
+      urls.push(await saveOneFile(file, uploadDir));
+    }
 
-    // Mengembalikan URL relatif gambar
-    return NextResponse.json({ url: `/uploads/${safeFilename}` });
+    // `url` (tunggal) dipertahankan untuk pemanggil lama; `urls` untuk galeri.
+    return NextResponse.json({ url: urls[0], urls });
   } catch (error) {
     if (error.status) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Upload error:', error);
