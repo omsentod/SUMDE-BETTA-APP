@@ -61,6 +61,93 @@
     overflow: hidden;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    /* Izinkan scroll vertikal halaman, tapi swipe horizontal jadi ganti foto. */
+    touch-action: pan-y;
+}
+
+/* --- Multi-image gallery --- */
+.galleryNav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: color-mix(in oklab, var(--bg-card) 82%, transparent);
+    color: var(--text-main);
+    cursor: pointer;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.galleryNav:hover {
+    background: var(--bg-card);
+    transform: translateY(-50%) scale(1.06);
+}
+
+.galleryPrev { left: 12px; }
+.galleryNext { right: 12px; }
+
+.galleryDots {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+.galleryDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s ease;
+}
+
+.galleryDotActive {
+    width: 20px;
+    border-radius: 4px;
+    background: var(--primary);
+}
+
+.thumbStrip {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+}
+
+.thumb {
+    position: relative;
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    background: var(--bg-card);
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.thumb:hover { opacity: 1; }
+
+.thumbActive {
+    opacity: 1;
+    border-color: var(--primary);
 }
 
 .image {

@@ -22,6 +22,7 @@ const emptyProductForm = () => ({
   coloration: 'Multicolor',
   description: '',
   image: '/img/betta-1.png',
+  images: [],
   isPremium: false,
   statsForm: 'COMP',
   age: '4 Month',
@@ -53,6 +54,9 @@ export default function AdminProductsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  // Drag-and-drop urutan foto: index yang sedang ditarik & target hover.
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const confirm = useConfirmModal();
 
@@ -96,23 +100,63 @@ export default function AdminProductsPage() {
     });
   }, [products, search, categoryFilter, stockFilter]);
 
+  // Upload satu ATAU banyak foto sekaligus, lalu tambahkan ke akhir galeri
+  // (urutan = urutan tampil). Cover selalu disinkron ke foto pertama.
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     setIsUploading(true);
     setUploadError('');
     const fd = new FormData();
-    fd.append('file', file);
+    files.forEach((f) => fd.append('file', f));
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal mengunggah gambar.');
-      setForm((prev) => ({ ...prev, image: data.url }));
+      const newUrls = data.urls || (data.url ? [data.url] : []);
+      setForm((prev) => {
+        const existing = Array.isArray(prev.images) ? prev.images : [];
+        const merged = [...existing, ...newUrls];
+        return { ...prev, images: merged, image: merged[0] || prev.image };
+      });
     } catch (err) {
       setUploadError(err.message);
     } finally {
       setIsUploading(false);
+      // Reset input supaya memilih file yang sama lagi tetap memicu onChange.
+      e.target.value = '';
     }
+  };
+
+  // Geser posisi foto (dir -1 = kiri, +1 = kanan). Foto index 0 = cover.
+  const moveImage = (index, dir) => {
+    setForm((prev) => {
+      const imgs = [...(prev.images || [])];
+      const j = index + dir;
+      if (j < 0 || j >= imgs.length) return prev;
+      [imgs[index], imgs[j]] = [imgs[j], imgs[index]];
+      return { ...prev, images: imgs, image: imgs[0] || prev.image };
+    });
+  };
+
+  const removeImage = (index) => {
+    setForm((prev) => {
+      const imgs = (prev.images || []).filter((_, i) => i !== index);
+      return { ...prev, images: imgs, image: imgs[0] || '' };
+    });
+  };
+
+  // Pindahkan foto dari posisi drag ke posisi target (tarik-lepas).
+  const handleImageDrop = (targetIndex) => {
+    setForm((prev) => {
+      if (dragIndex === null || dragIndex === targetIndex) return prev;
+      const imgs = [...(prev.images || [])];
+      const [moved] = imgs.splice(dragIndex, 1);
+      imgs.splice(targetIndex, 0, moved);
+      return { ...prev, images: imgs, image: imgs[0] || prev.image };
+    });
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const openAdd = () => {
@@ -128,6 +172,17 @@ export default function AdminProductsPage() {
         parsedSizes = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
       }
     } catch { /* ignore */ }
+    // Galeri: parse `images` (Json). Fallback ke [image] untuk produk lama yang
+    // belum punya galeri.
+    let parsedImages = [];
+    try {
+      if (product.images) {
+        parsedImages = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+      }
+    } catch { /* ignore */ }
+    if (!Array.isArray(parsedImages) || parsedImages.length === 0) {
+      parsedImages = product.image ? [product.image] : [];
+    }
     setForm({
       name: product.name,
       price: product.price,
@@ -136,7 +191,8 @@ export default function AdminProductsPage() {
       form: product.form,
       coloration: product.coloration,
       description: product.description,
-      image: product.image,
+      image: parsedImages[0] || product.image,
+      images: parsedImages,
       isPremium: product.isPremium,
       statsForm: product.statsForm || 'COMP',
       age: product.age || '4 Month',
@@ -367,22 +423,75 @@ export default function AdminProductsPage() {
               </div>
 
               <div className={styles.formFullWidth}>
-                <label className={styles.formLabel} style={{ textAlign: 'center' }}>Foto Produk</label>
-                <div className={styles.uploadBox}>
-                  <div className={styles.previewThumb}>
-                    {form.image ? (
-                      <Image src={form.image} alt="Preview" fill style={{ objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>No Image</div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="file" accept="image/*" onChange={handleFileUpload} id="product-image-upload" style={{ display: 'none' }} />
-                    <label htmlFor="product-image-upload" className="btn btn-outline" style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}>
-                      {isUploading ? 'Mengunggah...' : 'Pilih Foto dari Komputer'}
-                    </label>
-                    {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
-                  </div>
+                <label className={styles.formLabel} style={{ textAlign: 'center' }}>Foto Produk (bisa lebih dari satu)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+
+                  {form.images && form.images.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: '0.75rem', width: '100%' }}>
+                      {form.images.map((url, index) => (
+                        <div
+                          key={`${url}-${index}`}
+                          draggable
+                          onDragStart={() => setDragIndex(index)}
+                          onDragOver={(e) => { e.preventDefault(); if (dragOverIndex !== index) setDragOverIndex(index); }}
+                          onDragLeave={() => setDragOverIndex((cur) => (cur === index ? null : cur))}
+                          onDrop={() => handleImageDrop(index)}
+                          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                          title="Seret untuk mengurutkan"
+                          style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${dragOverIndex === index ? 'var(--primary)' : (index === 0 ? 'var(--primary)' : 'var(--border-color)')}`, background: 'var(--bg-card)', cursor: 'grab', opacity: dragIndex === index ? 0.4 : 1, transition: 'opacity 0.15s ease, border-color 0.15s ease' }}
+                        >
+                          <Image src={url} alt={`Foto ${index + 1}`} fill sizes="96px" draggable={false} style={{ objectFit: 'cover' }} />
+
+                          {index === 0 && (
+                            <span style={{ position: 'absolute', top: '4px', left: '4px', background: 'var(--primary)', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px', letterSpacing: '0.03em' }}>
+                              COVER
+                            </span>
+                          )}
+
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.55)' }}>
+                            <button
+                              type="button"
+                              title="Geser ke kiri"
+                              aria-label="Geser ke kiri"
+                              disabled={index === 0}
+                              onClick={() => moveImage(index, -1)}
+                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5px 0', background: 'none', border: 'none', color: '#fff', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.35 : 1 }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                            </button>
+                            <button
+                              type="button"
+                              title="Hapus foto"
+                              aria-label="Hapus foto"
+                              onClick={() => removeImage(index)}
+                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5px 0', background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRight: '1px solid rgba(255,255,255,0.15)' }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            </button>
+                            <button
+                              type="button"
+                              title="Geser ke kanan"
+                              aria-label="Geser ke kanan"
+                              disabled={index === form.images.length - 1}
+                              onClick={() => moveImage(index, 1)}
+                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5px 0', background: 'none', border: 'none', color: '#fff', cursor: index === form.images.length - 1 ? 'not-allowed' : 'pointer', opacity: index === form.images.length - 1 ? 0.35 : 1 }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <input type="file" accept="image/*" multiple onChange={handleFileUpload} id="product-image-upload" style={{ display: 'none' }} />
+                  <label htmlFor="product-image-upload" className="btn btn-outline" style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}>
+                    {isUploading ? 'Mengunggah...' : (form.images?.length > 0 ? '+ Tambah Foto Lagi' : 'Pilih Foto dari Komputer')}
+                  </label>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, maxWidth: '340px' }}>
+                    Foto pertama (COVER) tampil sebagai thumbnail. Seret foto untuk mengurutkan (atau pakai tombol ◀ ▶) — user bisa geser galeri sesuai urutan ini.
+                  </p>
+                  {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
                 </div>
               </div>
 

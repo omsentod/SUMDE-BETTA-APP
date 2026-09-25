@@ -1,11 +1,29 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
 import styles from './productDetail.module.css';
+
+// Normalisasi galeri foto ke array URL yang aman ditampilkan. Prisma Json biasa
+// sudah balik sebagai array, tapi tetap toleran kalau berupa string JSON. Kalau
+// kosong, fallback ke cover tunggal (`image`) untuk produk lama.
+function toImageArray(images, fallbackImage) {
+    let arr = [];
+    if (Array.isArray(images)) {
+        arr = images;
+    } else if (typeof images === 'string') {
+        try {
+            const parsed = JSON.parse(images);
+            if (Array.isArray(parsed)) arr = parsed;
+        } catch { /* ignore */ }
+    }
+    arr = arr.filter((u) => typeof u === 'string' && u);
+    if (arr.length === 0 && fallbackImage) arr = [fallbackImage];
+    return arr;
+}
 
 export default function ProductDetailClient() {
     const { id } = useParams();
@@ -14,6 +32,8 @@ export default function ProductDetailClient() {
     const { products, isLoading } = useProducts();
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
+    const [activeIndex, setActiveIndex] = useState(0);
+    const touchStartX = useRef(null);
 
     const product = products.find((p) => p.id === id);
 
@@ -22,8 +42,10 @@ export default function ProductDetailClient() {
     useEffect(() => {
         if (!product) return;
         const firstAvailable = product.sizes?.find((s) => s.quantity > 0)?.size || '';
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync state turunan saat pindah produk (id berubah)
         setSelectedSize(firstAvailable);
         setSizeError('');
+        setActiveIndex(0); // kembali ke foto pertama saat pindah produk
     }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (isLoading) {
@@ -73,28 +95,97 @@ export default function ProductDetailClient() {
 
     const canBuy = !product.isSold && product.quantity > 0;
 
+    // Galeri berurutan sesuai urutan yang di-set admin.
+    const gallery = toImageArray(product.images, product.image);
+    const idx = gallery.length > 0 ? Math.min(activeIndex, gallery.length - 1) : 0;
+    const hasMultiple = gallery.length > 1;
+
+    const goTo = (dir) => {
+        const n = gallery.length;
+        if (n <= 1) return;
+        setActiveIndex((prev) => (Math.min(prev, n - 1) + dir + n) % n);
+    };
+    const onTouchStart = (e) => { touchStartX.current = e.touches[0]?.clientX ?? null; };
+    const onTouchEnd = (e) => {
+        if (touchStartX.current == null) return;
+        const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+        if (Math.abs(dx) > 40) goTo(dx < 0 ? 1 : -1);
+        touchStartX.current = null;
+    };
+
     return (
         <div className={styles.page}>
             <section className={styles.section}>
                 <div className="container">
                     <div className={styles.grid}>
 
-                        {/* Image */}
+                        {/* Image gallery — geser sesuai urutan yang di-set admin */}
                         <div>
-                            <div className={styles.imageFrame}>
+                            <div
+                                className={styles.imageFrame}
+                                onTouchStart={onTouchStart}
+                                onTouchEnd={onTouchEnd}
+                            >
                                 <Image
-                                    src={product.image}
-                                    alt={product.name}
+                                    src={gallery[idx] || product.image}
+                                    alt={`${product.name}${hasMultiple ? ` — foto ${idx + 1} dari ${gallery.length}` : ''}`}
                                     fill
                                     sizes="(max-width: 900px) 100vw, 50vw"
                                     className={styles.image}
+                                    priority
                                 />
+
                                 {product.isSold && (
                                     <div className={styles.soldOverlay}>
                                         <span className={styles.soldBadge}>Arsip</span>
                                     </div>
                                 )}
+
+                                {hasMultiple && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className={`${styles.galleryNav} ${styles.galleryPrev}`}
+                                            onClick={() => goTo(-1)}
+                                            aria-label="Foto sebelumnya"
+                                        >
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`${styles.galleryNav} ${styles.galleryNext}`}
+                                            onClick={() => goTo(1)}
+                                            aria-label="Foto berikutnya"
+                                        >
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                                        </button>
+                                        <div className={styles.galleryDots}>
+                                            {gallery.map((_, i) => (
+                                                <span
+                                                    key={i}
+                                                    className={`${styles.galleryDot} ${i === idx ? styles.galleryDotActive : ''}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
+
+                            {hasMultiple && (
+                                <div className={styles.thumbStrip}>
+                                    {gallery.map((url, i) => (
+                                        <button
+                                            key={`${url}-${i}`}
+                                            type="button"
+                                            className={`${styles.thumb} ${i === idx ? styles.thumbActive : ''}`}
+                                            onClick={() => setActiveIndex(i)}
+                                            aria-label={`Lihat foto ${i + 1}`}
+                                        >
+                                            <Image src={url} alt={`${product.name} ${i + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Info — punya class `infoColumn` supaya mobile bisa jadi flex + reorder */}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { normalizeImages } from '@/lib/productImages';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export async function PUT(request, { params }) {
   try {
     await requireAdmin(request);
     const { id } = await params;
-    const { name, price, category, gender, form, coloration, description, image, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes } = await request.json();
     const dataToUpdate = {};
     if (name !== undefined) dataToUpdate.name = name;
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
@@ -28,7 +29,20 @@ export async function PUT(request, { params }) {
     if (form !== undefined) dataToUpdate.form = form;
     if (coloration !== undefined) dataToUpdate.coloration = coloration;
     if (description !== undefined) dataToUpdate.description = description;
-    if (image !== undefined) dataToUpdate.image = image;
+    // Galeri: kalau `images` dikirim, simpan array berurutan + sinkronkan cover
+    // (`image` = images[0]). Kalau hanya `image` tunggal yang dikirim (pemanggil
+    // lama), tetap dukung — sekaligus jaga `images` konsisten.
+    if (images !== undefined) {
+      const gallery = normalizeImages(images, image);
+      if (gallery.length === 0) {
+        return NextResponse.json({ error: 'Produk harus punya minimal 1 foto.' }, { status: 400 });
+      }
+      dataToUpdate.images = gallery;
+      dataToUpdate.image = gallery[0];
+    } else if (image !== undefined) {
+      dataToUpdate.image = image;
+      dataToUpdate.images = normalizeImages([image], image);
+    }
     if (isPremium !== undefined) dataToUpdate.isPremium = Boolean(isPremium);
     if (statsForm !== undefined) dataToUpdate.statsForm = statsForm;
     if (age !== undefined) dataToUpdate.age = age;
