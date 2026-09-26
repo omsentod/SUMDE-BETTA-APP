@@ -7,7 +7,25 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import SizePickerModal from './SizePickerModal';
 
-export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, category, description, statsForm, age, statsSpirit, sizes }) {
+// Normalisasi galeri foto ke array URL yang aman ditampilkan. Prisma Json biasa
+// sudah balik sebagai array, tapi tetap toleran kalau berupa string JSON. Kalau
+// kosong, fallback ke cover tunggal (`image`).
+function toGallery(images, fallbackImage) {
+    let arr = [];
+    if (Array.isArray(images)) {
+        arr = images;
+    } else if (typeof images === 'string') {
+        try {
+            const parsed = JSON.parse(images);
+            if (Array.isArray(parsed)) arr = parsed;
+        } catch { /* ignore */ }
+    }
+    arr = arr.filter((u) => typeof u === 'string' && u);
+    if (arr.length === 0 && fallbackImage) arr = [fallbackImage];
+    return arr;
+}
+
+export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity }) {
     const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -59,7 +77,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
         touchStartX.current = null;
     };
 
-    const productPayload = { id, name, price, form, coloration, gender, image, category, description, statsForm, age, statsSpirit, sizes, quantity };
+    const productPayload = { id, name, price, form, coloration, gender, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity };
 
     const commitAddToCart = (selectedSize) => {
         addToCart({ ...productPayload, selectedSize });
@@ -142,23 +160,26 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                         </div>
                     )}
 
-                    {/* Badges container */}
+                    {/* Badges container (Kiri Atas) */}
                     <div className={styles.badgesContainer}>
-                        {effectiveSold ? (
+                        {effectiveSold && (
                             <span className={styles.badgeSold}>
                                 Terjual
                             </span>
-                        ) : isLowStock ? (
-                            <span className={styles.badgeLowStock}>
-                                Sisa {totalStock}
-                            </span>
-                        ) : null}
+                        )}
                         {isPremium && !effectiveSold && (
                             <span className={styles.badgePremium}>
                                 Premium
                             </span>
                         )}
                     </div>
+
+                    {/* Badge Sisa Stok (Kanan Atas) */}
+                    {isLowStock && (
+                        <span className={styles.badgeLowStock}>
+                            Sisa {totalStock}
+                        </span>
+                    )}
                 </div>
 
                 {/* Content Container */}

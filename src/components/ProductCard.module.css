@@ -48,7 +48,7 @@
 }
 
 .badgesContainer {
-    @apply absolute top-2 left-2 flex flex-col gap-1;
+    @apply absolute top-2 left-2 flex flex-col gap-1 z-[2];
 }
 
 @media (min-width: 640px) {
@@ -61,17 +61,20 @@
     @apply bg-slate-800 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-sm;
 }
 
-.badgeLowStock {
-    @apply bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm tracking-wide;
-}
-
 .badgePremium {
     @apply bg-amber-500 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full shadow-sm;
 }
 
+.badgeLowStock {
+    @apply absolute top-2 right-2 z-[2] bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm tracking-wide;
+}
+
 @media (min-width: 640px) {
-    .badgeSold, .badgeLowStock, .badgePremium {
+    .badgeSold, .badgePremium {
         @apply text-xs px-3 py-1 shadow-md;
+    }
+    .badgeLowStock {
+        @apply top-3 right-3 text-xs px-3 py-1 shadow-md;
     }
 }
 
