@@ -46,11 +46,60 @@ ls ~/domains/<DOMAIN>/hbuilds/versions/
 npx prisma@6.19.3 db push --schema=$HOME/domains/<DOMAIN>/hbuilds/last-source/prisma/schema.prisma
 ```
 
+> Wajib pakai `--schema=...last-source/...`. Folder `versions/<UUID>/nodejs/` tidak berisi `prisma/schema.prisma`, jadi `npm run db:push` biasa akan error `Could not find Prisma Schema`.
+>
+> Warning `package.json#prisma is deprecated` boleh diabaikan — itu cuma pemberitahuan untuk Prisma 7, **jangan** upgrade ke Prisma 7 (breaking change: wajib driver adapter + `prisma.config.ts`).
+
+Sukses kalau muncul: `Your database is now in sync with your Prisma schema`.
+
 Setelah push schema, restart app:
 ```bash
 cd ~/domains/<DOMAIN>/hbuilds/versions/<UUID>/nodejs/
 mkdir -p tmp && touch tmp/restart.txt
 ```
+
+### Fallback: `db push` macet (diam setelah baris `Datasource "db": MySQL database ...`)
+
+Schema engine Prisma kadang hang di shared env Hostinger. Tunggu 1–2 menit, `Ctrl+C`, retry sekali. Kalau tetap macet, ubah tabel manual lewat `mysql` CLI (env dari langkah 2 harus sudah di-load).
+
+```bash
+# 1. Cek user DB (password disamarkan)
+echo "$DATABASE_URL" | sed 's/:[^:@]*@/:****@/'
+#    → mysql://<DB_USER>:****@localhost/<DB_NAME>?socket=/var/lib/mysql/mysql.sock
+
+# 2. Tes koneksi + lihat kolom tabel yang berubah (password diketik manual)
+mysql -u <DB_USER> -p -S /var/lib/mysql/mysql.sock -e "SHOW COLUMNS FROM <Tabel>;" <DB_NAME>
+
+# 3. Bandingkan dengan prisma/schema.prisma, lalu jalankan ALTER untuk yang kurang
+mysql -u <DB_USER> -p -S /var/lib/mysql/mysql.sock -e "ALTER TABLE <Tabel> ADD COLUMN <kolom> <TIPE> NULL;" <DB_NAME>
+
+# 4. Verifikasi, lalu restart app (lihat di atas)
+mysql -u <DB_USER> -p -S /var/lib/mysql/mysql.sock -e "SHOW COLUMNS FROM <Tabel> LIKE '<kolom>';" <DB_NAME>
+```
+
+Mapping tipe Prisma → MySQL/MariaDB yang dipakai project ini:
+
+| Prisma | SQL |
+|---|---|
+| `String` | `VARCHAR(191) NOT NULL` |
+| `String @db.Text` | `TEXT NOT NULL` |
+| `String?` | `VARCHAR(191) NULL` |
+| `Int @default(1)` | `INT NOT NULL DEFAULT 1` |
+| `Float` | `DOUBLE NOT NULL` |
+| `Boolean @default(false)` | `TINYINT(1) NOT NULL DEFAULT 0` |
+| `Json?` | `JSON NULL` (MariaDB tampil sebagai `longtext` — normal) |
+| `DateTime @default(now())` | `DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)` |
+
+Contoh nyata (galeri foto produk):
+```sql
+ALTER TABLE Product ADD COLUMN images JSON NULL AFTER image;
+```
+
+Tips:
+- Kolom baru sebaiknya **nullable atau punya default** — aman untuk baris lama, tanpa data loss.
+- Jangan `DROP COLUMN` / ubah tipe kolom tanpa backup dulu (hPanel → Databases → phpMyAdmin → Export).
+- Kalau `mysql` CLI error `Access denied`, reset password DB user di hPanel sesuai `DATABASE_URL`.
+- Alternatif tanpa SSH: jalankan SQL yang sama di **hPanel → Databases → phpMyAdmin → tab SQL**.
 
 ---
 
@@ -133,6 +182,10 @@ Kalau ada error di console.log → cek kolom error dan fix di kode → push ulan
 
 ### Seed script panic "timer has gone away"
 - Bug Prisma engine di Hostinger shared env. Coba retry, kalau tetap gagal, insert data manual via phpMyAdmin SQL.
+
+### `console.log` penuh "✓ Ready" berulang + `Error: Server is not running`
+- Normal setelah restart: Passenger spawn beberapa worker (tiap worker log "Ready"), dan worker lama yang di-shutdown melempar `Server is not running`. Tidak berbahaya.
+- Yang perlu diwaspadai: `PrismaClientKnownRequestError`, `Unknown column`, `P2022` → schema DB belum sync (lihat bagian perubahan schema di atas).
 
 ### `npx` / `node` command not found di SSH
 - PATH belum load Node. Jalankan:
