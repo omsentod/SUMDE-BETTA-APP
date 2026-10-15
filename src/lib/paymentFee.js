@@ -41,11 +41,11 @@ export const PAYMENT_METHODS = {
   },
 
   // ---------- Virtual Account (SNAP) ----------
-  VA_BCA: { label: 'BCA Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BCA', fee: { flat: 4000 }, inactive: true }, // dimatikan DOKU per 2026-10-15
+  VA_BCA: { label: 'BCA Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BCA', fee: { flat: 4000 } },
   VA_BNI: { label: 'BNI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BNI', fee: { flat: 4000 } },
   VA_BRI: { label: 'BRI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BRI', fee: { flat: 4000 } },
-  VA_MANDIRI: { label: 'Mandiri Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_MANDIRI', fee: { flat: 4000 }}, // belum aktif di akun DOKU merchant production
-  VA_BSI: { label: 'BSI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BSI', fee: { flat: 4000 }, inactive: true },
+  VA_MANDIRI: { label: 'Mandiri Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_MANDIRI', fee: { flat: 4000 } },
+  VA_BSI: { label: 'BSI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BSI', fee: { flat: 4000 } },
   VA_PERMATA: { label: 'Permata Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_PERMATA', fee: { flat: 4000 } },
   VA_CIMB: { label: 'CIMB Niaga Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_CIMB', fee: { flat: 4000 } },
   VA_DANAMON: { label: 'Danamon Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_DANAMON', fee: { flat: 4000 } },
@@ -61,7 +61,6 @@ export const PAYMENT_METHODS = {
     category: 'E-Wallet',
     dokuType: 'EMONEY_DOKU',
     fee: { percent: 0.015 },
-    inactive: true, // belum di-enable di merchant account
   },
 
   // ---------- Paylater ----------

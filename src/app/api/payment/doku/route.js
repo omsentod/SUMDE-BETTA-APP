@@ -73,7 +73,7 @@ export async function POST(request) {
       // Safety net kalau registry drift dari dashboard DOKU (channel dimatikan
       // tanpa update kode). Ulangi sekali tanpa filter supaya user tetap bisa
       // membayar lewat katalog penuh, bukan buntu di layar error.
-      const channelDown = /PAYMENT CHANNEL IS INACTIVE/i.test(err.message || '');
+      const channelDown = /CHANNEL.*(?:INACTIVE|NOT.*ACTIVE|NOT.*FOUND|NOT.*CONFIGURED|INVALID)|INACTIVE.*CHANNEL/i.test(err.message || '');
       if (!channelDown || !paymentMethodTypes) throw err;
 
       // Auto-detect: catat channel ini sebagai inactive supaya picker

@@ -63,6 +63,13 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
     return () => { cancelled = true; };
   }, []);
 
+  // If the currently selected method became inactive/hidden, reset selection
+  useEffect(() => {
+    if (value && selectable.length > 0 && !selectable.some((m) => m.key === value)) {
+      onChange?.(null);
+    }
+  }, [selectable, value, onChange]);
+
   // Group methods by category
   const grouped = useMemo(() => {
     const out = {};

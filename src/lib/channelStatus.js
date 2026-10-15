@@ -18,8 +18,20 @@
 // How long a detected-inactive channel stays hidden before we retry.
 const RECOVERY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+// Initial known inactive channels on production merchant account.
+// They start hidden, but after 24h the system will auto-probe them.
+// If DOKU enables any of them, it automatically reappears!
+const initialInactiveSeed = [
+  'VIRTUAL_ACCOUNT_BCA',
+  'VIRTUAL_ACCOUNT_BANK_MANDIRI',
+  'VIRTUAL_ACCOUNT_BSI',
+  'EMONEY_DOKU',
+];
+
 // Map<dokuType, { detectedAt: number }>
-const inactiveChannels = new Map();
+const inactiveChannels = new Map(
+  initialInactiveSeed.map((type) => [type, { detectedAt: Date.now() }])
+);
 
 /**
  * Record that DOKU rejected this channel as inactive.
