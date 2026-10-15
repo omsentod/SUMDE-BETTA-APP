@@ -12,9 +12,9 @@ const SUCCESS_STATUSES = ['SUCCESS'];
 const FAILED_STATUSES = ['FAILED', 'EXPIRED', 'VOID', 'CANCELLED'];
 
 // Reject webhooks whose timestamp header is further than this from server clock.
-// DOKU normally delivers within seconds; anything older is either replay or a
-// broken retry. Keep generous to survive minor clock drift.
-const MAX_TIMESTAMP_SKEW_MS = 5 * 60 * 1000; // 5 minutes
+// DOKU normally delivers within seconds; retries or minor server clock drift can
+// cause delays. 15 minutes handles retries safely while preventing stale replays.
+const MAX_TIMESTAMP_SKEW_MS = 15 * 60 * 1000; // 15 minutes
 
 // Constant-time signature comparison (P2-d).
 function signaturesMatch(received, expected) {
@@ -101,21 +101,35 @@ export async function POST(request) {
     }
 
     const payload = JSON.parse(rawBody);
-    const invoiceNumber = payload.order?.invoice_number;
+    const invoiceNumber = payload.order?.invoice_number || payload.invoice_number;
     // Extract actual order ID (strip off the timestamp suffix if present)
-    const actualOrderId = invoiceNumber ? invoiceNumber.split('_')[0] : null;
-    const rawStatus = payload.payment?.status;
+    const actualOrderId = invoiceNumber ? String(invoiceNumber).split('_')[0] : null;
+
+    // DOKU Checkout Notification sends status in transaction.status (e.g. "SUCCESS").
+    // We also fallback to order.status or payment.status for backward compatibility.
+    const rawStatus =
+      payload.transaction?.status ||
+      payload.order?.status ||
+      payload.payment?.status ||
+      payload.transaction_status;
 
     if (!actualOrderId || !rawStatus) {
+      console.error('Doku webhook rejected: invalid payload structure.', {
+        hasInvoice: !!invoiceNumber,
+        actualOrderId,
+        rawStatus,
+        keys: Object.keys(payload || {}),
+      });
       return NextResponse.json({ error: 'Invalid webhook payload structure.' }, { status: 400 });
     }
-    const paymentStatus = rawStatus.toUpperCase();
+    const paymentStatus = String(rawStatus).toUpperCase();
 
     const order = await prisma.order.findUnique({
       where: { id: actualOrderId },
       include: { items: { include: { product: true } } },
     });
     if (!order) {
+      console.warn(`Doku Webhook: Order matching invoice not found (actualOrderId=${actualOrderId}).`);
       return NextResponse.json({ error: 'Order matching invoice not found.' }, { status: 404 });
     }
 
@@ -131,12 +145,13 @@ export async function POST(request) {
       // Defense-in-depth: refuse to mark the order paid unless DOKU's reported
       // amount matches what we stored server-side. Guards against any path
       // where the price sent to DOKU could drift from what we charge.
-      const paidAmount = Number(payload.order?.amount);
+      const rawAmount = payload.order?.amount ?? payload.amount?.value ?? payload.transaction?.amount;
+      const paidAmount = Number(rawAmount);
       const expectedAmount = Math.round(order.total);
       if (!Number.isFinite(paidAmount) || paidAmount !== expectedAmount) {
         console.error(
           `Doku Webhook: amount mismatch for order ${actualOrderId} — ` +
-          `expected ${expectedAmount}, got ${paidAmount}. Leaving PENDING for human review.`
+          `expected ${expectedAmount}, got ${paidAmount} (raw: ${rawAmount}). Leaving PENDING for human review.`
         );
         return NextResponse.json({ error: 'Amount mismatch.' }, { status: 400 });
       }

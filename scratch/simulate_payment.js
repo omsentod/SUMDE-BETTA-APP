@@ -65,14 +65,14 @@ async function processOrder(orderId) {
         });
       }
 
-      // 2. Update order status
+      // 2. Update order status to PAID (Order Status Lifecycle: PENDING -> PAID -> PROCESSING)
       await tx.order.update({
         where: { id: orderId },
-        data: { status: 'PROCESSING' }
+        data: { status: 'PAID' }
       });
     });
 
-    console.log(`✓ SUKSES! Status Order "${orderId}" sekarang: PROCESSING.`);
+    console.log(`✓ SUKSES! Status Order "${orderId}" sekarang: PAID (stok terpotong, siap diproses admin).`);
     return true;
   } catch (error) {
     console.error(`Gagal memproses simulasi pembayaran untuk "${orderId}":`, error);

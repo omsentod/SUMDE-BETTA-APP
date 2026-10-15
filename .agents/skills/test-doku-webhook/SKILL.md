@@ -57,6 +57,7 @@ async function main() {
       invoice_number: `${order.id}_${Date.now()}`,
       amount: Math.round(order.total),
     },
+    transaction: { status: statusArg },
     payment: { status: statusArg },
   };
   const body = JSON.stringify(payload);
@@ -96,8 +97,8 @@ main().catch((e) => { console.error(e); process.exit(1); });
 
 | Scenario | Command | Expected |
 |---|---|---|
-| Happy path | `node scratch/test_webhook.js <id> SUCCESS` | 200 + order PROCESSING + stock decrement |
-| Replay | run happy path twice | 2nd: 200, order stays PROCESSING (idempotent) |
+| Happy path | `node scratch/test_webhook.js <id> SUCCESS` | 200 + order PAID + stock decrement |
+| Replay | run happy path twice | 2nd: 200, order stays PAID (idempotent) |
 | Wrong amount | edit script → `amount: 1` | 400 "Amount mismatch." + PENDING preserved |
 | Stale timestamp | edit script → `timestamp = new Date(Date.now() - 600000)...` | 401 "Timestamp out of range." |
 | Bad signature | edit script → append 'x' to signature | 401 "Signature mismatch." |
