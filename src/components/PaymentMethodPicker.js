@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PaymentLogo from './PaymentLogo';
 import {
   PAYMENT_METHODS,
@@ -41,10 +41,27 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
   // Accordion state: default null (all dropdowns closed by default)
   const [openCategory, setOpenCategory] = useState(null);
 
-  // Channel yang benar-benar hidup di merchant account. Channel `inactive`
-  // sengaja tidak ditawarkan — DOKU akan menolaknya dengan
-  // "PAYMENT CHANNEL IS INACTIVE" saat user menekan bayar.
-  const selectable = useMemo(() => getSelectableMethods(), []);
+  // Fetch available channels from server (includes runtime auto-detection).
+  // Falls back to hardcoded list if API is unavailable.
+  const [selectable, setSelectable] = useState(() => getSelectableMethods());
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchChannels() {
+      try {
+        const res = await fetch('/api/payment/channels');
+        if (!res.ok) return; // keep hardcoded fallback
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data.methods) && data.methods.length > 0) {
+          setSelectable(data.methods);
+        }
+      } catch {
+        // Network error — keep hardcoded fallback silently
+      }
+    }
+    fetchChannels();
+    return () => { cancelled = true; };
+  }, []);
 
   // Group methods by category
   const grouped = useMemo(() => {

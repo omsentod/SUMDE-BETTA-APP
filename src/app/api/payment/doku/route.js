@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createCheckoutSession } from '@/lib/doku';
 import { PAYMENT_METHODS } from '@/lib/paymentFee';
+import { markChannelInactive, isChannelRuntimeInactive } from '@/lib/channelStatus';
 
 export async function POST(request) {
   try {
@@ -21,12 +22,16 @@ export async function POST(request) {
     }
 
     // Restrict DOKU hosted page to the specific channel the customer picked
-    // when creating the order. If paymentMethod is missing (legacy orders
-    // pre-picker) or the channel is flagged inactive on this merchant account,
-    // leave the filter off so DOKU shows the full catalog instead of rejecting
-    // the whole session with "PAYMENT CHANNEL IS INACTIVE".
+    // when creating the order. Skip filter if:
+    //  - paymentMethod missing (legacy orders pre-picker)
+    //  - channel hardcoded inactive in paymentFee.js
+    //  - channel recently detected inactive at runtime (auto-detect)
     const method = order.paymentMethod ? PAYMENT_METHODS[order.paymentMethod] : null;
-    const paymentMethodTypes = method?.dokuType && !method.inactive ? [method.dokuType] : undefined;
+    const channelHardcodeInactive = !!method?.inactive;
+    const channelRuntimeInactive = method?.dokuType ? isChannelRuntimeInactive(method.dokuType) : false;
+    const paymentMethodTypes = method?.dokuType && !channelHardcodeInactive && !channelRuntimeInactive
+      ? [method.dokuType]
+      : undefined;
 
     // Request Checkout Session from Doku Sandbox
     // Append timestamp to avoid 'INVOICE ALREADY USED' if retrying payment
@@ -71,8 +76,13 @@ export async function POST(request) {
       const channelDown = /PAYMENT CHANNEL IS INACTIVE/i.test(err.message || '');
       if (!channelDown || !paymentMethodTypes) throw err;
 
+      // Auto-detect: catat channel ini sebagai inactive supaya picker
+      // langsung menyembunyikannya untuk visitor berikutnya (tanpa deploy).
+      markChannelInactive(method?.dokuType);
+
       console.warn(
-        `Doku: channel ${method?.dokuType} inactive for order ${order.id}. Retrying with full catalog.`
+        `Doku: channel ${method?.dokuType} inactive for order ${order.id}. ` +
+        `Marked as runtime-inactive (auto-recovery 24h). Retrying with full catalog.`
       );
       dokuResponse = await createCheckoutSession({
         invoiceNumber: `${order.id}_${Date.now()}`,
