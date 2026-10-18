@@ -199,6 +199,28 @@
     .title { font-size: 2.25rem; }
 }
 
+.priceRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.soldBadgeTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 9999px;
+    background: var(--dropdown-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 /* --- Prominent price block (pola marketplace: harga besar di bawah title) --- */
 .priceBlock {
     display: flex;
@@ -207,7 +229,7 @@
     padding: 1rem 1.25rem;
     background: color-mix(in oklab, var(--primary) 8%, transparent);
     border-radius: 12px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0;
     border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
 }
 
@@ -560,3 +582,81 @@ border-color: var(--primary);
     background: color-mix(in oklab, var(--primary) 6%, transparent);
     border-radius: 999px;
 }
+
+/* --- Produk Serupa (Content-Based Recommendation Section) --- */
+.similarSection {
+    padding: 5rem 0 6rem;
+    border-top: 1px solid var(--border-color);
+    background: color-mix(in oklab, var(--bg-card) 40%, transparent);
+}
+
+.similarHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2.5rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.similarEyebrow {
+    display: block;
+    color: var(--primary);
+    letter-spacing: 0.15rem;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.similarTitle {
+    font-family: var(--font-serif);
+    font-size: 2.4rem;
+    line-height: 1.2;
+    color: var(--text-main);
+    font-style: italic;
+    margin: 0 0 0.4rem 0;
+}
+
+.similarSubtitle {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.similarViewAll {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent);
+    background: color-mix(in oklab, var(--primary) 6%, transparent);
+    transition: all 0.2s ease;
+}
+
+.similarViewAll:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateX(2px);
+}
+
+@media (max-width: 768px) {
+    .similarSection {
+        padding: 3.5rem 0 5rem;
+    }
+    .similarTitle {
+        font-size: 1.85rem;
+    }
+    .similarHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+}
+

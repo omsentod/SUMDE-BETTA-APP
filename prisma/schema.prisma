@@ -133,6 +133,7 @@ model Product {
   // = urutan tampil yang di-set admin; user bisa geser sesuai urutan ini.
   // Nullable untuk kompatibilitas baris lama yang cuma punya `image`.
   images      Json?
+  soldCount   Int      @default(0)
   isSold      Boolean  @default(false)
   isPremium   Boolean  @default(false)
   isArchived  Boolean  @default(false)

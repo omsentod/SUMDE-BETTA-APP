@@ -119,12 +119,32 @@
 }
 
 .price {
-    @apply text-sm font-bold text-[#FF6B35] mb-3;
+    @apply text-sm font-bold text-[#FF6B35];
 }
 
 @media (min-width: 640px) {
     .price {
-        @apply text-lg mb-5;
+        @apply text-lg;
+    }
+}
+
+.priceRow {
+    @apply flex items-baseline justify-between gap-2 mb-3 mt-auto;
+}
+
+@media (min-width: 640px) {
+    .priceRow {
+        @apply mb-4;
+    }
+}
+
+.soldCount {
+    @apply text-[10px] text-[var(--text-muted)] font-medium whitespace-nowrap bg-[var(--dropdown-bg)] border border-[var(--border-color)] px-1.5 py-0.5 rounded-md;
+}
+
+@media (min-width: 640px) {
+    .soldCount {
+        @apply text-xs px-2 py-0.5;
     }
 }
 

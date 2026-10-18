@@ -71,12 +71,14 @@ async function restockOrder(tx, order) {
       newTotalQty = product.quantity + item.quantity;
     }
 
+    const decrementAmount = Math.min(product.soldCount || 0, item.quantity);
     await tx.product.update({
       where: { id: product.id },
       data: {
         sizes: updatedSizes ?? undefined,
         quantity: newTotalQty,
         isSold: newTotalQty === 0,
+        soldCount: decrementAmount > 0 ? { decrement: decrementAmount } : undefined,
       },
     });
   }

@@ -51,6 +51,7 @@ async function decrementStockForOrder(tx, order) {
         sizes: updatedSizes ?? undefined,
         quantity: newTotalQty,
         isSold: newTotalQty === 0,
+        soldCount: { increment: item.quantity },
       },
     });
   }

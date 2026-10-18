@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import ManageableSelect from '@/components/admin/ManageableSelect';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
+import BulkProductModal from '@/components/admin/BulkProductModal';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const DEFAULT_CATEGORIES = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'];
@@ -29,6 +30,7 @@ const emptyProductForm = () => ({
   statsSpirit: 'Aktif',
   quantity: 1,
   sizes: [],
+  soldCount: 0,
 });
 
 const formatCurrency = (v) =>
@@ -36,7 +38,7 @@ const formatCurrency = (v) =>
 
 export default function AdminProductsPage() {
   const { currentUser, isLoading: authLoading } = useAuth();
-  const { products, addProduct, updateProduct, deleteProduct, isLoading: productsLoading } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, isLoading: productsLoading, fetchProducts } = useProducts();
   const router = useRouter();
 
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
@@ -49,6 +51,7 @@ export default function AdminProductsPage() {
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [currentEdit, setCurrentEdit] = useState(null);
   const [form, setForm] = useState(emptyProductForm());
 
@@ -199,6 +202,7 @@ export default function AdminProductsPage() {
       statsSpirit: product.statsSpirit || 'Aktif',
       quantity: product.quantity ?? 1,
       sizes: parsedSizes || [],
+      soldCount: product.soldCount ?? 0,
     });
     setIsEditOpen(true);
   };
@@ -260,6 +264,19 @@ export default function AdminProductsPage() {
           </div>
           <div className={styles.headerButtons}>
             <button
+              type="button"
+              onClick={() => setIsBulkOpen(true)}
+              className="btn btn-outline"
+              style={{ borderRadius: '30px', padding: '0.65rem 1.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Bulk Upload
+            </button>
+            <button
               onClick={openAdd}
               className="btn btn-primary"
               style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
@@ -313,6 +330,7 @@ export default function AdminProductsPage() {
                   <th className={styles.hideOnMobile}>Kategori & Ukuran</th>
                   <th>Harga</th>
                   <th>Status Stok</th>
+                  <th>Terjual</th>
                   <th style={{ textAlign: 'right' }}>Aksi</th>
                 </tr>
               </thead>
@@ -357,6 +375,11 @@ export default function AdminProductsPage() {
                       ) : (
                         <span className={`${styles.badge} ${styles.badgeMuted}`}>Habis</span>
                       )}
+                    </td>
+                    <td>
+                      <span className={styles.badge} style={{ background: 'var(--dropdown-bg)', border: '1px solid var(--border-color)', color: 'var(--text-main)', fontVariantNumeric: 'tabular-nums' }}>
+                        {product.soldCount || 0}
+                      </span>
                     </td>
                     <td>
                       <div className={styles.actionGroup}>
@@ -609,6 +632,22 @@ export default function AdminProductsPage() {
                 />
               </div>
 
+              <div>
+                <label className={styles.formLabel}>
+                  Terjual (Display)
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.35rem', fontWeight: 'normal' }}>
+                    (Bisa diedit manual & tidak mengubah laporan keuangan)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className={styles.formInput}
+                  value={form.soldCount ?? 0}
+                  onChange={(e) => setForm({ ...form, soldCount: Math.max(0, parseInt(e.target.value) || 0) })}
+                />
+              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.2rem' }}>
                 <input
                   type="checkbox"
@@ -639,6 +678,11 @@ export default function AdminProductsPage() {
       )}
 
       <AdminConfirmModal state={confirm.state} onClose={confirm.close} />
+      <BulkProductModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        onComplete={() => fetchProducts()}
+      />
     </div>
   );
 }

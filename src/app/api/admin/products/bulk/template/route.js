@@ -1,0 +1,148 @@
+import { NextResponse } from 'next/server';
+import * as XLSX from 'xlsx';
+import { requireAdmin } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request) {
+  try {
+    await requireAdmin(request);
+
+    // Definisi kolom template produk
+    const templateData = [
+      {
+        'Nama Produk': 'Halfmoon Super Red High Quality',
+        'Harga': 350000,
+        'Kategori': 'Halfmoon',
+        'Gender': 'Male',
+        'Corak Warna': 'Super Red',
+        'Deskripsi': 'Ikan cupang Halfmoon warna merah solid pekat, bukaan ekor 180 derajat full over spread.',
+        'Stok': 1,
+        'Grade Bentuk': 'COMP',
+        'Umur': '4.5 Month',
+        'Ukuran': 'M:1',
+        'Terjual': 8,
+        'Premium': 'Ya',
+      },
+      {
+        'Nama Produk': 'Plakat Multicolor Fancy Top Grade',
+        'Harga': 275000,
+        'Kategori': 'Plakat',
+        'Gender': 'Male',
+        'Corak Warna': 'Multicolor',
+        'Deskripsi': 'Form tebal, mental aktif agresif, warna motif galaxy rapi.',
+        'Stok': 3,
+        'Grade Bentuk': 'COMP',
+        'Umur': '4 Month',
+        'Ukuran': 'S:1, M:2',
+        'Terjual': 24,
+        'Premium': 'Tidak',
+      },
+    ];
+
+    // Buat sheet petunjuk
+    const guideData = [
+      {
+        'Kolom': 'Nama Produk',
+        'Status': 'Wajib',
+        'Keterangan': 'Nama produk cupang. Nama folder di file ZIP foto WAJIB SAMA PERSIS dengan kolom ini.',
+      },
+      {
+        'Kolom': 'Harga',
+        'Status': 'Wajib',
+        'Keterangan': 'Nominal harga dalam Rupiah (hanya angka tanpa Rp / titik / koma, contoh: 250000).',
+      },
+      {
+        'Kolom': 'Kategori',
+        'Status': 'Opsional',
+        'Keterangan': 'Plakat, Halfmoon, Crowntail, Giant, Double Tail, atau Dumbo Ear (default: Plakat).',
+      },
+      {
+        'Kolom': 'Gender',
+        'Status': 'Opsional',
+        'Keterangan': 'Male, Female, atau Pair (default: Male).',
+      },
+      {
+        'Kolom': 'Corak Warna',
+        'Status': 'Opsional',
+        'Keterangan': 'Contoh: Multicolor, Blue Rim, Super Red, Black Samurai, Koi Galaxy (default: Multicolor).',
+      },
+      {
+        'Kolom': 'Deskripsi',
+        'Status': 'Opsional',
+        'Keterangan': 'Deskripsi lengkap spesimen dan keunggulan ikan.',
+      },
+      {
+        'Kolom': 'Stok',
+        'Status': 'Opsional',
+        'Keterangan': 'Jumlah stok jika tidak menggunakan varian ukuran (default: 1).',
+      },
+      {
+        'Kolom': 'Grade Bentuk',
+        'Status': 'Opsional',
+        'Keterangan': 'COMP, COMPETITION, A, B, atau C (default: COMP).',
+      },
+      {
+        'Kolom': 'Umur',
+        'Status': 'Opsional',
+        'Keterangan': 'Contoh: 4 Month, 5 Month (default: 4 Month).',
+      },
+      {
+        'Kolom': 'Ukuran',
+        'Status': 'Opsional',
+        'Keterangan': 'Varian ukuran & stok dengan format "Size:Qty", contoh: "S:2, M:5, L:1". Jika diisi, stok total otomatis dijumlahkan.',
+      },
+      {
+        'Kolom': 'Terjual',
+        'Status': 'Opsional',
+        'Keterangan': 'Jumlah produk terjual untuk display customer. Tidak mengubah laporan keuangan.',
+      },
+      {
+        'Kolom': 'Premium',
+        'Status': 'Opsional',
+        'Keterangan': 'Isi "Ya" atau "Tidak" untuk badge ikan premium (default: Tidak).',
+      },
+    ];
+
+    const wb = XLSX.utils.book_new();
+
+    const wsTemplate = XLSX.utils.json_to_sheet(templateData);
+    // Atur lebar kolom template
+    wsTemplate['!cols'] = [
+      { wch: 35 }, // Nama Produk
+      { wch: 14 }, // Harga
+      { wch: 16 }, // Kategori
+      { wch: 12 }, // Gender
+      { wch: 20 }, // Corak Warna
+      { wch: 45 }, // Deskripsi
+      { wch: 10 }, // Stok
+      { wch: 14 }, // Grade Bentuk
+      { wch: 14 }, // Umur
+      { wch: 18 }, // Ukuran
+      { wch: 12 }, // Terjual
+      { wch: 12 }, // Premium
+    ];
+    XLSX.utils.book_append_sheet(wb, wsTemplate, 'Data Produk');
+
+    const wsGuide = XLSX.utils.json_to_sheet(guideData);
+    wsGuide['!cols'] = [
+      { wch: 18 }, // Kolom
+      { wch: 12 }, // Status
+      { wch: 70 }, // Keterangan
+    ];
+    XLSX.utils.book_append_sheet(wb, wsGuide, 'Petunjuk Pengisian');
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    return new NextResponse(buf, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="template_bulk_upload_produk.xlsx"',
+      },
+    });
+  } catch (error) {
+    console.error('Download template error:', error);
+    return NextResponse.json({ error: error.message || 'Gagal membuat template.' }, { status: error.status || 500 });
+  }
+}

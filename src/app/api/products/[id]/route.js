@@ -20,7 +20,7 @@ export async function PUT(request, { params }) {
   try {
     await requireAdmin(request);
     const { id } = await params;
-    const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes, soldCount } = await request.json();
     const dataToUpdate = {};
     if (name !== undefined) dataToUpdate.name = name;
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
@@ -54,6 +54,7 @@ export async function PUT(request, { params }) {
       dataToUpdate.isSold = qty === 0;
     }
     if (sizes !== undefined) dataToUpdate.sizes = sizes;
+    if (soldCount !== undefined) dataToUpdate.soldCount = Math.max(0, parseInt(soldCount) || 0);
     const updatedProduct = await prisma.product.update({ where: { id }, data: dataToUpdate });
     return NextResponse.json(updatedProduct);
   } catch (error) {

@@ -23,7 +23,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     await requireAdmin(request);
-    const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, quantity, sizes } = await request.json();
+    const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, quantity, sizes, soldCount } = await request.json();
     // Galeri berurutan; cover = foto pertama. Terima `images[]` (baru) atau
     // fallback ke `image` tunggal (pemanggil lama).
     const gallery = normalizeImages(images, image);
@@ -41,7 +41,8 @@ export async function POST(request) {
         statsSpirit: statsSpirit || 'Aktif',
         quantity: qty,
         sizes: sizes || [],
-        isSold: qty === 0
+        isSold: qty === 0,
+        soldCount: soldCount !== undefined ? Math.max(0, parseInt(soldCount) || 0) : 0,
       }
     });
     return NextResponse.json(newProduct, { status: 201 });

@@ -25,7 +25,7 @@ function toGallery(images, fallbackImage) {
     return arr;
 }
 
-export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity }) {
+export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount }) {
     const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -77,7 +77,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
         touchStartX.current = null;
     };
 
-    const productPayload = { id, name, price, form, coloration, gender, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity };
+    const productPayload = { id, name, price, form, coloration, gender, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount };
 
     const commitAddToCart = (selectedSize) => {
         addToCart({ ...productPayload, selectedSize });
@@ -198,10 +198,17 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                         {name}
                     </h3>
 
-                    {/* Price */}
-                    <p className={styles.price}>
-                        {formattedPrice}
-                    </p>
+                    {/* Price and Sold info */}
+                    <div className={styles.priceRow}>
+                        <p className={styles.price}>
+                            {formattedPrice}
+                        </p>
+                        {Number(soldCount) > 0 && (
+                            <span className={styles.soldCount}>
+                                {soldCount} Terjual
+                            </span>
+                        )}
+                    </div>
                 </div>
             </Link>
 

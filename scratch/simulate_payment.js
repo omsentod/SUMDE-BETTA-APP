@@ -61,6 +61,7 @@ async function processOrder(orderId) {
             sizes: updatedSizes ?? undefined,
             quantity: newTotalQty,
             isSold: newTotalQty === 0,
+            soldCount: { increment: item.quantity },
           },
         });
       }

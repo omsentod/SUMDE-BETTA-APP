@@ -1,10 +1,12 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
+import ProductCard from '@/components/ProductCard';
+import { getSimilarProducts } from '@/lib/recommendation';
 import styles from './productDetail.module.css';
 
 // Normalisasi galeri foto ke array URL yang aman ditampilkan. Prisma Json biasa
@@ -36,6 +38,13 @@ export default function ProductDetailClient() {
     const touchStartX = useRef(null);
 
     const product = products.find((p) => p.id === id);
+
+    // Algoritma Content-Based Recommendation: hitung produk dengan
+    // karakteristik (form, corak warna, gender, harga, grade) paling serupa
+    const similarProducts = useMemo(() => {
+        if (!product || !products || products.length === 0) return [];
+        return getSimilarProducts(product, products, 4);
+    }, [product, products]);
 
     // Reset selected size + error whenever we're viewing a different product
     // (product id changes because URL param or products list updated).
@@ -196,11 +205,23 @@ export default function ProductDetailClient() {
                             <h1 className={styles.title}>{product.name}</h1>
 
 
-                            <div className={styles.priceBlock}>
-                                <span className={styles.priceCurrency}>Rp</span>
-                                <span className={styles.priceAmount}>
-                                    {new Intl.NumberFormat('id-ID').format(product.price)}
-                                </span>
+                            <div className={styles.priceRow}>
+                                <div className={styles.priceBlock}>
+                                    <span className={styles.priceCurrency}>Rp</span>
+                                    <span className={styles.priceAmount}>
+                                        {new Intl.NumberFormat('id-ID').format(product.price)}
+                                    </span>
+                                </div>
+                                {Number(product.soldCount) > 0 && (
+                                    <div className={styles.soldBadgeTag}>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                            <line x1="3" y1="6" x2="21" y2="6" />
+                                            <path d="M16 10a4 4 0 0 1-8 0" />
+                                        </svg>
+                                        <span>{product.soldCount} Terjual</span>
+                                    </div>
+                                )}
                             </div>
 
                             <p className={styles.description}>{product.description}</p>
@@ -294,6 +315,36 @@ export default function ProductDetailClient() {
                     </div>
                 </div>
             </section>
+
+            {/* Section Produk Serupa (Content-Based Recommendation) */}
+            {similarProducts.length > 0 && (
+                <section className={styles.similarSection}>
+                    <div className="container">
+                        <div className={styles.similarHeader}>
+                            <div>
+                                <span className={styles.similarEyebrow}>Rekomendasi Spesimen</span>
+                                <h2 className={styles.similarTitle}>Produk Serupa</h2>
+                                <p className={styles.similarSubtitle}>
+                                    Spesimen dengan form {product.form}, corak {product.coloration}, dan karakteristik serupa.
+                                </p>
+                            </div>
+                            <Link href={`/produk?category=${encodeURIComponent(product.form)}`} className={styles.similarViewAll}>
+                                <span>Lihat Semua {product.form}</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                            </Link>
+                        </div>
+
+                        <div className="productGrid">
+                            {similarProducts.map((simProd) => (
+                                <ProductCard key={simProd.id} {...simProd} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Mobile-only sticky bottom action bar — menggantikan MobileBottomNav di halaman ini */}
             {canBuy && (
