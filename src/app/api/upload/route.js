@@ -85,14 +85,12 @@ export async function POST(request) {
       );
     }
 
-    // Hostinger clone ulang git ke direktori versi BARU setiap deploy —
-    // apa pun yang ditulis ke public/uploads relatif terhadap process.cwd()
-    // cuma hidup di direktori versi itu dan hilang begitu deploy berikutnya
-    // mengalihkan traffic ke direktori baru. UPLOADS_DIR (absolute path ke
-    // public_html/uploads, di luar hbuilds/versions) dipakai di production
-    // supaya file selamat lintas deploy — public_html sudah dikonfirmasi
-    // di-serve langsung oleh webserver, bukan lewat Next.js. Kalau env var
-    // ini tidak di-set (dev lokal), fallback ke public/uploads seperti biasa.
+    // Hostinger clone ulang git ke direktori versi BARU setiap deploy.
+    // Selain itu, Hostinger menimpa/membersihkan isi public_html saat deploy.
+    // Oleh karena itu, UPLOADS_DIR WAJIB ditaruh di luar public_html dan di luar
+    // hbuilds (contoh: /home/<USER>/domains/<DOMAIN>/uploads) agar file foto
+    // tidak pernah terhapus saat deploy. File disajikan via route /uploads/[filename].
+    // Kalau env var ini tidak di-set (dev lokal), fallback ke public/uploads.
     const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
     await fs.mkdir(uploadDir, { recursive: true });
 

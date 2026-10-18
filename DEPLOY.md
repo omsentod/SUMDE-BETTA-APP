@@ -231,6 +231,7 @@ Yang ada di Hostinger Deployments UI (10 vars):
 | `SHIPPING_ORIGIN_CITY_ID` | ID kota asal pengiriman |
 | `SHIPPING_COURIERS` | Ekspedisi tersedia (`jne,pos,tiki`) |
 | `SHIPPING_ITEMS_PER_KG` | Kalkulasi berat kg per item |
+| `UPLOADS_DIR` | Folder upload persisten di luar public_html & hbuilds (`/home/<USER>/domains/<DOMAIN>/uploads`) |
 
 Values disimpan di catatan pribadi (jangan commit ke repo).
 
