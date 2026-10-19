@@ -52,15 +52,13 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
                 {/* Header with product preview */}
                 <div className="size-picker-header">
                     <div className="size-picker-thumb">
-                        {product.image && (
-                            <Image
-                                src={product.image}
-                                alt={product.name}
-                                fill
-                                sizes="96px"
-                                className="size-picker-thumb-img"
-                            />
-                        )}
+                        <Image
+                            src={product.image || '/img/betta-1.png'}
+                            alt={product.name}
+                            fill
+                            sizes="96px"
+                            className="size-picker-thumb-img"
+                        />
                     </div>
                     <div className="size-picker-info">
                         <p className="size-picker-price">{priceFormatted}</p>

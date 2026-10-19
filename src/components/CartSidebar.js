@@ -116,7 +116,7 @@ export default function CartSidebar() {
 
                                 <div className="cart-item-body">
                                     <div className="cart-item-img-wrapper">
-                                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                        <Image src={item.image || '/img/betta-1.png'} alt={item.name} fill className="object-cover" />
                                     </div>
                                     <div className="flex-1">
                                         <h4 className="cart-item-title">{item.name}</h4>

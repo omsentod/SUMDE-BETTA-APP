@@ -448,7 +448,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                         {zipResult.results.map((p) => (
                           <div key={p.productId} className={styles.previewCard}>
                             <div className={styles.previewThumb}>
-                              <Image src={p.coverImage} alt={p.productName} fill sizes="150px" style={{ objectFit: 'cover' }} />
+                              <Image src={p.coverImage || '/img/betta-1.png'} alt={p.productName} fill sizes="150px" style={{ objectFit: 'cover' }} />
                             </div>
                             <div className={styles.previewInfo}>
                               <div className={styles.previewName} title={p.productName}>{p.productName}</div>

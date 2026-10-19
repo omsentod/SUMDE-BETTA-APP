@@ -351,7 +351,17 @@ export default function AdminProductsPage() {
                   <tr key={product.id} className={styles.tableRow}>
                     <td className={styles.hideOnMobile}>
                       <div className={styles.productThumb}>
-                        <Image src={product.image} alt={product.name} fill style={{ objectFit: 'cover' }} />
+                        {product.image ? (
+                          <Image src={product.image} alt={product.name} fill style={{ objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'var(--border-color)', color: 'var(--text-muted)' }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                              <circle cx="9" cy="9" r="2"/>
+                              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                            </svg>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td style={{ fontWeight: '600' }}>

@@ -410,7 +410,7 @@ export default function CheckoutPage() {
                                 {cart.map((item) => (
                                     <div key={`${item.id}-${item.selectedSize}`} className="checkout-item-row">
                                         <div className="checkout-item-image">
-                                            <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                            <Image src={item.image || '/img/betta-1.png'} alt={item.name} fill className="object-cover" />
                                         </div>
                                         <div className="checkout-item-info">
                                             <h3>{item.name}</h3>
