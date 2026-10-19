@@ -279,8 +279,7 @@ export default function AdminProductsPage() {
               <button
                 type="button"
                 onClick={() => setIsBulkOpen(true)}
-                className="btn btn-outline"
-                style={{ borderRadius: '30px', padding: '0.65rem 1.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+                className={styles.outlineBtn}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -293,10 +292,13 @@ export default function AdminProductsPage() {
             {canCreate && (
               <button
                 onClick={openAdd}
-                className="btn btn-primary"
-                style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
+                className={styles.primaryBtn}
               >
-                + Tambah Produk
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Tambah Produk
               </button>
             )}
           </div>
@@ -528,7 +530,7 @@ export default function AdminProductsPage() {
                   )}
 
                   <input type="file" accept="image/*" multiple onChange={handleFileUpload} id="product-image-upload" style={{ display: 'none' }} />
-                  <label htmlFor="product-image-upload" className="btn btn-outline" style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}>
+                  <label htmlFor="product-image-upload" className={styles.pillOutlineBtn} style={{ cursor: 'pointer' }}>
                     {isUploading ? 'Mengunggah...' : (form.images?.length > 0 ? '+ Tambah Foto Lagi' : 'Pilih Foto dari Komputer')}
                   </label>
                   <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, maxWidth: '340px' }}>
@@ -609,8 +611,7 @@ export default function AdminProductsPage() {
                       />
                       <button
                         type="button"
-                        className="btn btn-outline"
-                        style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}
+                        className={styles.tableActionBtnDanger}
                         onClick={() => {
                           const newSizes = form.sizes.filter((_, idx) => idx !== index);
                           const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
@@ -623,8 +624,8 @@ export default function AdminProductsPage() {
                   ))}
                   <button
                     type="button"
-                    className="btn btn-outline"
-                    style={{ width: '100%', maxWidth: '300px', fontSize: '0.85rem', padding: '0.75rem', borderRadius: '30px', marginTop: form.sizes?.length > 0 ? '0.5rem' : 0 }}
+                    className={styles.outlineBtn}
+                    style={{ width: '100%', maxWidth: '300px', marginTop: form.sizes?.length > 0 ? '0.5rem' : 0 }}
                     onClick={() => {
                       const newSizes = [...(form.sizes || []), { size: '', quantity: 1 }];
                       const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
@@ -683,12 +684,12 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
-                  className="btn btn-outline"
-                  style={{ flex: 1, padding: '0.9rem', borderRadius: '30px' }}
+                  className={styles.outlineBtn}
+                  style={{ flex: 1, padding: '0.65rem' }}
                 >
                   Batal
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.9rem', borderRadius: '30px' }}>
+                <button type="submit" className={styles.primaryBtn} style={{ flex: 1, padding: '0.65rem' }}>
                   Simpan
                 </button>
               </div>

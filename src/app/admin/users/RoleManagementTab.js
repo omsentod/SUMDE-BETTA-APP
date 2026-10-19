@@ -93,11 +93,10 @@ export default function RoleManagementTab({
         {canManageRoles && (
           <button
             type="button"
-            className="btn btn-primary"
+            className={styles.primaryBtn}
             onClick={handleOpenAdd}
-            style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.4rem' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -178,24 +177,16 @@ export default function RoleManagementTab({
                       <>
                         <button
                           type="button"
-                          className="btn btn-outline"
+                          className={styles.actionBtn}
                           onClick={() => handleOpenEdit(role)}
-                          style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem', borderRadius: '8px' }}
                         >
                           Edit Izin
                         </button>
                         <button
                           type="button"
-                          className="btn btn-outline"
+                          className={styles.actionBtnDelete}
                           onClick={() => askDelete(role)}
                           disabled={role.userCount > 0}
-                          style={{
-                            padding: '0.3rem 0.55rem',
-                            fontSize: '0.75rem',
-                            borderRadius: '8px',
-                            color: role.userCount > 0 ? 'var(--text-muted)' : 'var(--status-error)',
-                            borderColor: role.userCount > 0 ? 'var(--border-color)' : 'rgba(239, 68, 68, 0.3)',
-                          }}
                           title={role.userCount > 0 ? 'Tidak dapat dihapus karena masih digunakan user' : 'Hapus Role'}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

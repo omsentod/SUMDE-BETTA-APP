@@ -200,10 +200,13 @@ export default function AdminEventsPage() {
             {canCreate && (
               <button
                 onClick={openAdd}
-                className="btn btn-primary"
-                style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
+                className={styles.primaryBtn}
               >
-                + Tambah Event
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Tambah Event
               </button>
             )}
           </div>
@@ -414,7 +417,7 @@ export default function AdminEventsPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <input type="file" accept="image/*" onChange={handleFileUpload} id="event-image-upload" style={{ display: 'none' }} />
-                    <label htmlFor="event-image-upload" className="btn btn-outline" style={{ cursor: 'pointer', padding: '0.6rem 1.5rem', fontSize: '0.85rem', borderRadius: '30px' }}>
+                    <label htmlFor="event-image-upload" className={styles.pillOutlineBtn} style={{ cursor: 'pointer' }}>
                       {isUploading ? 'Mengunggah...' : 'Pilih Banner dari Komputer'}
                     </label>
                     {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
@@ -439,12 +442,12 @@ export default function AdminEventsPage() {
                 <button
                   type="button"
                   onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
-                  className="btn btn-outline"
-                  style={{ flex: 1, padding: '0.9rem', borderRadius: '30px' }}
+                  className={styles.outlineBtn}
+                  style={{ flex: 1, padding: '0.65rem' }}
                 >
                   Batal
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.9rem', borderRadius: '30px' }}>
+                <button type="submit" className={styles.primaryBtn} style={{ flex: 1, padding: '0.65rem' }}>
                   Simpan
                 </button>
               </div>

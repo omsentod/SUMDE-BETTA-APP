@@ -289,13 +289,7 @@ export default function AdminUsersPage() {
                                 <button
                                   type="button"
                                   onClick={() => setRoleModalUser(user)}
-                                  className="btn btn-outline"
-                                  style={{
-                                    padding: '0.3rem 0.55rem',
-                                    fontSize: '0.7rem',
-                                    borderRadius: '8px',
-                                    whiteSpace: 'nowrap',
-                                  }}
+                                  className={dashboardStyles.tableActionBtn}
                                 >
                                   Ubah Role
                                 </button>

@@ -365,10 +365,10 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="button" className="btn btn-outline" onClick={onClose} disabled={submitting}>
+            <button type="button" className={styles.outlineBtn} onClick={onClose} disabled={submitting}>
               Batal
             </button>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
+            <button type="submit" className={styles.primaryBtn} disabled={submitting}>
               {submitting ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Buat Role'}
             </button>
           </div>

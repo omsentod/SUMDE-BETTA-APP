@@ -126,10 +126,10 @@ export default function UserRoleModal({ isOpen, onClose, user, roles, onSaved, c
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="button" className="btn btn-outline" onClick={onClose} disabled={submitting}>
+            <button type="button" className={styles.outlineBtn} onClick={onClose} disabled={submitting}>
               Batal
             </button>
-            <button type="submit" className="btn btn-primary" disabled={submitting || isSelf}>
+            <button type="submit" className={styles.primaryBtn} disabled={submitting || isSelf}>
               {submitting ? 'Menyimpan...' : 'Simpan Role'}
             </button>
           </div>

@@ -584,3 +584,121 @@
   border-radius: 50%;
   background: #ffffff;
 }
+
+/* Modern Admin Button System (Filament/Linear Caliber) */
+.primaryBtn {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(255, 107, 53, 0.25);
+  text-decoration: none;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--primary) 88%, #ffffff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.35);
+}
+
+.primaryBtn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.outlineBtn {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.outlineBtn:hover:not(:disabled) {
+  background: var(--glass);
+  border-color: var(--text-muted);
+  color: var(--text-main);
+}
+
+.outlineBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actionBtn {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: var(--glass);
+  border-color: var(--text-muted);
+}
+
+.actionBtnDelete {
+  background: transparent;
+  color: var(--status-error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionBtnDelete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--status-error);
+}
+
+.actionBtn:disabled,
+.actionBtnDelete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
