@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 import * as XLSX from 'xlsx';
 
 const REVENUE_STATUSES = new Set(['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED']);
@@ -26,7 +26,7 @@ function fmtDate(d) {
 
 export async function GET(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'reports:view');
     const { searchParams } = new URL(request.url);
     const { from, to } = parseRange(searchParams);
 

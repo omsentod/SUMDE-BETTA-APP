@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 import { createShipment } from '@/lib/shipping';
 
 // POST /api/admin/orders/bulk/pickup
@@ -10,7 +10,7 @@ import { createShipment } from '@/lib/shipping';
 // Return per-order result supaya UI bisa tampilkan sukses/gagal spesifik.
 export async function POST(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'shipping:manage');
 
     const { orderIds } = await request.json();
     if (!Array.isArray(orderIds) || orderIds.length === 0) {

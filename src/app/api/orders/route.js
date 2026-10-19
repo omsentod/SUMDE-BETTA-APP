@@ -4,12 +4,14 @@ import { getSession, requireUser } from '@/lib/auth';
 import { findAndValidateRate } from '@/lib/shipping';
 import { notifyAllAdmins } from '@/lib/notification';
 import { calcPaymentFee, isValidPaymentMethod } from '@/lib/paymentFee';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET(request) {
   try {
-    // Admins see every order; a regular user sees only their own.
+    // Admins and staff with orders:view see every order; customers see only their own.
     const session = await requireUser(request);
-    const where = session.role === 'admin' ? {} : { userId: session.id };
+    const canViewAll = session.role === 'admin' || (await hasPermission(session.role, 'orders:view'));
+    const where = canViewAll ? {} : { userId: session.id };
     const orders = await prisma.order.findMany({
       where,
       include: { items: { include: { product: true } }, user: true },

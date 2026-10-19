@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 import { normalizeImages } from '@/lib/productImages';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'products:manage');
     const { id } = await params;
     const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes, soldCount } = await request.json();
     const dataToUpdate = {};
@@ -64,7 +64,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'products:manage');
     const { id } = await params;
 
     // If the product has ever been ordered, keep the row (and its OrderItems)

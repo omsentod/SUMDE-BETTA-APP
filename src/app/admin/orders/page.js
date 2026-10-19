@@ -1,8 +1,11 @@
 'use client';
 
 import { Fragment, Suspense, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { getMethodLabel } from '@/lib/paymentFee';
+import { useToast } from '@/context/ToastContext';
+import { canUser } from '@/lib/permission-utils';
 import styles from './orders.module.css';
 
 const formatIDR = (v) =>
@@ -71,9 +74,17 @@ const STATUS_LABEL = {
 };
 
 function AdminOrdersPageInner() {
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast, confirmDialog } = useToast();
   const urlStatus = searchParams.get('status');
   const initialStatus = urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All';
+
+  const canView = canUser(currentUser, 'orders:view');
+  const canPickup = canUser(currentUser, 'shipping:pickup');
+  const canLabel = canUser(currentUser, 'shipping:label');
+  const canUpdateStatus = canUser(currentUser, 'orders:update');
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +94,12 @@ function AdminOrdersPageInner() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [statusModal, setStatusModal] = useState({ open: false, target: '' });
+
+  useEffect(() => {
+    if (!authLoading && (!currentUser || !canView)) {
+      router.push('/admin/dashboard');
+    }
+  }, [currentUser, authLoading, canView, router]);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -97,9 +114,8 @@ function AdminOrdersPageInner() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load
-    loadOrders();
-  }, []);
+    if (canView) loadOrders();
+  }, [canView]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync from URL param
@@ -153,13 +169,15 @@ function AdminOrdersPageInner() {
 
   const handleBulkPickup = async () => {
     if (eligiblePickup === 0) {
-      alert('Tidak ada order yang bisa di-pickup. Hanya order LUNAS (PAID) tanpa shipment yang eligible.');
+      toast.warning('Tidak ada order yang bisa di-pickup. Hanya order LUNAS (PAID) tanpa shipment yang eligible.');
       return;
     }
-    const confirmed = window.confirm(
-      `Panggil kurir untuk ${eligiblePickup} order?\n` +
-      'Order non-PAID atau yang sudah punya shipment akan di-skip.'
-    );
+    const confirmed = await confirmDialog({
+      title: 'Panggil Kurir?',
+      message: `Panggil kurir untuk ${eligiblePickup} order?\nOrder non-PAID atau yang sudah punya shipment akan di-skip.`,
+      confirmText: 'Panggil Kurir',
+      cancelText: 'Batal',
+    });
     if (!confirmed) return;
 
     setBusy(true);
@@ -179,14 +197,16 @@ function AdminOrdersPageInner() {
       const failReasons = failedResults
         .map((r) => `- #${r.orderId.slice(0, 8)}: ${r.error}`)
         .join('\n');
-      alert(
-        `Selesai: ${ok} sukses, ${failedResults.length} gagal.` +
-        (failedResults.length > 0 ? `\n\n${failReasons}` : '')
-      );
+      
+      if (ok > 0) {
+        toast.success(`Selesai: ${ok} sukses dipanggil kurirnya.` + (failedResults.length > 0 ? ` (${failedResults.length} gagal)` : ''));
+      } else {
+        toast.error(`Gagal: ${failedResults.length} order gagal diproses.` + (failReasons ? `\n${failReasons}` : ''));
+      }
       setSelectedIds(new Set());
       loadOrders();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -197,7 +217,7 @@ function AdminOrdersPageInner() {
       .filter((o) => PRINTABLE_STATUSES.has(o.status))
       .map((o) => o.id);
     if (ids.length === 0) {
-      alert('Tidak ada order yang bisa dicetak resinya. Hanya order PAID, PROCESSING, SHIPPED, atau COMPLETED yang eligible.');
+      toast.warning('Tidak ada order yang bisa dicetak resinya. Hanya order PAID, PROCESSING, SHIPPED, atau COMPLETED yang eligible.');
       return;
     }
     window.open(`/admin/orders/labels-batch?ids=${ids.join(',')}`, '_blank');
@@ -215,16 +235,24 @@ function AdminOrdersPageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal update status');
       const ok = data.results.filter((r) => r.ok).length;
-      alert(`Selesai: ${ok} order status di-update ke ${statusModal.target}.`);
+      toast.success(`Selesai: ${ok} order status di-update ke ${statusModal.target}.`);
       setStatusModal({ open: false, target: '' });
       setSelectedIds(new Set());
       loadOrders();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
   };
+
+  if (authLoading || !currentUser || !canView) {
+    return (
+      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
+        <h2>Memverifikasi Otoritas Pesanan...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -262,28 +290,34 @@ function AdminOrdersPageInner() {
       {selectedIds.size > 0 && (
         <div className={styles.bulkBar}>
           <span className={styles.bulkBarCount}>{selectedIds.size} terpilih</span>
-          <button
-            className={styles.bulkBtn}
-            onClick={handleBulkPickup}
-            disabled={busy || eligiblePickup === 0}
-            title={eligiblePickup === 0 ? 'Tidak ada order eligible untuk pickup' : ''}
-          >
-            Panggil Kurir ({eligiblePickup})
-          </button>
-          <button
-            className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
-            onClick={handleBulkPrint}
-            disabled={busy || eligiblePrint === 0}
-          >
-            Cetak Resi ({eligiblePrint})
-          </button>
-          <button
-            className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
-            onClick={() => setStatusModal({ open: true, target: '' })}
-            disabled={busy}
-          >
-            Ubah Status
-          </button>
+          {canPickup && (
+            <button
+              className={styles.bulkBtn}
+              onClick={handleBulkPickup}
+              disabled={busy || eligiblePickup === 0}
+              title={eligiblePickup === 0 ? 'Tidak ada order eligible untuk pickup' : ''}
+            >
+              Panggil Kurir ({eligiblePickup})
+            </button>
+          )}
+          {canLabel && (
+            <button
+              className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
+              onClick={handleBulkPrint}
+              disabled={busy || eligiblePrint === 0}
+            >
+              Cetak Resi ({eligiblePrint})
+            </button>
+          )}
+          {canUpdateStatus && (
+            <button
+              className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
+              onClick={() => setStatusModal({ open: true, target: '' })}
+              disabled={busy}
+            >
+              Ubah Status
+            </button>
+          )}
           <button
             className={`${styles.bulkBtn} ${styles.bulkBtnGhost}`}
             onClick={() => setSelectedIds(new Set())}

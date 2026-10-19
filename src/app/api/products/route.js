@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 import { normalizeImages } from '@/lib/productImages';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'products:manage');
     const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, quantity, sizes, soldCount } = await request.json();
     // Galeri berurutan; cover = foto pertama. Terima `images[]` (baru) atau
     // fallback ke `image` tunggal (pemanggil lama).

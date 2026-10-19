@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { getRolePermissions } from '@/lib/permissions';
 
 // Source of truth for the client's current user, backed by the httpOnly cookie
 // (replaces reading the user out of localStorage).
@@ -14,6 +15,8 @@ export async function GET(request) {
     return NextResponse.json({ user: null });
   }
   const { password, ...userData } = user;
+  const permissions = await getRolePermissions(user.role);
+
   // Expose flags derived dari kolom sensitif — client butuh tahu tapi tidak
   // boleh lihat nilai actual.
   // - hasPassword: user bisa login pakai email/password (kalau false → cuma Google)
@@ -21,6 +24,7 @@ export async function GET(request) {
   return NextResponse.json({
     user: {
       ...userData,
+      permissions,
       hasPassword: !!password,
       hasGoogle: !!user.googleId,
     },

@@ -40,6 +40,20 @@ model User {
   pushSubscriptions  PushSubscription[]
 }
 
+// Master Role & Hak Akses (RBAC)
+model Role {
+  id          String   @id @default(uuid())
+  name        String   // e.g. "Staff Logistik"
+  slug        String   @unique // e.g. "staff_logistik"
+  description String?  @db.Text
+  permissions Json     // Array of string permission keys, e.g. ["orders:read", "shipping:manage"]
+  isSystem    Boolean  @default(false) // System roles (admin, customer) cannot be deleted or have slug altered
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
+
 // Bell inbox — 1 row per event yang perlu dilihat user.
 // Type contoh: 'order.new' (admin), 'order.paid', 'order.shipped', 'order.delivered'.
 // readAt null = belum dibaca (badge merah aktif).

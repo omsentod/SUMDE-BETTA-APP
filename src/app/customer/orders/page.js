@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
 import ShipmentTracker from './ShipmentTracker';
 
 const STATUS_CONFIG = {
@@ -38,6 +39,7 @@ const fmt = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currenc
 
 export default function OrdersPage() {
     const { currentUser, isLoading: authLoading, fetchMyOrders } = useAuth();
+    const { toast, confirmDialog } = useToast();
     const router = useRouter();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -62,14 +64,22 @@ export default function OrdersPage() {
             if (!res.ok) throw new Error(data.error);
             setTrackingData(prev => ({...prev, [order.id]: data}));
         } catch (err) {
-            alert(err.message || 'Gagal melacak pesanan');
+            toast.error(err.message || 'Gagal melacak pesanan.');
         } finally {
             setTrackingLoading(prev => ({...prev, [order.id]: false}));
         }
     };
 
     const handleCancelOrder = async (orderId) => {
-        if (!confirm('Batalkan pesanan ini? Tindakan ini tidak dapat diurungkan.')) return;
+        const confirmed = await confirmDialog({
+            title: 'Batalkan Pesanan?',
+            message: 'Batalkan pesanan ini? Tindakan ini tidak dapat diurungkan.',
+            confirmText: 'Ya, Batalkan',
+            cancelText: 'Kembali',
+            isDanger: true,
+        });
+        if (!confirmed) return;
+
         setCancellingOrderId(orderId);
         try {
             const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' });
@@ -78,8 +88,9 @@ export default function OrdersPage() {
             // Update state lokal langsung dari response server — hindari refetch
             // penuh supaya scroll position & tab aktif tidak reset.
             setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: data.order.status } : o));
+            toast.success('Pesanan berhasil dibatalkan.');
         } catch (err) {
-            alert(err.message || 'Gagal membatalkan pesanan.');
+            toast.error(err.message || 'Gagal membatalkan pesanan.');
         } finally {
             setCancellingOrderId(null);
         }
@@ -99,7 +110,7 @@ export default function OrdersPage() {
             window.location.href = data.paymentUrl;
         } catch (err) {
             console.error('Payment error:', err);
-            alert(err.message || 'Gagal memulai pembayaran.');
+            toast.error(err.message || 'Gagal memulai pembayaran.');
             setPayingOrderId(null);
         }
     };

@@ -12,6 +12,34 @@ async function upsertProduct(data) {
 }
 
 async function main() {
+  // Master Roles (RBAC)
+  await prisma.role.upsert({
+    where: { slug: 'admin' },
+    update: {},
+    create: {
+      name: 'Administrator',
+      slug: 'admin',
+      description: 'Akses penuh tanpa batas ke seluruh modul sistem (Superadmin).',
+      permissions: [
+        'orders:read', 'orders:write', 'shipping:manage',
+        'products:manage', 'events:manage', 'reports:view',
+        'users:manage', 'roles:manage'
+      ],
+      isSystem: true,
+    },
+  });
+
+  await prisma.role.upsert({
+    where: { slug: 'customer' },
+    update: {},
+    create: {
+      name: 'Customer',
+      slug: 'customer',
+      description: 'Pelanggan standar toko SUMDE BETTA (tanpa akses panel admin).',
+      permissions: [],
+      isSystem: true,
+    },
+  });
   await prisma.user.upsert({
     where: { email: 'admin@sumdebetta.com' },
     update: {},

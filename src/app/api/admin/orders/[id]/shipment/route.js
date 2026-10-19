@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 import { createShipment } from '@/lib/shipping';
 
 export async function POST(request, { params }) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'shipping:manage');
 
     const { id } = await params;
     const order = await prisma.order.findUnique({

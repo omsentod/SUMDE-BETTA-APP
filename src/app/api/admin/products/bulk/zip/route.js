@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import JSZip from 'jszip';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 import { saveImageBuffer, detectImageKind } from '@/lib/imageStorage';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,7 @@ function extractFileNumber(filename) {
 
 export async function POST(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'products:manage');
 
     const formData = await request.formData();
     const file = formData.get('file');

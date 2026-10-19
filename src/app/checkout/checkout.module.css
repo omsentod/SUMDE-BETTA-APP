@@ -56,8 +56,12 @@
 }
 
 .addressDefaultBadge {
-    font-size: 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.68rem;
     color: var(--primary);
+    font-weight: 600;
 }
 
 .addressRecipient {
@@ -89,7 +93,9 @@
 }
 
 .selectAlertText {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.75rem;
     color: var(--primary);
     margin-top: 0.4rem;
@@ -102,17 +108,27 @@
 }
 
 .saveAddressBtn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     color: var(--text-main);
     padding: 0.8rem 1.5rem;
     border-radius: 0.6rem;
     cursor: pointer;
     font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.saveAddressBtn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .saveAddressBtnDisabled {
-    cursor: default;
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .summaryTitle {
@@ -161,4 +177,41 @@
     color: var(--text-muted);
     margin-top: 1.5rem;
     line-height: 1.5;
+}
+
+.emptyStateContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 8rem 1.5rem;
+    text-align: center;
+    min-height: 60vh;
+}
+
+.emptyStateIcon {
+    width: 64px;
+    height: 64px;
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.emptyStateTitle {
+    font-family: var(--font-serif);
+    font-size: 2.4rem;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.emptyStateSubtitle {
+    font-size: 1rem;
+    color: var(--text-muted);
+    max-width: 420px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.emptyStateBtn {
+    margin-top: 0.5rem;
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSession, requireAdmin } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED'];
 
@@ -35,8 +36,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    // Only admins may change order status via this endpoint.
-    await requireAdmin(request);
+    await requirePermission(request, 'orders:write');
 
     const { id } = await params;
     const { status } = await request.json();

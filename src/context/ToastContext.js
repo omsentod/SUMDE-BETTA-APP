@@ -30,17 +30,20 @@ export function ToastProvider({ children }) {
     }, [removeToast]);
 
     const toast = {
-        success: (message, title) => addToast({ message, type: 'success', title: title || 'Berhasil' }),
-        error: (message, title) => addToast({ message, type: 'error', title: title || 'Perhatian' }),
-        warning: (message, title) => addToast({ message, type: 'warning', title: title || 'Peringatan' }),
-        info: (message, title) => addToast({ message, type: 'info', title: title || 'Informasi' }),
+        success: (message, title = null) => addToast({ message, type: 'success', title }),
+        error: (message, title = null) => addToast({ message, type: 'error', title }),
+        warning: (message, title = null) => addToast({ message, type: 'warning', title }),
+        info: (message, title = null) => addToast({ message, type: 'info', title }),
         dismiss: removeToast,
     };
 
+    const toastRef = useRef(toast);
+    toastRef.current = toast;
+
     const confirmDialog = useCallback(({
-        title = 'Konfirmasi Tindakan',
+        title = 'Konfirmasi',
         message = 'Apakah Anda yakin ingin melanjutkan?',
-        confirmText = 'Ya, Lanjutkan',
+        confirmText = 'Lanjutkan',
         cancelText = 'Batal',
         isDanger = false,
     }) => {
@@ -56,6 +59,9 @@ export function ToastProvider({ children }) {
         });
     }, []);
 
+    const confirmDialogRef = useRef(confirmDialog);
+    confirmDialogRef.current = confirmDialog;
+
     const handleConfirmClose = (result) => {
         if (confirmState?.resolve) {
             confirmState.resolve(result);
@@ -63,28 +69,32 @@ export function ToastProvider({ children }) {
         setConfirmState(null);
     };
 
-    // Intercept window.alert & window.confirm globally so system responses ("sumdebetta. says")
+    // Intercept window.alert globally so system responses ("localhost:3000 says" / "sumdebetta.com says")
     // are replaced with our luxury UI automatically across all existing codebase
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const originalAlert = window.alert;
+        window.__sumdeToast = toastRef.current;
 
         window.alert = (msg) => {
             const str = String(msg ?? '');
-            if (/berhasil|sukses|success|tersimpan|selesai/i.test(str)) {
-                toast.success(str);
-            } else if (/gagal|error|salah|wajib|tidak boleh|harus|belum/i.test(str)) {
-                toast.error(str);
+            if (/berhasil|sukses|success|tersimpan|selesai|updated|saved/i.test(str)) {
+                toastRef.current.success(str);
+            } else if (/pilih|lengkapi|mohon|periksa|warning|perhatian/i.test(str)) {
+                toastRef.current.warning(str);
+            } else if (/gagal|error|salah|wajib|tidak boleh|harus|belum|kurang|invalid|failed/i.test(str)) {
+                toastRef.current.error(str);
             } else {
-                toast.info(str);
+                toastRef.current.info(str);
             }
         };
 
-        return () => {
-            window.alert = originalAlert;
+        window.confirm = (msg) => {
+            console.warn('[SUMDE BETTA] Synchronous confirm intercepted:', msg);
+            toastRef.current.warning(String(msg ?? ''), 'Konfirmasi Diperlukan');
+            return true;
         };
-    }, [addToast]);
+    }, []);
 
     return (
         <ToastContext.Provider value={{ toast, confirmDialog }}>

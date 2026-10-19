@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import styles from './NotificationBell.module.css';
 
 const POLL_MS = 30_000; // fallback polling — Ably subscribe akan short-circuit
@@ -29,6 +30,7 @@ function relativeTime(iso) {
 
 export default function NotificationBell() {
   const { currentUser } = useAuth();
+  const { toast } = useToast();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
@@ -176,8 +178,9 @@ export default function NotificationBell() {
         body: JSON.stringify(sub.toJSON()),
       });
       setPushStatus('enabled');
+      toast.success('Notifikasi push browser berhasil diaktifkan.');
     } catch (err) {
-      alert('Gagal enable push: ' + err.message);
+      toast.error('Gagal mengaktifkan push: ' + err.message);
     }
   };
 

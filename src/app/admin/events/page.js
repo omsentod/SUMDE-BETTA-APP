@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
+import { useToast } from '@/context/ToastContext';
+import { canUser } from '@/lib/permission-utils';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const emptyEventForm = () => ({
@@ -28,7 +30,13 @@ const formatDateInput = (dateStr) => {
 
 export default function AdminEventsPage() {
   const { currentUser, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
   const router = useRouter();
+
+  const canView = canUser(currentUser, 'events:view');
+  const canCreate = canUser(currentUser, 'events:create');
+  const canUpdate = canUser(currentUser, 'events:update');
+  const canDelete = canUser(currentUser, 'events:delete');
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -45,10 +53,10 @@ export default function AdminEventsPage() {
   const confirm = useConfirmModal();
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || currentUser.role !== 'admin')) {
-      router.push('/login');
+    if (!authLoading && (!currentUser || !canView)) {
+      router.push('/admin/dashboard');
     }
-  }, [currentUser, authLoading, router]);
+  }, [currentUser, authLoading, canView, router]);
 
   const loadEvents = async () => {
     setLoading(true);
@@ -126,8 +134,9 @@ export default function AdminEventsPage() {
       setEvents((prev) => [data, ...prev]);
       setIsAddOpen(false);
       setForm(emptyEventForm());
+      toast.success('Event baru berhasil ditambahkan.');
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || 'Gagal menambah event.');
     }
   };
 
@@ -145,8 +154,9 @@ export default function AdminEventsPage() {
       setIsEditOpen(false);
       setCurrentEdit(null);
       setForm(emptyEventForm());
+      toast.success('Event berhasil diperbarui.');
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || 'Gagal memperbarui event.');
     }
   };
 
@@ -160,17 +170,18 @@ export default function AdminEventsPage() {
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Gagal menghapus event.');
           setEvents((prev) => prev.filter((ev) => ev.id !== event.id));
+          toast.success(`Event "${event.title}" berhasil dihapus.`);
         } catch (err) {
-          alert(err.message);
+          toast.error(err.message || 'Gagal menghapus event.');
         }
       },
     });
   };
 
-  if (authLoading || !currentUser || currentUser.role !== 'admin') {
+  if (authLoading || !currentUser || !canView) {
     return (
       <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
-        <h2>Memverifikasi Otoritas Admin...</h2>
+        <h2>Memverifikasi Otoritas Event...</h2>
       </div>
     );
   }
@@ -186,13 +197,15 @@ export default function AdminEventsPage() {
             <h1 className={styles.headerTitle}>Kelola Event</h1>
           </div>
           <div className={styles.headerButtons}>
-            <button
-              onClick={openAdd}
-              className="btn btn-primary"
-              style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
-            >
-              + Tambah Event
-            </button>
+            {canCreate && (
+              <button
+                onClick={openAdd}
+                className="btn btn-primary"
+                style={{ borderRadius: '30px', padding: '0.65rem 1.4rem' }}
+              >
+                + Tambah Event
+              </button>
+            )}
           </div>
         </div>
 
@@ -276,18 +289,22 @@ export default function AdminEventsPage() {
                       </td>
                       <td>
                         <div className={styles.actionGroup}>
-                          <button onClick={() => openEdit(event)} className={styles.iconBtn} title="Edit Event">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                          <button onClick={() => askDelete(event)} className={`${styles.iconBtn} ${styles.iconBtnDanger}`} title="Hapus Event">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                          </button>
+                          {canUpdate && (
+                            <button onClick={() => openEdit(event)} className={styles.iconBtn} title="Edit Event">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button onClick={() => askDelete(event)} className={`${styles.iconBtn} ${styles.iconBtnDanger}`} title="Hapus Event">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

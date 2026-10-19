@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import SearchableSelect from '@/components/SearchableSelect';
+import { useToast } from '@/context/ToastContext';
 import styles from './addresses.module.css';
 
 const LABELS = ['Rumah', 'Kantor', 'Kos', 'Lainnya'];
@@ -18,6 +19,7 @@ const emptyForm = { label: 'Rumah', recipientName: '', phone: '', streetAddress:
 
 export default function AddressesPage() {
     const { currentUser, isLoading: authLoading, fetchMyAddresses, createAddress, updateAddress, deleteAddress } = useAuth();
+    const { toast, confirmDialog } = useToast();
     const router = useRouter();
 
     const [addresses, setAddresses] = useState([]);
@@ -161,6 +163,15 @@ export default function AddressesPage() {
     };
 
     const handleDelete = async (id) => {
+        const confirmed = await confirmDialog({
+            title: 'Hapus Alamat?',
+            message: 'Apakah Anda yakin ingin menghapus alamat ini dari buku alamat?',
+            confirmText: 'Hapus',
+            cancelText: 'Batal',
+            isDanger: true,
+        });
+        if (!confirmed) return;
+
         setDeletingId(id);
         try {
             await deleteAddress(id);
@@ -169,8 +180,9 @@ export default function AddressesPage() {
                 fetchMyAddresses().then(setAddresses);
                 return remaining;
             });
+            toast.success('Alamat berhasil dihapus.');
         } catch {
-            alert('Gagal menghapus alamat.');
+            toast.error('Gagal menghapus alamat.');
         } finally {
             setDeletingId(null);
         }
@@ -180,8 +192,9 @@ export default function AddressesPage() {
         try {
             await updateAddress(id, { isDefault: true });
             setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+            toast.success('Alamat utama berhasil diperbarui.');
         } catch {
-            alert('Gagal mengatur alamat utama.');
+            toast.error('Gagal mengatur alamat utama.');
         }
     };
 
@@ -257,17 +270,44 @@ export default function AddressesPage() {
                                 <div>
                                     <label className={styles.label}>Kabupaten / Kota</label>
                                     <SearchableSelect options={cities} value={cityId} onChange={handleCity} disabled={!provId} placeholder="-- Pilih Kab/Kota --" onClickDisabled={() => triggerAlert('city', 'Pilih Provinsi terlebih dahulu.')} />
-                                    {selectAlert.field === 'city' && <span className={styles.selectAlert}>⚠️ {selectAlert.message}</span>}
+                                    {selectAlert.field === 'city' && (
+                                        <span className={styles.selectAlert}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" y1="8" x2="12" y2="12" />
+                                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                                            </svg>
+                                            {selectAlert.message}
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={styles.label}>Kecamatan</label>
                                     <SearchableSelect options={districts} value={districtId} onChange={handleDistrict} disabled={!cityId} placeholder="-- Pilih Kecamatan --" onClickDisabled={() => triggerAlert('district', 'Pilih Kab/Kota terlebih dahulu.')} />
-                                    {selectAlert.field === 'district' && <span className={styles.selectAlert}>⚠️ {selectAlert.message}</span>}
+                                    {selectAlert.field === 'district' && (
+                                        <span className={styles.selectAlert}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" y1="8" x2="12" y2="12" />
+                                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                                            </svg>
+                                            {selectAlert.message}
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={styles.label}>Kelurahan / Desa</label>
                                     <SearchableSelect options={villages} value={villages.find(v => v.name.toLowerCase() === form.village?.toLowerCase())?.id || ''} onChange={handleVillage} disabled={!districtId} placeholder="-- Pilih Kel/Desa --" onClickDisabled={() => triggerAlert('village', 'Pilih Kecamatan terlebih dahulu.')} />
-                                    {selectAlert.field === 'village' && <span className={styles.selectAlert}>⚠️ {selectAlert.message}</span>}
+                                    {selectAlert.field === 'village' && (
+                                        <span className={styles.selectAlert}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" y1="8" x2="12" y2="12" />
+                                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                                            </svg>
+                                            {selectAlert.message}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div>

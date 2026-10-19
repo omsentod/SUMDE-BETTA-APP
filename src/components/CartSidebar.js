@@ -2,6 +2,7 @@
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/context/ToastContext';
 import styles from './CartSidebar.module.css';
 
 export default function CartSidebar() {
@@ -19,6 +20,7 @@ export default function CartSidebar() {
         removeCheckedItems,
         setDirectCheckoutItem
     } = useCart();
+    const { confirmDialog } = useToast();
     const router = useRouter();
 
     if (!isCartOpen) return null;
@@ -30,11 +32,15 @@ export default function CartSidebar() {
         router.push('/checkout');
     };
 
-    const handleBulkDelete = () => {
+    const handleBulkDelete = async () => {
         if (checkedCount === 0) return;
-        const confirmed = window.confirm(
-            `Hapus ${checkedCount} item terpilih dari keranjang?`
-        );
+        const confirmed = await confirmDialog({
+            title: 'Hapus Item Keranjang',
+            message: `Hapus ${checkedCount} item terpilih dari keranjang belanja?`,
+            confirmText: 'Hapus',
+            cancelText: 'Batal',
+            isDanger: true,
+        });
         if (confirmed) removeCheckedItems();
     };
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +71,7 @@ export async function GET(request) {
 // POST: Membuat event baru
 export async function POST(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'events:manage');
     const body = await request.json();
     const { title, subtitle, description, image, targetUrl, buttonText, isActive, startDate, endDate } = body;
 
@@ -105,7 +105,7 @@ export async function POST(request) {
 // PUT: Memperbarui event
 export async function PUT(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'events:manage');
     const body = await request.json();
     const { id, title, subtitle, description, image, targetUrl, buttonText, isActive, startDate, endDate } = body;
 
@@ -146,7 +146,7 @@ export async function PUT(request) {
 // DELETE: Menghapus event
 export async function DELETE(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'events:manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

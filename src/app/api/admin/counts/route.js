@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 // GET /api/admin/counts
 // Sumber data badge di AdminSidebar. Dipanggil polling 30 detik dari client.
 // Ringan sengaja: hanya count() query, tidak fetch full row.
 export async function GET(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'orders:read');
 
     // Jalankan 4 count query paralel supaya total latency ≈ query terlambat,
     // bukan sum semua.

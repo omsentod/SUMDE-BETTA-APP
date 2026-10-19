@@ -7,11 +7,13 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import SearchableSelect from '@/components/SearchableSelect';
 import CourierLogo from '@/components/CourierLogo';
+import { useToast } from '@/context/ToastContext';
 import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
     const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart } = useCart();
     const { currentUser, fetchMyAddresses, createAddress } = useAuth();
+    const { toast, confirmDialog } = useToast();
     const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -57,6 +59,19 @@ export default function CheckoutPage() {
         setTimeout(() => {
             setSelectAlert(prev => prev.field === field ? { field: '', message: '' } : prev);
         }, 3000);
+    };
+
+    const handleDeleteCheckoutItem = async (item) => {
+        const confirmed = await confirmDialog({
+            title: 'Hapus Spesimen?',
+            message: `Hapus "${item.name}"${item.selectedSize ? ` (Ukuran: ${item.selectedSize})` : ''} dari pesanan Anda?`,
+            confirmText: 'Ya, Hapus',
+            cancelText: 'Batal',
+            isDanger: true,
+        });
+        if (!confirmed) return;
+        removeFromCart(item.id, item.selectedSize);
+        toast.info(`"${item.name}" dihapus dari pesanan.`);
     };
 
     // Fill the form from a saved Address record (from the address book)
@@ -312,7 +327,7 @@ export default function CheckoutPage() {
     const handleSaveAddress = async () => {
         const { name, phone, streetAddress, rtRw, province, city, district, village, postalCode } = formData;
         if (!name || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
-            alert('Lengkapi seluruh detail alamat terlebih dahulu sebelum menyimpan.');
+            toast.warning('Lengkapi seluruh detail alamat terlebih dahulu.');
             return;
         }
         setSavingAddress(true);
@@ -332,9 +347,9 @@ export default function CheckoutPage() {
             });
             setSavedAddresses(prev => [...prev, created]);
             setSelectedAddressId(created.id);
-            alert('Alamat berhasil disimpan ke buku alamat.');
+            toast.success('Alamat berhasil disimpan ke buku alamat.');
         } catch (err) {
-            alert(err.message || 'Gagal menyimpan alamat.');
+            toast.error(err.message || 'Gagal menyimpan alamat.');
         } finally {
             setSavingAddress(false);
         }
@@ -344,11 +359,11 @@ export default function CheckoutPage() {
         e.preventDefault();
         const { name, phone, streetAddress, rtRw, province, city, district, village, postalCode } = formData;
         if (!name || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
-            alert('Mohon lengkapi seluruh detail pengiriman.');
+            toast.warning('Mohon lengkapi seluruh detail pengiriman.');
             return;
         }
         if (!selectedRate) {
-            alert('Pilih kurir pengiriman terlebih dahulu.');
+            toast.warning('Pilih kurir pengiriman terlebih dahulu.');
             return;
         }
         const shipping = {
@@ -364,9 +379,19 @@ export default function CheckoutPage() {
 
     if (cart.length === 0) {
         return (
-            <div className="container" style={{ padding: '10rem 0', textAlign: 'center' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem' }}>Inventaris Anda Kosong</h2>
-                <Link href="/produk" className="btn btn-primary" style={{ marginTop: '2rem' }}>Jelajahi Galeri</Link>
+            <div className={`container ${styles.emptyStateContainer}`}>
+                <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                <h2 className={styles.emptyStateTitle}>Inventaris Anda Kosong</h2>
+                <p className={styles.emptyStateSubtitle}>
+                    Belum ada spesimen pilihan yang ditambahkan ke pesanan. Silakan jelajahi galeri koleksi akuatik kami.
+                </p>
+                <Link href="/produk" className={`btn btn-primary ${styles.emptyStateBtn}`}>
+                    Jelajahi Galeri
+                </Link>
             </div>
         );
     }
@@ -405,7 +430,7 @@ export default function CheckoutPage() {
                                             <p>
                                                 {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}
                                             </p>
-                                            <button onClick={() => removeFromCart(item.id, item.selectedSize)} className="checkout-item-delete">
+                                            <button onClick={() => handleDeleteCheckoutItem(item)} className="checkout-item-delete">
                                                 HAPUS
                                             </button>
                                         </div>
@@ -432,7 +457,14 @@ export default function CheckoutPage() {
                                                     >
                                                         <div className={styles.addressCardHeader}>
                                                             <span className={styles.addressTag}>{addr.label}</span>
-                                                            {addr.isDefault && <span className={styles.addressDefaultBadge}>★ Utama</span>}
+                                                            {addr.isDefault && (
+                                                                <span className={styles.addressDefaultBadge}>
+                                                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                                    </svg>
+                                                                    Utama
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <p className={styles.addressRecipient}>{addr.recipientName} · {addr.phone}</p>
                                                         <p className={styles.addressDetailText}>
@@ -481,7 +513,12 @@ export default function CheckoutPage() {
                                         />
                                         {selectAlert.field === 'city' && (
                                             <span className={styles.selectAlertText}>
-                                                ⚠️ {selectAlert.message}
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                                </svg>
+                                                {selectAlert.message}
                                             </span>
                                         )}
                                     </div>
@@ -497,7 +534,12 @@ export default function CheckoutPage() {
                                         />
                                         {selectAlert.field === 'district' && (
                                             <span className={styles.selectAlertText}>
-                                                ⚠️ {selectAlert.message}
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                                </svg>
+                                                {selectAlert.message}
                                             </span>
                                         )}
                                     </div>
@@ -513,7 +555,12 @@ export default function CheckoutPage() {
                                         />
                                         {selectAlert.field === 'village' && (
                                             <span className={styles.selectAlertText}>
-                                                ⚠️ {selectAlert.message}
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                                </svg>
+                                                {selectAlert.message}
                                             </span>
                                         )}
                                     </div>
@@ -542,7 +589,16 @@ export default function CheckoutPage() {
                                                 disabled={savingAddress}
                                                 className={`${styles.saveAddressBtn} ${savingAddress ? styles.saveAddressBtnDisabled : ''}`}
                                             >
-                                                {savingAddress ? 'Menyimpan...' : '💾 Simpan alamat ini ke buku alamat'}
+                                                {savingAddress ? 'Menyimpan...' : (
+                                                    <>
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                                            <polyline points="17 21 17 13 7 13 7 21" />
+                                                            <polyline points="7 3 7 8 15 8" />
+                                                        </svg>
+                                                        Simpan alamat ini ke buku alamat
+                                                    </>
+                                                )}
                                             </button>
                                         </div>
                                     )}

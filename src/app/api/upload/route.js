@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 // Sniff the actual image kind from the first bytes of the file. The
 // client-supplied MIME (file.type) and filename extension are both
@@ -67,7 +67,7 @@ async function saveOneFile(file, uploadDir) {
 
 export async function POST(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, ['products:manage', 'events:manage']);
     const formData = await request.formData();
 
     // Terima satu ATAU banyak file dari field "file". getAll menangkap semua

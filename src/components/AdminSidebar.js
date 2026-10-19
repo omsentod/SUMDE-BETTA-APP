@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { canUser } from '@/lib/permission-utils';
 import styles from './AdminSidebar.module.css';
 
 const REFRESH_MS = 30_000;
@@ -43,13 +45,18 @@ function AdminSidebarInner() {
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const activeStatus = searchParams.get('status');
+  const { currentUser } = useAuth();
 
   const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0 });
   const [open, setOpen] = useState(false);
   const isOnOrdersRoute = pathname.startsWith('/admin/orders');
   const [ordersOpen, setOrdersOpen] = useState(false);
 
+  const can = (perm) => canUser(currentUser, perm);
+
   useEffect(() => {
+    if (!currentUser) return;
+    if (!can('orders:view')) return;
     let cancelled = false;
     const load = () => {
       fetch('/api/admin/counts')
@@ -60,7 +67,7 @@ function AdminSidebarInner() {
     load();
     const timer = setInterval(load, REFRESH_MS);
     return () => { cancelled = true; clearInterval(timer); };
-  }, []);
+  }, [currentUser]);
 
   // Tutup drawer setiap navigate di mobile.
   useEffect(() => {
@@ -84,6 +91,8 @@ function AdminSidebarInner() {
     { label: 'Retur', href: '/admin/orders?status=RETURNED', active: isOrdersStatus('RETURNED'), badge: counts.returned },
   ];
 
+  const showMasterData = can('products:view') || can('users:view') || can('roles:view') || can('events:view');
+
   return (
     <>
       <button className={styles.mobileToggle} onClick={() => setOpen(true)} aria-label="Buka menu">
@@ -102,63 +111,79 @@ function AdminSidebarInner() {
           {iconClose}
         </button>
 
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Ringkasan</div>
-          <Link href="/admin/dashboard" className={`${styles.link} ${isActive('/admin/dashboard') ? styles.linkActive : ''}`.trim()}>
-            <span className={styles.linkContent}>{iconDashboard}<span className={styles.linkLabel}>Dashboard</span></span>
-          </Link>
-          <Link href="/admin/reports" className={`${styles.link} ${isActive('/admin/reports') ? styles.linkActive : ''}`.trim()}>
-            <span className={styles.linkContent}>{iconReports}<span className={styles.linkLabel}>Laporan Penjualan</span></span>
-          </Link>
-        </div>
+        {(can('dashboard:view') || can('reports:view')) && (
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Ringkasan</div>
+            {can('dashboard:view') && (
+              <Link href="/admin/dashboard" className={`${styles.link} ${isActive('/admin/dashboard') ? styles.linkActive : ''}`.trim()}>
+                <span className={styles.linkContent}>{iconDashboard}<span className={styles.linkLabel}>Dashboard</span></span>
+              </Link>
+            )}
+            {can('reports:view') && (
+              <Link href="/admin/reports" className={`${styles.link} ${isActive('/admin/reports') ? styles.linkActive : ''}`.trim()}>
+                <span className={styles.linkContent}>{iconReports}<span className={styles.linkLabel}>Laporan Penjualan</span></span>
+              </Link>
+            )}
+          </div>
+        )}
 
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Operasional</div>
-          <button
-            type="button"
-            className={`${styles.link} ${styles.groupToggle} ${isOnOrdersRoute ? styles.linkActive : ''}`.trim()}
-            onClick={() => setOrdersOpen((v) => !v)}
-            aria-expanded={ordersOpen}
-            aria-controls="admin-orders-submenu"
-          >
-            <span className={styles.linkContent}>{iconOrders}<span className={styles.linkLabel}>Pesanan</span></span>
-            <span className={styles.groupToggleRight}>
-              {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
-              <span className={`${styles.chevronWrap} ${ordersOpen ? styles.chevronOpen : ''}`.trim()}>
-                {iconChevron}
+        {can('orders:view') && (
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Operasional</div>
+            <button
+              type="button"
+              className={`${styles.link} ${styles.groupToggle} ${isOnOrdersRoute ? styles.linkActive : ''}`.trim()}
+              onClick={() => setOrdersOpen((v) => !v)}
+              aria-expanded={ordersOpen}
+              aria-controls="admin-orders-submenu"
+            >
+              <span className={styles.linkContent}>{iconOrders}<span className={styles.linkLabel}>Pesanan</span></span>
+              <span className={styles.groupToggleRight}>
+                {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
+                <span className={`${styles.chevronWrap} ${ordersOpen ? styles.chevronOpen : ''}`.trim()}>
+                  {iconChevron}
+                </span>
               </span>
-            </span>
-          </button>
-          {ordersOpen && (
-            <div id="admin-orders-submenu" className={styles.submenu}>
-              {orderStatusItems.map((it) => (
-                <Link
-                  key={it.href}
-                  href={it.href}
-                  className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
-                >
-                  <span className={styles.linkContent}>
-                    <span className={styles.linkLabel}>{it.label}</span>
-                  </span>
-                  <Badge count={it.badge} />
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+            </button>
+            {ordersOpen && (
+              <div id="admin-orders-submenu" className={styles.submenu}>
+                {orderStatusItems.map((it) => (
+                  <Link
+                    key={it.href}
+                    href={it.href}
+                    className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
+                  >
+                    <span className={styles.linkContent}>
+                      <span className={styles.linkLabel}>{it.label}</span>
+                    </span>
+                    <Badge count={it.badge} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Master Data</div>
-          <Link href="/admin/products" className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
-            <span className={styles.linkContent}>{iconProducts}<span className={styles.linkLabel}>Produk</span></span>
-          </Link>
-          <Link href="/admin/users" className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
-            <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User</span></span>
-          </Link>
-          <Link href="/admin/events" className={`${styles.link} ${isActive('/admin/events') ? styles.linkActive : ''}`.trim()}>
-            <span className={styles.linkContent}>{iconEvents}<span className={styles.linkLabel}>Event</span></span>
-          </Link>
-        </div>
+        {showMasterData && (
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>Master Data</div>
+            {can('products:view') && (
+              <Link href="/admin/products" className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
+                <span className={styles.linkContent}>{iconProducts}<span className={styles.linkLabel}>Produk</span></span>
+              </Link>
+            )}
+            {(can('users:view') || can('roles:view')) && (
+              <Link href="/admin/users" className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
+                <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User & Role</span></span>
+              </Link>
+            )}
+            {can('events:view') && (
+              <Link href="/admin/events" className={`${styles.link} ${isActive('/admin/events') ? styles.linkActive : ''}`.trim()}>
+                <span className={styles.linkContent}>{iconEvents}<span className={styles.linkLabel}>Event</span></span>
+              </Link>
+            )}
+          </div>
+        )}
       </aside>
     </>
   );

@@ -55,7 +55,9 @@ export default function SearchableSelect({
                 <span className="searchable-select-label">
                     {selected ? selected.name : placeholder}
                 </span>
-                <span className={`searchable-select-arrow ${isOpen ? 'open' : ''}`}>▼</span>
+                <svg className={`searchable-select-arrow ${isOpen ? 'open' : ''}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
             </button>
 
             {/* Dropdown Popover */}

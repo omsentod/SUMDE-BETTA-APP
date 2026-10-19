@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import PaymentMethodPicker from '@/components/PaymentMethodPicker';
 import { calcPaymentFee, getMethodLabel, isValidPaymentMethod } from '@/lib/paymentFee';
+import { useToast } from '@/context/ToastContext';
 import styles from './payment.module.css';
 
 // Ambang basi untuk state checkout yang tersimpan di localStorage
@@ -23,6 +24,7 @@ function isFresh(createdAt) {
 
 export default function PaymentPage() {
     const { checkoutTotal: total, clearCheckout: clearCart, checkoutItems: cart } = useCart();
+    const { toast, confirmDialog } = useToast();
     const router = useRouter();
 
     const [shipment, setShipment] = useState(null);
@@ -148,12 +150,12 @@ export default function PaymentPage() {
     // untuk cart yang sama.
     const handleProceedToDoku = async () => {
         if (!isChangingMethod && (!shipment?.shipping?.courier || !shipment?.shipping?.service)) {
-            alert('Data ongkir hilang. Silakan kembali ke halaman checkout.');
+            toast.error('Data ongkir hilang. Silakan kembali ke halaman checkout.');
             router.push('/checkout');
             return;
         }
         if (!isValidPaymentMethod(paymentMethod)) {
-            alert('Pilih metode pembayaran terlebih dahulu.');
+            toast.warning('Pilih metode pembayaran terlebih dahulu.');
             return;
         }
         setLoading(true);
@@ -231,7 +233,7 @@ export default function PaymentPage() {
 
         } catch (err) {
             console.error('Error starting Doku payment:', err);
-            alert(err.message || 'Terjadi kesalahan sistem.');
+            toast.error(err.message || 'Terjadi kesalahan sistem.');
         } finally {
             setLoading(false);
         }
@@ -256,7 +258,7 @@ export default function PaymentPage() {
             window.location.href = data.paymentUrl;
         } catch (err) {
             console.error('Error resuming Doku payment:', err);
-            alert(err.message || 'Gagal membuat ulang sesi pembayaran.');
+            toast.error(err.message || 'Gagal membuat ulang sesi pembayaran.');
         } finally {
             setResuming(false);
         }
@@ -288,19 +290,28 @@ export default function PaymentPage() {
                 clearCart();
                 localStorage.removeItem('temp-shipment');
                 localStorage.removeItem('active-payment');
+                toast.success('Pembayaran terverifikasi! Pesanan Anda sedang diproses.');
             } else {
-                alert('Pembayaran belum terdeteksi. Silakan lakukan pembayaran terlebih dahulu di halaman DOKU.');
+                toast.warning('Pembayaran belum terdeteksi. Silakan selesaikan pembayaran terlebih dahulu di DOKU.');
             }
         } catch (err) {
             console.error('Error checking status:', err);
-            alert(err.message || 'Gagal mengecek status pembayaran.');
+            toast.error(err.message || 'Gagal mengecek status pembayaran.');
         } finally {
             setCheckingStatus(false);
         }
     };
 
     const handleCancelPayment = async () => {
-        if (!confirm('Apakah Anda ingin membatalkan transaksi pembayaran aktif ini? Pesanan akan ditandai dibatalkan.')) return;
+        const confirmed = await confirmDialog({
+            title: 'Batalkan Transaksi?',
+            message: 'Apakah Anda ingin membatalkan transaksi pembayaran aktif ini? Pesanan akan ditandai dibatalkan.',
+            confirmText: 'Ya, Batalkan',
+            cancelText: 'Kembali',
+            isDanger: true,
+        });
+        if (!confirmed) return;
+
         // Mark order CANCELLED di server DULU. Kalau gagal, jangan clear local
         // state — supaya user tahu pesanan belum ter-cancel (admin masih lihat
         // PENDING). Cegah drift UI vs DB.
@@ -310,13 +321,14 @@ export default function PaymentPage() {
                 const res = await fetch(`/api/orders/${activePayment.orderId}/cancel`, { method: 'POST' });
                 if (res.ok) {
                     ok = true;
+                    toast.info('Pesanan berhasil dibatalkan.');
                 } else {
                     const errData = await res.json().catch(() => ({}));
-                    alert(`Gagal membatalkan pesanan: ${errData.error || res.statusText}. Coba lagi atau hubungi admin.`);
+                    toast.error(`Gagal membatalkan pesanan: ${errData.error || res.statusText}.`);
                 }
             } catch (err) {
                 console.error('Cancel order network error:', err);
-                alert('Gagal menghubungi server untuk membatalkan pesanan. Cek koneksi lalu coba lagi.');
+                toast.error('Gagal menghubungi server untuk membatalkan pesanan.');
             }
             if (!ok) return; // pertahankan state lokal — biar user retry
         }

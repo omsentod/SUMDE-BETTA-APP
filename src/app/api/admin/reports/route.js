@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 // Revenue-generating statuses. PAID = uang masuk (webhook DOKU sudah verifikasi).
 // PENDING (belum bayar), CANCELLED, RETURNED
@@ -33,7 +33,7 @@ function dayKey(d) {
 
 export async function GET(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'reports:view');
 
     const { searchParams } = new URL(request.url);
     const { from, to } = parseRange(searchParams);

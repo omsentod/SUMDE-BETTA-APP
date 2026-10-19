@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { canUser } from '@/lib/permission-utils';
 import styles from './reports.module.css';
 
 const formatIDR = (v) =>
@@ -63,6 +67,13 @@ const STATUS_LABELS = {
 };
 
 export default function AdminReportsPage() {
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const canView = canUser(currentUser, 'reports:view');
+  const canExport = canUser(currentUser, 'reports:export');
+
   const [preset, setPreset] = useState('30d');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -73,6 +84,13 @@ export default function AdminReportsPage() {
   const range = useMemo(() => computeRange(preset, customFrom, customTo), [preset, customFrom, customTo]);
 
   useEffect(() => {
+    if (!authLoading && (!currentUser || !canView)) {
+      router.push('/admin/dashboard');
+    }
+  }, [currentUser, authLoading, canView, router]);
+
+  useEffect(() => {
+    if (!canView) return;
     let cancelled = false;
     const load = async () => {
       setLoading(true);
@@ -90,7 +108,7 @@ export default function AdminReportsPage() {
     };
     load();
     return () => { cancelled = true; };
-  }, [range]);
+  }, [range, canView]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -114,8 +132,9 @@ export default function AdminReportsPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(objectUrl);
+      toast.success('Laporan berhasil diekspor.');
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || 'Gagal mengekspor laporan.');
     } finally {
       setExporting(false);
     }
@@ -125,6 +144,14 @@ export default function AdminReportsPage() {
     if (!report) return 1;
     return Math.max(1, ...Object.values(report.statusBreakdown || {}));
   }, [report]);
+
+  if (authLoading || !currentUser || !canView) {
+    return (
+      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
+        <h2>Memverifikasi Otoritas Laporan...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -160,18 +187,20 @@ export default function AdminReportsPage() {
             />
           </div>
         )}
-        <button
-          className={styles.exportBtn}
-          onClick={handleExport}
-          disabled={exporting || !report}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {exporting ? 'Menyiapkan...' : 'Download Excel'}
-        </button>
+        {canExport && (
+          <button
+            className={styles.exportBtn}
+            onClick={handleExport}
+            disabled={exporting || !report}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            {exporting ? 'Menyiapkan...' : 'Download Excel'}
+          </button>
+        )}
       </div>
 
       {loading && <div className={styles.loading}>Memuat laporan...</div>}

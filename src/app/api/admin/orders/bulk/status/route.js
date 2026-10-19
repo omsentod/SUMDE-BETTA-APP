@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 const VALID_STATUSES = new Set(['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
 
@@ -16,7 +16,7 @@ const VALID_STATUSES = new Set(['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COM
 // Endpoint ini untuk kondisi darurat: webhook missed, koreksi status manual.
 export async function PUT(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'orders:write');
 
     const { orderIds, status } = await request.json();
     if (!Array.isArray(orderIds) || orderIds.length === 0) {

@@ -28,6 +28,13 @@
 - **No Emojis/Emoticons in UI**: Do NOT use raw emoji characters or text emoticons in the UI. Always use clean vector SVG icons or standard HTML icon elements for visual iconography.
 - **Light + Dark Mode Parity — MANDATORY**: Any UI surface with a background color (modals, popups, dropdowns, toasts, side panels, cards) MUST use the theme CSS variables (`--bg-card`, `--modal-bg`, `--dropdown-bg`, `--header-bg`, etc.) that already flip between light and dark mode. NEVER hardcode a hex color like `#121216`, `#050505`, `#111`, `#fff` for a background — that locks the surface into one theme. After building any modal/popup/panel, verify it looks correct in BOTH modes by toggling `[data-theme="dark"]`. If a needed variable doesn't exist yet, add both light and dark values to `:root` and `[data-theme="dark"]` in `globals.css` before using it.
 - **Empty States Must Vary With Context**: On any page filtered by tabs/status/category (orders, products, users), the empty state message MUST reflect the active filter — never render "Belum ada X" for every tab. Example: on `/customer/orders`, tab `PENDING` → "Tidak ada tagihan menunggu bayar" not "Belum ada pesanan". Every empty state must be `display: flex; flex-direction: column; align-items: center; gap: <spacing>` so icon/heading/description/CTA stack cleanly, never overlap.
+- **Anti-AI-Slop Design Restraint (See skill `anti-ai-slop-ui`)**:
+  - **No Component Brand Watermarks**: Never stamp brand tags/watermarks (e.g. `SUMDE BETTA • KONFIRMASI`, `SUMDE BETTA` badge on toast cards). The brand belongs strictly in the Navbar/Header.
+  - **No Rainbow/Countdown Progress Bars**: Never add animated rainbow/gradient progress bars or countdown meters to toast notifications.
+  - **Single-Sentence Toasts Without Forced Headers**: Never force artificial bold titles (`PERINGATAN`, `BERHASIL`, `INFORMASI`) above single-sentence notifications. Let the message speak for itself.
+  - **No Spammy Micro-Interaction Toasts**: Never trigger toast notifications on micro-interactions like clicking a disabled input or tab change. Use quiet inline indicators.
+  - **Clean, Minimalist Dialogs**: Confirmation modals must have a clean layout (max-width 400px), crisp question title, concise description, and right-aligned buttons (*Batal* ghost/outline + *Aksi* solid). No giant centered glowing halos or 3D gradient buttons.
+  - **CSS Syntax Integrity**: Always write valid kebab-case properties in `.css` / `.module.css` (e.g. `font-size:`, never camelCase `fontSize:`).
 
 ## 5. Auth (Email Verification, Password Reset, Change Password)
 

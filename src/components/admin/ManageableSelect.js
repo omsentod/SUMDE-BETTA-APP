@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useToast } from '@/context/ToastContext';
 import styles from '@/app/admin/dashboard/adminDashboard.module.css';
 
 export default function ManageableSelect({ label, value, onChange, options, setOptions }) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [newValue, setNewValue] = useState('');
   const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -24,7 +26,7 @@ export default function ManageableSelect({ label, value, onChange, options, setO
     const trimmed = newValue.trim();
     if (!trimmed) return;
     if (options.some((o) => o.toLowerCase() === trimmed.toLowerCase())) {
-      alert('Opsi ini sudah ada.');
+      toast.warning('Opsi ini sudah ada.');
       return;
     }
     setOptions([...options, trimmed]);

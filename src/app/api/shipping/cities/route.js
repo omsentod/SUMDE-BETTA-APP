@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { searchCities } from '@/lib/shipping';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/permissions';
 
 // Admin-only search across Komerce's destination database. Used ONCE during
 // setup to find the merchant's own SHIPPING_ORIGIN_CITY_ID.
@@ -13,7 +13,7 @@ import { requireAdmin } from '@/lib/auth';
 // put its `id` into SHIPPING_ORIGIN_CITY_ID in .env.
 export async function GET(request) {
   try {
-    await requireAdmin(request);
+    await requirePermission(request, 'shipping:manage');
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get('q') || '').trim();
     if (!q) {
