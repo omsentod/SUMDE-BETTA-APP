@@ -58,8 +58,8 @@ export default function Header() {
         ? currentUser.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
         : '';
 
-    const isAdmin = currentUser?.role === 'admin';
-    const isCustomer = currentUser?.role === 'customer';
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.canAccessAdmin || (Array.isArray(currentUser?.permissions) && currentUser.permissions.length > 0);
+    const isCustomer = !isAdmin;
 
     return (
         <>

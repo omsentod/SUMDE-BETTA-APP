@@ -1,6 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import styles from './tracker.module.css';
+
+export function getCourierTrackingUrl(courier, waybill) {
+  const c = String(courier || '').toLowerCase();
+  if (c.includes('pos')) return 'https://www.posindonesia.co.id/id/tracking';
+  if (c.includes('jnt') || c.includes('j&t')) return 'https://www.jet.co.id/track';
+  if (c.includes('jne')) return 'https://www.jne.co.id/id/tracking/trace';
+  if (c.includes('sicepat')) return 'https://www.sicepat.com/checkAwb';
+  if (c.includes('anteraja')) return 'https://anteraja.id/tracking';
+  if (c.includes('tiki')) return 'https://www.tiki.id/id/tracking';
+  if (c.includes('ninja')) return 'https://www.ninjaxpress.co/id-id/tracking';
+  return `https://cekresi.com/?noresi=${encodeURIComponent(waybill || '')}`;
+}
 
 // Shopee / Tokopedia style shipment timeline in Indonesian.
 // Biteship sends courier updates via `history: [{ status, note, updated_at }]`.
@@ -136,7 +149,27 @@ function formatWhen(dt) {
   };
 }
 
-export default function ShipmentTracker({ history = [], waybill, courier }) {
+export default function ShipmentTracker({
+  history = [],
+  waybill,
+  courier,
+  link,
+  plain = false,
+  hideHeader = false,
+  hideExternalLink = false,
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyWaybill = (e) => {
+    e.stopPropagation();
+    if (!waybill) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(waybill);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Collapse spam/ping-pong duplicates, then reverse so newest is on top (Shopee-style)
   const cleaned = collapseHistoryClient(history);
   const items = [...cleaned].reverse();
@@ -164,25 +197,45 @@ export default function ShipmentTracker({ history = [], waybill, courier }) {
       : styles.statusBadgeNeutral;
 
   return (
-    <div className={styles.card}>
+    <div className={plain ? styles.plainCard : styles.card}>
       {/* Header: courier + waybill */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1" y="3" width="15" height="13" rx="1" />
-            <path d="M16 8h4l3 3v5h-7z" />
-            <circle cx="5.5" cy="18.5" r="2.5" />
-            <circle cx="18.5" cy="18.5" r="2.5" />
-          </svg>
-          <span className={styles.headerTitle}>Lacak Pengiriman</span>
-        </div>
-        <div className={styles.headerRight}>
-          <div className={styles.courierBadge}>
-            {(courier || '').toUpperCase()}
+      {!hideHeader && (
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="3" width="15" height="13" rx="1" />
+              <path d="M16 8h4l3 3v5h-7z" />
+              <circle cx="5.5" cy="18.5" r="2.5" />
+              <circle cx="18.5" cy="18.5" r="2.5" />
+            </svg>
+            <div className={styles.headerTitle}>Pelacakan Paket</div>
           </div>
-          <div className={styles.waybillText}>{waybill}</div>
+          <div className={styles.headerRight}>
+            <div className={styles.courierBadge}>{String(courier || 'Kurir').toUpperCase()}</div>
+            <div className={styles.waybillRow}>
+              <span className={styles.waybillText}>{waybill}</span>
+              <button
+                type="button"
+                className={styles.copyWaybillBtn}
+                onClick={handleCopyWaybill}
+                title="Salin Nomor Resi"
+                aria-label="Salin nomor resi"
+              >
+                {copied ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--status-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {items.length === 0 ? (
         <div className={styles.emptyState}>
@@ -241,6 +294,24 @@ export default function ShipmentTracker({ history = [], waybill, courier }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {!hideExternalLink && waybill && (
+        <div className={styles.externalFooter}>
+          <a
+            href={link || getCourierTrackingUrl(courier, waybill)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.externalLinkBtn}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            Buka Web Resmi Ekspedisi ({String(courier || 'Kurir').toUpperCase()})
+          </a>
         </div>
       )}
     </div>

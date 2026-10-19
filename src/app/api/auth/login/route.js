@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, isLegacyPassword, hashPassword, signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth';
 import { consume, clientIp } from '@/lib/rateLimit';
+import { getRolePermissions } from '@/lib/permissions';
 
 export async function POST(request) {
   try {
@@ -47,8 +48,14 @@ export async function POST(request) {
 
     const token = await signSession({ id: user.id, role: user.role });
     const { password: _, ...userData } = user;
+    const permissions = await getRolePermissions(user.role);
+    const canAccessAdmin = user.role === 'admin' || (Array.isArray(permissions) && permissions.length > 0);
 
-    const res = NextResponse.json(userData);
+    const res = NextResponse.json({
+      ...userData,
+      permissions,
+      canAccessAdmin,
+    });
     res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
     return res;
   } catch (error) {

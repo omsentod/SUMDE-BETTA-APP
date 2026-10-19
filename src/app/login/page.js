@@ -6,13 +6,28 @@ import Link from 'next/link';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 function LoginPageInner() {
-    const { login } = useAuth();
+    const { currentUser, login } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Jika sudah login, redirect langsung ke dashboard yang sesuai
+    useEffect(() => {
+        if (currentUser) {
+            const hasAdminAccess = currentUser.role === 'admin' || currentUser.canAccessAdmin || (Array.isArray(currentUser.permissions) && currentUser.permissions.length > 0);
+            const nextParam = searchParams.get('next');
+            const safeNext = nextParam && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextParam) ? nextParam : null;
+
+            if (safeNext && !(safeNext === '/customer/dashboard' && hasAdminAccess)) {
+                router.push(safeNext);
+            } else {
+                router.push(hasAdminAccess ? '/admin/dashboard' : '/customer/dashboard');
+            }
+        }
+    }, [currentUser, router, searchParams]);
 
     // Pesan error dari flow Google OAuth (redirect balik dari /callback dengan
     // ?googleError=...). Tampilkan di banner error.
@@ -36,7 +51,13 @@ function LoginPageInner() {
 
         try {
             const user = await login(email, password);
-            if (user.role === 'admin') {
+            const hasAdminAccess = user.role === 'admin' || user.canAccessAdmin || (Array.isArray(user.permissions) && user.permissions.length > 0);
+            const nextParam = searchParams.get('next');
+            const safeNext = nextParam && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextParam) ? nextParam : null;
+
+            if (safeNext && !(safeNext === '/customer/dashboard' && hasAdminAccess)) {
+                router.push(safeNext);
+            } else if (hasAdminAccess) {
                 router.push('/admin/dashboard');
             } else {
                 router.push('/customer/dashboard');

@@ -6,6 +6,7 @@ import {
   OAUTH_STATE_COOKIE,
 } from '@/lib/googleAuth';
 import { signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth';
+import { getRolePermissions } from '@/lib/permissions';
 
 // Base URL untuk membangun redirect balik ke browser. Wajib pakai APP_URL
 // karena `request.url` di belakang reverse proxy Hostinger mengembalikan
@@ -91,7 +92,15 @@ export async function GET(request) {
     }
 
     const token = await signSession({ id: user.id, role: user.role });
-    const res = NextResponse.redirect(new URL(next, base));
+    const permissions = await getRolePermissions(user.role);
+    const hasAdminAccess = user.role === 'admin' || (Array.isArray(permissions) && permissions.length > 0);
+
+    let redirectPath = next;
+    if ((redirectPath === '/customer/dashboard' || redirectPath === '/') && hasAdminAccess) {
+      redirectPath = '/admin/dashboard';
+    }
+
+    const res = NextResponse.redirect(new URL(redirectPath, base));
     res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
     // Hapus state cookie — sudah dipakai.
     res.cookies.set(OAUTH_STATE_COOKIE, '', { path: '/', maxAge: 0 });

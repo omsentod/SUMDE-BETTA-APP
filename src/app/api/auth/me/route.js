@@ -25,6 +25,7 @@ export async function GET(request) {
     user: {
       ...userData,
       permissions,
+      canAccessAdmin: user.role === 'admin' || (Array.isArray(permissions) && permissions.length > 0),
       hasPassword: !!password,
       hasGoogle: !!user.googleId,
     },

@@ -246,13 +246,13 @@
 }
 
 .recipientText {
-    fontWeight: 700;
-    fontSize: 1rem;
+    font-weight: 700;
+    font-size: 1rem;
     color: var(--text-main);
 }
 
 .addressDetailText {
-    fontSize: 0.88rem;
+    font-size: 0.88rem;
     color: var(--text-muted);
     line-height: 1.5;
 }

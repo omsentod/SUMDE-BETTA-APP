@@ -67,8 +67,9 @@ export default function MobileBottomNav() {
     return pathname === href || pathname.startsWith(href + '/');
   };
 
+  const hasAdminAccess = currentUser?.role === 'admin' || currentUser?.canAccessAdmin || (Array.isArray(currentUser?.permissions) && currentUser.permissions.length > 0);
   const accountHref = currentUser
-    ? (currentUser.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard')
+    ? (hasAdminAccess ? '/admin/dashboard' : '/customer/dashboard')
     : '/login';
   const accountLabel = currentUser ? 'Akun' : 'Masuk';
   const AccountIcon = currentUser ? IconUser : IconLogin;

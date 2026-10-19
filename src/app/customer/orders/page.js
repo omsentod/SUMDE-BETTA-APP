@@ -265,6 +265,7 @@ export default function OrdersPage() {
                                             history={trackingData[order.id].history || []}
                                             waybill={order.trackingNumber}
                                             courier={order.shippingCourier}
+                                            link={trackingData[order.id]?.link}
                                         />
                                     )}
                                 </div>

@@ -7,6 +7,14 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
+.plainCard {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -41,11 +49,36 @@
   letter-spacing: 0.05em;
 }
 
+.waybillRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
 .waybillText {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: 0.02em;
+}
+
+.copyWaybillBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 0.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.copyWaybillBtn:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
 }
 
 .emptyState {
@@ -211,4 +244,32 @@
   color: var(--text-muted);
   margin-top: 0.35rem;
   opacity: 0.85;
+}
+
+.externalFooter {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.externalLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in oklab, var(--primary) 25%, transparent);
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.externalLinkBtn:hover {
+  background: color-mix(in oklab, var(--primary) 22%, transparent);
 }

@@ -77,7 +77,8 @@ function VerifyEmailForm() {
 
       setStatus({ kind: 'success', message: 'Email terverifikasi. Mengarahkan ke dashboard...' });
       setCurrentUser(data);
-      setTimeout(() => router.push('/customer/dashboard'), 1500);
+      const hasAdmin = data.role === 'admin' || data.canAccessAdmin || (Array.isArray(data.permissions) && data.permissions.length > 0);
+      setTimeout(() => router.push(hasAdmin ? '/admin/dashboard' : '/customer/dashboard'), 1500);
     } catch (err) {
       setStatus({ kind: 'error', message: err.message });
       setDigits(['', '', '', '', '', '']);

@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getMethodLabel } from '@/lib/paymentFee';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
+import ShipmentTracker from '@/app/customer/orders/ShipmentTracker';
 import styles from './orders.module.css';
 
 const formatIDR = (v) =>
@@ -51,6 +52,23 @@ const NEW_ORDER_STATUSES = new Set(['PENDING', 'PAID']);
 // dieksklusi karena reprint label bekas cancel bisa nyasar paket.
 const PRINTABLE_STATUSES = new Set(['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED']);
 
+// Statuses where the shipment can be actively tracked.
+// PENDING: belum bayar (belum ada pengiriman/resi)
+// PAID: lunas tapi belum dipanggil kurir (belum ada resi)
+// CANCELLED: dibatalkan
+// PROCESSING, SHIPPED, COMPLETED, RETURNED: kurir sudah dipanggil, resi AWB tersedia dan dapat dilacak.
+const TRACKABLE_STATUSES = new Set(['PROCESSING', 'SHIPPED', 'COMPLETED', 'RETURNED']);
+const isOrderTrackable = (order) => Boolean(order?.trackingNumber && TRACKABLE_STATUSES.has(order?.status));
+
+const getCourierTrackingUrl = (courier, waybill) => {
+  const c = String(courier || '').toLowerCase();
+  if (c.includes('pos')) return 'https://www.posindonesia.co.id/id/tracking';
+  if (c.includes('jnt') || c.includes('j&t')) return 'https://www.jet.co.id/track';
+  if (c.includes('jne')) return 'https://www.jne.co.id/id/tracking/trace';
+  if (c.includes('sicepat')) return 'https://www.sicepat.com/checkAwb';
+  return `https://cekresi.com/?noresi=${encodeURIComponent(waybill || '')}`;
+};
+
 const STATUS_BADGE_CLASS = {
   PENDING: styles.badgePending,
   PAID: styles.badgePaid,
@@ -94,6 +112,66 @@ function AdminOrdersPageInner() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [statusModal, setStatusModal] = useState({ open: false, target: '' });
+  const [trackingModal, setTrackingModal] = useState({
+    open: false,
+    order: null,
+    loading: false,
+    error: null,
+    data: null,
+    copied: false,
+  });
+
+  const openTrackingModal = async (order) => {
+    if (!order || !order.trackingNumber) return;
+    setTrackingModal({
+      open: true,
+      order,
+      loading: true,
+      error: null,
+      data: null,
+      copied: false,
+    });
+
+    try {
+      const courier = order.shippingCourier || '';
+      const res = await fetch(`/api/shipping/track?waybill=${encodeURIComponent(order.trackingNumber)}&courier=${encodeURIComponent(courier)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal mengambil informasi pelacakan.');
+      setTrackingModal((prev) => ({
+        ...prev,
+        loading: false,
+        data,
+      }));
+    } catch (err) {
+      setTrackingModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || 'Gagal melacak pesanan.',
+      }));
+    }
+  };
+
+  const closeTrackingModal = () => {
+    setTrackingModal({
+      open: false,
+      order: null,
+      loading: false,
+      error: null,
+      data: null,
+      copied: false,
+    });
+  };
+
+  const handleCopyTrackingNumber = (trackingNumber) => {
+    if (!trackingNumber) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(trackingNumber);
+    }
+    setTrackingModal((prev) => ({ ...prev, copied: true }));
+    setTimeout(() => {
+      setTrackingModal((prev) => ({ ...prev, copied: false }));
+    }, 2000);
+  };
 
   useEffect(() => {
     if (!authLoading && (!currentUser || !canView)) {
@@ -396,6 +474,16 @@ function AdminOrdersPageInner() {
                               Resi
                             </a>
                           )}
+                          {isOrderTrackable(order) && (
+                            <button
+                              type="button"
+                              className={styles.actionBtn}
+                              onClick={() => openTrackingModal(order)}
+                              title="Lacak Pengiriman"
+                            >
+                              Lacak
+                            </button>
+                          )}
                           <button className={styles.actionBtn} onClick={() => setExpandedId(isExpanded ? null : order.id)}>
                             {isExpanded ? 'Tutup' : 'Detail'}
                           </button>
@@ -446,6 +534,21 @@ function AdminOrdersPageInner() {
                                     <span className={styles.awbLabel}>AWB:</span>
                                     <strong>{order.trackingNumber}</strong>
                                     {order.biteshipStatus && <span style={{ color: 'var(--text-muted)' }}> · {order.biteshipStatus}</span>}
+                                    {isOrderTrackable(order) && (
+                                      <button
+                                        type="button"
+                                        className={styles.trackLinkBtn}
+                                        onClick={() => openTrackingModal(order)}
+                                      >
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="1" y="3" width="15" height="13" rx="1" />
+                                          <path d="M16 8h4l3 3v5h-7z" />
+                                          <circle cx="5.5" cy="18.5" r="2.5" />
+                                          <circle cx="18.5" cy="18.5" r="2.5" />
+                                        </svg>
+                                        Lacak Pesanan
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -491,6 +594,128 @@ function AdminOrdersPageInner() {
                 disabled={!statusModal.target || busy}
               >
                 {busy ? 'Menyimpan...' : 'Ubah Status'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {trackingModal.open && trackingModal.order && (
+        <div className={styles.trackingModalBackdrop} onClick={closeTrackingModal}>
+          <div className={styles.trackingModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.trackingModalHeader}>
+              <div className={styles.trackingModalTitleGroup}>
+                <h4 className={styles.trackingModalTitle}>
+                  Lacak Pesanan #{trackingModal.order.id.slice(0, 8).toUpperCase()}
+                </h4>
+                <span className={styles.trackingModalSubtitle}>
+                  Status: {STATUS_LABEL[trackingModal.order.status] || trackingModal.order.status} · Penerima: {trackingModal.order.name}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.trackingModalCloseBtn}
+                onClick={closeTrackingModal}
+                aria-label="Tutup modal pelacakan"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className={styles.trackingModalBody}>
+              <div className={styles.trackingMetaCard}>
+                <div className={styles.trackingMetaGroup}>
+                  <span className={styles.trackingMetaLabel}>Kurir & Layanan</span>
+                  <span className={styles.trackingMetaValue}>
+                    {(trackingModal.order.shippingCourier || 'Kurir').toUpperCase()} {trackingModal.order.shippingService ? `(${trackingModal.order.shippingService})` : ''}
+                  </span>
+                </div>
+                <div className={styles.trackingMetaGroup}>
+                  <span className={styles.trackingMetaLabel}>Nomor Resi (AWB)</span>
+                  <div className={styles.trackingMetaValue}>
+                    <span>{trackingModal.order.trackingNumber}</span>
+                    <button
+                      type="button"
+                      className={styles.trackingCopyBtn}
+                      onClick={() => handleCopyTrackingNumber(trackingModal.order.trackingNumber)}
+                    >
+                      {trackingModal.copied ? (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--status-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Tersalin
+                        </>
+                      ) : (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </svg>
+                          Salin
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {trackingModal.loading ? (
+                <div className={styles.trackingLoadingState}>
+                  <div className={styles.trackingSpinner} />
+                  <span>Menghubungkan ke sistem ekspedisi...</span>
+                </div>
+              ) : trackingModal.error ? (
+                <div className={styles.trackingErrorState}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--status-error)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <span>{trackingModal.error}</span>
+                  <button
+                    type="button"
+                    className={styles.trackingRetryBtn}
+                    onClick={() => openTrackingModal(trackingModal.order)}
+                  >
+                    Coba Lagi
+                  </button>
+                </div>
+              ) : (
+                <ShipmentTracker
+                  history={trackingModal.data?.history || []}
+                  waybill={trackingModal.order.trackingNumber}
+                  courier={trackingModal.order.shippingCourier}
+                  plain={true}
+                  hideHeader={true}
+                  hideExternalLink={true}
+                />
+              )}
+            </div>
+
+            <div className={styles.trackingModalFooter}>
+              <a
+                href={trackingModal.data?.link || getCourierTrackingUrl(trackingModal.order.shippingCourier, trackingModal.order.trackingNumber)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.trackingExternalBtn}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                Buka Web Resmi Ekspedisi
+              </a>
+              <button
+                type="button"
+                className={styles.trackingCloseActionBtn}
+                onClick={closeTrackingModal}
+              >
+                Tutup
               </button>
             </div>
           </div>
