@@ -418,6 +418,147 @@
   cursor: not-allowed;
 }
 
+.statNumSuccess {
+  color: var(--status-success, #22c55e);
+}
+
+.statNumInfo {
+  color: #3b82f6;
+}
+
+.statNumWarning {
+  color: #eab308;
+}
+
+.statNumDanger {
+  color: #ef4444;
+}
+
+.templateTitle {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-main);
+}
+
+.structureTitle {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.35rem;
+}
+
+.structureIndent1 {
+  padding-left: 1.2rem;
+}
+
+.structureIndent2 {
+  padding-left: 2.4rem;
+}
+
+.errorList {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.resultCardActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.resultCardBtnSecondary {
+  border-radius: 30px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+}
+
+.resultCardBtnPrimary {
+  border-radius: 30px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.85rem;
+}
+
+.previewTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.previewThumbImg {
+  object-fit: cover;
+}
+
+.footerBtnOutline {
+  border-radius: 30px;
+  padding: 0.65rem 1.4rem;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.stepBadgeCompleted {
+  background: var(--status-success, #22c55e) !important;
+  color: #fff !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.finishActionBtn {
+  background: #16a34a;
+}
+
+.finishActionBtn:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.autoCloseBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  padding: 0.85rem 1.2rem;
+  color: #22c55e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.autoCloseText {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.instantCloseBtn {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.instantCloseBtn:hover {
+  opacity: 0.9;
+}
+
+.footerRightActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 @media (max-width: 640px) {
   .modalContainer {
     max-height: 95vh;
@@ -436,8 +577,14 @@
     padding: 1rem;
     flex-direction: column-reverse;
   }
-  .uploadActionBtn {
+  .uploadActionBtn,
+  .footerBtnOutline {
     width: 100%;
     justify-content: center;
   }
+  .footerRightActions {
+    width: 100%;
+    flex-direction: column;
+  }
 }
+
