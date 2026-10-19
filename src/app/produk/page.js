@@ -1,8 +1,8 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/context/ProductContext";
-
 
 const SORT_OPTIONS = [
     { label: 'Newest', value: 'newest' },
@@ -10,41 +10,81 @@ const SORT_OPTIONS = [
     { label: 'Price: High to Low', value: 'price_desc' }
 ];
 
-export default function GalleryPage() {
+function GalleryContent() {
+    const searchParams = useSearchParams();
+    const paramCat = (searchParams.get('category') || searchParams.get('form') || '').trim();
+    const paramGender = (searchParams.get('gender') || '').trim();
+    const paramColor = (searchParams.get('color') || searchParams.get('coloration') || '').trim();
+
     const { products: allProducts, isLoading } = useProducts();
     // Hide soft-deleted (archived) products from the public gallery.
     const products = useMemo(() => allProducts.filter(p => !p.isArchived), [allProducts]);
 
     // Derive filter options dynamically from current products list
     const genders = useMemo(() => {
-        const set = new Set(products.map(p => p.gender).filter(Boolean));
+        const set = new Set();
         ['Male', 'Female', 'Pair'].forEach(g => set.add(g));
+        products.forEach(p => { if (p.gender) set.add(p.gender); });
         return Array.from(set).sort();
     }, [products]);
 
     const forms = useMemo(() => {
-        const set = new Set(products.map(p => p.form).filter(Boolean));
+        const set = new Set();
         ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'].forEach(f => set.add(f));
+        products.forEach(p => {
+            if (p.form) set.add(p.form);
+            if (p.category) set.add(p.category);
+        });
         return Array.from(set).sort();
     }, [products]);
 
     const colors = useMemo(() => {
-        const set = new Set(products.map(p => p.coloration).filter(Boolean));
+        const set = new Set();
         ['Avatar', 'Multicolor', 'Koi', 'Copper', 'Solid', 'Super Red', 'Galaxy', 'Nemo', 'Black Samurai'].forEach(c => set.add(c));
+        products.forEach(p => { if (p.coloration) set.add(p.coloration); });
         return Array.from(set).sort();
     }, [products]);
 
     // State Management
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-    const [filters, setFilters] = useState({
-        genders: [],
-        forms: [],
-        colors: [],
+    const [filters, setFilters] = useState(() => ({
+        genders: paramGender ? [paramGender] : [],
+        forms: paramCat ? [paramCat] : [],
+        colors: paramColor ? [paramColor] : [],
         priceMin: 0,
         priceMax: 5000000,
-    });
+    }));
     const [sortBy, setSortBy] = useState('newest');
+
+    // Sinkronkan filter saat query param category/form/gender/color berubah via navigasi
+    useEffect(() => {
+        const cat = (searchParams.get('category') || searchParams.get('form') || '').trim();
+        const gender = (searchParams.get('gender') || '').trim();
+        const color = (searchParams.get('color') || searchParams.get('coloration') || '').trim();
+
+        setFilters(prev => {
+            const nextForms = cat ? [cat] : [];
+            const nextGenders = gender ? [gender] : [];
+            const nextColors = color ? [color] : [];
+
+            const formsMatch = prev.forms.length === nextForms.length &&
+                prev.forms.every((f, i) => f.toLowerCase() === nextForms[i].toLowerCase());
+            const gendersMatch = prev.genders.length === nextGenders.length &&
+                prev.genders.every((g, i) => g.toLowerCase() === nextGenders[i].toLowerCase());
+            const colorsMatch = prev.colors.length === nextColors.length &&
+                prev.colors.every((c, i) => c.toLowerCase() === nextColors[i].toLowerCase());
+
+            if (formsMatch && gendersMatch && colorsMatch) return prev;
+
+            return {
+                ...prev,
+                ...(cat ? { forms: nextForms } : {}),
+                ...(gender ? { genders: nextGenders } : {}),
+                ...(color ? { colors: nextColors } : {}),
+            };
+        });
+    }, [searchParams]);
 
     // Lock body scroll while mobile filter sheet is open — prevents background
     // page scroll leaking through when user drags inside the sheet.
@@ -63,23 +103,33 @@ export default function GalleryPage() {
         (Number(filters.priceMin) > 0 ? 1 : 0) +
         (Number(filters.priceMax) < 5000000 ? 1 : 0);
 
-    // Filter Logic — must be before any conditional return (Rules of Hooks)
+    // Filter Logic — case-insensitive and robust against whitespace/empty fields
     const filteredProducts = useMemo(() => {
         let result = [...products];
 
         if (filters.genders.length > 0) {
-            result = result.filter(p => filters.genders.includes(p.gender));
+            const selectedGenders = filters.genders.map(g => g.trim().toLowerCase());
+            result = result.filter(p => selectedGenders.includes((p.gender || '').trim().toLowerCase()));
         }
+
         if (filters.forms.length > 0) {
-            result = result.filter(p => filters.forms.includes(p.form));
+            const selectedForms = filters.forms.map(f => f.trim().toLowerCase());
+            result = result.filter(p => {
+                const pForm = (p.form || '').trim().toLowerCase();
+                const pCat = (p.category || '').trim().toLowerCase();
+                return selectedForms.includes(pForm) || selectedForms.includes(pCat);
+            });
         }
+
         if (filters.colors.length > 0) {
-            result = result.filter(p => filters.colors.includes(p.coloration));
+            const selectedColors = filters.colors.map(c => c.trim().toLowerCase());
+            result = result.filter(p => selectedColors.includes((p.coloration || '').trim().toLowerCase()));
         }
-        if (filters.priceMin !== '') {
+
+        if (filters.priceMin !== '' && filters.priceMin !== undefined) {
             result = result.filter(p => p.price >= Number(filters.priceMin));
         }
-        if (filters.priceMax !== '') {
+        if (filters.priceMax !== '' && filters.priceMax !== undefined) {
             result = result.filter(p => p.price <= Number(filters.priceMax));
         }
 
@@ -112,16 +162,21 @@ export default function GalleryPage() {
     // Handlers
     const handleCheckboxChange = (type, value) => {
         setFilters(prev => {
-            const current = prev[type];
-            const updated = current.includes(value)
-                ? current.filter(item => item !== value)
+            const current = prev[type] || [];
+            const valLower = value.trim().toLowerCase();
+            const exists = current.some(item => item.trim().toLowerCase() === valLower);
+            const updated = exists
+                ? current.filter(item => item.trim().toLowerCase() !== valLower)
                 : [...current, value];
             return { ...prev, [type]: updated };
         });
     };
 
-    const handlePriceChange = (e, minOrMax) => {
-        setFilters(prev => ({ ...prev, [minOrMax]: e.target.value }));
+    const removeSingleFilter = (type, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [type]: (prev[type] || []).filter(item => item.trim().toLowerCase() !== value.trim().toLowerCase())
+        }));
     };
 
     const clearFilters = () => {
@@ -235,7 +290,7 @@ export default function GalleryPage() {
                                         <input
                                             type="checkbox"
                                             className="checkboxInput"
-                                            checked={filters.genders.includes(gender)}
+                                            checked={filters.genders.some(g => g.trim().toLowerCase() === gender.trim().toLowerCase())}
                                             onChange={() => handleCheckboxChange('genders', gender)}
                                         />
                                         <span className="checkboxText">{gender}</span>
@@ -255,7 +310,7 @@ export default function GalleryPage() {
                                         <input
                                             type="checkbox"
                                             className="checkboxInput"
-                                            checked={filters.forms.includes(form)}
+                                            checked={filters.forms.some(f => f.trim().toLowerCase() === form.trim().toLowerCase())}
                                             onChange={() => handleCheckboxChange('forms', form)}
                                         />
                                         <span className="checkboxText">{form}</span>
@@ -275,7 +330,7 @@ export default function GalleryPage() {
                                         <input
                                             type="checkbox"
                                             className="checkboxInput"
-                                            checked={filters.colors.includes(color)}
+                                            checked={filters.colors.some(c => c.trim().toLowerCase() === color.trim().toLowerCase())}
                                             onChange={() => handleCheckboxChange('colors', color)}
                                         />
                                         <span className="checkboxText">{color}</span>
@@ -369,6 +424,56 @@ export default function GalleryPage() {
                             </div>
                         </div>
 
+                        {/* Active Filter Chips Bar */}
+                        {activeFilterCount > 0 && (
+                            <div className="activeFiltersBar">
+                                <span className="activeFiltersLabel">Filter Aktif:</span>
+                                {filters.forms.map(form => (
+                                    <button
+                                        key={`form-${form}`}
+                                        type="button"
+                                        className="filterChip"
+                                        onClick={() => removeSingleFilter('forms', form)}
+                                        title="Hapus filter form"
+                                    >
+                                        <span>{form}</span>
+                                        <span className="filterChipRemove" aria-hidden="true">✕</span>
+                                    </button>
+                                ))}
+                                {filters.genders.map(gender => (
+                                    <button
+                                        key={`gender-${gender}`}
+                                        type="button"
+                                        className="filterChip"
+                                        onClick={() => removeSingleFilter('genders', gender)}
+                                        title="Hapus filter gender"
+                                    >
+                                        <span>{gender}</span>
+                                        <span className="filterChipRemove" aria-hidden="true">✕</span>
+                                    </button>
+                                ))}
+                                {filters.colors.map(color => (
+                                    <button
+                                        key={`color-${color}`}
+                                        type="button"
+                                        className="filterChip"
+                                        onClick={() => removeSingleFilter('colors', color)}
+                                        title="Hapus filter warna"
+                                    >
+                                        <span>{color}</span>
+                                        <span className="filterChipRemove" aria-hidden="true">✕</span>
+                                    </button>
+                                ))}
+                                <button
+                                    type="button"
+                                    className="clearAllChipsBtn"
+                                    onClick={clearFilters}
+                                >
+                                    Reset Semua
+                                </button>
+                            </div>
+                        )}
+
                         {/* Grid */}
                         {filteredProducts.length > 0 ? (
                             <div className="productGrid">
@@ -378,14 +483,21 @@ export default function GalleryPage() {
                             </div>
                         ) : (
                             <div className="emptyState">
-                                <div className="emptyStateIcon">🐟</div>
-                                <h3 className="emptyStateTitle">No Betta found</h3>
-                                <p className="emptyStateDesc">Try adjusting your filters to find your perfect match.</p>
+                                <div className="emptyStateIcon" aria-hidden="true">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                        <line x1="8" y1="11" x2="14" y2="11" />
+                                    </svg>
+                                </div>
+                                <h3 className="emptyStateTitle">Tidak ada spesimen ditemukan</h3>
+                                <p className="emptyStateDesc">Tidak ada ikan cupang yang cocok dengan kriteria filter saat ini.</p>
                                 <button
+                                    type="button"
                                     onClick={clearFilters}
                                     className="emptyStateBtn"
                                 >
-                                    Clear Filters
+                                    Reset Filter
                                 </button>
                             </div>
                         )}
@@ -394,5 +506,13 @@ export default function GalleryPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function GalleryPage() {
+    return (
+        <Suspense fallback={<div className="container" style={{ padding: '6rem 0', textAlign: 'center', color: 'var(--text-muted)' }}>Memuat katalog produk...</div>}>
+            <GalleryContent />
+        </Suspense>
     );
 }

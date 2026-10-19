@@ -328,8 +328,8 @@ export default function ProductDetailClient() {
                                     Spesimen dengan form {product.form}, corak {product.coloration}, dan karakteristik serupa.
                                 </p>
                             </div>
-                            <Link href={`/produk?category=${encodeURIComponent(product.form)}`} className={styles.similarViewAll}>
-                                <span>Lihat Semua {product.form}</span>
+                            <Link href={product.form || product.category ? `/produk?category=${encodeURIComponent((product.form || product.category).trim())}` : '/produk'} className={styles.similarViewAll}>
+                                <span>Lihat Semua {product.form || product.category || 'Koleksi'}</span>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="5" y1="12" x2="19" y2="12" />
                                     <polyline points="12 5 19 12 12 19" />

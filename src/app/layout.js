@@ -4,6 +4,7 @@ import { CartProvider } from "@/context/CartContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProductProvider } from "@/context/ProductContext";
+import { ToastProvider } from "@/context/ToastContext";
 
 export const metadata = {
     title: "SUMDE BETTA | Koleksi Akuatik Eksklusif",
@@ -22,7 +23,9 @@ export default function RootLayout({ children }) {
                     <AuthProvider>
                         <ProductProvider>
                             <CartProvider>
-                                <LayoutWrapper>{children}</LayoutWrapper>
+                                <ToastProvider>
+                                    <LayoutWrapper>{children}</LayoutWrapper>
+                                </ToastProvider>
                             </CartProvider>
                         </ProductProvider>
                     </AuthProvider>
