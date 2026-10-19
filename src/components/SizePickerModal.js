@@ -80,9 +80,9 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
 
                 {/* Size options */}
                 <div className="size-picker-section">
-                    <div className="size-picker-label">Ukuran</div>
+                    <div className="size-picker-label">Pilih Varian</div>
                     {sizes.length === 0 ? (
-                        <p className="size-picker-empty">Produk ini tidak punya varian ukuran.</p>
+                        <p className="size-picker-empty">Produk ini tidak punya opsi varian.</p>
                     ) : (
                         <div className="size-picker-options">
                             {sizes.map((s) => {
@@ -102,7 +102,7 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
                 </div>
 
                 <div className="size-picker-footer-hint">
-                    Klik ukuran di atas untuk langsung {ctaLabel.toLowerCase()}.
+                    Pilih varian di atas untuk langsung {ctaLabel.toLowerCase()}.
                 </div>
             </div>
         </div>,

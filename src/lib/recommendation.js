@@ -64,30 +64,24 @@ export function getSimilarProducts(currentProduct, allProducts, limit = 4) {
     const formB = (candidate.form || candidate.category || '').toLowerCase().trim();
     const formSim = formA && formB && formA === formB ? 1.0 : 0;
 
-    // 2. Corak Warna Match / Jaccard Overlap (25%)
+    // 2. Corak Warna Match / Jaccard Overlap (30%)
     const colorSim = calculateColorSimilarity(currentProduct.coloration, candidate.coloration);
 
-    // 3. Gender Match (15%)
-    const genderA = (currentProduct.gender || '').toLowerCase().trim();
-    const genderB = (candidate.gender || '').toLowerCase().trim();
-    const genderSim = genderA && genderB && genderA === genderB ? 1.0 : 0;
-
-    // 4. Price Proximity (15%) - semakin dekat harganya semakin tinggi nilainya
+    // 3. Price Proximity (15%) - semakin dekat harganya semakin tinggi nilainya
     const priceA = Number(currentProduct.price) || 0;
     const priceB = Number(candidate.price) || 0;
     const maxPrice = Math.max(priceA, priceB);
     const priceSim = maxPrice > 0 ? Math.max(0, 1 - Math.abs(priceA - priceB) / maxPrice) : 1.0;
 
-    // 5. Grade Bentuk / statsForm Match (10%)
+    // 4. Grade Bentuk / statsForm Match (10%)
     const gradeA = (currentProduct.statsForm || '').toLowerCase().trim();
     const gradeB = (candidate.statsForm || '').toLowerCase().trim();
     const gradeSim = gradeA && gradeB && gradeA === gradeB ? 1.0 : 0;
 
     // Total Skor Dasar (0 - 100)
     let totalScore =
-      formSim * 35 +
-      colorSim * 25 +
-      genderSim * 15 +
+      formSim * 45 +
+      colorSim * 30 +
       priceSim * 15 +
       gradeSim * 10;
 

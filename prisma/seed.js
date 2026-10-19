@@ -66,7 +66,6 @@ async function main() {
     name: 'Halfmoon Blue Marble',
     price: 150000,
     category: 'Halfmoon',
-    gender: 'Male',
     form: 'Halfmoon',
     coloration: 'Blue Marble',
     description: 'Ikan cupang halfmoon dengan warna blue marble yang memukau. Sirip mengembang sempurna membentuk setengah lingkaran 180°. Cocok untuk kontes maupun koleksi pribadi.',
@@ -77,8 +76,8 @@ async function main() {
     statsSpirit: 'Aktif',
     quantity: 5,
     sizes: [
-      { size: 'M', quantity: 3 },
-      { size: 'M+', quantity: 2 }
+      { size: 'Male (M)', quantity: 3 },
+      { size: 'Male (M+)', quantity: 2 }
     ]
   });
 
@@ -86,7 +85,6 @@ async function main() {
     name: 'Crowntail Red Dragon',
     price: 120000,
     category: 'Crowntail',
-    gender: 'Male',
     form: 'Crowntail',
     coloration: 'Red Dragon',
     description: 'Cupang crowntail dengan warna merah menyala dan sisik dragon yang tegas. Ekor bercabang-cabang seperti mahkota memberikan kesan gagah dan eksotis.',
@@ -97,8 +95,8 @@ async function main() {
     statsSpirit: 'Aktif',
     quantity: 3,
     sizes: [
-      { size: 'S', quantity: 1 },
-      { size: 'M', quantity: 2 }
+      { size: 'Male (S)', quantity: 1 },
+      { size: 'Male (M)', quantity: 2 }
     ]
   });
 
@@ -106,7 +104,6 @@ async function main() {
     name: 'Plakat Yellow Koi',
     price: 200000,
     category: 'Plakat',
-    gender: 'Male',
     form: 'Plakat',
     coloration: 'Yellow Koi',
     description: 'Plakat premium dengan pola koi kuning-putih yang langka. Tubuh kompak dan sirip pendek khas plakat membuat warna tampil lebih mencolok. Sangat jarang di pasaran.',
@@ -117,8 +114,8 @@ async function main() {
     statsSpirit: 'Aktif',
     quantity: 2,
     sizes: [
-      { size: 'M', quantity: 1 },
-      { size: 'L', quantity: 1 }
+      { size: 'Male (M)', quantity: 1 },
+      { size: 'Male (L)', quantity: 1 }
     ]
   });
 

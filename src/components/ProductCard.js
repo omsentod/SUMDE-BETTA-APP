@@ -25,7 +25,7 @@ function toGallery(images, fallbackImage) {
     return arr;
 }
 
-export default function ProductCard({ id, name, price, form, coloration, gender, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount }) {
+export default function ProductCard({ id, name, price, form, coloration, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount }) {
     const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -77,7 +77,7 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
         touchStartX.current = null;
     };
 
-    const productPayload = { id, name, price, form, coloration, gender, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount };
+    const productPayload = { id, name, price, form, coloration, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount };
 
     const commitAddToCart = (selectedSize) => {
         addToCart({ ...productPayload, selectedSize });
@@ -186,9 +186,9 @@ export default function ProductCard({ id, name, price, form, coloration, gender,
                 <div className={styles.contentContainer}>
                     {/* Taxonomy quick details */}
                     <div className={styles.taxonomyContainer}>
-                        <span>{gender}</span>
-                        <span className={styles.dot}></span>
                         <span>{form}</span>
+                        <span className={styles.dot}></span>
+                        <span>{coloration}</span>
                         <span className={styles.dot}></span>
                         <span>{age}</span>
                     </div>

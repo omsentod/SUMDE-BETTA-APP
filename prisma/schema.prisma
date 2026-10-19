@@ -136,7 +136,6 @@ model Product {
   name        String
   price       Float
   category    String
-  gender      String
   form        String
   coloration  String
   description String  @db.Text

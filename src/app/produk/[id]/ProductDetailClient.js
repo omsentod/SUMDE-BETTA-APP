@@ -95,7 +95,7 @@ export default function ProductDetailClient() {
 
     const handleAddToCart = () => {
         if (requiresSizePick) {
-            setSizeError('Mohon pilih ukuran (size) terlebih dahulu.');
+            setSizeError('Mohon pilih varian terlebih dahulu.');
             return;
         }
         setSizeError('');
@@ -236,16 +236,16 @@ export default function ProductDetailClient() {
                                     <span className={styles.metaValue}>{product.age || '4 Month'}</span>
                                 </div>
                                 <div className={styles.metaItem}>
-                                    <label className={styles.metaLabel}>Gender</label>
+                                    <label className={styles.metaLabel}>Tipe Form</label>
                                     <span className={`${styles.metaValue} ${styles.metaValueUpper}`}>
-                                        {product.gender || 'MALE'}
+                                        {product.form || product.category || 'PLAKAT'}
                                     </span>
                                 </div>
                             </div>
 
                             {hasSizes && (
                                 <div className={`${styles.sizeSection} ${sizeError ? styles.sizeSectionInvalid : ''}`}>
-                                    <h3 className={styles.sizeHeader}>Pilih Ukuran (Size)</h3>
+                                    <h3 className={styles.sizeHeader}>Pilih Varian</h3>
                                     <div className={styles.sizeList}>
                                         {product.sizes.map((s) => {
                                             const isOutOfStock = s.quantity <= 0;

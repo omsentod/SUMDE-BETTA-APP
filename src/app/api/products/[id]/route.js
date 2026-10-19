@@ -20,12 +20,11 @@ export async function PUT(request, { params }) {
   try {
     await requirePermission(request, 'products:manage');
     const { id } = await params;
-    const { name, price, category, gender, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes, soldCount } = await request.json();
+    const { name, price, category, form, coloration, description, image, images, isPremium, statsForm, age, statsSpirit, isSold, quantity, sizes, soldCount } = await request.json();
     const dataToUpdate = {};
     if (name !== undefined) dataToUpdate.name = name;
     if (price !== undefined) dataToUpdate.price = parseFloat(price);
     if (category !== undefined) dataToUpdate.category = category;
-    if (gender !== undefined) dataToUpdate.gender = gender;
     if (form !== undefined) dataToUpdate.form = form;
     if (coloration !== undefined) dataToUpdate.coloration = coloration;
     if (description !== undefined) dataToUpdate.description = description;

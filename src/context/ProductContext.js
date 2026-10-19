@@ -24,7 +24,8 @@ export function ProductProvider({ children }) {
 
     useEffect(() => {
         let cancelled = false;
-        (async () => {
+        const load = async (showLoading = true) => {
+            if (showLoading) setIsLoading(true);
             try {
                 const res = await fetch('/api/products');
                 if (res.ok) {
@@ -34,10 +35,21 @@ export function ProductProvider({ children }) {
             } catch (error) {
                 console.error('Gagal mengambil data produk:', error);
             } finally {
-                if (!cancelled) setIsLoading(false);
+                if (!cancelled && showLoading) setIsLoading(false);
             }
-        })();
-        return () => { cancelled = true; };
+        };
+
+        load(true);
+
+        const handleFocus = () => {
+            load(false);
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            cancelled = true;
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     const addProduct = useCallback(async (productData) => {

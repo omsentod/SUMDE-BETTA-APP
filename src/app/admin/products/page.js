@@ -13,14 +13,12 @@ import { canUser } from '@/lib/permission-utils';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const DEFAULT_CATEGORIES = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'];
-const DEFAULT_GENDERS = ['Male', 'Female', 'Pair'];
 const DEFAULT_GRADES = ['COMP', 'COMPETITION', 'A', 'B', 'C'];
 
 const emptyProductForm = () => ({
   name: '',
   price: '',
   category: 'Plakat',
-  gender: 'Male',
   form: 'Plakat',
   coloration: 'Multicolor',
   description: '',
@@ -51,7 +49,6 @@ export default function AdminProductsPage() {
   const canImport = canUser(currentUser, 'products:import');
 
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-  const [genders, setGenders] = useState(DEFAULT_GENDERS);
   const [grades, setGrades] = useState(DEFAULT_GRADES);
 
   const [search, setSearch] = useState('');
@@ -82,18 +79,16 @@ export default function AdminProductsPage() {
     if (products.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- derive from products
       setCategories((prev) => {
-        const s = new Set([...DEFAULT_CATEGORIES, ...prev]);
-        products.forEach((p) => { if (p.form) s.add(p.form); });
-        return Array.from(s);
-      });
-      setGenders((prev) => {
-        const s = new Set([...DEFAULT_GENDERS, ...prev]);
-        products.forEach((p) => { if (p.gender) s.add(p.gender); });
+        const s = new Set(prev);
+        products.forEach((p) => {
+          if (p.form) s.add(p.form.trim());
+          if (p.category) s.add(p.category.trim());
+        });
         return Array.from(s);
       });
       setGrades((prev) => {
-        const s = new Set([...DEFAULT_GRADES, ...prev]);
-        products.forEach((p) => { if (p.statsForm) s.add(p.statsForm); });
+        const s = new Set(prev);
+        products.forEach((p) => { if (p.statsForm) s.add(p.statsForm.trim()); });
         return Array.from(s);
       });
     }
@@ -199,7 +194,6 @@ export default function AdminProductsPage() {
       name: product.name,
       price: product.price,
       category: product.category,
-      gender: product.gender,
       form: product.form,
       coloration: product.coloration,
       description: product.description,
@@ -369,14 +363,14 @@ export default function AdminProductsPage() {
                       )}
                     </td>
                     <td className={styles.hideOnMobile}>
-                      <div>{product.form} ({product.gender})</div>
+                      <div>{product.form}</div>
                       {product.sizes && (() => {
                         try {
                           const parsed = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
                           if (Array.isArray(parsed) && parsed.length > 0) {
                             return (
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                                Size: {parsed.map((s) => `${s.size} (${s.quantity})`).join(', ')}
+                                Varian: {parsed.map((s) => `${s.size} (${s.quantity})`).join(', ')}
                               </div>
                             );
                           }
@@ -449,16 +443,6 @@ export default function AdminProductsPage() {
                   onChange={(val) => setForm({ ...form, category: val, form: val })}
                   options={categories}
                   setOptions={setCategories}
-                />
-              </div>
-
-              <div>
-                <ManageableSelect
-                  label="Gender"
-                  value={form.gender}
-                  onChange={(val) => setForm({ ...form, gender: val })}
-                  options={genders}
-                  setOptions={setGenders}
                 />
               </div>
 
@@ -575,16 +559,16 @@ export default function AdminProductsPage() {
 
               <div className={styles.formFullWidth} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
                 <label className={styles.formLabel} style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--text-main)', textAlign: 'center', marginBottom: '1rem' }}>
-                  Kelola Ukuran (Size) & Jumlah Stok
+                  Kelola Varian (Gender / Ukuran) & Jumlah Stok
                 </label>
                 <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', border: '1px dashed var(--border-color)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   {form.sizes && form.sizes.map((s, index) => (
                     <div key={index} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.8rem', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
                       <input
                         type="text"
-                        placeholder="Size (S, M, L)"
+                        placeholder="Varian (Contoh: Male (M), Female, Pair)"
                         className={styles.formInput}
-                        style={{ flex: '1 1 120px' }}
+                        style={{ flex: '1 1 180px' }}
                         value={s.size}
                         onChange={(e) => {
                           const newSizes = [...form.sizes];
@@ -598,7 +582,7 @@ export default function AdminProductsPage() {
                         type="number"
                         placeholder="Stok"
                         className={styles.formInput}
-                        style={{ flex: '1 1 120px' }}
+                        style={{ flex: '1 1 100px' }}
                         value={s.quantity}
                         min="0"
                         onChange={(e) => {
@@ -632,7 +616,7 @@ export default function AdminProductsPage() {
                       setForm({ ...form, sizes: newSizes, quantity: totalQty });
                     }}
                   >
-                    + Tambah Baris Size & Stok
+                    + Tambah Varian & Stok
                   </button>
                 </div>
               </div>

@@ -331,7 +331,7 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td style={{ fontWeight: 600 }}>{p.name}</td>
-                        <td className={styles.hideOnMobile} style={{ color: 'var(--text-muted)' }}>{p.form} ({p.gender})</td>
+                        <td className={styles.hideOnMobile} style={{ color: 'var(--text-muted)' }}>{p.form || p.category}</td>
                         <td>
                           {p.quantity > 0 ? (
                             <span className={`${styles.badge} ${styles.badgeWarning}`}>Stok: {p.quantity}</span>

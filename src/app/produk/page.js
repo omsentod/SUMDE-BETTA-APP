@@ -10,6 +10,20 @@ const SORT_OPTIONS = [
     { label: 'Price: High to Low', value: 'price_desc' }
 ];
 
+function parseVariantSizes(product) {
+    if (!product || !product.sizes) return [];
+    if (Array.isArray(product.sizes)) return product.sizes;
+    if (typeof product.sizes === 'string') {
+        try {
+            const parsed = JSON.parse(product.sizes);
+            if (Array.isArray(parsed)) return parsed;
+        } catch {
+            return [];
+        }
+    }
+    return [];
+}
+
 function GalleryContent() {
     const searchParams = useSearchParams();
     const paramCat = (searchParams.get('category') || searchParams.get('form') || '').trim();
@@ -20,29 +34,63 @@ function GalleryContent() {
     // Hide soft-deleted (archived) products from the public gallery.
     const products = useMemo(() => allProducts.filter(p => !p.isArchived), [allProducts]);
 
-    // Derive filter options dynamically from current products list
+    // Derive gender filter options by inspecting product variants (sizes) & name
     const genders = useMemo(() => {
-        const set = new Set();
-        ['Male', 'Female', 'Pair'].forEach(g => set.add(g));
-        products.forEach(p => { if (p.gender) set.add(p.gender); });
-        return Array.from(set).sort();
+        const detected = new Set();
+        products.forEach(p => {
+            const variants = parseVariantSizes(p);
+            if (variants.length > 0) {
+                variants.forEach(v => {
+                    const s = String(v.size || '').toLowerCase();
+                    if (s.includes('female') || s.includes('betina')) detected.add('Female');
+                    else if (s.includes('male') || s.includes('jantan')) detected.add('Male');
+                    if (s.includes('pair') || s.includes('sepasang')) detected.add('Pair');
+                });
+            } else {
+                const n = (p.name || '').toLowerCase();
+                if (n.includes('female') || n.includes('betina')) detected.add('Female');
+                else if (n.includes('male') || n.includes('jantan')) detected.add('Male');
+                if (n.includes('pair') || n.includes('sepasang')) detected.add('Pair');
+            }
+        });
+        if (detected.size === 0) {
+            return ['Male', 'Female', 'Pair'];
+        }
+        return ['Male', 'Female', 'Pair'].filter(g => detected.has(g));
     }, [products]);
 
     const forms = useMemo(() => {
-        const set = new Set();
-        ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'].forEach(f => set.add(f));
+        const map = new Map();
         products.forEach(p => {
-            if (p.form) set.add(p.form);
-            if (p.category) set.add(p.category);
+            const formVal = (p.form || '').trim();
+            const catVal = (p.category || '').trim();
+            const val = formVal || catVal;
+            if (val && !map.has(val.toLowerCase())) {
+                map.set(val.toLowerCase(), val);
+            }
         });
-        return Array.from(set).sort();
+        if (map.size === 0) {
+            ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'].forEach(f => {
+                map.set(f.toLowerCase(), f);
+            });
+        }
+        return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     }, [products]);
 
     const colors = useMemo(() => {
-        const set = new Set();
-        ['Avatar', 'Multicolor', 'Koi', 'Copper', 'Solid', 'Super Red', 'Galaxy', 'Nemo', 'Black Samurai'].forEach(c => set.add(c));
-        products.forEach(p => { if (p.coloration) set.add(p.coloration); });
-        return Array.from(set).sort();
+        const map = new Map();
+        products.forEach(p => {
+            const val = (p.coloration || '').trim();
+            if (val && !map.has(val.toLowerCase())) {
+                map.set(val.toLowerCase(), val);
+            }
+        });
+        if (map.size === 0) {
+            ['Avatar', 'Multicolor', 'Koi', 'Copper', 'Solid', 'Super Red', 'Galaxy', 'Nemo', 'Black Samurai'].forEach(c => {
+                map.set(c.toLowerCase(), c);
+            });
+        }
+        return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     }, [products]);
 
     // State Management
@@ -109,7 +157,31 @@ function GalleryContent() {
 
         if (filters.genders.length > 0) {
             const selectedGenders = filters.genders.map(g => g.trim().toLowerCase());
-            result = result.filter(p => selectedGenders.includes((p.gender || '').trim().toLowerCase()));
+            result = result.filter(p => {
+                const variants = parseVariantSizes(p);
+                if (variants.length > 0) {
+                    return variants.some(v => {
+                        const s = String(v.size || '').toLowerCase();
+                        const isFemale = s.includes('female') || s.includes('betina');
+                        const isMale = (s.includes('male') || s.includes('jantan')) && !isFemale;
+                        const isPair = s.includes('pair') || s.includes('sepasang');
+
+                        if (selectedGenders.includes('male') && isMale) return true;
+                        if (selectedGenders.includes('female') && isFemale) return true;
+                        if (selectedGenders.includes('pair') && isPair) return true;
+                        return false;
+                    });
+                }
+                const nameLower = (p.name || '').toLowerCase();
+                const isFemaleName = nameLower.includes('female') || nameLower.includes('betina');
+                const isMaleName = (nameLower.includes('male') || nameLower.includes('jantan')) && !isFemaleName;
+                const isPairName = nameLower.includes('pair') || nameLower.includes('sepasang');
+
+                if (selectedGenders.includes('male') && isMaleName) return true;
+                if (selectedGenders.includes('female') && isFemaleName) return true;
+                if (selectedGenders.includes('pair') && isPairName) return true;
+                return false;
+            });
         }
 
         if (filters.forms.length > 0) {

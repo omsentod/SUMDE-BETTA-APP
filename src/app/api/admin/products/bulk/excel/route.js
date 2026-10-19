@@ -126,16 +126,16 @@ export async function POST(request) {
 
       const category = String(getField(row, ['Kategori', 'category', 'Kategori Form', 'form'], 'Plakat')).trim() || 'Plakat';
       const form = category;
-      const gender = String(getField(row, ['Gender', 'gender', 'Jenis Kelamin'], 'Male')).trim() || 'Male';
+      const rawGender = String(getField(row, ['Gender', 'gender', 'Jenis Kelamin', 'Varian'], '')).trim();
       const coloration = String(getField(row, ['Corak Warna', 'coloration', 'Warna'], 'Multicolor')).trim() || 'Multicolor';
       const description = String(getField(row, ['Deskripsi', 'description', 'Keterangan'], '')).trim();
       const statsForm = String(getField(row, ['Grade Bentuk', 'statsForm', 'Grade'], 'COMP')).trim() || 'COMP';
       const age = String(getField(row, ['Umur', 'age', 'Age'], '4 Month')).trim() || '4 Month';
       const statsSpirit = 'Aktif';
 
-      // Parse varian ukuran
+      // Parse varian ukuran / gender
       const rawSizes = getField(row, ['Ukuran', 'sizes', 'Sizes', 'Varian']);
-      const sizes = parseSizes(rawSizes);
+      let sizes = parseSizes(rawSizes);
 
       // Hitung stok: jika ada sizes, total = sum of sizes. Jika tidak, ambil dari kolom Stok.
       let quantity = 1;
@@ -145,6 +145,9 @@ export async function POST(request) {
         const rawQty = getField(row, ['Stok', 'quantity', 'Qty', 'Stock'], 1);
         const parsedQty = parseInt(rawQty);
         quantity = Number.isFinite(parsedQty) && parsedQty >= 0 ? parsedQty : 1;
+        if (rawGender) {
+          sizes = [{ size: rawGender, quantity }];
+        }
       }
 
       // Parse sold count
@@ -169,7 +172,6 @@ export async function POST(request) {
               price: cleanPrice,
               category,
               form,
-              gender,
               coloration,
               description: description || existing.description,
               statsForm,
@@ -191,7 +193,6 @@ export async function POST(request) {
               price: cleanPrice,
               category,
               form,
-              gender,
               coloration,
               description: description || `Ikan Cupang ${name} kualitas pilihan SUMDE BETTA.`,
               image: '',
