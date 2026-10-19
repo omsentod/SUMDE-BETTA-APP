@@ -94,7 +94,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              Bulk Action Upload Produk
+              Uplaod Massal
             </h2>
             <p className={styles.modalSubtitle}>
               Unggah data produk dalam jumlah banyak via Excel, lalu lengkapi fotonya via file ZIP.
