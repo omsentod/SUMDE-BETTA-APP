@@ -14,13 +14,12 @@ export async function GET(request) {
         'Nama Produk': 'Halfmoon Super Red High Quality',
         'Harga': 350000,
         'Kategori': 'Halfmoon',
-        'Gender': 'Male',
         'Corak Warna': 'Super Red',
         'Deskripsi': 'Ikan cupang Halfmoon warna merah solid pekat, bukaan ekor 180 derajat full over spread.',
-        'Stok': 1,
+        'Stok': 3,
         'Grade Bentuk': 'COMP',
         'Umur': '4.5 Month',
-        'Ukuran': 'M:1',
+        'Varian': 'Male (M): 2, Male (M+): 1',
         'Terjual': 8,
         'Premium': 'Ya',
       },
@@ -28,13 +27,12 @@ export async function GET(request) {
         'Nama Produk': 'Plakat Multicolor Fancy Top Grade',
         'Harga': 275000,
         'Kategori': 'Plakat',
-        'Gender': 'Male',
         'Corak Warna': 'Multicolor',
         'Deskripsi': 'Form tebal, mental aktif agresif, warna motif galaxy rapi.',
         'Stok': 3,
         'Grade Bentuk': 'COMP',
         'Umur': '4 Month',
-        'Ukuran': 'S:1, M:2',
+        'Varian': 'Male: 2, Female: 1',
         'Terjual': 24,
         'Premium': 'Tidak',
       },
@@ -58,11 +56,6 @@ export async function GET(request) {
         'Keterangan': 'Plakat, Halfmoon, Crowntail, Giant, Double Tail, atau Dumbo Ear (default: Plakat).',
       },
       {
-        'Kolom': 'Gender',
-        'Status': 'Opsional',
-        'Keterangan': 'Male, Female, atau Pair (default: Male).',
-      },
-      {
         'Kolom': 'Corak Warna',
         'Status': 'Opsional',
         'Keterangan': 'Contoh: Multicolor, Blue Rim, Super Red, Black Samurai, Koi Galaxy (default: Multicolor).',
@@ -75,7 +68,7 @@ export async function GET(request) {
       {
         'Kolom': 'Stok',
         'Status': 'Opsional',
-        'Keterangan': 'Jumlah stok jika tidak menggunakan varian ukuran (default: 1).',
+        'Keterangan': 'Jumlah stok jika tidak menggunakan varian (default: 1). Jika kolom Varian diisi, kolom ini akan otomatis terhitung dari total varian.',
       },
       {
         'Kolom': 'Grade Bentuk',
@@ -88,9 +81,9 @@ export async function GET(request) {
         'Keterangan': 'Contoh: 4 Month, 5 Month (default: 4 Month).',
       },
       {
-        'Kolom': 'Ukuran',
+        'Kolom': 'Varian',
         'Status': 'Opsional',
-        'Keterangan': 'Varian ukuran & stok dengan format "Size:Qty", contoh: "S:2, M:5, L:1". Jika diisi, stok total otomatis dijumlahkan.',
+        'Keterangan': 'Varian gender / ukuran & stok dengan format "Varian:Qty", contoh: "Male:2, Female:1" atau "Male (M):2, Male (L):1". Jika diisi, stok total otomatis dijumlahkan.',
       },
       {
         'Kolom': 'Terjual',
@@ -112,13 +105,12 @@ export async function GET(request) {
       { wch: 35 }, // Nama Produk
       { wch: 14 }, // Harga
       { wch: 16 }, // Kategori
-      { wch: 12 }, // Gender
       { wch: 20 }, // Corak Warna
       { wch: 45 }, // Deskripsi
       { wch: 10 }, // Stok
       { wch: 14 }, // Grade Bentuk
       { wch: 14 }, // Umur
-      { wch: 18 }, // Ukuran
+      { wch: 30 }, // Varian
       { wch: 12 }, // Terjual
       { wch: 12 }, // Premium
     ];

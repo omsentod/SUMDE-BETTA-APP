@@ -133,8 +133,8 @@ export async function POST(request) {
       const age = String(getField(row, ['Umur', 'age', 'Age'], '4 Month')).trim() || '4 Month';
       const statsSpirit = 'Aktif';
 
-      // Parse varian ukuran / gender
-      const rawSizes = getField(row, ['Ukuran', 'sizes', 'Sizes', 'Varian']);
+      // Parse varian (gender & ukuran)
+      const rawSizes = getField(row, ['Varian', 'varian', 'Varian / Ukuran', 'Varian (Gender/Ukuran)', 'Ukuran', 'sizes', 'Sizes']);
       let sizes = parseSizes(rawSizes);
 
       // Hitung stok: jika ada sizes, total = sum of sizes. Jika tidak, ambil dari kolom Stok.
