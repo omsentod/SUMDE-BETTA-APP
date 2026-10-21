@@ -9,28 +9,29 @@ export async function GET(request) {
   try {
     await requirePermission(request, 'orders:read');
 
-    // Jalankan 4 count query paralel supaya total latency ≈ query terlambat,
-    // bukan sum semua.
-    const [pendingOrders, processing, awaitingWaybill, returned] = await Promise.all([
-      // Pesanan Baru — belum bayar (PENDING) + sudah bayar tapi belum panggil
-      // kurir (PAID). Keduanya actionable untuk admin (verifikasi/proses).
-      prisma.order.count({ where: { status: { in: ['PENDING', 'PAID'] } } }),
-
-      // Diproses — sudah panggil kurir, menunggu kurir pickup / AWB.
-      // Aligned dengan link sidebar `/admin/orders?status=PROCESSING`.
-      prisma.order.count({ where: { status: 'PROCESSING' } }),
-
-      // Menunggu waybill — shipment sudah dibuat tapi AWB belum turun dari Biteship.
+    // Gunakan groupBy untuk status agar hanya butuh 1 query agregat (1 koneksi DB)
+    // untuk menghitung PENDING, PAID, PROCESSING, dan RETURNED secara efisien.
+    const [statusGroups, awaitingWaybill] = await Promise.all([
+      prisma.order.groupBy({
+        by: ['status'],
+        _count: { id: true },
+      }),
       prisma.order.count({
         where: {
           biteshipShipmentId: { not: null },
           trackingNumber: null,
         },
       }),
-
-      // Retur — perlu review admin manual (tidak auto-restock).
-      prisma.order.count({ where: { status: 'RETURNED' } }),
     ]);
+
+    const countsByStatus = {};
+    for (const group of statusGroups) {
+      countsByStatus[group.status] = group._count.id;
+    }
+
+    const pendingOrders = (countsByStatus['PENDING'] || 0) + (countsByStatus['PAID'] || 0);
+    const processing = countsByStatus['PROCESSING'] || 0;
+    const returned = countsByStatus['RETURNED'] || 0;
 
     return NextResponse.json({
       pendingOrders,

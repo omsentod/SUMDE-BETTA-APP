@@ -50,6 +50,8 @@ export default function NotificationBell() {
 
   const prevUnreadRef = useRef(0);
   const isFirstLoadRef = useRef(true);
+  const notifInFlightRef = useRef(false);
+  const notifLastLoadedRef = useRef(Date.now());
 
   // Load sound preference on mount
   useEffect(() => {
@@ -71,12 +73,18 @@ export default function NotificationBell() {
 
   const loadNotifications = async (isBackgroundPoll = false) => {
     if (!currentUser?.id) return;
+    if (notifInFlightRef.current) return;
+    // Jangan polling jika tab sedang di latar belakang (background tab)
+    if (isBackgroundPoll && typeof document !== 'undefined' && document.hidden) return;
+
+    notifInFlightRef.current = true;
     try {
       const res = await fetch('/api/notifications?limit=30');
       if (!res.ok) return;
       const data = await res.json();
       const newItems = data.notifications || [];
       const newUnread = data.unreadCount || 0;
+      notifLastLoadedRef.current = Date.now();
 
       // Cek apakah ada notifikasi baru yang masuk saat user aktif
       if (!isFirstLoadRef.current && isBackgroundPoll && newUnread > prevUnreadRef.current) {
@@ -101,6 +109,8 @@ export default function NotificationBell() {
       isFirstLoadRef.current = false;
     } catch {
       // silent
+    } finally {
+      notifInFlightRef.current = false;
     }
   };
 
@@ -109,7 +119,18 @@ export default function NotificationBell() {
     if (!currentUser?.id) return;
     loadNotifications(false);
     const interval = setInterval(() => loadNotifications(true), POLL_MS);
-    return () => clearInterval(interval);
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden && Date.now() - notifLastLoadedRef.current >= POLL_MS) {
+        loadNotifications(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [currentUser?.id]);
 
   // Ably real-time subscription

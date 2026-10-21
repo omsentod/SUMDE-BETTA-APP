@@ -28,7 +28,8 @@ async function readSession(request) {
 export async function middleware(request) {
   const session = await readSession(request);
   if (!session || session.role !== 'admin') {
-    const loginUrl = new URL('/login', request.url);
+    const base = process.env.APP_URL || request.url;
+    const loginUrl = new URL('/login', base);
     // Preserve where they tried to go so the login page can bounce them back.
     loginUrl.searchParams.set('next', request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);

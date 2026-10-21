@@ -58,15 +58,44 @@ function AdminSidebarInner() {
     if (!currentUser) return;
     if (!can('orders:view')) return;
     let cancelled = false;
-    const load = () => {
+    let inFlight = false;
+    let lastLoaded = Date.now();
+
+    const load = (force = false) => {
+      if (cancelled || inFlight) return;
+      // Jangan bebani server / database jika tab sedang di latar belakang (background tab)
+      if (!force && typeof document !== 'undefined' && document.hidden) return;
+
+      inFlight = true;
       fetch('/api/admin/counts')
         .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data && !cancelled) setCounts(data); })
-        .catch(() => { });
+        .then((data) => {
+          if (data && !cancelled) {
+            setCounts(data);
+            lastLoaded = Date.now();
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          inFlight = false;
+        });
     };
-    load();
-    const timer = setInterval(load, REFRESH_MS);
-    return () => { cancelled = true; clearInterval(timer); };
+
+    load(true);
+    const timer = setInterval(() => load(false), REFRESH_MS);
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden && Date.now() - lastLoaded >= REFRESH_MS) {
+        load(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [currentUser]);
 
   // Tutup drawer setiap navigate di mobile.

@@ -171,25 +171,51 @@ function AdminOrdersPageInner() {
     }
   }, [currentUser, authLoading, canView, router]);
 
+  const inFlightRef = useRef(false);
+  const lastLoadedRef = useRef(Date.now());
+
   const loadOrders = async (silent = false) => {
+    if (inFlightRef.current) return;
+    // Jangan polling jika tab sedang di latar belakang (background tab)
+    if (silent && typeof document !== 'undefined' && document.hidden) return;
+
+    inFlightRef.current = true;
     if (!silent) setLoading(true);
     try {
       const res = await fetch('/api/orders');
-      if (res.ok) setOrders(await res.json());
+      if (res.ok) {
+        setOrders(await res.json());
+        lastLoadedRef.current = Date.now();
+      }
     } catch (err) {
       console.error(err);
     } finally {
+      inFlightRef.current = false;
       if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!canView) return;
-    loadOrders();
+    loadOrders(false);
+
+    // 35 detik polling aman (Ably realtime juga tetap aktif mendengarkan event baru)
+    const POLL_ORDERS_MS = 35_000;
     const timer = setInterval(() => {
       loadOrders(true);
-    }, 15000);
-    return () => clearInterval(timer);
+    }, POLL_ORDERS_MS);
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden && Date.now() - lastLoadedRef.current >= POLL_ORDERS_MS) {
+        loadOrders(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [canView]);
 
   useEffect(() => {
