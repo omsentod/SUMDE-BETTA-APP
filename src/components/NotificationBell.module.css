@@ -377,38 +377,21 @@
   overflow: hidden;
 }
 
-/* Item Action Overlay (desktop hover / mobile accessible) */
-.itemActions {
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  margin-top: 0.35rem;
-}
 
-.actionBtn {
-  background: none;
-  border: 1px solid var(--border-color);
+
+.trashHeaderBtn {
   color: var(--text-muted);
-  font-size: 0.7rem;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  transition: color 0.12s, border-color 0.12s, background-color 0.12s;
+  transition: color 0.15s, background-color 0.15s;
 }
 
-.actionBtn:hover {
-  color: var(--text-main);
-  border-color: var(--text-muted);
-  background: color-mix(in oklab, var(--text-muted) 8%, transparent);
-}
-
-.actionBtnDanger:hover {
+.trashHeaderBtn:hover:not(:disabled) {
   color: #EF4444;
-  border-color: #EF4444;
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.trashHeaderBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* Dropdown Footer */
@@ -418,7 +401,7 @@
   background: color-mix(in oklab, var(--text-muted) 3%, var(--bg-card));
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.5rem;
 }
 

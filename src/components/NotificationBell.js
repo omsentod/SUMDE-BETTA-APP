@@ -237,20 +237,6 @@ export default function NotificationBell() {
     } catch { /* silent */ }
   };
 
-  // Delete single notification
-  const handleDeleteItem = async (item, e) => {
-    e.stopPropagation();
-    try {
-      const res = await fetch(`/api/notifications/${item.id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setItems((prev) => prev.filter((n) => n.id !== item.id));
-        if (!item.readAt) {
-          setUnread((prev) => Math.max(0, prev - 1));
-        }
-      }
-    } catch { /* silent */ }
-  };
-
   // Mark all as read
   const handleReadAll = async () => {
     try {
@@ -262,15 +248,22 @@ export default function NotificationBell() {
     } catch { /* silent */ }
   };
 
-  // Clear read notifications
-  const handleClearRead = async () => {
+  // Clear all notifications
+  const handleClearAll = async () => {
+    if (items.length === 0) return;
+    if (!window.confirm('Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) return;
     try {
-      const res = await fetch('/api/notifications?clear=read', { method: 'DELETE' });
+      const res = await fetch('/api/notifications?clear=all', { method: 'DELETE' });
       if (res.ok) {
-        setItems((prev) => prev.filter((n) => !n.readAt));
-        toast.success('Notifikasi yang sudah dibaca berhasil dibersihkan.');
+        setItems([]);
+        setUnread(0);
+        toast.success('Semua notifikasi berhasil dihapus.');
+      } else {
+        toast.error('Gagal menghapus notifikasi.');
       }
-    } catch { /* silent */ }
+    } catch {
+      toast.error('Gagal menghapus notifikasi.');
+    }
   };
 
   // Request browser push permission
@@ -394,8 +387,22 @@ export default function NotificationBell() {
                   className={styles.readAllBtn}
                   onClick={handleReadAll}
                   disabled={unread === 0}
+                  title="Tandai semua dibaca"
                 >
                   Tandai semua dibaca
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.iconBtn} ${styles.trashHeaderBtn}`}
+                  onClick={handleClearAll}
+                  disabled={items.length === 0}
+                  title="Hapus semua notifikasi"
+                  aria-label="Hapus semua notifikasi"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -484,35 +491,6 @@ export default function NotificationBell() {
                         </div>
                         <div className={styles.itemTitleText}>{item.title}</div>
                         {item.body && <div className={styles.itemBody}>{item.body}</div>}
-
-                        {/* Quick Action Buttons */}
-                        <div className={styles.itemActions}>
-                          {!item.readAt && (
-                            <button
-                              type="button"
-                              className={styles.actionBtn}
-                              onClick={(e) => handleMarkAsRead(item, e)}
-                              title="Tandai sudah dibaca"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                              Dibaca
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                            onClick={(e) => handleDeleteItem(item, e)}
-                            title="Hapus notifikasi ini"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                            Hapus
-                          </button>
-                        </div>
                       </div>
                     </div>
                   );
@@ -532,17 +510,6 @@ export default function NotificationBell() {
 
             {/* Footer */}
             <div className={styles.dropdownFooter}>
-              {hasReadItems ? (
-                <button
-                  type="button"
-                  className={styles.clearReadBtn}
-                  onClick={handleClearRead}
-                >
-                  Bersihkan yang dibaca
-                </button>
-              ) : (
-                <span />
-              )}
               <Link
                 href="/customer/notifications"
                 className={styles.footerLink}

@@ -9,13 +9,14 @@
   align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 1.5rem;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .titleArea {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  flex: 1;
 }
 
 .title {
@@ -37,8 +38,8 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.625rem;
+  flex-shrink: 0;
 }
 
 .actionBtn {
@@ -253,39 +254,7 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
   line-height: 1.45;
-  margin: 0 0 0.5rem;
-}
-
-.itemActions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.itemActionBtn {
-  background: none;
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  font-size: 0.725rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 5px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  transition: all 0.12s;
-}
-
-.itemActionBtn:hover {
-  color: var(--text-main);
-  border-color: var(--text-muted);
-  background: color-mix(in oklab, var(--text-muted) 8%, transparent);
-}
-
-.itemActionBtnDanger:hover {
-  color: #EF4444;
-  border-color: #EF4444;
-  background: rgba(239, 68, 68, 0.08);
+  margin: 0;
 }
 
 .emptyCard {
@@ -330,6 +299,15 @@
   .header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 1rem;
+  }
+  .headerActions {
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .actionBtn {
+    flex: 1;
+    justify-content: center;
   }
   .title {
     font-size: 1.5rem;

@@ -101,21 +101,6 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleDeleteItem = async (item, e) => {
-    e.stopPropagation();
-    try {
-      const res = await fetch(`/api/notifications/${item.id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setItems((prev) => prev.filter((n) => n.id !== item.id));
-        toast.success('Notifikasi berhasil dihapus.');
-      } else {
-        toast.error('Gagal menghapus notifikasi.');
-      }
-    } catch {
-      toast.error('Gagal menghapus notifikasi.');
-    }
-  };
-
   const handleReadAll = async () => {
     try {
       await fetch('/api/notifications/read-all', { method: 'POST' });
@@ -127,12 +112,16 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleClearRead = async () => {
+  const handleClearAll = async () => {
+    if (items.length === 0) return;
+    if (!window.confirm('Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) return;
     try {
-      const res = await fetch('/api/notifications?clear=read', { method: 'DELETE' });
+      const res = await fetch('/api/notifications?clear=all', { method: 'DELETE' });
       if (res.ok) {
-        setItems((prev) => prev.filter((n) => !n.readAt));
-        toast.success('Notifikasi yang sudah dibaca berhasil dibersihkan.');
+        setItems([]);
+        toast.success('Semua notifikasi berhasil dihapus.');
+      } else {
+        toast.error('Gagal membersihkan notifikasi.');
       }
     } catch {
       toast.error('Gagal membersihkan notifikasi.');
@@ -158,29 +147,30 @@ export default function NotificationsPage() {
           <p className={styles.subtitle}>Riwayat transaksi, status pesanan, dan informasi akun Anda.</p>
         </div>
         <div className={styles.headerActions}>
-          {hasReadItems && (
-            <button
-              type="button"
-              onClick={handleClearRead}
-              className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-              Bersihkan yang Dibaca
-            </button>
-          )}
           <button
             type="button"
             onClick={handleReadAll}
             disabled={unreadCount === 0}
             className={styles.actionBtn}
+            title="Tandai semua notifikasi sudah dibaca"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
             Tandai Semua Dibaca
+          </button>
+          <button
+            type="button"
+            onClick={handleClearAll}
+            disabled={items.length === 0}
+            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+            title="Hapus semua notifikasi"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            Hapus Semua
           </button>
         </div>
       </div>
@@ -312,34 +302,6 @@ export default function NotificationsPage() {
 
                     <div className={styles.itemTitle}>{item.title || 'Notifikasi'}</div>
                     {item.body && <div className={styles.itemMessage}>{item.body}</div>}
-
-                    <div className={styles.itemActions}>
-                      {!item.readAt && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleMarkAsRead(item, e)}
-                          className={styles.itemActionBtn}
-                          title="Tandai sudah dibaca"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Tandai Dibaca
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteItem(item, e)}
-                        className={`${styles.itemActionBtn} ${styles.itemActionBtnDanger}`}
-                        title="Hapus notifikasi"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                        Hapus
-                      </button>
-                    </div>
                   </div>
                 </div>
               </li>
