@@ -80,7 +80,7 @@ export default function CatalogHome() {
         return () => clearInterval(interval);
     }, [events]);
 
-    if (isLoading) {
+    if (isLoading || eventsLoading) {
         return (
             <div className="pageContainer" style={{ paddingTop: '90px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)' }}>Memuat Koleksi Elit...</h2>
@@ -91,7 +91,7 @@ export default function CatalogHome() {
     return (
         <div className="pageContainer" style={{ paddingTop: '90px' }}>
             <section className="container" style={{ margin: '2rem auto' }}>
-                {!eventsLoading && events.length > 0 ? (
+                {events.length > 0 ? (
                     <div className="hero-carousel-section">
                         {events.map((event, idx) => {
                             const isActiveSlide = idx === currentSlide;
@@ -151,7 +151,7 @@ export default function CatalogHome() {
                         )}
                     </div>
                 ) : (
-                    /* Fallback ke Featured Premium Product Banner jika event kosong atau loading */
+                    /* Fallback ke Featured Premium Product Banner jika tidak ada promo event aktif */
                     <div className="hero-carousel-section">
                         <div className="hero-slide hero-slide-active">
                             {/* Background Image */}
