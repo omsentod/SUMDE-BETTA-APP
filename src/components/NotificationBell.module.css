@@ -1,107 +1,268 @@
 .wrap {
   position: relative;
   display: inline-flex;
+  align-items: center;
 }
 
 .trigger {
-  background: none;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.45rem;
-  border-radius: 6px;
+  padding: 0.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
 }
 
 .trigger:hover {
-  background: color-mix(in oklab, var(--primary) 6%, transparent);
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
+  color: var(--primary);
+}
+
+.bellRinging {
+  animation: bellShake 1.2s ease-in-out;
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+@keyframes bellShake {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(4deg); }
+  100% { transform: rotate(0); }
 }
 
 .badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -5px;
+  right: -5px;
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 9px;
-  background: var(--status-error);
-  color: #fff;
-  font-size: 0.7rem;
+  border-radius: 9999px;
+  background: #EF4444;
+  color: #ffffff;
+  font-size: 0.6875rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  border: 2px solid var(--bg-card);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 599;
+  background: transparent;
 }
 
 .dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  width: 360px;
-  max-width: calc(100vw - 24px);
-  max-height: 480px;
-  background: var(--bg-card);
+  width: 380px;
+  max-width: calc(100vw - 20px);
+  max-height: 520px;
+  background: var(--modal-bg, var(--bg-card));
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-  z-index: 500;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 600;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  animation: dropdownIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .dropdownHeader {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 0.875rem 1rem 0.625rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in oklab, var(--text-muted) 3%, var(--bg-card));
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .dropdownTitle {
   font-weight: 700;
+  font-size: 0.95rem;
   color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.iconBtn:hover {
+  color: var(--text-main);
+  background: color-mix(in oklab, var(--text-muted) 10%, transparent);
 }
 
 .readAllBtn {
   background: none;
   border: none;
   color: var(--primary);
-  font-size: 0.8rem;
+  font-size: 0.775rem;
   cursor: pointer;
   font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.readAllBtn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
 }
 
 .readAllBtn:disabled {
   color: var(--text-muted);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Tabs Bar */
+.tabsBar {
+  display: flex;
+  padding: 0.35rem 0.75rem;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.tabBtn:hover {
+  color: var(--text-main);
+  background: color-mix(in oklab, var(--text-muted) 8%, transparent);
+}
+
+.tabActive {
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+}
+
+.tabPill {
+  background: #EF4444;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Notification Items List */
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 0.25rem 0;
+  padding: 0;
+  margin: 0;
+  max-height: 330px;
 }
 
-.empty {
-  padding: 2rem 1rem;
+.emptyState {
+  padding: 2.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  gap: 0.625rem;
+}
+
+.emptyIcon {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  opacity: 0.4;
+  margin-bottom: 0.25rem;
+}
+
+.emptyTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.emptyDesc {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  max-width: 260px;
+  line-height: 1.4;
+  margin: 0;
 }
 
 .item {
-  display: block;
-  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
   text-decoration: none;
   color: var(--text-main);
+  position: relative;
+  transition: background-color 0.12s;
   cursor: pointer;
-  transition: background 0.1s;
+}
+
+.item:last-child {
+  border-bottom: none;
 }
 
 .item:hover {
@@ -112,69 +273,301 @@
   background: color-mix(in oklab, var(--primary) 4%, transparent);
 }
 
-.itemTitle {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-main);
+.typeBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* Type badge variants */
+.variant_order {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+}
+
+.variant_payment {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.variant_shipping {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0EA5E9;
+}
+
+.variant_completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22C55E;
+}
+
+.variant_cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.variant_promo {
+  background: rgba(168, 85, 247, 0.15);
+  color: #A855F7;
+}
+
+.variant_info {
+  background: color-mix(in oklab, var(--primary) 15%, transparent);
+  color: var(--primary);
+}
+
+.itemContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.itemTitleText {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.itemTime {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .unreadDot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--primary);
   flex-shrink: 0;
 }
 
 .itemBody {
-  font-size: 0.8rem;
+  font-size: 0.775rem;
   color: var(--text-muted);
-  margin-top: 0.15rem;
   line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.itemTime {
-  font-size: 0.7rem;
+/* Item Action Overlay (desktop hover / mobile accessible) */
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+}
+
+.actionBtn {
+  background: none;
+  border: 1px solid var(--border-color);
   color: var(--text-muted);
-  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.12s, border-color 0.12s, background-color 0.12s;
 }
 
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 499;
-  background: transparent;
-}
-
-.pushToggle {
-  padding: 0.6rem 1rem;
-  border-top: 1px solid var(--border-color);
-  background: color-mix(in oklab, var(--text-muted) 6%, transparent);
-  font-size: 0.8rem;
+.actionBtn:hover {
   color: var(--text-main);
+  border-color: var(--text-muted);
+  background: color-mix(in oklab, var(--text-muted) 8%, transparent);
+}
+
+.actionBtnDanger:hover {
+  color: #EF4444;
+  border-color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Dropdown Footer */
+.dropdownFooter {
+  padding: 0.625rem 0.875rem;
+  border-top: 1px solid var(--border-color);
+  background: color-mix(in oklab, var(--text-muted) 3%, var(--bg-card));
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.pushToggleBtn {
-  background: var(--primary);
-  color: #1a1a1a;
+.footerLink {
+  font-size: 0.775rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: opacity 0.15s;
+}
+
+.footerLink:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+.clearReadBtn {
+  background: none;
   border: none;
-  padding: 0.3rem 0.7rem;
-  border-radius: 5px;
+  color: var(--text-muted);
+  font-size: 0.725rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.clearReadBtn:hover {
+  color: #EF4444;
+}
+
+/* Push Prompt Banner */
+.pushPrompt {
+  padding: 0.55rem 0.875rem;
+  border-top: 1px solid var(--border-color);
+  background: color-mix(in oklab, var(--primary) 6%, var(--bg-card));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   font-size: 0.75rem;
+  color: var(--text-main);
+}
+
+.pushPromptBtn {
+  background: var(--primary);
+  color: #121212;
+  border: none;
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.725rem;
   font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s;
+}
+
+.pushPromptBtn:active {
+  transform: scale(0.96);
+}
+
+/* In-App Floating Toast Banner */
+.floatingAlert {
+  position: fixed;
+  top: 76px;
+  right: 1.5rem;
+  width: 340px;
+  max-width: calc(100vw - 2rem);
+  background: var(--modal-bg, var(--bg-card));
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  animation: slideInDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floatingAlertContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.floatingAlertTitle {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  margin-bottom: 0.15rem;
+}
+
+.floatingAlertBody {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.floatingAlertActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.floatingAlertLink {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.pushToggleBtn.enabled {
-  background: transparent;
+.floatingAlertClose {
+  background: none;
+  border: none;
   color: var(--text-muted);
-  border: 1px solid var(--border-color);
+  cursor: pointer;
+  padding: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 767px) {
+  .dropdown {
+    width: calc(100vw - 1.5rem);
+    right: -10px;
+    max-height: 480px;
+  }
+  .floatingAlert {
+    top: auto;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0));
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
 }

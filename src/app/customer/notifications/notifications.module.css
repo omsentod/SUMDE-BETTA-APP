@@ -1,60 +1,129 @@
 .wrapper {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 100px 1.25rem 3rem;
+  padding: 100px 1.25rem 4rem;
 }
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 1.5rem;
   gap: 1rem;
 }
 
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pageBadge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+
 .title {
   font-family: var(--font-serif);
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-style: italic;
   color: var(--text-main);
   margin: 0;
+  line-height: 1.2;
 }
 
-.readAllBtn {
-  background: none;
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.45rem 0.9rem;
+  padding: 0.45rem 0.85rem;
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
 }
 
-.readAllBtn:hover:not(:disabled) {
+.actionBtn:hover:not(:disabled) {
   color: var(--primary);
   border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
 }
 
-.readAllBtn:disabled {
-  opacity: 0.4;
+.actionBtn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.muted {
-  color: var(--text-muted);
-  text-align: center;
-  padding: 2rem 0;
+.actionBtnDanger:hover:not(:disabled) {
+  color: #EF4444;
+  border-color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
 }
 
-.empty {
-  text-align: center;
-  padding: 3rem 1rem;
+/* Tabs Filter */
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  background: none;
+  border: 1px solid transparent;
+  padding: 0.45rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.825rem;
+  font-weight: 600;
   color: var(--text-muted);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.tab:hover {
+  color: var(--text-main);
+  background: color-mix(in oklab, var(--text-muted) 8%, transparent);
+}
+
+.tabActive {
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  border-color: color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+.pillCount {
+  background: #EF4444;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  font-weight: 700;
 }
 
 .list {
@@ -63,28 +132,79 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
-.item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.15rem;
+.itemCard {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
   text-decoration: none;
   color: var(--text-main);
-  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+  cursor: pointer;
 }
 
-.item:hover {
+.itemCard:hover {
   border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .itemUnread {
   background: color-mix(in oklab, var(--primary) 4%, var(--bg-card));
+  border-color: color-mix(in oklab, var(--primary) 25%, var(--border-color));
+}
+
+.typeBadge {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+/* Category badge variants */
+.variant_order {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+}
+
+.variant_payment {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.variant_shipping {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0EA5E9;
+}
+
+.variant_completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22C55E;
+}
+
+.variant_cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.variant_promo {
+  background: rgba(168, 85, 247, 0.15);
+  color: #A855F7;
+}
+
+.variant_info {
+  background: color-mix(in oklab, var(--primary) 15%, transparent);
+  color: var(--primary);
 }
 
 .itemBody {
@@ -92,22 +212,30 @@
   min-width: 0;
 }
 
+.itemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
 .itemTitle {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 0.25rem;
+  letter-spacing: -0.01em;
 }
 
-.itemMessage {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.4;
-  margin-bottom: 0.35rem;
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .itemTime {
-  font-size: 0.72rem;
+  font-size: 0.725rem;
   color: var(--text-muted);
 }
 
@@ -117,14 +245,91 @@
   border-radius: 50%;
   background: var(--primary);
   flex-shrink: 0;
-  margin-top: 0.5rem;
+}
+
+.itemMessage {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.itemActionBtn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.725rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.12s;
+}
+
+.itemActionBtn:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
+  background: color-mix(in oklab, var(--text-muted) 8%, transparent);
+}
+
+.itemActionBtnDanger:hover {
+  color: #EF4444;
+  border-color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.emptyCard {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+  opacity: 0.4;
+  margin-bottom: 0.25rem;
+}
+
+.emptyTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.emptyDesc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  max-width: 360px;
+  line-height: 1.45;
+  margin: 0;
 }
 
 @media (max-width: 767px) {
   .wrapper {
-    padding: 80px 1rem 2rem;
+    padding: 80px 1rem 3rem;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
   }
   .title {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
   }
 }
