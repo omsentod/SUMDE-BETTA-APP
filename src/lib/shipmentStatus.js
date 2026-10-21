@@ -55,32 +55,47 @@ export function mapBiteshipStatus(bs) {
 // courier. Mirror image of the DOKU webhook's decrementStockForOrder.
 async function restockOrder(tx, order) {
   for (const item of order.items) {
-    const product = item.product;
-    if (!product) continue;
-
-    let updatedSizes;
-    let newTotalQty;
-    if (Array.isArray(product.sizes) && item.selectedSize) {
-      updatedSizes = product.sizes.map((s) =>
-        s.size === item.selectedSize
-          ? { ...s, quantity: s.quantity + item.quantity }
-          : s
-      );
-      newTotalQty = updatedSizes.reduce((sum, s) => sum + s.quantity, 0);
-    } else {
-      newTotalQty = product.quantity + item.quantity;
+    let variant = null;
+    if (item.variantId) {
+      variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
+    } else if (item.selectedSize) {
+      variant = await tx.productVariant.findFirst({
+        where: { productId: item.productId, size: item.selectedSize },
+      });
     }
 
-    const decrementAmount = Math.min(product.soldCount || 0, item.quantity);
-    await tx.product.update({
-      where: { id: product.id },
-      data: {
-        sizes: updatedSizes ?? undefined,
-        quantity: newTotalQty,
-        isSold: newTotalQty === 0,
-        soldCount: decrementAmount > 0 ? { decrement: decrementAmount } : undefined,
-      },
-    });
+    if (variant) {
+      await tx.productVariant.update({
+        where: { id: variant.id },
+        data: { stock: { increment: item.quantity } },
+      });
+      const variants = await tx.productVariant.findMany({
+        where: { productId: item.productId },
+      });
+      const newTotalQty = variants.reduce((sum, v) => sum + Math.max(0, v.stock), 0);
+      const decrementAmount = Math.min(item.product?.soldCount || 0, item.quantity);
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          quantity: newTotalQty,
+          isSold: newTotalQty === 0,
+          soldCount: decrementAmount > 0 ? { decrement: decrementAmount } : undefined,
+        },
+      });
+    } else {
+      const product = item.product || await tx.product.findUnique({ where: { id: item.productId } });
+      if (!product) continue;
+      const newTotalQty = product.quantity + item.quantity;
+      const decrementAmount = Math.min(product.soldCount || 0, item.quantity);
+      await tx.product.update({
+        where: { id: product.id },
+        data: {
+          quantity: newTotalQty,
+          isSold: newTotalQty === 0,
+          soldCount: decrementAmount > 0 ? { decrement: decrementAmount } : undefined,
+        },
+      });
+    }
   }
 }
 
@@ -212,10 +227,30 @@ export async function applyBiteshipUpdate({ order, biteshipStatus, waybillId, so
   });
   console.log(`Shipment(${source}): order ${order.id} ${order.status} → ${target} (biteship=${biteshipStatus || 'waybill'}).`);
 
-  // Fire the shipped notification exactly once, when the order first crosses
-  // into SHIPPED (from anything below it).
   if (STATUS_RANK[target] >= STATUS_RANK['SHIPPED'] && currentRank < STATUS_RANK['SHIPPED']) {
     await sendShippedNotifications(order, newWaybill || order.trackingNumber);
+  }
+
+  if (target === 'COMPLETED' && currentRank < STATUS_RANK['COMPLETED']) {
+    try {
+      if (order.userId) {
+        await createNotification({
+          userId: order.userId,
+          type: 'order.completed',
+          title: 'Pesanan Selesai',
+          body: `Order #${order.id.slice(0, 8)} telah sampai di tujuan.`,
+          link: '/customer/orders',
+        });
+      }
+      await notifyAllAdmins({
+        type: 'order.completed',
+        title: 'Pesanan Selesai',
+        body: `Order #${order.id.slice(0, 8)} telah diterima pembeli.`,
+        link: '/admin/orders?status=COMPLETED',
+      });
+    } catch (notifErr) {
+      console.error('Order completed notification fanout failed:', notifErr.message);
+    }
   }
 
   return { changed: true, from: order.status, to: target };

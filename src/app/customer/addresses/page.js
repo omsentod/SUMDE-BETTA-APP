@@ -142,6 +142,10 @@ export default function AddressesPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!/^\d{5}$/.test(form.postalCode)) {
+            setError('Kode pos harus terdiri dari 5 digit angka.');
+            return;
+        }
         setSaving(true); setError('');
         try {
             if (editingId) {
@@ -316,7 +320,18 @@ export default function AddressesPage() {
                                 </div>
                                 <div>
                                     <label className={styles.label}>Kode Pos</label>
-                                    <input className={styles.input} value={form.postalCode} onChange={e => setForm(p => ({ ...p, postalCode: e.target.value }))} required placeholder="12345" />
+                                    <input
+                                        className={styles.input}
+                                        inputMode="numeric"
+                                        maxLength={5}
+                                        value={form.postalCode}
+                                        onChange={e => {
+                                            const numeric = e.target.value.replace(/\D/g, '').slice(0, 5);
+                                            setForm(p => ({ ...p, postalCode: numeric }));
+                                        }}
+                                        required
+                                        placeholder="Contoh: 12190"
+                                    />
                                 </div>
 
                                 <div className={styles.fullCol}>

@@ -11,7 +11,8 @@ const SORT_OPTIONS = [
 ];
 
 function parseVariantSizes(product) {
-    if (!product || !product.sizes) return [];
+    if (!product) return [];
+    if (Array.isArray(product.variants) && product.variants.length > 0) return product.variants;
     if (Array.isArray(product.sizes)) return product.sizes;
     if (typeof product.sizes === 'string') {
         try {

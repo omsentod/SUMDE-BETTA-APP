@@ -8,11 +8,30 @@ export const dynamic = 'force-dynamic';
 
 const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 
-// Ekstraksi angka urutan dari nama file (misal "1.jpg" -> 1, "02.png" -> 2, "ikan_10.jpg" -> 10)
 function extractFileNumber(filename) {
   const base = filename.replace(/\.[^.]+$/, '');
   const match = base.match(/\d+/);
   return match ? parseInt(match[0], 10) : 999999;
+}
+
+function matchVariantForFile(fileName, subFolderName, variants) {
+  if (!Array.isArray(variants) || variants.length === 0) return null;
+  const fLower = fileName.toLowerCase();
+  const subLower = (subFolderName || '').toLowerCase();
+
+  for (const v of variants) {
+    if (!v.size) continue;
+    const sLower = v.size.trim().toLowerCase();
+    if (subLower && (subLower === sLower || subLower.startsWith(sLower + '-') || subLower.startsWith(sLower + '_'))) {
+      return v;
+    }
+    const escaped = sLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp('(^|[^a-z0-9])' + escaped + '([^a-z0-9]|$)', 'i');
+    if (regex.test(fLower)) {
+      return v;
+    }
+  }
+  return null;
 }
 
 export async function POST(request) {
@@ -36,7 +55,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ukuran file ZIP melebihi batas maksimal 200MB.' }, { status: 400 });
     }
 
-    // Verifikasi magic bytes ZIP (PK\x03\x04 atau PK\x05\x06)
     if (
       zipBuffer.length < 4 ||
       zipBuffer[0] !== 0x50 ||
@@ -52,15 +70,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Gagal mengekstrak arsip ZIP. Pastikan file tidak terenkripsi atau rusak.' }, { status: 400 });
     }
 
-    // Ambil seluruh produk dari database untuk pencocokan nama folder
-    const allProducts = await prisma.product.findMany();
+    const allProducts = await prisma.product.findMany({
+      include: { variants: true },
+    });
     const productMap = new Map();
     for (const p of allProducts) {
       productMap.set(p.name.trim().toLowerCase(), p);
     }
 
-    // Kelompokkan file gambar berdasarkan folder produk
-    // Map: productNameLower -> [{ entry, filename, number }]
     const foldersMap = new Map();
     const unmatchedFolders = new Set();
     const parseErrors = [];
@@ -68,7 +85,6 @@ export async function POST(request) {
     const entries = Object.values(zip.files);
 
     for (const entry of entries) {
-      // Abaikan folder dan file sistem / metadata macOS
       if (entry.dir) continue;
       const normalizedPath = entry.name.replace(/\\/g, '/');
       if (
@@ -80,7 +96,6 @@ export async function POST(request) {
         continue;
       }
 
-      // Validasi ekstensi gambar
       const ext = ('.' + normalizedPath.split('.').pop()).toLowerCase();
       if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
         continue;
@@ -88,16 +103,14 @@ export async function POST(request) {
 
       const parts = normalizedPath.split('/').filter(Boolean);
       if (parts.length < 2) {
-        // File berada di root ZIP tanpa folder produk
         parseErrors.push(`File "${entry.name}" tidak berada di dalam folder nama produk.`);
         continue;
       }
 
       const fileName = parts[parts.length - 1];
-      // Cari segmen path yang cocok dengan nama produk di database
-      // Prioritaskan folder langsung di atas file (parts[parts.length - 2])
       let matchedProduct = null;
       let matchedFolderName = '';
+      let productFolderIndex = -1;
 
       for (let i = parts.length - 2; i >= 0; i--) {
         const candidateName = parts[i].trim();
@@ -105,16 +118,20 @@ export async function POST(request) {
         if (productMap.has(candidateLower)) {
           matchedProduct = productMap.get(candidateLower);
           matchedFolderName = candidateName;
+          productFolderIndex = i;
           break;
         }
       }
 
       if (!matchedProduct) {
-        // Catat folder yang tidak cocok
         const folderCandidate = parts[parts.length - 2];
         unmatchedFolders.add(folderCandidate);
         continue;
       }
+
+      const subFolderName = (parts.length - 1 > productFolderIndex + 1)
+        ? parts[parts.length - 2]
+        : '';
 
       const key = matchedProduct.id;
       if (!foldersMap.has(key)) {
@@ -128,6 +145,7 @@ export async function POST(request) {
       foldersMap.get(key).files.push({
         entry,
         fileName,
+        subFolderName,
         number: extractFileNumber(fileName),
       });
     }
@@ -135,9 +153,7 @@ export async function POST(request) {
     const results = [];
     let totalImagesSaved = 0;
 
-    // Proses setiap produk yang cocok
     for (const [, { product, folderName, files }] of foldersMap.entries()) {
-      // Urutkan file berdasarkan angka penamaan (1, 2, 3, dst)
       files.sort((a, b) => {
         if (a.number !== b.number) return a.number - b.number;
         return a.fileName.localeCompare(b.fileName, undefined, { numeric: true });
@@ -145,18 +161,17 @@ export async function POST(request) {
 
       const savedUrls = [];
       const fileErrors = [];
+      const variantImageMap = new Map();
 
       for (const item of files) {
         try {
           const imgBuffer = await item.entry.async('nodebuffer');
 
-          // Validasi ukuran tiap gambar (maks 10MB)
           if (imgBuffer.length > 10 * 1024 * 1024) {
             fileErrors.push(`File ${item.fileName} melebihi 10MB`);
             continue;
           }
 
-          // Verifikasi magic bytes gambar asli
           const kind = detectImageKind(imgBuffer);
           if (!kind) {
             fileErrors.push(`File ${item.fileName} bukan format gambar yang valid`);
@@ -166,13 +181,17 @@ export async function POST(request) {
           const savedUrl = await saveImageBuffer(imgBuffer);
           savedUrls.push(savedUrl);
           totalImagesSaved++;
+
+          const matchedVar = matchVariantForFile(item.fileName, item.subFolderName, product.variants);
+          if (matchedVar && !variantImageMap.has(matchedVar.id)) {
+            variantImageMap.set(matchedVar.id, savedUrl);
+          }
         } catch (imgErr) {
           fileErrors.push(`Gagal menyimpan ${item.fileName}: ${imgErr.message}`);
         }
       }
 
       if (savedUrls.length > 0) {
-        // Gambar nomor 1 menjadi cover utama (image), dan seluruh gambar disimpan di images
         await prisma.product.update({
           where: { id: product.id },
           data: {
@@ -181,6 +200,13 @@ export async function POST(request) {
           },
         });
 
+        for (const [vId, vUrl] of variantImageMap.entries()) {
+          await prisma.productVariant.update({
+            where: { id: vId },
+            data: { imageUrl: vUrl },
+          });
+        }
+
         results.push({
           productId: product.id,
           productName: product.name,
@@ -188,6 +214,7 @@ export async function POST(request) {
           imageCount: savedUrls.length,
           coverImage: savedUrls[0],
           images: savedUrls,
+          variantsMatched: variantImageMap.size,
           warnings: fileErrors.length > 0 ? fileErrors : undefined,
         });
       } else {

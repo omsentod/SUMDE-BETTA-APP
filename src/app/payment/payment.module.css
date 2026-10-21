@@ -228,6 +228,72 @@
     border-radius: 4px;
 }
 
+.shippingInfoTopActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.editAddressBtn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.editAddressBtn:hover {
+    border-color: var(--primary);
+    background: rgba(255, 107, 53, 0.08);
+}
+
+.orderErrorBox {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.orderErrorHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--primary);
+    line-height: 1.4;
+}
+
+.orderErrorHeader svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.orderErrorActionBtn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.orderErrorActionBtn:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
 .recipientRow {
     display: flex;
     align-items: center;

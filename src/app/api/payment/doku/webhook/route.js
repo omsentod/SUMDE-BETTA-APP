@@ -29,31 +29,36 @@ function signaturesMatch(received, expected) {
 // order creation, so abandoned PENDING orders no longer consume stock.
 async function decrementStockForOrder(tx, order) {
   for (const item of order.items) {
-    const product = item.product;
-    if (!product) continue;
-
-    let updatedSizes;
-    let newTotalQty;
-    if (Array.isArray(product.sizes) && item.selectedSize) {
-      updatedSizes = product.sizes.map((s) =>
-        s.size === item.selectedSize
-          ? { ...s, quantity: Math.max(0, s.quantity - item.quantity) }
-          : s
-      );
-      newTotalQty = updatedSizes.reduce((sum, s) => sum + s.quantity, 0);
+    if (item.variantId) {
+      await tx.productVariant.update({
+        where: { id: item.variantId },
+        data: { stock: { decrement: item.quantity } },
+      });
+      const variants = await tx.productVariant.findMany({
+        where: { productId: item.productId },
+      });
+      const newTotalQty = variants.reduce((sum, v) => sum + Math.max(0, v.stock), 0);
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          quantity: newTotalQty,
+          isSold: newTotalQty === 0,
+          soldCount: { increment: item.quantity },
+        },
+      });
     } else {
-      newTotalQty = Math.max(0, product.quantity - item.quantity);
+      const product = item.product;
+      if (!product) continue;
+      const newTotalQty = Math.max(0, product.quantity - item.quantity);
+      await tx.product.update({
+        where: { id: product.id },
+        data: {
+          quantity: newTotalQty,
+          isSold: newTotalQty === 0,
+          soldCount: { increment: item.quantity },
+        },
+      });
     }
-
-    await tx.product.update({
-      where: { id: product.id },
-      data: {
-        sizes: updatedSizes ?? undefined,
-        quantity: newTotalQty,
-        isSold: newTotalQty === 0,
-        soldCount: { increment: item.quantity },
-      },
-    });
   }
 }
 
@@ -127,7 +132,14 @@ export async function POST(request) {
 
     const order = await prisma.order.findUnique({
       where: { id: actualOrderId },
-      include: { items: { include: { product: true } } },
+      include: {
+        items: {
+          include: {
+            product: true,
+            variant: true,
+          },
+        },
+      },
     });
     if (!order) {
       console.warn(`Doku Webhook: Order matching invoice not found (actualOrderId=${actualOrderId}).`);

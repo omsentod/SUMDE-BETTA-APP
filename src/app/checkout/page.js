@@ -206,6 +206,11 @@ export default function CheckoutPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'postalCode') {
+            const numeric = value.replace(/\D/g, '').slice(0, 5);
+            setFormData(prev => ({ ...prev, postalCode: numeric }));
+            return;
+        }
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -304,6 +309,7 @@ export default function CheckoutPage() {
         } catch (err) {
             setRatesError(err.message);
             setRates([]);
+            setSelectedRate(null);
         } finally {
             setRatesLoading(false);
         }
@@ -360,6 +366,10 @@ export default function CheckoutPage() {
         const { name, phone, streetAddress, rtRw, province, city, district, village, postalCode } = formData;
         if (!name || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
             toast.warning('Mohon lengkapi seluruh detail pengiriman.');
+            return;
+        }
+        if (ratesError) {
+            toast.error(ratesError);
             return;
         }
         if (!selectedRate) {
@@ -571,8 +581,28 @@ export default function CheckoutPage() {
                                         <input type="text" name="rtRw" className={`search-input ${styles.inputFull}`} placeholder="Contoh: RT 02 / RW 04" value={formData.rtRw} onChange={handleInputChange} required />
                                     </div>
                                     <div>
-                                        <label className={styles.fieldLabel}>Kode Pos</label>
-                                        <input type="text" name="postalCode" className={`search-input ${styles.inputFull}`} value={formData.postalCode} onChange={handleInputChange} required />
+                                        <label className={styles.fieldLabel}>Kode Pos (5 Digit)</label>
+                                        <input
+                                            type="text"
+                                            name="postalCode"
+                                            inputMode="numeric"
+                                            maxLength={5}
+                                            placeholder="Contoh: 12190"
+                                            className={`search-input ${styles.inputFull} ${ratesError && ratesError.toLowerCase().includes('kode pos') ? styles.inputError : ''}`}
+                                            value={formData.postalCode}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                        {ratesError && ratesError.toLowerCase().includes('kode pos') && (
+                                            <span className={styles.postalErrorText}>
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                                </svg>
+                                                {ratesError}
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className={styles.fullCol}>

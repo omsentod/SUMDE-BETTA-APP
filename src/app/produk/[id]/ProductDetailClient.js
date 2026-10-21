@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,6 +35,7 @@ export default function ProductDetailClient() {
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
+    const [prevProductId, setPrevProductId] = useState(id);
     const touchStartX = useRef(null);
 
     const product = products.find((p) => p.id === id);
@@ -47,15 +48,44 @@ export default function ProductDetailClient() {
     }, [product, products]);
 
     // Reset selected size + error whenever we're viewing a different product
-    // (product id changes because URL param or products list updated).
-    useEffect(() => {
-        if (!product) return;
-        const firstAvailable = product.sizes?.find((s) => s.quantity > 0)?.size || '';
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync state turunan saat pindah produk (id berubah)
+    const variants = useMemo(() => {
+        if (!product) return [];
+        if (Array.isArray(product.variants) && product.variants.length > 0) return product.variants;
+        if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+            return product.sizes.map((s) => ({ size: s.size, stock: s.quantity, price: null, imageUrl: null }));
+        }
+        return [];
+    }, [product]);
+
+    const activeVariant = useMemo(() => {
+        return variants.find((v) => v.size === selectedSize) || null;
+    }, [variants, selectedSize]);
+
+    const currentPrice = useMemo(() => {
+        if (activeVariant && activeVariant.price !== null && activeVariant.price !== undefined) {
+            return activeVariant.price;
+        }
+        return product?.price || 0;
+    }, [activeVariant, product]);
+
+    if (id !== prevProductId) {
+        setPrevProductId(id);
+        const firstAvailable = variants.find((v) => (v.stock ?? v.quantity ?? 0) > 0)?.size || '';
         setSelectedSize(firstAvailable);
         setSizeError('');
-        setActiveIndex(0); // kembali ke foto pertama saat pindah produk
-    }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+        setActiveIndex(0);
+    }
+
+    const gallery = useMemo(() => {
+        if (!product) return [];
+        const base = toImageArray(product.images, product.image);
+        variants.forEach((v) => {
+            if (v.imageUrl && !base.includes(v.imageUrl)) {
+                base.push(v.imageUrl);
+            }
+        });
+        return base;
+    }, [product, variants]);
 
     if (isLoading) {
         return (
@@ -78,18 +108,19 @@ export default function ProductDetailClient() {
         style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0,
-    }).format(product.price);
+    }).format(currentPrice);
 
-    const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+    const hasSizes = variants.length > 0;
     const requiresSizePick = hasSizes && !selectedSize;
 
     const handleAcquire = () => {
         if (requiresSizePick) {
-            setSizeError('Mohon pilih ukuran (size) terlebih dahulu.');
+            setSizeError('Mohon pilih varian terlebih dahulu.');
             return;
         }
         setSizeError('');
-        buyNow({ ...product, selectedSize });
+        const itemImage = activeVariant?.imageUrl || product.image;
+        buyNow({ ...product, price: currentPrice, image: itemImage, selectedSize, variantId: activeVariant?.id });
         router.push('/checkout');
     };
 
@@ -99,13 +130,11 @@ export default function ProductDetailClient() {
             return;
         }
         setSizeError('');
-        addToCart({ ...product, selectedSize });
+        const itemImage = activeVariant?.imageUrl || product.image;
+        addToCart({ ...product, price: currentPrice, image: itemImage, selectedSize, variantId: activeVariant?.id });
     };
 
     const canBuy = !product.isSold && product.quantity > 0;
-
-    // Galeri berurutan sesuai urutan yang di-set admin.
-    const gallery = toImageArray(product.images, product.image);
     const idx = gallery.length > 0 ? Math.min(activeIndex, gallery.length - 1) : 0;
     const hasMultiple = gallery.length > 1;
 
@@ -247,29 +276,42 @@ export default function ProductDetailClient() {
                                 <div className={`${styles.sizeSection} ${sizeError ? styles.sizeSectionInvalid : ''}`}>
                                     <h3 className={styles.sizeHeader}>Pilih Varian</h3>
                                     <div className={styles.sizeList}>
-                                        {product.sizes.map((s) => {
-                                            const isOutOfStock = s.quantity <= 0;
-                                            const isSelected = selectedSize === s.size;
+                                        {variants.map((v) => {
+                                            const stock = v.stock ?? v.quantity ?? 0;
+                                            const isOutOfStock = stock <= 0;
+                                            const isSelected = selectedSize === v.size;
                                             const cls = [
                                                 styles.sizeBtn,
                                                 isSelected && styles.sizeBtnSelected,
                                                 isOutOfStock && styles.sizeBtnOut,
                                             ].filter(Boolean).join(' ');
+                                            const vPriceFormatted = v.price != null
+                                                ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v.price)
+                                                : null;
                                             return (
                                                 <button
-                                                    key={s.size}
+                                                    key={v.size}
                                                     type="button"
                                                     disabled={isOutOfStock}
                                                     onClick={() => {
-                                                        setSelectedSize(s.size);
+                                                        setSelectedSize(v.size);
                                                         if (sizeError) setSizeError('');
+                                                        if (v.imageUrl) {
+                                                            const foundIdx = gallery.indexOf(v.imageUrl);
+                                                            if (foundIdx >= 0) setActiveIndex(foundIdx);
+                                                        }
                                                     }}
                                                     className={cls}
                                                 >
-                                                    <span className={styles.sizeLabel}>{s.size}</span>
+                                                    <span className={styles.sizeLabel}>{v.size}</span>
                                                     <span className={styles.sizeStock}>
-                                                        {isOutOfStock ? 'Habis' : `Stok: ${s.quantity}`}
+                                                        {isOutOfStock ? 'Habis' : `Stok: ${stock}`}
                                                     </span>
+                                                    {vPriceFormatted && (
+                                                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', marginTop: '2px', display: 'block' }}>
+                                                            {vPriceFormatted}
+                                                        </span>
+                                                    )}
                                                 </button>
                                             );
                                         })}

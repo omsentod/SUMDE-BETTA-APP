@@ -25,7 +25,7 @@ function toGallery(images, fallbackImage) {
     return arr;
 }
 
-export default function ProductCard({ id, name, price, form, coloration, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount }) {
+export default function ProductCard({ id, name, price, form, coloration, isSold, isPremium, image, images, category, description, statsForm, age, statsSpirit, sizes, variants, quantity, soldCount }) {
     const { addToCart, buyNow, isCartOpen, toggleCart } = useCart();
     const router = useRouter();
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -34,24 +34,22 @@ export default function ProductCard({ id, name, price, form, coloration, isSold,
         minimumFractionDigits: 0
     }).format(price);
 
-    // Hitung total stok efektif baik dari varian sizes maupun base quantity
-    const totalStock = Array.isArray(sizes) && sizes.length > 0
-        ? sizes.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0)
+    const variantList = Array.isArray(variants) && variants.length > 0
+        ? variants
+        : (Array.isArray(sizes) && sizes.length > 0
+            ? sizes.map(s => ({ size: s.size, stock: s.quantity, price: null, imageUrl: null }))
+            : []);
+
+    const totalStock = variantList.length > 0
+        ? variantList.reduce((sum, s) => sum + (Number(s.stock ?? s.quantity) || 0), 0)
         : (Number(quantity) || 0);
 
     const effectiveSold = Boolean(isSold || totalStock <= 0);
-    // Tampilkan label sisa sedikit apabila stok <= 5 dan belum terjual
     const isLowStock = !effectiveSold && totalStock > 0 && totalStock <= 5;
 
-    // Products with sizes require the buyer to pick a size before purchase.
-    // Instead of blocking on the card, open a Shopee-style size picker modal
-    // that collects the selection then completes the action inline.
-    const hasSizes = Array.isArray(sizes) && sizes.length > 0;
-    // modalAction === 'cart' | 'buy' | null
+    const hasSizes = variantList.length > 0;
     const [modalAction, setModalAction] = useState(null);
 
-    // Galeri foto pada kartu: hover (desktop) menggeser antar-zona, swipe (mobile)
-    // menggeser satu per satu. Urutan mengikuti yang di-set admin.
     const gallery = toGallery(images, image);
     const hasGallery = gallery.length > 1;
     const [imgIdx, setImgIdx] = useState(0);
@@ -77,20 +75,22 @@ export default function ProductCard({ id, name, price, form, coloration, isSold,
         touchStartX.current = null;
     };
 
-    const productPayload = { id, name, price, form, coloration, image, images, category, description, statsForm, age, statsSpirit, sizes, quantity, soldCount };
+    const productPayload = { id, name, price, form, coloration, image, images, category, description, statsForm, age, statsSpirit, sizes, variants: variantList, quantity, soldCount };
 
-    const commitAddToCart = (selectedSize) => {
-        addToCart({ ...productPayload, selectedSize });
+    const commitAddToCart = (selectedSize, variant) => {
+        const itemPrice = variant?.price !== null && variant?.price !== undefined ? variant.price : price;
+        const itemImage = variant?.imageUrl || image;
+        addToCart({ ...productPayload, price: itemPrice, image: itemImage, selectedSize, variantId: variant?.id });
     };
 
-    const commitBuyNow = (selectedSize) => {
+    const commitBuyNow = (selectedSize, variant) => {
         if (effectiveSold) return;
-        buyNow({ ...productPayload, selectedSize });
+        const itemPrice = variant?.price !== null && variant?.price !== undefined ? variant.price : price;
+        const itemImage = variant?.imageUrl || image;
+        buyNow({ ...productPayload, price: itemPrice, image: itemImage, selectedSize, variantId: variant?.id });
         router.push('/checkout');
     };
 
-    // Open size picker AND close the cart sidebar first — otherwise both
-    // overlays coexist (the "2 modal crash" the user reported).
     const openSizePicker = (action) => {
         if (isCartOpen) toggleCart();
         setModalAction(action);
@@ -100,7 +100,7 @@ export default function ProductCard({ id, name, price, form, coloration, isSold,
         e.preventDefault();
         e.stopPropagation();
         if (hasSizes) { openSizePicker('cart'); return; }
-        commitAddToCart(null);
+        commitAddToCart(null, null);
     };
 
     const handleBuyNow = (e) => {
@@ -108,12 +108,12 @@ export default function ProductCard({ id, name, price, form, coloration, isSold,
         e.stopPropagation();
         if (effectiveSold) return;
         if (hasSizes) { openSizePicker('buy'); return; }
-        commitBuyNow(null);
+        commitBuyNow(null, null);
     };
 
-    const handleModalCommit = (selectedSize) => {
-        if (modalAction === 'buy') commitBuyNow(selectedSize);
-        else commitAddToCart(selectedSize);
+    const handleModalCommit = (selectedSize, variant) => {
+        if (modalAction === 'buy') commitBuyNow(selectedSize, variant);
+        else commitAddToCart(selectedSize, variant);
         setModalAction(null);
     };
 

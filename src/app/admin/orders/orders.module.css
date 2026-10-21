@@ -328,6 +328,32 @@
   cursor: pointer;
 }
 
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refreshBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(255, 107, 53, 0.06);
+}
+
+.refreshBtnDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Modal for bulk status */
 .modalBackdrop {
   position: fixed;

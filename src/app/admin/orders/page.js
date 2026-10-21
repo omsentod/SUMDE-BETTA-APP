@@ -142,6 +142,7 @@ function AdminOrdersPageInner() {
         loading: false,
         data,
       }));
+      loadOrders(true);
     } catch (err) {
       setTrackingModal((prev) => ({
         ...prev,
@@ -179,21 +180,71 @@ function AdminOrdersPageInner() {
     }
   }, [currentUser, authLoading, canView, router]);
 
-  const loadOrders = async () => {
-    setLoading(true);
+  const loadOrders = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch('/api/orders');
       if (res.ok) setOrders(await res.json());
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (canView) loadOrders();
+    if (!canView) return;
+    loadOrders();
+    const timer = setInterval(() => {
+      loadOrders(true);
+    }, 15000);
+    return () => clearInterval(timer);
   }, [canView]);
+
+  useEffect(() => {
+    if (!currentUser?.id || !canView) return;
+    let client = null;
+    let channel = null;
+    let cancelled = false;
+
+    const setup = async () => {
+      try {
+        const res = await fetch('/api/ably/status');
+        if (!res.ok || cancelled) return;
+        const { enabled } = await res.json();
+        if (!enabled || cancelled) return;
+
+        const Ably = await import('ably');
+        if (cancelled) return;
+
+        client = new Ably.Realtime({ authUrl: '/api/ably/auth', authMethod: 'GET' });
+        client.connection.on(['failed', 'suspended', 'disconnected', 'closed'], () => {});
+
+        if (cancelled) {
+          try { client.close(); } catch {}
+          return;
+        }
+
+        channel = client.channels.get(`user:${currentUser.id}`);
+        channel.subscribe('notification', () => {
+          loadOrders(true);
+        });
+      } catch (err) {
+        console.warn('Admin orders Ably setup failed:', err.message);
+      }
+    };
+
+    setup();
+    return () => {
+      cancelled = true;
+      if (channel) {
+        try { channel.unsubscribe(); } catch {}
+      }
+      if (client) {
+        try { client.close(); } catch {}
+      }
+    };
+  }, [currentUser?.id, canView]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync from URL param
@@ -363,6 +414,19 @@ function AdminOrdersPageInner() {
             ))}
           </select>
         )}
+        <button
+          type="button"
+          onClick={() => loadOrders(false)}
+          className={styles.refreshBtn}
+          title="Segarkan data pesanan"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+          Segarkan
+        </button>
       </div>
 
       {selectedIds.size > 0 && (

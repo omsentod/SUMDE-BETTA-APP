@@ -29,7 +29,7 @@ const emptyProductForm = () => ({
   age: '4 Month',
   statsSpirit: 'Aktif',
   quantity: 1,
-  sizes: [],
+  variants: [],
   soldCount: 0,
 });
 
@@ -173,14 +173,6 @@ export default function AdminProductsPage() {
 
   const openEdit = (product) => {
     setCurrentEdit(product);
-    let parsedSizes = [];
-    try {
-      if (product.sizes) {
-        parsedSizes = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
-      }
-    } catch { /* ignore */ }
-    // Galeri: parse `images` (Json). Fallback ke [image] untuk produk lama yang
-    // belum punya galeri.
     let parsedImages = [];
     try {
       if (product.images) {
@@ -190,6 +182,30 @@ export default function AdminProductsPage() {
     if (!Array.isArray(parsedImages) || parsedImages.length === 0) {
       parsedImages = product.image ? [product.image] : [];
     }
+    const parsedVariants = (Array.isArray(product.variants) && product.variants.length > 0)
+      ? product.variants.map((v) => ({
+          id: v.id,
+          size: v.size,
+          stock: v.stock,
+          price: v.price ?? '',
+          imageUrl: v.imageUrl ?? '',
+        }))
+      : (() => {
+          try {
+            if (product.sizes) {
+              const s = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
+              if (Array.isArray(s)) {
+                return s.map((item) => ({
+                  size: item.size || '',
+                  stock: parseInt(item.quantity) || 0,
+                  price: '',
+                  imageUrl: '',
+                }));
+              }
+            }
+          } catch { }
+          return [];
+        })();
     setForm({
       name: product.name,
       price: product.price,
@@ -204,7 +220,7 @@ export default function AdminProductsPage() {
       age: product.age || '4 Month',
       statsSpirit: product.statsSpirit || 'Aktif',
       quantity: product.quantity ?? 1,
-      sizes: parsedSizes || [],
+      variants: parsedVariants,
       soldCount: product.soldCount ?? 0,
     });
     setIsEditOpen(true);
@@ -374,18 +390,21 @@ export default function AdminProductsPage() {
                     </td>
                     <td className={styles.hideOnMobile}>
                       <div>{product.form}</div>
-                      {product.sizes && (() => {
-                        try {
-                          const parsed = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
-                          if (Array.isArray(parsed) && parsed.length > 0) {
-                            return (
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                                Varian: {parsed.map((s) => `${s.size} (${s.quantity})`).join(', ')}
-                              </div>
-                            );
-                          }
-                        } catch { /* ignore */ }
-                        return null;
+                      {(() => {
+                        const vList = (Array.isArray(product.variants) && product.variants.length > 0)
+                          ? product.variants.map((v) => `${v.size} (${v.stock}${v.price ? ' • ' + formatCurrency(v.price) : ''})`)
+                          : (() => {
+                              try {
+                                const s = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
+                                return Array.isArray(s) ? s.map((x) => `${x.size} (${x.quantity})`) : [];
+                              } catch { return []; }
+                            })();
+                        if (vList.length === 0) return null;
+                        return (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                            {vList.join(', ')}
+                          </div>
+                        );
                       })()}
                     </td>
                     <td style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>{formatCurrency(product.price)}</td>
@@ -569,22 +588,21 @@ export default function AdminProductsPage() {
 
               <div className={styles.formFullWidth} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
                 <label className={styles.formLabel} style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--text-main)', textAlign: 'center', marginBottom: '1rem' }}>
-                  Kelola Varian (Gender / Ukuran) & Jumlah Stok
+                  Varian (Gender / Ukuran)
                 </label>
-                <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', border: '1px dashed var(--border-color)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  {form.sizes && form.sizes.map((s, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.8rem', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', border: '1px dashed var(--border-color)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {form.variants.map((v, index) => (
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.3fr 1.4fr auto', gap: '0.5rem', alignItems: 'center' }}>
                       <input
                         type="text"
-                        placeholder="Varian (Contoh: Male (M), Female, Pair)"
+                        placeholder="Varian (Male, Female, Pair)"
                         className={styles.formInput}
-                        style={{ flex: '1 1 180px' }}
-                        value={s.size}
+                        value={v.size}
                         onChange={(e) => {
-                          const newSizes = [...form.sizes];
-                          newSizes[index].size = e.target.value;
-                          const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
-                          setForm({ ...form, sizes: newSizes, quantity: totalQty });
+                          const updated = [...form.variants];
+                          updated[index] = { ...updated[index], size: e.target.value };
+                          const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                          setForm({ ...form, variants: updated, quantity: total });
                         }}
                         required
                       />
@@ -592,24 +610,49 @@ export default function AdminProductsPage() {
                         type="number"
                         placeholder="Stok"
                         className={styles.formInput}
-                        style={{ flex: '1 1 100px' }}
-                        value={s.quantity}
+                        value={v.stock}
                         min="0"
                         onChange={(e) => {
-                          const newSizes = [...form.sizes];
-                          newSizes[index].quantity = parseInt(e.target.value) || 0;
-                          const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
-                          setForm({ ...form, sizes: newSizes, quantity: totalQty });
+                          const updated = [...form.variants];
+                          updated[index] = { ...updated[index], stock: parseInt(e.target.value) || 0 };
+                          const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                          setForm({ ...form, variants: updated, quantity: total });
                         }}
                         required
                       />
+                      <input
+                        type="number"
+                        placeholder={`Harga (default: ${form.price || '—'})`}
+                        className={styles.formInput}
+                        value={v.price}
+                        min="0"
+                        onChange={(e) => {
+                          const updated = [...form.variants];
+                          updated[index] = { ...updated[index], price: e.target.value };
+                          setForm({ ...form, variants: updated });
+                        }}
+                      />
+                      <select
+                        className={styles.formInput}
+                        value={v.imageUrl || ''}
+                        onChange={(e) => {
+                          const updated = [...form.variants];
+                          updated[index] = { ...updated[index], imageUrl: e.target.value };
+                          setForm({ ...form, variants: updated });
+                        }}
+                      >
+                        <option value="">Foto Utama</option>
+                        {form.images && form.images.map((img, i) => (
+                          <option key={i} value={img}>Foto {i + 1}</option>
+                        ))}
+                      </select>
                       <button
                         type="button"
                         className={styles.tableActionBtnDanger}
                         onClick={() => {
-                          const newSizes = form.sizes.filter((_, idx) => idx !== index);
-                          const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
-                          setForm({ ...form, sizes: newSizes, quantity: totalQty });
+                          const updated = form.variants.filter((_, i) => i !== index);
+                          const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                          setForm({ ...form, variants: updated, quantity: total });
                         }}
                       >
                         Hapus
@@ -619,14 +662,14 @@ export default function AdminProductsPage() {
                   <button
                     type="button"
                     className={styles.outlineBtn}
-                    style={{ width: '100%', maxWidth: '300px', marginTop: form.sizes?.length > 0 ? '0.5rem' : 0 }}
+                    style={{ width: '100%', maxWidth: '300px', marginTop: form.variants.length > 0 ? '0.25rem' : 0, alignSelf: 'center' }}
                     onClick={() => {
-                      const newSizes = [...(form.sizes || []), { size: '', quantity: 1 }];
-                      const totalQty = newSizes.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
-                      setForm({ ...form, sizes: newSizes, quantity: totalQty });
+                      const updated = [...form.variants, { size: '', stock: 1, price: '', imageUrl: '' }];
+                      const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                      setForm({ ...form, variants: updated, quantity: total });
                     }}
                   >
-                    + Tambah Varian & Stok
+                    + Tambah Varian
                   </button>
                 </div>
               </div>
@@ -637,13 +680,13 @@ export default function AdminProductsPage() {
                   type="number"
                   className={styles.formInput}
                   style={{ opacity: 0.7 }}
-                  value={form.sizes?.length > 0 ? form.quantity : (form.quantity || 0)}
+                  value={form.variants.length > 0 ? form.quantity : (form.quantity || 0)}
                   onChange={(e) => {
-                    if (!form.sizes || form.sizes.length === 0) {
+                    if (!form.variants || form.variants.length === 0) {
                       setForm({ ...form, quantity: parseInt(e.target.value) || 0 });
                     }
                   }}
-                  readOnly={form.sizes?.length > 0}
+                  readOnly={form.variants.length > 0}
                 />
               </div>
 

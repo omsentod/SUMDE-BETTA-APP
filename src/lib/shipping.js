@@ -71,14 +71,34 @@ export async function searchCities(query, { limit = 25 } = {}) {
  *
  * @returns {Promise<Array<{ courier_code, courier_name, courier_service_code, courier_service_name, duration, price }>>}
  */
-export async function fetchRates({ destinationPostal, destinationCity, items }) {
+export function sanitizeShippingError(rawError, postalCode) {
+  const msg = String(rawError || '');
+  const isPostalIssue =
+    /invalid or missing postal code/i.test(msg) ||
+    /postal code/i.test(msg) ||
+    /kode pos/i.test(msg);
+
+  if (isPostalIssue) {
+    const postalDetail = postalCode ? ` (${postalCode})` : '';
+    return `Kode pos tujuan${postalDetail} tidak valid atau tidak terdaftar di sistem ekspedisi. Pastikan menggunakan 5 digit kode pos resmi sesuai kelurahan/kecamatan Anda.`;
+  }
+
+  if (/support@biteship\.com/i.test(msg) || /biteship/i.test(msg)) {
+    return 'Layanan pengiriman kurir sedang tidak dapat diakses untuk rute ini. Silakan periksa kembali alamat Anda atau hubungi admin.';
+  }
+
+  return msg || 'Gagal memproses data pengiriman.';
+}
+
+export async function fetchRates({ destinationPostal, destinationCity: _destinationCity, items }) {
   const cfg = config();
   if (!Array.isArray(items) || items.length === 0) {
     const err = new Error('Item pesanan kosong.'); err.status = 400; throw err;
   }
   
-  if (!destinationPostal || !/^\d{5}$/.test(String(destinationPostal))) {
-    const err = new Error('Kode pos tujuan tidak valid. Biteship membutuhkan kode pos 5 digit.');
+  const cleanedPostal = String(destinationPostal || '').trim();
+  if (!cleanedPostal || !/^\d{5}$/.test(cleanedPostal)) {
+    const err = new Error('Kode pos tujuan tidak valid. Masukkan 5 digit kode pos.');
     err.status = 400; throw err;
   }
 
@@ -87,8 +107,8 @@ export async function fetchRates({ destinationPostal, destinationCity, items }) 
   const weightGrams = packagesKg * 1000;
 
   const payload = {
-    origin_postal_code: parseInt(cfg.originPostal),
-    destination_postal_code: parseInt(destinationPostal),
+    origin_postal_code: parseInt(cfg.originPostal, 10),
+    destination_postal_code: parseInt(cleanedPostal, 10),
     couriers: cfg.couriers,
     items: [
       {
@@ -112,9 +132,11 @@ export async function fetchRates({ destinationPostal, destinationCity, items }) 
   
   const data = await res.json();
   if (!res.ok || !data.success) {
-    const msg = data.error || data.message || 'Gagal mengambil ongkir Biteship.';
+    const rawMsg = data.error || data.message || 'Gagal mengambil ongkir.';
+    const msg = sanitizeShippingError(rawMsg, cleanedPostal);
+    const isPostal = /invalid or missing postal code/i.test(rawMsg) || /postal code/i.test(rawMsg);
     const err = new Error(msg);
-    err.status = res.status || 502;
+    err.status = isPostal ? 400 : (res.status || 502);
     throw err;
   }
 
@@ -204,7 +226,9 @@ export async function createShipment(order, totalQty) {
   
   const data = await res.json();
   if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Gagal memanggil kurir via Biteship.');
+    const rawMsg = data.error || data.message || 'Gagal memanggil kurir.';
+    const msg = sanitizeShippingError(rawMsg, order.postalCode);
+    throw new Error(msg);
   }
   return data;
 }

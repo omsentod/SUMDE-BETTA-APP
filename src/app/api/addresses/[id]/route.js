@@ -34,7 +34,13 @@ export async function PUT(request, { params }) {
     if (city !== undefined) fields.city = city;
     if (district !== undefined) fields.district = district;
     if (village !== undefined) fields.village = village;
-    if (postalCode !== undefined) fields.postalCode = postalCode;
+    if (postalCode !== undefined) {
+      const cleaned = String(postalCode || '').trim();
+      if (!/^\d{5}$/.test(cleaned)) {
+        return NextResponse.json({ error: 'Kode pos wajib terdiri dari 5 digit angka.' }, { status: 400 });
+      }
+      fields.postalCode = cleaned;
+    }
     if (isDefault !== undefined) fields.isDefault = isDefault;
 
     const updated = await prisma.address.update({ where: { id }, data: fields });

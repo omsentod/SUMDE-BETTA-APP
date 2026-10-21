@@ -37,7 +37,7 @@ export default function PaymentPage() {
     // (bukan bikin order baru).
     const [isChangingMethod, setIsChangingMethod] = useState(false);
 
-    // Sesi Checkout Details
+    const [orderError, setOrderError] = useState('');
     const [activePayment, setActivePayment] = useState(null);
     const [status, setStatus] = useState('pending'); // 'pending' | 'checkout_created' | 'success'
 
@@ -159,6 +159,7 @@ export default function PaymentPage() {
             return;
         }
         setLoading(true);
+        setOrderError('');
         try {
             let orderId;
 
@@ -233,7 +234,9 @@ export default function PaymentPage() {
 
         } catch (err) {
             console.error('Error starting Doku payment:', err);
-            toast.error(err.message || 'Terjadi kesalahan sistem.');
+            const msg = err.message || 'Terjadi kesalahan sistem.';
+            setOrderError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -427,9 +430,18 @@ export default function PaymentPage() {
                                             </svg>
                                             <span>Kirim Ke</span>
                                         </div>
-                                        {shipment?.shipping?.serviceName && (
-                                            <span className={styles.courierChip}>{shipment.shipping.serviceName}</span>
-                                        )}
+                                        <div className={styles.shippingInfoTopActions}>
+                                            {shipment?.shipping?.serviceName && (
+                                                <span className={styles.courierChip}>{shipment.shipping.serviceName}</span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => router.push('/checkout')}
+                                                className={styles.editAddressBtn}
+                                            >
+                                                Ubah
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className={styles.recipientRow}>
                                         <p className={styles.recipientName}>{shipment?.name || 'Penerima'}</p>
@@ -440,6 +452,7 @@ export default function PaymentPage() {
                                         {shipment?.village ? `, Kel. ${shipment.village}` : ''}
                                         {shipment?.city ? `, ${shipment.city}` : ''}
                                         {shipment?.province ? `, ${shipment.province}` : ''}
+                                        {shipment?.postalCode ? `, Kode Pos ${shipment.postalCode}` : ''}
                                     </p>
                                 </div>
 
@@ -506,6 +519,26 @@ export default function PaymentPage() {
                                             'Bayar Sekarang'
                                         )}
                                     </button>
+
+                                    {orderError && (
+                                        <div className={styles.orderErrorBox}>
+                                            <div className={styles.orderErrorHeader}>
+                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                                </svg>
+                                                <span>{orderError}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => router.push('/checkout')}
+                                                className={styles.orderErrorActionBtn}
+                                            >
+                                                Periksa Alamat di Checkout
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

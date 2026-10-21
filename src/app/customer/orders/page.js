@@ -63,6 +63,7 @@ export default function OrdersPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             setTrackingData(prev => ({...prev, [order.id]: data}));
+            fetchMyOrders().then(setOrders);
         } catch (err) {
             toast.error(err.message || 'Gagal melacak pesanan.');
         } finally {
@@ -122,6 +123,10 @@ export default function OrdersPage() {
     useEffect(() => {
         if (!currentUser) return;
         fetchMyOrders().then(data => { setOrders(data); setLoading(false); });
+        const timer = setInterval(() => {
+            fetchMyOrders().then(setOrders);
+        }, 20000);
+        return () => clearInterval(timer);
     }, [currentUser]);
 
     const filtered = activeTab === 'ALL' ? orders : orders.filter(o => o.status === activeTab);

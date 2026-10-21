@@ -8,20 +8,12 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  // Nullable karena user yang daftar via Google OAuth tidak punya password
-  // di sistem kita — mereka login lewat Google. User email/password punya
-  // password ini terisi. Kalau salah satu ada = auth punya minimal 1 metode.
-  password  String?
-  name      String
-  role      String   @default("customer") // "customer" | "admin"
-  // Google Sub Claim (id user di Google). Unique — 1 akun Google = 1 user.
-  // Null berarti user belum pernah link Google, cuma pakai password.
-  googleId  String?  @unique
-  // Null = belum verifikasi email. Timestamp = kapan berhasil verifikasi via OTP.
-  // Login email/password diblokir sampai verifikasi (lihat AGENTS.md §Auth).
-  // User via Google auto-set timestamp saat register (Google sudah verify email).
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String?
+  name          String
+  role          String    @default("customer")
+  googleId      String?   @unique
   emailVerified DateTime?
   phone         String?
   streetAddress String?
@@ -31,83 +23,72 @@ model User {
   district      String?
   village       String?
   postalCode    String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   orders        Order[]
   addresses     Address[]
-  passwordResets PasswordReset[]
+  passwordResets     PasswordReset[]
   notifications      Notification[]
   pushSubscriptions  PushSubscription[]
 }
 
-// Master Role & Hak Akses (RBAC)
 model Role {
   id          String   @id @default(uuid())
-  name        String   // e.g. "Staff Logistik"
-  slug        String   @unique // e.g. "staff_logistik"
+  name        String
+  slug        String   @unique
   description String?  @db.Text
-  permissions Json     // Array of string permission keys, e.g. ["orders:read", "shipping:manage"]
-  isSystem    Boolean  @default(false) // System roles (admin, customer) cannot be deleted or have slug altered
+  permissions Json
+  isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([slug])
 }
 
-// Bell inbox — 1 row per event yang perlu dilihat user.
-// Type contoh: 'order.new' (admin), 'order.paid', 'order.shipped', 'order.delivered'.
-// readAt null = belum dibaca (badge merah aktif).
-// link = deep link ke halaman relevan (misal /admin/orders?status=PENDING atau /customer/orders).
 model Notification {
-  id         String    @id @default(uuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       String    // 'order.new' | 'order.paid' | 'order.shipped' | ...
-  title      String
-  body       String    @db.Text
-  link       String?
-  readAt     DateTime?
-  createdAt  DateTime  @default(now())
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String    @db.Text
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
   @@index([createdAt])
 }
 
-// Simpan browser push subscription per user (bisa >1 kalau user pakai
-// multiple browser / device). Endpoint unik per browser.
 model PushSubscription {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // FCM/Web Push endpoint biasanya 150-400 char. VarChar(500) supaya bisa
-  // di-index @unique (MySQL tidak boleh unique index di TEXT tanpa prefix).
-  endpoint   String   @unique @db.VarChar(500)
-  p256dh     String   @db.VarChar(255)
-  auth       String   @db.VarChar(255)
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique @db.VarChar(500)
+  p256dh    String   @db.VarChar(255)
+  auth      String   @db.VarChar(255)
+  createdAt DateTime @default(now())
 
   @@index([userId])
 }
 
-// OTP satu-per-email. Register / resend timpa row lama. Verifikasi sukses hapus row.
 model EmailVerification {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  otp        String   // 6-digit, disimpan hashed via scrypt
-  expiresAt  DateTime
-  attempts   Int      @default(0)
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
-// Token satu-shot untuk reset password. Disimpan hashed. Setelah dipakai, usedAt di-set.
 model PasswordReset {
-  id         String    @id @default(uuid())
-  tokenHash  String    @unique
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime
-  usedAt     DateTime?
-  createdAt  DateTime  @default(now())
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId])
 }
@@ -116,7 +97,7 @@ model Address {
   id            String   @id @default(uuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label         String   @default("Rumah") // "Rumah" | "Kantor" | "Kos" | "Lainnya"
+  label         String   @default("Rumah")
   recipientName String
   phone         String
   streetAddress String
@@ -138,13 +119,8 @@ model Product {
   category    String
   form        String
   coloration  String
-  description String  @db.Text
-  // Cover image (thumbnail dipakai di kartu produk, keranjang, snapshot order).
-  // Selalu = images[0] supaya kode lama yang baca `image` tetap jalan.
+  description String   @db.Text
   image       String
-  // Galeri foto berurutan untuk halaman detail (array URL string). Urutan array
-  // = urutan tampil yang di-set admin; user bisa geser sesuai urutan ini.
-  // Nullable untuk kompatibilitas baris lama yang cuma punya `image`.
   images      Json?
   soldCount   Int      @default(0)
   isSold      Boolean  @default(false)
@@ -158,54 +134,70 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
+  variants    ProductVariant[]
+}
+
+model ProductVariant {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size         String
+  stock        Int      @default(0)
+  price        Float?
+  imageUrl     String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orderItems   OrderItem[]
+
+  @@unique([productId, size])
+  @@index([productId])
 }
 
 model Order {
-  id        String      @id @default(uuid())
-  userId    String?
-  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  // Money breakdown: subtotal = sum of item prices, shippingFee = courier cost,
-  // paymentFee = DOKU admin fee for the chosen method,
-  // total = subtotal + shippingFee + paymentFee. All authoritative from the server.
-  subtotal        Float   @default(0)
-  shippingFee     Float   @default(0)
-  paymentFee      Float   @default(0)
-  // Payment method key from src/lib/paymentFee.js (e.g. "QRIS", "VA_BCA").
-  // Null for orders created before the picker existed.
-  paymentMethod   String?
-  total           Float
-  // Courier snapshot (immutable per order — Biteship code + service tier)
-  shippingCourier String? // e.g. "jne", "jnt", "sicepat", "gosend"
-  shippingService String? // e.g. "REG", "YES", "SAME_DAY"
-  shippingEta     String? // e.g. "1-2 hari"
-  trackingNumber  String? // e.g. "JB000111222333" (AWB from courier)
-  biteshipShipmentId String? // e.g. "62f4b..." (Biteship internal ID)
-  biteshipStatus  String? // e.g. "allocated", "picking_up", "picked", "dropped", "delivered"
-  status    String      @default("PENDING") // "PENDING" (belum bayar) | "PAID" (webhook DOKU confirmed, stock decremented) | "PROCESSING" (Panggil Kurir done, resi dipanggil) | "SHIPPED" | "COMPLETED" | "CANCELLED" | "RETURNED"
-  name      String
-  email     String
-  phone         String
-  streetAddress String
-  rtRw          String
-  province      String
-  city          String
-  district      String
-  village       String
-  postalCode    String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  items     OrderItem[]
+  id                 String    @id @default(uuid())
+  userId             String?
+  user               User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subtotal           Float     @default(0)
+  shippingFee        Float     @default(0)
+  paymentFee         Float     @default(0)
+  paymentMethod      String?
+  total              Float
+  shippingCourier    String?
+  shippingService    String?
+  shippingEta        String?
+  trackingNumber     String?
+  biteshipShipmentId String?
+  biteshipStatus     String?
+  status             String    @default("PENDING")
+  name               String
+  email              String
+  phone              String
+  streetAddress      String
+  rtRw               String
+  province           String
+  city               String
+  district           String
+  village            String
+  postalCode         String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  items              OrderItem[]
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int      @default(1)
-  price     Float
+  id           String          @id @default(uuid())
+  orderId      String
+  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product         @relation(fields: [productId], references: [id])
+  variantId    String?
+  variant      ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  quantity     Int             @default(1)
+  price        Float
   selectedSize String?
+
+  @@index([variantId])
 }
 
 model PromoEvent {
@@ -222,4 +214,3 @@ model PromoEvent {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
-

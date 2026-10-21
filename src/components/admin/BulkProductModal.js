@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/context/ToastContext';
 import styles from './BulkProductModal.module.css';
@@ -22,23 +22,11 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
   const [zipResult, setZipResult] = useState(null);
   const [zipError, setZipError] = useState('');
   const [isZipDragOver, setIsZipDragOver] = useState(false);
+  const [zipUploadProgress, setZipUploadProgress] = useState(0); // 0-100
 
-  // DOM Refs for auto-scroll and file inputs
+  // DOM Refs for file inputs
   const excelInputRef = useRef(null);
   const zipInputRef = useRef(null);
-  const modalBodyRef = useRef(null);
-  const excelResultRef = useRef(null);
-  const zipResultRef = useRef(null);
-  const autoCloseTimerRef = useRef(null);
-
-  // Clear timers on unmount
-  useEffect(() => {
-    return () => {
-      if (autoCloseTimerRef.current) {
-        clearTimeout(autoCloseTimerRef.current);
-      }
-    };
-  }, []);
 
   if (!isOpen) return null;
 
@@ -59,11 +47,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
   };
 
   const handleFinish = (customMsg) => {
-    if (autoCloseTimerRef.current) {
-      clearTimeout(autoCloseTimerRef.current);
-      autoCloseTimerRef.current = null;
-    }
-    const message = customMsg || 'Data produk dan galeri foto berhasil ditambahkan!';
+    const message = customMsg || 'Data produk massal berhasil diproses!';
     toast.success(message);
     if (onComplete) onComplete();
     resetState();
@@ -71,10 +55,6 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
   };
 
   const handleClose = () => {
-    if (autoCloseTimerRef.current) {
-      clearTimeout(autoCloseTimerRef.current);
-      autoCloseTimerRef.current = null;
-    }
     if (excelResult || zipResult) {
       if (onComplete) onComplete();
     }
@@ -101,11 +81,6 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
       if (!res.ok) throw new Error(data.error || 'Gagal mengunggah file Excel.');
       setExcelResult(data);
       if (onComplete) onComplete();
-
-      // Scroll smoothly so the user sees the result summary and Step 2 CTA
-      setTimeout(() => {
-        excelResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
     } catch (err) {
       setExcelError(err.message);
     } finally {
@@ -113,42 +88,45 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
     }
   };
 
-  // Handle ZIP File Upload
-  const handleUploadZip = async () => {
+  // Handle ZIP File Upload with progress
+  const handleUploadZip = () => {
     if (!zipFile) return;
     setIsZipUploading(true);
     setZipError('');
     setZipResult(null);
+    setZipUploadProgress(0);
 
     const fd = new FormData();
     fd.append('file', zipFile);
 
-    try {
-      const res = await fetch('/api/admin/products/bulk/zip', {
-        method: 'POST',
-        body: fd,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal memproses file ZIP.');
-      setZipResult(data);
-      if (onComplete) onComplete();
-
-      // Scroll smoothly so the user sees the extraction results
-      setTimeout(() => {
-        zipResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
-
-      // If all images matched cleanly without errors, schedule auto-close after 1.8s
-      if (data.totalUnmatched === 0 && (!data.errors || data.errors.length === 0)) {
-        autoCloseTimerRef.current = setTimeout(() => {
-          handleFinish('Data produk dan galeri foto berhasil ditambahkan!');
-        }, 1800);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/admin/products/bulk/zip');
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        setZipUploadProgress(percent);
       }
-    } catch (err) {
-      setZipError(err.message);
-    } finally {
+    };
+    xhr.onload = () => {
       setIsZipUploading(false);
-    }
+      setZipUploadProgress(100);
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setZipResult(data);
+          if (onComplete) onComplete();
+        } else {
+          throw new Error(data.error || 'Gagal memproses file ZIP.');
+        }
+      } catch (err) {
+        setZipError(err.message);
+      }
+    };
+    xhr.onerror = () => {
+      setIsZipUploading(false);
+      setZipError('Terjadi kesalahan jaringan saat mengunggah ZIP.');
+    };
+    xhr.send(fd);
   };
 
   const handleDownloadTemplate = () => {
@@ -160,101 +138,74 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
       <div className={styles.modalContainer}>
         {/* Header */}
         <div className={styles.modalHeader}>
-          <div>
-            <h2 className={styles.modalTitle}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              Upload Produk Massal
-            </h2>
-            <p className={styles.modalSubtitle}>
-              Unggah data produk dalam jumlah banyak via Excel, lalu lengkapi fotonya via file ZIP.
-            </p>
+          <div className={styles.modalTitle}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>Upload Produk Massal</span>
           </div>
           <button onClick={handleClose} className={styles.closeBtn} title="Tutup">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        {/* Tab Navigation / Stepper */}
+        {/* Tab Navigation */}
         <div className={styles.tabBar}>
           <button
+            type="button"
             className={`${styles.tabBtn} ${activeTab === 'excel' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('excel');
-              modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onClick={() => setActiveTab('excel')}
           >
-            <span className={`${styles.stepBadge} ${excelResult ? styles.stepBadgeCompleted : ''}`}>
-              {excelResult ? (
+            <span>Data Produk (Excel)</span>
+            {excelResult && (
+              <span className={styles.tabCheckIcon}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-              ) : '1'}
-            </span>
-            Langkah 1: Data Produk (Excel)
+              </span>
+            )}
           </button>
           <button
+            type="button"
             className={`${styles.tabBtn} ${activeTab === 'zip' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('zip');
-              modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onClick={() => setActiveTab('zip')}
           >
-            <span className={`${styles.stepBadge} ${zipResult ? styles.stepBadgeCompleted : ''}`}>
-              {zipResult ? (
+            <span>Galeri Foto (ZIP)</span>
+            {zipResult && (
+              <span className={styles.tabCheckIcon}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-              ) : '2'}
-            </span>
-            Langkah 2: Galeri Foto (ZIP)
+              </span>
+            )}
           </button>
         </div>
 
         {/* Body Content */}
-        <div className={styles.modalBody} ref={modalBodyRef}>
+        <div className={styles.modalBody}>
           {activeTab === 'excel' ? (
             <>
-              {/* Petunjuk Alur Excel */}
-              <div className={styles.infoCard}>
-                <div className={styles.infoCardTitle}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                  Langkah 1: Upload Data Produk Tanpa Gambar
-                </div>
-                Unggah file spreadsheet (.xlsx/.xls/.csv) berisi informasi produk (nama, harga, kategori, stok, ukuran, dll). Produk akan tersimpan di database tanpa foto, dan siap diisi fotonya pada Langkah 2.
-              </div>
-
-              {/* Download Template Bar */}
-              <div className={styles.templateDownloadBar}>
-                <div>
-                  <div className={styles.templateTitle}>
-                    Gunakan Format Template Resmi
-                  </div>
-                  <div className={styles.templateText}>
-                    Unduh file Excel contoh dengan kolom yang sudah disesuaikan dan petunjuk pengisian.
-                  </div>
-                </div>
+              {/* Template Download Bar */}
+              <div className={styles.topActionRow}>
+                <span className={styles.topActionText}>
+                  Format file: <code>.xlsx</code>, <code>.xls</code>, atau <code>.csv</code>
+                </span>
                 <button
                   type="button"
                   onClick={handleDownloadTemplate}
                   className={styles.downloadBtn}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  Download Template Excel
+                  <span>Unduh Template Excel</span>
                 </button>
               </div>
 
@@ -291,27 +242,45 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 }}
               >
                 <div className={styles.dropIcon}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="8" y1="13" x2="16" y2="13" />
                     <line x1="8" y1="17" x2="16" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
                   </svg>
                 </div>
                 <div className={styles.dropTitle}>
                   {excelFile ? 'Klik untuk mengganti file Excel' : 'Pilih atau Tarik File Excel ke Sini'}
                 </div>
                 <div className={styles.dropSubtitle}>
-                  Mendukung file .xlsx, .xls, .csv (Maksimal 10MB)
+                  Maksimal 10MB (.xlsx, .xls, .csv)
                 </div>
 
                 {excelFile && (
-                  <div className={styles.fileSelectedBadge}>
+                  <div
+                    className={styles.fileSelectedBadge}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    {excelFile.name} ({(excelFile.size / 1024).toFixed(1)} KB)
+                    <span>{excelFile.name} ({(excelFile.size / 1024).toFixed(1)} KB)</span>
+                    <button
+                      type="button"
+                      className={styles.fileRemoveBtn}
+                      title="Hapus file"
+                      onClick={() => {
+                        setExcelFile(null);
+                        setExcelResult(null);
+                        setExcelError('');
+                        if (excelInputRef.current) excelInputRef.current.value = '';
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
@@ -328,14 +297,14 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 </div>
               )}
 
-              {/* Result Summary */}
+              {/* Result Summary (Tanpa tombol duplikat) */}
               {excelResult && (
-                <div className={styles.resultCard} ref={excelResultRef}>
+                <div className={styles.resultCard}>
                   <div className={styles.resultTitle}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" color="var(--status-success, #22c55e)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" color="var(--status-success, #22c55e)">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    Data Excel Berhasil Diproses
+                    <span>Data Excel Berhasil Diproses</span>
                   </div>
                   <div className={styles.statGrid}>
                     <div className={styles.statItem}>
@@ -344,16 +313,16 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                     </div>
                     <div className={styles.statItem}>
                       <div className={`${styles.statNum} ${styles.statNumSuccess}`}>{excelResult.createdCount}</div>
-                      <div className={styles.statLabel}>Produk Baru Dibuat</div>
+                      <div className={styles.statLabel}>Produk Baru</div>
                     </div>
                     <div className={styles.statItem}>
                       <div className={`${styles.statNum} ${styles.statNumInfo}`}>{excelResult.updatedCount}</div>
-                      <div className={styles.statLabel}>Produk Diperbarui</div>
+                      <div className={styles.statLabel}>Diperbarui</div>
                     </div>
                     {excelResult.errorCount > 0 && (
                       <div className={styles.statItem}>
                         <div className={`${styles.statNum} ${styles.statNumDanger}`}>{excelResult.errorCount}</div>
-                        <div className={styles.statLabel}>Gagal / Error</div>
+                        <div className={styles.statLabel}>Gagal</div>
                       </div>
                     )}
                   </div>
@@ -361,7 +330,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                   {excelResult.errors && excelResult.errors.length > 0 && (
                     <div className={`${styles.alertBox} ${styles.alertBoxWarning}`}>
                       <div>
-                        <strong>Catatan baris yang perlu diperiksa:</strong>
+                        <strong>Catatan baris error:</strong>
                         <ul className={styles.errorList}>
                           {excelResult.errors.slice(0, 5).map((e, idx) => (
                             <li key={idx}>Baris {e.rowNumber}: {e.error} {e.productName ? `(${e.productName})` : ''}</li>
@@ -373,77 +342,14 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                       </div>
                     </div>
                   )}
-
-                  <div className={styles.resultCardActions}>
-                    <button
-                      type="button"
-                      onClick={() => handleFinish('Data produk dari Excel berhasil ditambahkan!')}
-                      className={`btn btn-outline ${styles.resultCardBtnSecondary}`}
-                    >
-                      Selesai (Tanpa Foto)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('zip');
-                        setTimeout(() => {
-                          modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                        }, 50);
-                      }}
-                      className={`btn btn-primary ${styles.resultCardBtnPrimary}`}
-                    >
-                      Lanjut ke Langkah 2: Upload Foto ZIP &rarr;
-                    </button>
-                  </div>
                 </div>
               )}
             </>
           ) : (
             <>
-              {/* Petunjuk Alur ZIP */}
-              <div className={styles.infoCard}>
-                <div className={styles.infoCardTitle}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                  </svg>
-                  Langkah 2: Upload Galeri Foto Produk (ZIP Berisi Folder)
-                </div>
-                Unggah file ZIP yang berisi folder-folder. Nama tiap folder harus <strong>persis sama dengan nama produk</strong> yang diunggah di Excel. Di dalam tiap folder, foto diberi nama angka (<strong>1.jpg, 2.jpg, 3.jpg, dst</strong>). Foto nomor 1 otomatis menjadi foto cover utama produk.
-              </div>
-
-              {/* Struktur Folder ZIP */}
-              <div className={styles.zipStructureBox}>
-                <div className={styles.structureTitle}>
-                  Struktur Folder di Dalam File ZIP:
-                </div>
-                <div className={styles.structureLine}>
-                  <span>arsip_foto.zip</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent1}`}>
-                  <span>├── <strong>Halfmoon Super Red High Quality</strong>/</span>
-                  <span className={styles.structureComment}>&larr; (Nama produk)</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent2}`}>
-                  <span>├── 1.jpg</span>
-                  <span className={styles.structureComment}>&larr; (Cover utama)</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent2}`}>
-                  <span>├── 2.jpg</span>
-                  <span className={styles.structureComment}>&larr; (Foto samping)</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent2}`}>
-                  <span>└── 3.jpg</span>
-                  <span className={styles.structureComment}>&larr; (Detail sirip)</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent1}`}>
-                  <span>└── <strong>Plakat Multicolor Fancy Top Grade</strong>/</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent2}`}>
-                  <span>├── 1.png</span>
-                </div>
-                <div className={`${styles.structureLine} ${styles.structureIndent2}`}>
-                  <span>└── 2.png</span>
-                </div>
+              {/* Petunjuk Singkat ZIP */}
+              <div className={styles.helperNote}>
+                Nama folder di dalam ZIP harus sesuai nama produk di Excel, dengan foto bernomor (<code>1.jpg</code>, <code>2.jpg</code>, dst). Foto <code>1.jpg</code> menjadi cover utama.
               </div>
 
               {/* Dropzone ZIP */}
@@ -479,7 +385,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 }}
               >
                 <div className={styles.dropIcon}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                     <line x1="12" y1="11" x2="12" y2="17" />
                     <polyline points="9 14 12 11 15 14" />
@@ -489,18 +395,56 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                   {zipFile ? 'Klik untuk mengganti file ZIP' : 'Pilih atau Tarik File ZIP ke Sini'}
                 </div>
                 <div className={styles.dropSubtitle}>
-                  Mendukung file .zip (Maksimal 200MB)
+                  Maksimal 200MB (.zip)
                 </div>
 
                 {zipFile && (
-                  <div className={styles.fileSelectedBadge}>
+                  <div
+                    className={styles.fileSelectedBadge}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    {zipFile.name} ({(zipFile.size / (1024 * 1024)).toFixed(1)} MB)
+                    <span>{zipFile.name} ({(zipFile.size / (1024 * 1024)).toFixed(1)} MB)</span>
+                    <button
+                      type="button"
+                      className={styles.fileRemoveBtn}
+                      title="Hapus file"
+                      onClick={() => {
+                        setZipFile(null);
+                        setZipResult(null);
+                        setZipError('');
+                        if (zipInputRef.current) zipInputRef.current.value = '';
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
+
+              {/* Progress Bar ZIP Upload */}
+              {isZipUploading && (
+                <div className={styles.uploadProgressWrapper}>
+                  <div className={styles.uploadProgressHeader}>
+                    <span className={styles.uploadProgressLabel}>Mengunggah ZIP...</span>
+                    <span className={styles.uploadProgressPct}>{zipUploadProgress}%</span>
+                  </div>
+                  <div className={styles.uploadProgressTrack}>
+                    <div
+                      className={styles.uploadProgressFill}
+                      style={{ width: `${zipUploadProgress}%` }}
+                    />
+                  </div>
+                  {zipUploadProgress === 100 && (
+                    <div className={styles.uploadProgressProcessing}>Memproses gambar di server...</div>
+                  )}
+                </div>
+              )}
 
               {/* Error Message */}
               {zipError && (
@@ -514,34 +458,15 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 </div>
               )}
 
-              {/* Result Summary */}
+              {/* Result Summary (Tanpa tombol duplikat) */}
               {zipResult && (
-                <div className={styles.resultCard} ref={zipResultRef}>
+                <div className={styles.resultCard}>
                   <div className={styles.resultTitle}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" color="var(--status-success, #22c55e)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" color="var(--status-success, #22c55e)">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    Foto Produk Berhasil Ditautkan
+                    <span>Foto Produk Berhasil Ditautkan</span>
                   </div>
-
-                  {/* Auto-close Banner when completely successful */}
-                  {zipResult.totalUnmatched === 0 && (!zipResult.errors || zipResult.errors.length === 0) && (
-                    <div className={styles.autoCloseBanner}>
-                      <div className={styles.autoCloseText}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        <span>Semua foto berhasil ditautkan! Modal akan menutup otomatis...</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleFinish('Data produk dan galeri foto berhasil ditambahkan!')}
-                        className={styles.instantCloseBtn}
-                      >
-                        Tutup Sekarang
-                      </button>
-                    </div>
-                  )}
 
                   <div className={styles.statGrid}>
                     <div className={styles.statItem}>
@@ -550,7 +475,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                     </div>
                     <div className={styles.statItem}>
                       <div className={`${styles.statNum} ${styles.statNumInfo}`}>{zipResult.totalImagesSaved}</div>
-                      <div className={styles.statLabel}>Total Foto Diunggah</div>
+                      <div className={styles.statLabel}>Total Foto</div>
                     </div>
                     {zipResult.totalUnmatched > 0 && (
                       <div className={styles.statItem}>
@@ -562,19 +487,19 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
 
                   {/* Preview Foto Produk */}
                   {zipResult.results && zipResult.results.length > 0 && (
-                    <div>
+                    <div className={styles.previewSection}>
                       <div className={styles.previewTitle}>
-                        Preview Cover Produk yang Diperbarui:
+                        Preview Cover Produk:
                       </div>
                       <div className={styles.galleryPreviewList}>
                         {zipResult.results.map((p) => (
                           <div key={p.productId} className={styles.previewCard}>
                             <div className={styles.previewThumb}>
-                              <Image src={p.coverImage || '/img/betta-1.png'} alt={p.productName} fill sizes="150px" className={styles.previewThumbImg} />
+                              <Image src={p.coverImage || '/img/betta-1.png'} alt={p.productName} fill sizes="120px" className={styles.previewThumbImg} />
                             </div>
                             <div className={styles.previewInfo}>
                               <div className={styles.previewName} title={p.productName}>{p.productName}</div>
-                              <div className={styles.previewCount}>{p.imageCount} foto tersimpan</div>
+                              <div className={styles.previewCount}>{p.imageCount} foto</div>
                             </div>
                           </div>
                         ))}
@@ -586,7 +511,7 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                   {zipResult.unmatched && zipResult.unmatched.length > 0 && (
                     <div className={`${styles.alertBox} ${styles.alertBoxWarning}`}>
                       <div>
-                        <strong>Folder yang tidak cocok dengan nama produk di database:</strong>
+                        <strong>Folder tidak cocok di database:</strong>
                         <ul className={styles.errorList}>
                           {zipResult.unmatched.map((u, idx) => (
                             <li key={idx}><strong>&quot;{u.folderName}&quot;</strong>: {u.reason}</li>
@@ -595,31 +520,18 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                       </div>
                     </div>
                   )}
-
-                  <div className={styles.resultCardActions}>
-                    <button
-                      type="button"
-                      onClick={() => handleFinish('Data produk dan galeri foto berhasil ditambahkan!')}
-                      className={`btn btn-primary ${styles.resultCardBtnPrimary} ${styles.finishActionBtn}`}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Selesai & Tutup Jendela
-                    </button>
-                  </div>
                 </div>
               )}
             </>
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* Footer Actions (Satu-satunya tempat tombol aksi) */}
         <div className={styles.modalFooter}>
           <button
             type="button"
             onClick={handleClose}
-            className={`btn btn-outline ${styles.footerBtnOutline}`}
+            className={styles.footerBtnCancel}
           >
             {excelResult || zipResult ? 'Tutup' : 'Batal'}
           </button>
@@ -631,21 +543,19 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                   <button
                     type="button"
                     onClick={() => handleFinish('Data produk dari Excel berhasil ditambahkan!')}
-                    className={`btn btn-outline ${styles.footerBtnOutline}`}
+                    className={styles.secondaryActionBtn}
                   >
-                    Selesai (Tanpa Foto)
+                    Selesai
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveTab('zip');
-                      setTimeout(() => {
-                        modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                      }, 50);
-                    }}
-                    className={styles.uploadActionBtn}
+                    onClick={() => setActiveTab('zip')}
+                    className={styles.primaryActionBtn}
                   >
-                    Lanjut ke Langkah 2 (Upload Foto) &rarr;
+                    <span>Lanjut Upload Foto (ZIP)</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </button>
                 </>
               ) : (
@@ -653,23 +563,23 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                   type="button"
                   disabled={!excelFile || isExcelUploading}
                   onClick={handleUploadExcel}
-                  className={styles.uploadActionBtn}
+                  className={styles.primaryActionBtn}
                 >
                   {isExcelUploading ? (
                     <>
-                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="10" />
                       </svg>
-                      Sedang Memproses Excel...
+                      <span>Mengunggah...</span>
                     </>
                   ) : (
                     <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
+                        <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
-                      Proses & Upload Excel
+                      <span>Upload Excel</span>
                     </>
                   )}
                 </button>
@@ -679,35 +589,39 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 <button
                   type="button"
                   onClick={() => handleFinish('Data produk dan galeri foto berhasil ditambahkan!')}
-                  className={`${styles.uploadActionBtn} ${styles.finishActionBtn}`}
+                  className={styles.primaryActionBtn}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  Selesai & Simpan Semua
+                  <span>Selesai</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   disabled={!zipFile || isZipUploading}
                   onClick={handleUploadZip}
-                  className={styles.uploadActionBtn}
+                  className={styles.primaryActionBtn}
                 >
                   {isZipUploading ? (
                     <>
-                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="10" />
                       </svg>
-                      Sedang Mengekstrak & Menyimpan Foto...
+                      <span>
+                        {zipUploadProgress < 100
+                          ? `Mengunggah ${zipUploadProgress}%`
+                          : 'Memproses...'}
+                      </span>
                     </>
                   ) : (
                     <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
-                      Ekstrak & Tautkan Foto ZIP
+                      <span>Upload Foto ZIP</span>
                     </>
                   )}
                 </button>

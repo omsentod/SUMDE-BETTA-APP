@@ -20,9 +20,9 @@ export async function POST(request) {
   try {
     const session = await requireUser(request);
     const userId = session.id;
-    const { label, recipientName, phone, streetAddress, rtRw, province, city, district, village, postalCode, isDefault } = await request.json();
-    if (!recipientName || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !postalCode) {
-      return NextResponse.json({ error: 'Data alamat tidak lengkap.' }, { status: 400 });
+    const cleanedPostal = String(postalCode || '').trim();
+    if (!recipientName || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !/^\d{5}$/.test(cleanedPostal)) {
+      return NextResponse.json({ error: 'Data alamat tidak lengkap atau format kode pos tidak valid (wajib 5 digit).' }, { status: 400 });
     }
     if (isDefault) {
       await prisma.address.updateMany({ where: { userId }, data: { isDefault: false } });

@@ -1,24 +1,14 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
-// Shopee-style size picker: opens when a buyer clicks "Beli Sekarang" or the
-// cart icon on a ProductCard that has multiple sizes. User picks a size in a
-// bottom-sheet-like modal, then the action (add-to-cart / buy-now) completes.
-//
-// Props:
-//   product   — the full product object (needs id, name, price, image, sizes[])
-//   action    — 'cart' | 'buy'
-//   onClose   — close handler (backdrop click, escape, or after commit)
-//   onCommit  — (selectedSize) => void  runs after user picks + confirms
+const emptySubscribe = () => () => {};
 
 export default function SizePickerModal({ product, action, onClose, onCommit }) {
-    // Portal target = document.body — see note below.
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => { setMounted(true); }, []);
+    const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+    const [hoveredVariant, setHoveredVariant] = useState(null);
 
-    // Escape to close + body scroll lock
     useEffect(() => {
         const onKey = (e) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', onKey);
@@ -30,30 +20,32 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
     }, [onClose]);
 
     if (!product || !mounted) return null;
-    const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+
+    const variants = Array.isArray(product.variants) && product.variants.length > 0
+        ? product.variants
+        : (Array.isArray(product.sizes)
+            ? product.sizes.map(s => ({ size: s.size, stock: s.quantity, price: null, imageUrl: null }))
+            : []);
+
+    const activeDisplayPrice = hoveredVariant?.price != null ? hoveredVariant.price : product.price;
+    const activeDisplayImage = hoveredVariant?.imageUrl || product.image || '/img/betta-1.png';
 
     const priceFormatted = new Intl.NumberFormat('id-ID', {
         style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
-    }).format(product.price);
+    }).format(activeDisplayPrice);
 
     const ctaLabel = action === 'buy' ? 'Beli Sekarang' : 'Tambah ke Keranjang';
 
-    // Render into document.body via a portal. Without this, any ancestor with
-    // `transform` / `filter` / `will-change` (Tailwind's `transform` utility
-    // on ProductCard.card is the culprit) creates a stacking context that
-    // traps `position: fixed`. Result before portal: modal appears INSIDE the
-    // card, clipped by `overflow: hidden` — looking like a "second UI".
     return createPortal(
         <div
             className="size-picker-backdrop"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div className="size-picker-sheet" role="dialog" aria-modal="true">
-                {/* Header with product preview */}
                 <div className="size-picker-header">
                     <div className="size-picker-thumb">
                         <Image
-                            src={product.image || '/img/betta-1.png'}
+                            src={activeDisplayImage}
                             alt={product.name}
                             fill
                             sizes="96px"
@@ -76,22 +68,25 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
                     </button>
                 </div>
 
-                {/* Size options */}
                 <div className="size-picker-section">
                     <div className="size-picker-label">Pilih Varian</div>
-                    {sizes.length === 0 ? (
+                    {variants.length === 0 ? (
                         <p className="size-picker-empty">Produk ini tidak punya opsi varian.</p>
                     ) : (
                         <div className="size-picker-options">
-                            {sizes.map((s) => {
-                                const soldOut = (s.quantity || 0) <= 0;
+                            {variants.map((v) => {
+                                const stock = v.stock ?? v.quantity ?? 0;
+                                const soldOut = stock <= 0;
                                 return (
                                     <SizeOption
-                                        key={s.size}
-                                        size={s.size}
-                                        stock={s.quantity}
+                                        key={v.size}
+                                        size={v.size}
+                                        stock={stock}
+                                        price={v.price}
                                         soldOut={soldOut}
-                                        onPick={() => { if (!soldOut) onCommit(s.size); }}
+                                        onMouseEnter={() => setHoveredVariant(v)}
+                                        onMouseLeave={() => setHoveredVariant(null)}
+                                        onPick={() => { if (!soldOut) onCommit(v.size, v); }}
                                     />
                                 );
                             })}
@@ -108,11 +103,17 @@ export default function SizePickerModal({ product, action, onClose, onCommit }) 
     );
 }
 
-function SizeOption({ size, stock, soldOut, onPick }) {
+function SizeOption({ size, stock, price, soldOut, onPick, onMouseEnter, onMouseLeave }) {
+    const priceText = price != null
+        ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price)
+        : null;
+
     return (
         <button
             type="button"
             onClick={onPick}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
             disabled={soldOut}
             className={`size-picker-option ${soldOut ? 'size-picker-option-out' : ''}`}
             title={soldOut ? 'Stok habis' : `${stock} tersedia`}
@@ -121,6 +122,11 @@ function SizeOption({ size, stock, soldOut, onPick }) {
             <span className="size-picker-option-stock">
                 {soldOut ? 'Habis' : `${stock} tersedia`}
             </span>
+            {priceText && (
+                <span className="size-picker-option-price" style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', marginTop: '2px', display: 'block' }}>
+                    {priceText}
+                </span>
+            )}
         </button>
     );
 }
