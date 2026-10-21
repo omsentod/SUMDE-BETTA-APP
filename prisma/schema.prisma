@@ -132,10 +132,23 @@ model Product {
   statsSpirit String   @default("Aktif")
   quantity    Int      @default(1)
   sizes       Json?
+  // Daily Drop Telegram & Flash Sale
+  isDailyDrop        Boolean   @default(false)
+  dropNumber         String?   // e.g. "#01", "#02"
+  dropExpiresAt      DateTime? // Waktu berakhir drop 24 jam
+  videoUrl           String?   // Link video ikan
+  bookedBy           String?   // Telegram username pembeli yang sedang booking
+  bookedTelegramId   String?   // Telegram user ID
+  bookedUntil        DateTime? // Batas waktu bayar 15 menit
+  telegramMessageId  Int?      // ID pesan di grup Telegram untuk auto-update status
+  telegramChatId     String?   // Chat ID grup Telegram
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
   variants    ProductVariant[]
+
+  @@index([isDailyDrop, isSold])
+  @@index([bookedUntil])
 }
 
 model ProductVariant {
@@ -181,6 +194,7 @@ model Order {
   district           String
   village            String
   postalCode         String
+  telegramUsername   String?   // Username Telegram jika order dipesan via Telegram Drop
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   items              OrderItem[]

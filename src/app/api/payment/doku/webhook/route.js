@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { generateDigest, generateSignature } from '@/lib/doku';
 import { createNotification, notifyAllAdmins } from '@/lib/notification';
 import { sendMail, orderPaidEmailTemplate } from '@/lib/email';
+import { updateTelegramDropMessage, callTelegramApi, isTelegramConfigured } from '@/lib/telegram';
 
 const requestTarget = '/api/payment/doku/webhook';
 
@@ -214,6 +215,29 @@ export async function POST(request) {
         }
       } catch (notifErr) {
         console.error('Order paid notification fanout failed:', notifErr.message);
+      }
+
+      // 4. Update status drop Telegram jika order berisi ikan daily drop
+      if (isTelegramConfigured()) {
+        try {
+          for (const item of order.items) {
+            const prod = item.product;
+            if (prod?.telegramMessageId && prod?.telegramChatId) {
+              await updateTelegramDropMessage(prod, 'SOLD', prod.bookedBy || order.name);
+              await callTelegramApi('sendMessage', {
+                chat_id: prod.telegramChatId,
+                reply_to_message_id: prod.telegramMessageId,
+                text:
+                  `🎉 *RESMI TERJUAL (SOLD OUT)!*\n` +
+                  `Ikan *${prod.dropNumber || '#IKAN'} (${prod.name})* telah lunas dibayar via website oleh *${prod.bookedBy || order.name}*!\n\n` +
+                  `📦 Pesanan sedang disiapkan untuk pengiriman. Terima kasih!`,
+                parse_mode: 'Markdown',
+              });
+            }
+          }
+        } catch (tgErr) {
+          console.warn('Gagal broadcast SOLD ke Telegram:', tgErr.message);
+        }
       }
     } else if (FAILED_STATUSES.includes(paymentStatus)) {
       // Failed / expired / cancelled → cancel the order. No stock was decremented
