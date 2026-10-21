@@ -103,6 +103,7 @@ async function restockOrder(tx, order) {
 // admin bell). Best-effort — never throw; the status change already committed.
 async function sendShippedNotifications(order, waybill) {
   try {
+    const productImage = order.items?.[0]?.product?.image || null;
     if (order.userId) {
       await createNotification({
         userId: order.userId,
@@ -112,6 +113,7 @@ async function sendShippedNotifications(order, waybill) {
           ? `Order #${order.id.slice(0, 8)} — AWB ${waybill}`
           : `Order #${order.id.slice(0, 8)} sedang dalam perjalanan.`,
         link: '/customer/orders',
+        imageUrl: productImage,
       });
     }
     await notifyAllAdmins({
@@ -119,6 +121,7 @@ async function sendShippedNotifications(order, waybill) {
       title: 'Pesanan dikirim',
       body: `Order #${order.id.slice(0, 8)}${waybill ? ` — ${waybill}` : ''}`,
       link: '/admin/orders?status=SHIPPED',
+      imageUrl: productImage,
     });
     if (order.email) {
       const appUrl = process.env.APP_URL || 'https://sumdebetta.com';
@@ -233,6 +236,7 @@ export async function applyBiteshipUpdate({ order, biteshipStatus, waybillId, so
 
   if (target === 'COMPLETED' && currentRank < STATUS_RANK['COMPLETED']) {
     try {
+      const productImage = order.items?.[0]?.product?.image || null;
       if (order.userId) {
         await createNotification({
           userId: order.userId,
@@ -240,6 +244,7 @@ export async function applyBiteshipUpdate({ order, biteshipStatus, waybillId, so
           title: 'Pesanan Selesai',
           body: `Order #${order.id.slice(0, 8)} telah sampai di tujuan.`,
           link: '/customer/orders',
+          imageUrl: productImage,
         });
       }
       await notifyAllAdmins({
@@ -247,6 +252,7 @@ export async function applyBiteshipUpdate({ order, biteshipStatus, waybillId, so
         title: 'Pesanan Selesai',
         body: `Order #${order.id.slice(0, 8)} telah diterima pembeli.`,
         link: '/admin/orders?status=COMPLETED',
+        imageUrl: productImage,
       });
     } catch (notifErr) {
       console.error('Order completed notification fanout failed:', notifErr.message);

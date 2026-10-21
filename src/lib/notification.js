@@ -18,10 +18,11 @@ import prisma from '@/lib/prisma';
  * @param {string} args.title - judul singkat
  * @param {string} args.body - isi 1-2 kalimat
  * @param {string} [args.link] - deep link relatif (misal /admin/orders?status=PENDING)
+ * @param {string} [args.imageUrl] - url gambar thumbnail (produk/promo/avatar)
  * @param {object} [args.channels] - override channel dispatch. Default: {db:true, ably:true, push:true, email:false}
  * @returns {Promise<{notification, deliveries: {db, ably, push, email}}>}
  */
-export async function createNotification({ userId, type, title, body, link, channels = {} }) {
+export async function createNotification({ userId, type, title, body, link, imageUrl, channels = {} }) {
   const opts = { db: true, ably: true, push: true, email: false, ...channels };
   const deliveries = { db: null, ably: null, push: null, email: null };
 
@@ -31,7 +32,7 @@ export async function createNotification({ userId, type, title, body, link, chan
   if (opts.db) {
     try {
       notification = await prisma.notification.create({
-        data: { userId, type, title, body, link: link || null },
+        data: { userId, type, title, body, link: link || null, imageUrl: imageUrl || null },
       });
       deliveries.db = { ok: true, id: notification.id };
     } catch (err) {
@@ -48,7 +49,7 @@ export async function createNotification({ userId, type, title, body, link, chan
       const { publishToUser } = await import('@/lib/ably');
       await publishToUser(userId, 'notification', {
         id: notification?.id,
-        type, title, body, link,
+        type, title, body, link, imageUrl,
         createdAt: notification?.createdAt,
       });
       deliveries.ably = { ok: true };
@@ -62,7 +63,7 @@ export async function createNotification({ userId, type, title, body, link, chan
   if (opts.push) {
     try {
       const { sendPushToUser } = await import('@/lib/webpush');
-      await sendPushToUser(userId, { title, body, link });
+      await sendPushToUser(userId, { title, body, link, icon: imageUrl || '/img/logo.png' });
       deliveries.push = { ok: true };
     } catch (err) {
       console.error('Notification push send failed:', err.message);
@@ -70,12 +71,7 @@ export async function createNotification({ userId, type, title, body, link, chan
     }
   }
 
-  // 4. Email (opt-in via `channels.email: true`) — dispatcher tidak decide
-  //    template-nya. Caller yang panggil sendMail sendiri dengan template
-  //    yang sesuai event. Ini hanya flag "email juga dikirim".
-  //    Aku sengaja tidak coupling email di sini supaya template stay di
-  //    trigger point yang tahu konteks bisnisnya (order paid vs shipped
-  //    template berbeda).
+  // 4. Email (opt-in via `channels.email: true`)
   if (opts.email) {
     deliveries.email = { ok: 'caller-managed' };
   }
@@ -87,14 +83,14 @@ export async function createNotification({ userId, type, title, body, link, chan
  * Broadcast ke SEMUA admin. Biasa dipakai untuk event operasional
  * (misal order baru masuk — semua admin perlu tahu).
  */
-export async function notifyAllAdmins({ type, title, body, link, channels }) {
+export async function notifyAllAdmins({ type, title, body, link, imageUrl, channels }) {
   const admins = await prisma.user.findMany({
     where: { role: 'admin' },
     select: { id: true },
   });
   const results = await Promise.allSettled(
     admins.map((admin) =>
-      createNotification({ userId: admin.id, type, title, body, link, channels })
+      createNotification({ userId: admin.id, type, title, body, link, imageUrl, channels })
     )
   );
   return { count: admins.length, results };

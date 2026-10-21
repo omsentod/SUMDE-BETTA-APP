@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { getNotificationMeta, formatRelativeTime } from '@/lib/notificationHelpers';
+import { getNotificationMeta, formatRelativeTime, getNotificationImage } from '@/lib/notificationHelpers';
 import styles from './notifications.module.css';
 
 const TRANSACTION_TYPES = [
@@ -154,8 +154,8 @@ export default function NotificationsPage() {
       {/* Page Header */}
       <div className={styles.header}>
         <div className={styles.titleArea}>
-          <span className={styles.pageBadge}>Pusat Pesan</span>
-          <h1 className={styles.title}>Kotak Notifikasi</h1>
+          <h1 className={styles.title}>Notifikasi</h1>
+          <p className={styles.subtitle}>Riwayat transaksi, status pesanan, dan informasi akun Anda.</p>
         </div>
         <div className={styles.headerActions}>
           {hasReadItems && (
@@ -272,6 +272,7 @@ export default function NotificationsPage() {
         <ul className={styles.list}>
           {filteredItems.map((item) => {
             const meta = getNotificationMeta(item.type);
+            const imageSrc = getNotificationImage(item);
             return (
               <li key={item.id}>
                 <div
@@ -280,18 +281,38 @@ export default function NotificationsPage() {
                   role="button"
                   tabIndex={0}
                 >
-                  <div className={`${styles.typeBadge} ${styles['variant_' + meta.variant]}`}>
-                    {meta.icon}
+                  <div className={styles.thumbWrapper}>
+                    <img
+                      src={imageSrc}
+                      alt=""
+                      className={styles.thumbImage}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/img/betta-1.png';
+                      }}
+                    />
+                    <span
+                      className={styles.cornerBadge}
+                      style={{ backgroundColor: meta.badgeColor }}
+                      title={meta.label}
+                    >
+                      {meta.icon}
+                    </span>
                   </div>
+
                   <div className={styles.itemBody}>
                     <div className={styles.itemHeader}>
-                      <span className={styles.itemTitle}>{item.title || 'Notifikasi'}</span>
-                      <div className={styles.itemMeta}>
+                      <div className={styles.itemMetaRow}>
+                        <span className={styles.itemCategory}>{meta.label}</span>
+                        <span className={styles.itemSeparator}>•</span>
                         <span className={styles.itemTime}>{formatRelativeTime(item.createdAt)}</span>
-                        {!item.readAt && <span className={styles.unreadDot} aria-hidden="true" />}
                       </div>
+                      {!item.readAt && <span className={styles.unreadDot} aria-hidden="true" />}
                     </div>
+
+                    <div className={styles.itemTitle}>{item.title || 'Notifikasi'}</div>
                     {item.body && <div className={styles.itemMessage}>{item.body}</div>}
+
                     <div className={styles.itemActions}>
                       {!item.readAt && (
                         <button

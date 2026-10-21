@@ -181,6 +181,7 @@ export async function POST(request) {
       // Notif: customer (bell + email) + admin (bell). Best-effort — jangan
       // gagalkan webhook kalau notif error, order sudah paid di DB.
       try {
+        const firstItemImage = order.items?.[0]?.product?.image || order.items?.[0]?.variant?.imageUrl || null;
         if (order.userId) {
           await createNotification({
             userId: order.userId,
@@ -188,6 +189,7 @@ export async function POST(request) {
             title: 'Pembayaran diterima',
             body: `Pesanan #${order.id.slice(0, 8)} sedang kami siapkan untuk pengiriman.`,
             link: '/customer/orders',
+            imageUrl: firstItemImage,
           });
         }
         await notifyAllAdmins({
@@ -195,6 +197,7 @@ export async function POST(request) {
           title: 'Order dibayar',
           body: `Order #${order.id.slice(0, 8)} lunas — perlu dikirim.`,
           link: '/admin/orders?status=PAID',
+          imageUrl: firstItemImage,
         });
         if (order.email) {
           const appUrl = process.env.APP_URL || 'https://sumdebetta.com';

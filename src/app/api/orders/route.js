@@ -161,12 +161,24 @@ export async function POST(request) {
     // Notif admin: pesanan baru masuk (status PENDING, belum bayar).
     // Best-effort — jangan gagalkan order create kalau notif error.
     try {
+      const firstProductImage = products?.[0]?.image || null;
       await notifyAllAdmins({
         type: 'order.new',
         title: 'Pesanan baru masuk',
-        body: `${name} — ${order.items?.length || 0} item — menunggu pembayaran`,
+        body: `${name} — ${normalized.length} item — menunggu pembayaran`,
         link: '/admin/orders?status=PENDING',
+        imageUrl: firstProductImage,
       });
+      if (userId) {
+        await createNotification({
+          userId,
+          type: 'order.created',
+          title: 'Pesanan Dibuat',
+          body: `Pesanan #${order.id.slice(0, 8)} berhasil dibuat. Menunggu konfirmasi pembayaran.`,
+          link: '/customer/orders',
+          imageUrl: firstProductImage,
+        });
+      }
     } catch (notifErr) {
       console.error('New order notification fanout failed:', notifErr.message);
     }

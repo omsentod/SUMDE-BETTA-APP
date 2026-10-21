@@ -15,15 +15,7 @@
 .titleArea {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-}
-
-.pageBadge {
-  font-size: 0.725rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--primary);
+  gap: 0.35rem;
 }
 
 .title {
@@ -33,6 +25,13 @@
   color: var(--text-main);
   margin: 0;
   line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
 }
 
 .headerActions {
@@ -118,10 +117,10 @@
 }
 
 .pillCount {
-  background: #EF4444;
-  color: #fff;
-  font-size: 0.65rem;
-  padding: 0.1rem 0.45rem;
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+  font-size: 0.7rem;
+  padding: 0.05rem 0.45rem;
   border-radius: 9999px;
   font-weight: 700;
 }
@@ -132,7 +131,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 
 .itemCard {
@@ -142,7 +141,7 @@
   padding: 1rem 1.25rem;
   display: flex;
   align-items: flex-start;
-  gap: 0.875rem;
+  gap: 1rem;
   text-decoration: none;
   color: var(--text-main);
   position: relative;
@@ -151,65 +150,54 @@
 }
 
 .itemCard:hover {
-  border-color: var(--primary);
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--border-color));
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .itemUnread {
-  background: color-mix(in oklab, var(--primary) 4%, var(--bg-card));
-  border-color: color-mix(in oklab, var(--primary) 25%, var(--border-color));
+  background: color-mix(in oklab, var(--primary) 3%, var(--bg-card));
+  border-color: color-mix(in oklab, var(--primary) 30%, var(--border-color));
 }
 
-.typeBadge {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+.thumbWrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.thumbImage {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-hover, rgba(120, 120, 120, 0.08));
+  display: block;
+}
+
+.cornerBadge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  margin-top: 0.15rem;
-}
-
-/* Category badge variants */
-.variant_order {
-  background: rgba(245, 158, 11, 0.15);
-  color: #F59E0B;
-}
-
-.variant_payment {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10B981;
-}
-
-.variant_shipping {
-  background: rgba(14, 165, 233, 0.15);
-  color: #0EA5E9;
-}
-
-.variant_completed {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22C55E;
-}
-
-.variant_cancelled {
-  background: rgba(239, 68, 68, 0.15);
-  color: #EF4444;
-}
-
-.variant_promo {
-  background: rgba(168, 85, 247, 0.15);
-  color: #A855F7;
-}
-
-.variant_info {
-  background: color-mix(in oklab, var(--primary) 15%, transparent);
-  color: var(--primary);
+  color: #ffffff;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .itemBody {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .itemHeader {
@@ -217,26 +205,31 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.25rem;
+  line-height: 1.2;
 }
 
-.itemTitle {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.01em;
-}
-
-.itemMeta {
+.itemMetaRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
+  gap: 0.35rem;
+}
+
+.itemCategory {
+  font-weight: 600;
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.itemSeparator {
+  font-size: 0.65rem;
+  opacity: 0.4;
+  color: var(--text-muted);
 }
 
 .itemTime {
   font-size: 0.725rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .unreadDot {
@@ -247,11 +240,20 @@
   flex-shrink: 0;
 }
 
+.itemTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  margin: 0.1rem 0;
+}
+
 .itemMessage {
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
   color: var(--text-muted);
   line-height: 1.45;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 
 .itemActions {

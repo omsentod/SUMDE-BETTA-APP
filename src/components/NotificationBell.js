@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { getNotificationMeta, formatRelativeTime } from '@/lib/notificationHelpers';
+import { getNotificationMeta, formatRelativeTime, getNotificationImage } from '@/lib/notificationHelpers';
 import { playNotificationChime, isChimeMuted, setChimeMuted } from '@/lib/notificationSound';
 import styles from './NotificationBell.module.css';
 
@@ -319,26 +319,41 @@ export default function NotificationBell() {
       {/* Floating Alert Banner (realtime popup) */}
       {floatingAlert && (
         <div className={styles.floatingAlert} role="status">
-          <div className={`${styles.typeBadge} ${styles['variant_' + getNotificationMeta(floatingAlert.type).variant]}`}>
-            {getNotificationMeta(floatingAlert.type).icon}
+          <div className={styles.floatingThumbWrapper}>
+            <img
+              src={getNotificationImage(floatingAlert)}
+              alt=""
+              className={styles.floatingThumbImage}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/img/betta-1.png';
+              }}
+            />
+            <span
+              className={styles.cornerBadge}
+              style={{ backgroundColor: getNotificationMeta(floatingAlert.type).badgeColor }}
+            >
+              {getNotificationMeta(floatingAlert.type).icon}
+            </span>
           </div>
           <div className={styles.floatingAlertContent}>
-            <div className={styles.floatingAlertTitle}>{floatingAlert.title || 'Notifikasi Baru'}</div>
-            <div className={styles.floatingAlertBody}>{floatingAlert.body}</div>
-            <div className={styles.floatingAlertActions}>
-              {floatingAlert.link && (
-                <button
-                  type="button"
-                  className={styles.floatingAlertLink}
-                  onClick={() => {
-                    setFloatingAlert(null);
-                    router.push(floatingAlert.link);
-                  }}
-                >
-                  Buka Detail →
-                </button>
-              )}
+            <div className={styles.floatingAlertCategory}>
+              {getNotificationMeta(floatingAlert.type).label} • Baru saja
             </div>
+            <div className={styles.floatingAlertTitle}>{floatingAlert.title || 'Notifikasi Baru'}</div>
+            {floatingAlert.body && <div className={styles.floatingAlertBody}>{floatingAlert.body}</div>}
+            {floatingAlert.link && (
+              <button
+                type="button"
+                className={styles.floatingAlertLink}
+                onClick={() => {
+                  setFloatingAlert(null);
+                  router.push(floatingAlert.link);
+                }}
+              >
+                Lihat Detail →
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -433,6 +448,7 @@ export default function NotificationBell() {
               ) : (
                 displayedItems.map((item) => {
                   const meta = getNotificationMeta(item.type);
+                  const imageSrc = getNotificationImage(item);
                   return (
                     <div
                       key={item.id}
@@ -441,18 +457,33 @@ export default function NotificationBell() {
                       role="button"
                       tabIndex={0}
                     >
-                      <div className={`${styles.typeBadge} ${styles['variant_' + meta.variant]}`}>
-                        {meta.icon}
+                      <div className={styles.thumbWrapper}>
+                        <img
+                          src={imageSrc}
+                          alt=""
+                          className={styles.thumbImage}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/img/betta-1.png';
+                          }}
+                        />
+                        <span
+                          className={styles.cornerBadge}
+                          style={{ backgroundColor: meta.badgeColor }}
+                          title={meta.label}
+                        >
+                          {meta.icon}
+                        </span>
                       </div>
                       <div className={styles.itemContent}>
-                        <div className={styles.itemTop}>
-                          <span className={styles.itemTitleText}>{item.title}</span>
-                          <div className={styles.itemMeta}>
-                            <span className={styles.itemTime}>{formatRelativeTime(item.createdAt)}</span>
-                            {!item.readAt && <span className={styles.unreadDot} />}
-                          </div>
+                        <div className={styles.itemMetaRow}>
+                          <span className={styles.itemCategory}>{meta.label}</span>
+                          <span className={styles.itemSeparator}>•</span>
+                          <span className={styles.itemTime}>{formatRelativeTime(item.createdAt)}</span>
+                          {!item.readAt && <span className={styles.unreadDot} />}
                         </div>
-                        <div className={styles.itemBody}>{item.body}</div>
+                        <div className={styles.itemTitleText}>{item.title}</div>
+                        {item.body && <div className={styles.itemBody}>{item.body}</div>}
 
                         {/* Quick Action Buttons */}
                         <div className={styles.itemActions}>

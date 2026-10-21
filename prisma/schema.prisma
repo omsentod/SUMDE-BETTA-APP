@@ -53,6 +53,7 @@ model Notification {
   title     String
   body      String    @db.Text
   link      String?
+  imageUrl  String?
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
