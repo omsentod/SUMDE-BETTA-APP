@@ -39,6 +39,7 @@ export async function POST(request) {
       name, price, category, form, coloration, description,
       image, images, isPremium, statsForm, age, statsSpirit,
       quantity, variants, soldCount,
+      videoUrl, isDailyDrop, dropNumber,
     } = await request.json();
 
     const gallery = normalizeImages(images, image);
@@ -73,6 +74,9 @@ export async function POST(request) {
         description,
         image: gallery[0],
         images: gallery,
+        videoUrl: videoUrl || null,
+        isDailyDrop: Boolean(isDailyDrop),
+        dropNumber: dropNumber || null,
         isPremium: Boolean(isPremium),
         statsForm: statsForm || 'COMP',
         age: age || '4 Month',

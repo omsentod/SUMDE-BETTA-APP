@@ -24,7 +24,10 @@ const emptyProductForm = () => ({
   description: '',
   image: '/img/betta-1.png',
   images: [],
+  videoUrl: '',
   isPremium: false,
+  isDailyDrop: false,
+  dropNumber: '',
   statsForm: 'COMP',
   age: '4 Month',
   statsSpirit: 'Aktif',
@@ -226,7 +229,10 @@ export default function AdminProductsPage() {
       description: product.description,
       image: parsedImages[0] || product.image,
       images: parsedImages,
-      isPremium: product.isPremium,
+      videoUrl: product.videoUrl || '',
+      isPremium: Boolean(product.isPremium),
+      isDailyDrop: Boolean(product.isDailyDrop),
+      dropNumber: product.dropNumber || '',
       statsForm: product.statsForm || 'COMP',
       age: product.age || '4 Month',
       statsSpirit: product.statsSpirit || 'Aktif',
@@ -235,6 +241,39 @@ export default function AdminProductsPage() {
       soldCount: product.soldCount ?? 0,
     });
     setIsEditOpen(true);
+  };
+
+  const [broadcastingId, setBroadcastingId] = useState(null);
+
+  const handleBroadcastTelegram = async (product) => {
+    if (product.isSold || product.quantity === 0) {
+      toast.error('Ikan yang sudah habis atau terjual tidak dapat dibroadcast.');
+      return;
+    }
+
+    const defaultNumber = product.dropNumber || `#${product.id.slice(0, 4).toUpperCase()}`;
+    const code = window.prompt(
+      `Broadcast ikan "${product.name}" ke Grup Telegram?\nMasukkan Kode/Nomor Ikan (contoh: #01, #02):`,
+      defaultNumber
+    );
+    if (code === null) return;
+
+    setBroadcastingId(product.id);
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}/broadcast-telegram`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dropNumber: code.trim() || defaultNumber, durationHours: 24 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal broadcast ke Telegram.');
+      toast.success(data.message || 'Berhasil dibroadcast ke grup Telegram!');
+      if (fetchProducts) fetchProducts();
+    } catch (err) {
+      toast.error(err.message || 'Gagal broadcast ke Telegram.');
+    } finally {
+      setBroadcastingId(null);
+    }
   };
 
   const handleAdd = async (e) => {
@@ -416,6 +455,26 @@ export default function AdminProductsPage() {
                     <td style={{ fontWeight: '600' }}>
                       <div>{product.name}</div>
                       <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                        {product.isDailyDrop && (
+                          <span
+                            className={styles.badge}
+                            style={{
+                              fontSize: '0.7rem',
+                              background: 'rgba(0, 136, 204, 0.12)',
+                              color: '#0088cc',
+                              border: '1px solid rgba(0, 136, 204, 0.3)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            Drop {product.dropNumber || '24 Jam'}
+                            {product.bookedBy && ` (Booked: @${product.bookedBy})`}
+                          </span>
+                        )}
                         {product.isPremium && (
                           <span className={`${styles.badge} ${styles.badgeWarning}`} style={{ fontSize: '0.7rem' }}>
                             ★ Premium
@@ -464,6 +523,20 @@ export default function AdminProductsPage() {
                     </td>
                     <td>
                       <div className={styles.actionGroup}>
+                        {canUpdate && (
+                          <button
+                            onClick={() => handleBroadcastTelegram(product)}
+                            disabled={broadcastingId === product.id}
+                            className={styles.iconBtn}
+                            title={product.isDailyDrop ? `Broadcast Ulang ${product.dropNumber || ''} ke Telegram` : "Kirim ke Grup Telegram (Daily Drop 24 Jam)"}
+                            style={{ color: product.isDailyDrop ? '#0088cc' : 'inherit' }}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="22" y1="2" x2="11" y2="13"></line>
+                              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                          </button>
+                        )}
                         {product.isArchived && canUpdate && (
                           <button onClick={() => handleRestore(product)} className={styles.iconBtn} title="Pulihkan Produk ke Etalase">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -613,6 +686,38 @@ export default function AdminProductsPage() {
               </div>
 
               <div>
+                <label className={styles.formLabel}>
+                  Kode / Nomor Drop
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.35rem', fontWeight: 'normal' }}>
+                    (Contoh: #01)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: #01"
+                  className={styles.formInput}
+                  value={form.dropNumber || ''}
+                  onChange={(e) => setForm({ ...form, dropNumber: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className={styles.formLabel}>
+                  URL Video Ikan
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.35rem', fontWeight: 'normal' }}>
+                    (Opsional)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  className={styles.formInput}
+                  value={form.videoUrl || ''}
+                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+                />
+              </div>
+
+              <div>
                 <ManageableSelect
                   label="Grade Bentuk"
                   value={form.statsForm}
@@ -754,15 +859,28 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.2rem' }}>
-                <input
-                  type="checkbox"
-                  id="isPremiumCheck"
-                  checked={form.isPremium}
-                  onChange={(e) => setForm({ ...form, isPremium: e.target.checked })}
-                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                />
-                <label htmlFor="isPremiumCheck" style={{ fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>Ikan Premium</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    id="isPremiumCheck"
+                    checked={form.isPremium}
+                    onChange={(e) => setForm({ ...form, isPremium: e.target.checked })}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  Ikan Premium
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    id="isDailyDropCheck"
+                    checked={form.isDailyDrop}
+                    onChange={(e) => setForm({ ...form, isDailyDrop: e.target.checked })}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  Daily Drop 24 Jam
+                </label>
               </div>
 
               <div className={styles.formActions}>

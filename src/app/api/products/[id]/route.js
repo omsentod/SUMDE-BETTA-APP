@@ -29,6 +29,7 @@ export async function PUT(request, { params }) {
       name, price, category, form, coloration, description,
       image, images, isPremium, statsForm, age, statsSpirit,
       isSold, quantity, variants, soldCount, isArchived,
+      videoUrl, isDailyDrop, dropNumber,
     } = await request.json();
 
     const dataToUpdate = {};
@@ -38,6 +39,9 @@ export async function PUT(request, { params }) {
     if (form !== undefined) dataToUpdate.form = form;
     if (coloration !== undefined) dataToUpdate.coloration = coloration;
     if (description !== undefined) dataToUpdate.description = description;
+    if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
+    if (isDailyDrop !== undefined) dataToUpdate.isDailyDrop = Boolean(isDailyDrop);
+    if (dropNumber !== undefined) dataToUpdate.dropNumber = dropNumber;
 
     if (images !== undefined) {
       const gallery = normalizeImages(images, image);
