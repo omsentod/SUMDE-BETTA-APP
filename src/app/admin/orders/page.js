@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getMethodLabel } from '@/lib/paymentFee';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
-import ShipmentTracker from '@/app/customer/orders/ShipmentTracker';
+import ShipmentTracker, { getCourierTrackingUrl } from '@/app/customer/orders/ShipmentTracker';
 import styles from './orders.module.css';
 
 const formatIDR = (v) =>
@@ -59,15 +59,6 @@ const PRINTABLE_STATUSES = new Set(['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'
 // PROCESSING, SHIPPED, COMPLETED, RETURNED: kurir sudah dipanggil, resi AWB tersedia dan dapat dilacak.
 const TRACKABLE_STATUSES = new Set(['PROCESSING', 'SHIPPED', 'COMPLETED', 'RETURNED']);
 const isOrderTrackable = (order) => Boolean(order?.trackingNumber && TRACKABLE_STATUSES.has(order?.status));
-
-const getCourierTrackingUrl = (courier, waybill) => {
-  const c = String(courier || '').toLowerCase();
-  if (c.includes('pos')) return 'https://www.posindonesia.co.id/id/tracking';
-  if (c.includes('jnt') || c.includes('j&t')) return 'https://www.jet.co.id/track';
-  if (c.includes('jne')) return 'https://www.jne.co.id/id/tracking/trace';
-  if (c.includes('sicepat')) return 'https://www.sicepat.com/checkAwb';
-  return `https://cekresi.com/?noresi=${encodeURIComponent(waybill || '')}`;
-};
 
 const STATUS_BADGE_CLASS = {
   PENDING: styles.badgePending,
@@ -762,17 +753,22 @@ function AdminOrdersPageInner() {
 
             <div className={styles.trackingModalFooter}>
               <a
-                href={trackingModal.data?.link || getCourierTrackingUrl(trackingModal.order.shippingCourier, trackingModal.order.trackingNumber)}
+                href={getCourierTrackingUrl(trackingModal.order.shippingCourier, trackingModal.order.trackingNumber)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.trackingExternalBtn}
+                onClick={() => {
+                  if (trackingModal.order.trackingNumber && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(trackingModal.order.trackingNumber).catch(() => {});
+                  }
+                }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                   <polyline points="15 3 21 3 21 9" />
                   <line x1="10" y1="14" x2="21" y2="3" />
                 </svg>
-                Buka Web Resmi Ekspedisi
+                Lacak Lengkap di Cekresi ({String(trackingModal.order.shippingCourier || 'Kurir').toUpperCase()})
               </a>
               <button
                 type="button"

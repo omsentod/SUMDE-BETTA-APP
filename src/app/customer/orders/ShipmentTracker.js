@@ -5,14 +5,20 @@ import styles from './tracker.module.css';
 
 export function getCourierTrackingUrl(courier, waybill) {
   const c = String(courier || '').toLowerCase();
-  if (c.includes('pos')) return 'https://www.posindonesia.co.id/id/tracking';
-  if (c.includes('jnt') || c.includes('j&t')) return 'https://www.jet.co.id/track';
-  if (c.includes('jne')) return 'https://www.jne.co.id/id/tracking/trace';
-  if (c.includes('sicepat')) return 'https://www.sicepat.com/checkAwb';
-  if (c.includes('anteraja')) return 'https://anteraja.id/tracking';
-  if (c.includes('tiki')) return 'https://www.tiki.id/id/tracking';
-  if (c.includes('ninja')) return 'https://www.ninjaxpress.co/id-id/tracking';
-  return `https://cekresi.com/?noresi=${encodeURIComponent(waybill || '')}`;
+  const wb = encodeURIComponent(String(waybill || '').trim());
+  if (!wb) return 'https://cekresi.com';
+
+  if (c.includes('pos')) return `https://cekresi.com/tracking/cek-resi-pos.php?noresi=${wb}`;
+  if (c.includes('jnt') || c.includes('j&t')) return `https://cekresi.com/tracking/cek-resi-jnt-express.php?noresi=${wb}`;
+  if (c.includes('jne')) return `https://cekresi.com/tracking/cek-resi-jne.php?noresi=${wb}`;
+  if (c.includes('sicepat')) return `https://cekresi.com/tracking/cek-resi-sicepat.php?noresi=${wb}`;
+  if (c.includes('anteraja')) return `https://cekresi.com/tracking/cek-resi-anteraja.php?noresi=${wb}`;
+  if (c.includes('tiki')) return `https://cekresi.com/tracking/cek-resi-tiki.php?noresi=${wb}`;
+  if (c.includes('ninja')) return `https://cekresi.com/tracking/cek-resi-ninja-xpress.php?noresi=${wb}`;
+  if (c.includes('spx') || c.includes('shopee')) return `https://cekresi.com/tracking/cek-resi-spx-shopee-express.php?noresi=${wb}`;
+  if (c.includes('lion')) return `https://cekresi.com/tracking/cek-resi-lion-parcel.php?noresi=${wb}`;
+  if (c.includes('wahana')) return `https://cekresi.com/tracking/cek-resi-wahana.php?noresi=${wb}`;
+  return `https://cekresi.com/?noresi=${wb}`;
 }
 
 // Shopee / Tokopedia style shipment timeline in Indonesian.
@@ -300,17 +306,22 @@ export default function ShipmentTracker({
       {!hideExternalLink && waybill && (
         <div className={styles.externalFooter}>
           <a
-            href={link || getCourierTrackingUrl(courier, waybill)}
+            href={getCourierTrackingUrl(courier, waybill)}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.externalLinkBtn}
+            onClick={() => {
+              if (waybill && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(waybill).catch(() => {});
+              }
+            }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            Buka Web Resmi Ekspedisi ({String(courier || 'Kurir').toUpperCase()})
+            Lacak Lengkap di Cekresi ({String(courier || 'Kurir').toUpperCase()})
           </a>
         </div>
       )}
