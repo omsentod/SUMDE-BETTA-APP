@@ -35,7 +35,7 @@ export default function ProductDetailClient() {
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
-    const [prevProductId, setPrevProductId] = useState(id);
+    const [prevProductId, setPrevProductId] = useState(null);
     const touchStartX = useRef(null);
 
     const product = products.find((p) => p.id === id);
@@ -68,8 +68,8 @@ export default function ProductDetailClient() {
         return product?.price || 0;
     }, [activeVariant, product]);
 
-    if (id !== prevProductId) {
-        setPrevProductId(id);
+    if (product && product.id !== prevProductId) {
+        setPrevProductId(product.id);
         const firstAvailable = variants.find((v) => (v.stock ?? v.quantity ?? 0) > 0)?.size || '';
         setSelectedSize(firstAvailable);
         setSizeError('');
@@ -238,7 +238,7 @@ export default function ProductDetailClient() {
                                 <div className={styles.priceBlock}>
                                     <span className={styles.priceCurrency}>Rp</span>
                                     <span className={styles.priceAmount}>
-                                        {new Intl.NumberFormat('id-ID').format(product.price)}
+                                        {new Intl.NumberFormat('id-ID').format(currentPrice)}
                                     </span>
                                 </div>
                                 {Number(product.soldCount) > 0 && (
@@ -304,14 +304,14 @@ export default function ProductDetailClient() {
                                                     className={cls}
                                                 >
                                                     <span className={styles.sizeLabel}>{v.size}</span>
-                                                    <span className={styles.sizeStock}>
-                                                        {isOutOfStock ? 'Habis' : `Stok: ${stock}`}
-                                                    </span>
                                                     {vPriceFormatted && (
-                                                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', marginTop: '2px', display: 'block' }}>
+                                                        <span className={styles.sizePrice}>
                                                             {vPriceFormatted}
                                                         </span>
                                                     )}
+                                                    <span className={styles.sizeStock}>
+                                                        {isOutOfStock ? 'Habis' : `Stok: ${stock}`}
+                                                    </span>
                                                 </button>
                                             );
                                         })}

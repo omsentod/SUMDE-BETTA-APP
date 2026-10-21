@@ -351,26 +351,45 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.15rem;
-    min-width: 5rem;
-    padding: 0.55rem 1.15rem;
+    justify-content: center;
+    gap: 0.2rem;
+    min-width: 5.5rem;
+    padding: 0.65rem 1.25rem;
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
     color: var(--text-main);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+                border-color 0.2s ease,
+                background-color 0.2s ease,
+                box-shadow 0.2s ease;
+    position: relative;
+    text-align: center;
 }
 
+.sizeBtn:hover:not(:disabled):not(.sizeBtnSelected) {
+    border-color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+}
+
+.sizeBtn:active:not(:disabled) {
+    transform: scale(0.97);
+}
 
 .sizeBtnSelected {
     border-color: var(--primary);
     background: var(--primary);
-    color: #fff;
+    color: #ffffff;
+    box-shadow: 0 4px 14px var(--primary-glow);
+    transform: translateY(-1px);
 }
 
 .sizeBtnSelected:hover {
-border-color: var(--primary);  
+    border-color: var(--primary);
+    background: var(--primary);
 }
 
 .sizeBtnOut {
@@ -382,11 +401,33 @@ border-color: var(--primary);
 .sizeLabel {
     font-weight: 700;
     font-size: 0.95rem;
+    line-height: 1.2;
+    color: inherit;
+}
+
+.sizePrice {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+    margin-top: 1px;
+    transition: color 0.15s ease;
+}
+
+.sizeBtnSelected .sizePrice {
+    color: #ffffff !important;
 }
 
 .sizeStock {
-    font-size: 0.7rem;
-    opacity: 0.75;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    margin-top: 1px;
+    transition: color 0.15s ease;
+}
+
+.sizeBtnSelected .sizeStock {
+    color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* Inline size-error banner (replaces browser alert()) */
