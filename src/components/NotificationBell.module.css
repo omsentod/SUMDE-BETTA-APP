@@ -5,29 +5,36 @@
 }
 
 .trigger {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition-luxe);
   position: relative;
-  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+  flex-shrink: 0;
 }
 
 .trigger:hover {
-  border-color: var(--primary);
-  background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
-  color: var(--primary);
+  border-color: var(--text-main);
+  background: var(--glass);
+  transform: translateY(-1px);
+}
+
+.trigger:active {
+  transform: translateY(0);
 }
 
 .bellRinging {
   animation: bellShake 1.2s ease-in-out;
-  color: var(--primary);
-  border-color: var(--primary);
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
 }
 
 @keyframes bellShake {
@@ -44,20 +51,19 @@
   position: absolute;
   top: -5px;
   right: -5px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 4px;
   border-radius: 9999px;
-  background: #EF4444;
-  color: #ffffff;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 10px var(--primary-glow);
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-  border: 2px solid var(--bg-card);
 }
 
 .backdrop {
