@@ -40,16 +40,57 @@ export async function GET(request, { params }) {
       return new NextResponse('Format tidak didukung', { status: 415 });
     }
 
-    const uploadDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
-    const targetPath = path.join(uploadDir, filename);
+    // List of candidate locations where the image might be stored
+    const candidateDirs = [
+      process.env.UPLOADS_DIR,
+      '/home/u707667165/domains/sumdebetta.com/public_html/uploads',
+      '/home/u707667165/domains/sumdebetta.com/uploads',
+      path.join(process.cwd(), 'public', 'uploads'),
+    ].filter(Boolean);
 
-    let fileBuffer;
-    try {
-      fileBuffer = await fs.readFile(targetPath);
-    } catch {
-      // Fallback: check project public/uploads
-      const localPath = path.join(process.cwd(), 'public', 'uploads', filename);
-      fileBuffer = await fs.readFile(localPath);
+    let fileBuffer = null;
+
+    // 1. Try standard candidate directories
+    for (const dir of candidateDirs) {
+      try {
+        fileBuffer = await fs.readFile(path.join(dir, filename));
+        if (fileBuffer) break;
+      } catch {
+        // try next
+      }
+    }
+
+    // 2. If not found, search in sibling Hostinger hbuilds/versions/<UUID>/nodejs/public/uploads/
+    if (!fileBuffer) {
+      try {
+        // Hostinger deploy path: .../hbuilds/versions/<UUID>/nodejs
+        const versionsDir = path.resolve(process.cwd(), '..', '..');
+        const entries = await fs.readdir(versionsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const siblingPath = path.join(versionsDir, entry.name, 'nodejs', 'public', 'uploads', filename);
+            try {
+              fileBuffer = await fs.readFile(siblingPath);
+              if (fileBuffer) {
+                // Self-healing: save to persistent dir if possible
+                if (process.env.UPLOADS_DIR) {
+                  await fs.mkdir(process.env.UPLOADS_DIR, { recursive: true }).catch(() => {});
+                  await fs.writeFile(path.join(process.env.UPLOADS_DIR, filename), fileBuffer).catch(() => {});
+                }
+                break;
+              }
+            } catch {
+              // try next version
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!fileBuffer) {
+      return new NextResponse('Gambar tidak ditemukan', { status: 404 });
     }
 
     return new NextResponse(fileBuffer, {
