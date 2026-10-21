@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions';
 import { normalizeImages } from '@/lib/productImages';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request) {
   try {
@@ -19,7 +20,13 @@ export async function GET(request) {
     if (category && category !== 'Semua') {
       filtered = products.filter(p => p.form.toLowerCase() === category.toLowerCase());
     }
-    return NextResponse.json(filtered);
+    return NextResponse.json(filtered, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

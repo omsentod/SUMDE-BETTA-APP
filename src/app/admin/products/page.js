@@ -52,6 +52,7 @@ export default function AdminProductsPage() {
   const [grades, setGrades] = useState(DEFAULT_GRADES);
 
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'archived' | 'all'
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [stockFilter, setStockFilter] = useState('All');
 
@@ -98,14 +99,24 @@ export default function AdminProductsPage() {
     return products.filter((p) => {
       const q = search.toLowerCase();
       const matchSearch = p.name.toLowerCase().includes(q) || (p.form && p.form.toLowerCase().includes(q));
-      const matchCategory = categoryFilter === 'All' || p.form === categoryFilter;
+
+      const pForm = (p.form || '').trim().toLowerCase();
+      const pCat = (p.category || '').trim().toLowerCase();
+      const targetCat = categoryFilter.trim().toLowerCase();
+      const matchCategory = categoryFilter === 'All' || pForm === targetCat || pCat === targetCat;
+
       let matchStock = true;
       if (stockFilter === 'Ready') matchStock = p.quantity > 0;
       if (stockFilter === 'Sold') matchStock = p.quantity === 0;
       if (stockFilter === 'LowStock') matchStock = p.quantity > 0 && p.quantity <= 2;
-      return matchSearch && matchCategory && matchStock;
+
+      let matchStatus = true;
+      if (statusFilter === 'active') matchStatus = !p.isArchived;
+      if (statusFilter === 'archived') matchStatus = Boolean(p.isArchived);
+
+      return matchSearch && matchCategory && matchStock && matchStatus;
     });
-  }, [products, search, categoryFilter, stockFilter]);
+  }, [products, search, categoryFilter, stockFilter, statusFilter]);
 
   // Upload satu ATAU banyak foto sekaligus, lalu tambahkan ke akhir galeri
   // (urutan = urutan tampil). Cover selalu disinkron ke foto pertama.
@@ -254,16 +265,29 @@ export default function AdminProductsPage() {
   const askDelete = (product) => {
     confirm.open({
       title: 'Hapus Produk',
-      desc: `Apakah Anda yakin ingin menghapus produk "${product.name}"? Tindakan ini tidak dapat dibatalkan.`,
+      desc: `Apakah Anda yakin ingin menghapus produk "${product.name}"? Jika produk memiliki riwayat transaksi, produk akan otomatis diarsipkan agar data invoice pelanggan tetap aman.`,
       onConfirm: async () => {
         try {
-          await deleteProduct(product.id);
-          toast.success(`Produk "${product.name}" berhasil dihapus.`);
+          const res = await deleteProduct(product.id);
+          if (res && res.archived) {
+            toast.info(`Produk "${product.name}" diarsipkan karena memiliki riwayat transaksi.`);
+          } else {
+            toast.success(`Produk "${product.name}" berhasil dihapus.`);
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus produk.');
         }
       },
     });
+  };
+
+  const handleRestore = async (product) => {
+    try {
+      await updateProduct(product.id, { isArchived: false });
+      toast.success(`Produk "${product.name}" berhasil dipulihkan ke etalase toko.`);
+    } catch (err) {
+      toast.error(err.message || 'Gagal memulihkan produk.');
+    }
   };
 
   if (authLoading || !currentUser || !canView) {
@@ -329,6 +353,11 @@ export default function AdminProductsPage() {
             />
           </div>
           <div className={styles.filterGroup}>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={styles.selectInput}>
+              <option value="active">Status: Aktif</option>
+              <option value="archived">Status: Diarsipkan</option>
+              <option value="all">Status: Semua</option>
+            </select>
             <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={styles.selectInput}>
               <option value="All">Semua Kategori</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -345,8 +374,12 @@ export default function AdminProductsPage() {
         {productsLoading ? (
           <p style={{ color: 'var(--text-muted)' }}>Memuat produk...</p>
         ) : filtered.length === 0 ? (
-          <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            Tidak ada produk yang sesuai dengan kriteria pencarian.
+          <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            {statusFilter === 'archived'
+              ? 'Tidak ada produk yang diarsipkan.'
+              : search
+              ? `Tidak ada produk yang cocok dengan pencarian "${search}".`
+              : 'Tidak ada produk yang sesuai dengan kriteria pencarian.'}
           </div>
         ) : (
           <div className={styles.tableCard}>
@@ -382,11 +415,18 @@ export default function AdminProductsPage() {
                     </td>
                     <td style={{ fontWeight: '600' }}>
                       <div>{product.name}</div>
-                      {product.isPremium && (
-                        <span className={`${styles.badge} ${styles.badgeWarning}`} style={{ marginTop: '0.2rem', fontSize: '0.7rem' }}>
-                          ★ Premium
-                        </span>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                        {product.isPremium && (
+                          <span className={`${styles.badge} ${styles.badgeWarning}`} style={{ fontSize: '0.7rem' }}>
+                            ★ Premium
+                          </span>
+                        )}
+                        {product.isArchived && (
+                          <span className={`${styles.badge} ${styles.badgeMuted}`} style={{ fontSize: '0.7rem' }}>
+                            Diarsipkan
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className={styles.hideOnMobile}>
                       <div>{product.form}</div>
@@ -424,6 +464,14 @@ export default function AdminProductsPage() {
                     </td>
                     <td>
                       <div className={styles.actionGroup}>
+                        {product.isArchived && canUpdate && (
+                          <button onClick={() => handleRestore(product)} className={styles.iconBtn} title="Pulihkan Produk ke Etalase">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                              <path d="M3 3v5h5"/>
+                            </svg>
+                          </button>
+                        )}
                         {canUpdate && (
                           <button onClick={() => openEdit(product)} className={styles.iconBtn} title="Edit Produk">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

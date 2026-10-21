@@ -10,7 +10,7 @@ export function ProductProvider({ children }) {
     const fetchProducts = useCallback(async ({ showLoading = true } = {}) => {
         if (showLoading) setIsLoading(true);
         try {
-            const res = await fetch('/api/products');
+            const res = await fetch('/api/products', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setProducts(data);
@@ -27,7 +27,7 @@ export function ProductProvider({ children }) {
         const load = async (showLoading = true) => {
             if (showLoading) setIsLoading(true);
             try {
-                const res = await fetch('/api/products');
+                const res = await fetch('/api/products', { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
                     if (!cancelled) setProducts(data);

@@ -28,7 +28,7 @@ export async function PUT(request, { params }) {
     const {
       name, price, category, form, coloration, description,
       image, images, isPremium, statsForm, age, statsSpirit,
-      isSold, quantity, variants, soldCount,
+      isSold, quantity, variants, soldCount, isArchived,
     } = await request.json();
 
     const dataToUpdate = {};
@@ -57,6 +57,7 @@ export async function PUT(request, { params }) {
     if (statsSpirit !== undefined) dataToUpdate.statsSpirit = statsSpirit;
     if (isSold !== undefined) dataToUpdate.isSold = Boolean(isSold);
     if (soldCount !== undefined) dataToUpdate.soldCount = Math.max(0, parseInt(soldCount) || 0);
+    if (isArchived !== undefined) dataToUpdate.isArchived = Boolean(isArchived);
 
     if (Array.isArray(variants)) {
       const sizeSet = new Set();
