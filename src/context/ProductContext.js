@@ -41,8 +41,12 @@ export function ProductProvider({ children }) {
 
         load(true);
 
+        let lastFetchTime = Date.now();
         const handleFocus = () => {
-            load(false);
+            if (Date.now() - lastFetchTime > 60_000) {
+                lastFetchTime = Date.now();
+                load(false);
+            }
         };
         window.addEventListener('focus', handleFocus);
 

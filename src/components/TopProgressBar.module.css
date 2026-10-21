@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Top Navigation Progress Bar (Tokopedia / YouTube Style)
+   ========================================================================== */
+
+.barContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 99999;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.barFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #ff8a50);
+    box-shadow: 0 0 12px var(--primary-glow), 0 0 6px var(--primary);
+    width: 0%;
+    opacity: 0;
+    position: relative;
+}
+
+/* Glowing head on the leading edge of the progress bar */
+.barGlow {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    box-shadow: 0 0 16px var(--primary-glow), 0 0 8px #ff8a50;
+    transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Phase 1: Clicked - Immediately shoots to 75% smoothly while waiting */
+.statusLoading {
+    width: 78%;
+    opacity: 1;
+    transition: width 8s cubic-bezier(0.08, 0.8, 0.1, 1), opacity 0.15s ease-in;
+}
+
+/* Phase 2: Route updated - Snaps to 100% instantly */
+.statusComplete {
+    width: 100%;
+    opacity: 1;
+    transition: width 0.15s ease-out;
+}
+
+/* Phase 3: Fades out cleanly */
+.statusFade {
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+}
