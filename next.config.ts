@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: { unoptimized: true },
   serverExternalPackages: ['@prisma/client', '.prisma/client'],
+  experimental: {
+    cpus: 4,
+  },
   async headers() {
     // Di dev Turbopack pakai URL chunk yg stabil (nama sama walau isi berubah);
     // kalau kita apply cache 1-year immutable, browser serve JS lama selamanya
