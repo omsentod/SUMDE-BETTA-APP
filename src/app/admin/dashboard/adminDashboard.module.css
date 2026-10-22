@@ -537,6 +537,16 @@
     color: var(--status-error);
 }
 
+.iconBtnSuccess {
+    color: var(--status-success);
+}
+
+.iconBtnSuccess:hover {
+    border-color: var(--status-success);
+    background: var(--status-success-bg);
+    color: var(--status-success);
+}
+
 /* Transaction Card View */
 .orderList {
     display: flex;
@@ -1078,4 +1088,126 @@
     .confirmActions > * {
         width: 100%;
     }
+}
+
+.bulkBar {
+    position: sticky;
+    top: 70px;
+    z-index: 40;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.bulkBarCount {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-right: auto;
+}
+
+.bulkBtnTelegram {
+    background: #0088cc;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.15s ease;
+}
+
+.bulkBtnTelegram:hover {
+    background: #0077b3;
+    transform: translateY(-1px);
+}
+
+.bulkBtnOutline {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.bulkBtnOutline:hover {
+    background: var(--border-color);
+}
+
+.bulkBtnDanger {
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.15s ease;
+}
+
+.bulkBtnDanger:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.bulkBtnSuccess {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.15s ease;
+}
+
+.bulkBtnSuccess:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.selectActiveBtn {
+    background: rgba(255, 107, 53, 0.12);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 0.55rem 1.15rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.selectActiveBtn:hover {
+    background: rgba(255, 107, 53, 0.22);
 }

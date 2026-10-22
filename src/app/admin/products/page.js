@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import ManageableSelect from '@/components/admin/ManageableSelect';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
 import BulkProductModal from '@/components/admin/BulkProductModal';
+import BulkTelegramModal from '@/components/admin/BulkTelegramModal';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
 import styles from '../dashboard/adminDashboard.module.css';
@@ -39,7 +40,7 @@ const emptyProductForm = () => ({
 const formatCurrency = (v) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
 
-export default function AdminProductsPage() {
+function AdminProductsInner() {
   const { currentUser, isLoading: authLoading } = useAuth();
   const { products, addProduct, updateProduct, deleteProduct, isLoading: productsLoading, fetchProducts } = useProducts();
   const { toast } = useToast();
@@ -54,14 +55,18 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [grades, setGrades] = useState(DEFAULT_GRADES);
 
+  // Mode pemilihan (Selection Mode): checkbox tersembunyi sampai tombol 'Pilih' diklik
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'archived' | 'all'
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [stockFilter, setStockFilter] = useState('All');
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [isBulkTelegramOpen, setIsBulkTelegramOpen] = useState(false);
   const [currentEdit, setCurrentEdit] = useState(null);
   const [form, setForm] = useState(emptyProductForm());
 
@@ -100,6 +105,9 @@ export default function AdminProductsPage() {
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
+      // Halaman ini khusus katalog produk aktif (bukan yang diarsipkan di Recycle Bin)
+      if (p.isArchived) return false;
+
       const q = search.toLowerCase();
       const matchSearch = p.name.toLowerCase().includes(q) || (p.form && p.form.toLowerCase().includes(q));
 
@@ -113,13 +121,13 @@ export default function AdminProductsPage() {
       if (stockFilter === 'Sold') matchStock = p.quantity === 0;
       if (stockFilter === 'LowStock') matchStock = p.quantity > 0 && p.quantity <= 2;
 
-      let matchStatus = true;
-      if (statusFilter === 'active') matchStatus = !p.isArchived;
-      if (statusFilter === 'archived') matchStatus = Boolean(p.isArchived);
-
-      return matchSearch && matchCategory && matchStock && matchStatus;
+      return matchSearch && matchCategory && matchStock;
     });
-  }, [products, search, categoryFilter, stockFilter, statusFilter]);
+  }, [products, search, categoryFilter, stockFilter]);
+
+  const selectedProducts = useMemo(() => {
+    return products.filter((p) => selectedIds.has(p.id));
+  }, [products, selectedIds]);
 
   // Upload satu ATAU banyak foto sekaligus, lalu tambahkan ke akhir galeri
   // (urutan = urutan tampil). Cover selalu disinkron ke foto pertama.
@@ -301,18 +309,26 @@ export default function AdminProductsPage() {
     }
   };
 
-  const askDelete = (product) => {
+  // Bulk: Hapus terpilih (dipindahkan ke Recycle Bin)
+  const handleBulkDelete = () => {
+    const count = selectedIds.size;
+    if (count === 0) return;
     confirm.open({
       title: 'Hapus Produk',
-      desc: `Apakah Anda yakin ingin menghapus produk "${product.name}"? Jika produk memiliki riwayat transaksi, produk akan otomatis diarsipkan agar data invoice pelanggan tetap aman.`,
+      desc: `Apakah Anda yakin ingin menghapus ${count} produk terpilih? Produk akan dipindahkan ke Recycle Bin.`,
       onConfirm: async () => {
         try {
-          const res = await deleteProduct(product.id);
-          if (res && res.archived) {
-            toast.info(`Produk "${product.name}" diarsipkan karena memiliki riwayat transaksi.`);
-          } else {
-            toast.success(`Produk "${product.name}" berhasil dihapus.`);
-          }
+          const res = await fetch('/api/admin/products/bulk/archive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: Array.from(selectedIds), archive: true }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Gagal menghapus produk.');
+          toast.success(data.message || `${count} produk berhasil dihapus.`);
+          setSelectedIds(new Set());
+          setIsSelectMode(false);
+          if (fetchProducts) fetchProducts();
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus produk.');
         }
@@ -320,13 +336,21 @@ export default function AdminProductsPage() {
     });
   };
 
-  const handleRestore = async (product) => {
-    try {
-      await updateProduct(product.id, { isArchived: false });
-      toast.success(`Produk "${product.name}" berhasil dipulihkan ke etalase toko.`);
-    } catch (err) {
-      toast.error(err.message || 'Gagal memulihkan produk.');
-    }
+  // Single: Hapus produk (dipindahkan ke Recycle Bin)
+  const askDelete = (product) => {
+    confirm.open({
+      title: 'Hapus Produk',
+      desc: `Hapus produk "${product.name}"? Produk akan dipindahkan ke Recycle Bin dan dapat dipulihkan kapan saja.`,
+      onConfirm: async () => {
+        try {
+          await deleteProduct(product.id);
+          toast.success(`Produk "${product.name}" berhasil dihapus.`);
+          if (fetchProducts) fetchProducts();
+        } catch (err) {
+          toast.error(err.message || 'Gagal menghapus produk.');
+        }
+      },
+    });
   };
 
   if (authLoading || !currentUser || !canView) {
@@ -348,6 +372,38 @@ export default function AdminProductsPage() {
             <h1 className={styles.headerTitle}>Kelola Produk</h1>
           </div>
           <div className={styles.headerButtons}>
+            <button
+              type="button"
+              onClick={() => {
+                if (isSelectMode) {
+                  setIsSelectMode(false);
+                  setSelectedIds(new Set());
+                } else {
+                  setIsSelectMode(true);
+                }
+              }}
+              className={isSelectMode ? styles.selectActiveBtn : styles.outlineBtn}
+              title={isSelectMode ? 'Selesai memilih' : 'Pilih produk'}
+            >
+              {isSelectMode ? (
+                <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  Selesai
+                </>
+              ) : (
+                <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 11 12 14 22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </svg>
+                  Pilih
+                </>
+              )}
+            </button>
+
             {canImport && (
               <button
                 type="button"
@@ -392,11 +448,6 @@ export default function AdminProductsPage() {
             />
           </div>
           <div className={styles.filterGroup}>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={styles.selectInput}>
-              <option value="active">Status: Aktif</option>
-              <option value="archived">Status: Diarsipkan</option>
-              <option value="all">Status: Semua</option>
-            </select>
             <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={styles.selectInput}>
               <option value="All">Semua Kategori</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -411,34 +462,137 @@ export default function AdminProductsPage() {
         </div>
 
         {productsLoading ? (
-          <p style={{ color: 'var(--text-muted)' }}>Memuat produk...</p>
+          <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <p>Memuat produk...</p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            {statusFilter === 'archived'
-              ? 'Tidak ada produk yang diarsipkan.'
-              : search
-              ? `Tidak ada produk yang cocok dengan pencarian "${search}".`
-              : 'Tidak ada produk yang sesuai dengan kriteria pencarian.'}
+          <div className={styles.tableCard} style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+            {search ? (
+              <>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5, marginBottom: '0.25rem' }}>
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 600 }}>Pencarian Tidak Ditemukan</h3>
+                <p style={{ margin: 0, fontSize: '0.875rem' }}>Tidak ada produk yang cocok dengan pencarian &ldquo;{search}&rdquo;.</p>
+              </>
+            ) : (
+              <>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5, marginBottom: '0.25rem' }}>
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
+                </svg>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 600 }}>Belum Ada Produk</h3>
+                <p style={{ margin: 0, fontSize: '0.875rem' }}>Katalog produk aktif masih kosong.</p>
+                {canCreate && (
+                  <button type="button" onClick={openAdd} className={styles.primaryBtn} style={{ marginTop: '0.5rem' }}>
+                    Tambah Produk
+                  </button>
+                )}
+              </>
+            )}
           </div>
         ) : (
-          <div className={styles.tableCard}>
-            <table className={styles.dataTable}>
-              <thead>
-                <tr>
-                  <th className={styles.hideOnMobile}>Gambar</th>
-                  <th>Nama Produk</th>
-                  <th className={styles.hideOnMobile}>Kategori & Ukuran</th>
-                  <th>Harga</th>
-                  <th>Status Stok</th>
-                  <th>Terjual</th>
-                  <th style={{ textAlign: 'right' }}>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((product) => (
-                  <tr key={product.id} className={styles.tableRow}>
-                    <td className={styles.hideOnMobile}>
-                      <div className={styles.productThumb}>
+          <>
+            {isSelectMode && selectedIds.size > 0 && (
+              <div className={styles.bulkBar}>
+                <span className={styles.bulkBarCount}>{selectedIds.size} produk terpilih</span>
+
+                {canUpdate && (
+                  <button
+                    type="button"
+                    className={styles.bulkBtnTelegram}
+                    onClick={() => setIsBulkTelegramOpen(true)}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                    Broadcast ke Telegram ({selectedIds.size})
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    type="button"
+                    className={styles.bulkBtnDanger}
+                    onClick={handleBulkDelete}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Hapus ({selectedIds.size})
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className={styles.bulkBtnOutline}
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  Batal
+                </button>
+              </div>
+            )}
+
+            <div className={styles.tableCard}>
+              <table className={styles.dataTable}>
+                <thead>
+                  <tr>
+                    {isSelectMode && (
+                      <th style={{ width: '38px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={filtered.length > 0 && filtered.every((p) => selectedIds.has(p.id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const allIds = new Set(selectedIds);
+                              filtered.forEach((p) => allIds.add(p.id));
+                              setSelectedIds(allIds);
+                            } else {
+                              const next = new Set(selectedIds);
+                              filtered.forEach((p) => next.delete(p.id));
+                              setSelectedIds(next);
+                            }
+                          }}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                          aria-label="Pilih semua produk"
+                        />
+                      </th>
+                    )}
+                    <th className={styles.hideOnMobile}>Gambar</th>
+                    <th>Nama Produk</th>
+                    <th className={styles.hideOnMobile}>Kategori & Ukuran</th>
+                    <th>Harga</th>
+                    <th>Status Stok</th>
+                    <th>Terjual</th>
+                    <th style={{ textAlign: 'right' }}>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((product) => (
+                    <tr key={product.id} className={styles.tableRow}>
+                      {isSelectMode && (
+                        <td style={{ width: '38px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(product.id)}
+                            onChange={() => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(product.id)) next.delete(product.id);
+                                else next.add(product.id);
+                                return next;
+                              });
+                            }}
+                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                            aria-label={`Pilih ${product.name}`}
+                          />
+                        </td>
+                      )}
+                      <td className={styles.hideOnMobile}>
+                        <div className={styles.productThumb}>
                         {product.image ? (
                           <Image src={product.image} alt={product.name} fill style={{ objectFit: 'cover' }} />
                         ) : (
@@ -478,11 +632,6 @@ export default function AdminProductsPage() {
                         {product.isPremium && (
                           <span className={`${styles.badge} ${styles.badgeWarning}`} style={{ fontSize: '0.7rem' }}>
                             ★ Premium
-                          </span>
-                        )}
-                        {product.isArchived && (
-                          <span className={`${styles.badge} ${styles.badgeMuted}`} style={{ fontSize: '0.7rem' }}>
-                            Diarsipkan
                           </span>
                         )}
                       </div>
@@ -537,16 +686,8 @@ export default function AdminProductsPage() {
                             </svg>
                           </button>
                         )}
-                        {product.isArchived && canUpdate && (
-                          <button onClick={() => handleRestore(product)} className={styles.iconBtn} title="Pulihkan Produk ke Etalase">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                              <path d="M3 3v5h5"/>
-                            </svg>
-                          </button>
-                        )}
                         {canUpdate && (
-                          <button onClick={() => openEdit(product)} className={styles.iconBtn} title="Edit Produk">
+                          <button onClick={() => openEdit(product)} className={styles.iconBtn} title="Edit">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -554,7 +695,7 @@ export default function AdminProductsPage() {
                           </button>
                         )}
                         {canDelete && (
-                          <button onClick={() => askDelete(product)} className={`${styles.iconBtn} ${styles.iconBtnDanger}`} title="Hapus Produk">
+                          <button onClick={() => askDelete(product)} className={`${styles.iconBtn} ${styles.iconBtnDanger}`} title="Hapus">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <polyline points="3 6 5 6 21 6"></polyline>
                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -568,7 +709,9 @@ export default function AdminProductsPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </>
+      )}
+
       </div>
 
       {isModalOpen && (
@@ -907,6 +1050,23 @@ export default function AdminProductsPage() {
         onClose={() => setIsBulkOpen(false)}
         onComplete={() => fetchProducts()}
       />
+      <BulkTelegramModal
+        isOpen={isBulkTelegramOpen}
+        onClose={() => setIsBulkTelegramOpen(false)}
+        products={selectedProducts}
+        onComplete={() => {
+          setSelectedIds(new Set());
+          if (fetchProducts) fetchProducts();
+        }}
+      />
     </div>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminProductsInner />
+    </Suspense>
   );
 }

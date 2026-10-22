@@ -135,15 +135,27 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await requirePermission(request, 'products:manage');
+    await requirePermission(request, ['products:manage', 'products:delete']);
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get('permanent') === 'true';
+
+    if (!permanent) {
+      // Soft-delete default: Pindahkan ke Recycle Bin (isArchived: true)
+      await prisma.product.update({ where: { id }, data: { isArchived: true } });
+      return NextResponse.json({ message: 'Produk dipindahkan ke Recycle Bin.', archived: true });
+    }
+
+    // Permanent delete: Lindungi integritas invoice jika ada riwayat pesanan
     const orderItemCount = await prisma.orderItem.count({ where: { productId: id } });
     if (orderItemCount > 0) {
-      await prisma.product.update({ where: { id }, data: { isArchived: true } });
-      return NextResponse.json({ message: 'Produk diarsipkan (memiliki riwayat pesanan).', archived: true });
+      return NextResponse.json(
+        { error: 'Produk tidak dapat dihapus permanen karena terdapat riwayat pesanan (invoice). Produk tetap tersimpan di Recycle Bin.' },
+        { status: 400 }
+      );
     }
     await prisma.product.delete({ where: { id } });
-    return NextResponse.json({ message: 'Produk berhasil dihapus.', archived: false });
+    return NextResponse.json({ message: 'Produk berhasil dihapus secara permanen.', archived: false });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

@@ -80,8 +80,9 @@ export function ProductProvider({ children }) {
         return data;
     }, []);
 
-    const deleteProduct = useCallback(async (id) => {
-        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    const deleteProduct = useCallback(async (id, { permanent = false } = {}) => {
+        const url = `/api/products/${id}${permanent ? '?permanent=true' : ''}`;
+        const res = await fetch(url, { method: 'DELETE' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Gagal menghapus produk.');
         // The endpoint may soft-delete (returns { archived: true }) — in that

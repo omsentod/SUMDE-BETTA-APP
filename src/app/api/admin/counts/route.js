@@ -7,11 +7,11 @@ import { requirePermission } from '@/lib/permissions';
 // Ringan sengaja: hanya count() query, tidak fetch full row.
 export async function GET(request) {
   try {
-    await requirePermission(request, 'orders:read');
+    await requirePermission(request, ['orders:read', 'products:view', 'dashboard:view']);
 
     // Gunakan groupBy untuk status agar hanya butuh 1 query agregat (1 koneksi DB)
     // untuk menghitung PENDING, PAID, PROCESSING, dan RETURNED secara efisien.
-    const [statusGroups, awaitingWaybill] = await Promise.all([
+    const [statusGroups, awaitingWaybill, archivedProducts] = await Promise.all([
       prisma.order.groupBy({
         by: ['status'],
         _count: { id: true },
@@ -21,6 +21,9 @@ export async function GET(request) {
           biteshipShipmentId: { not: null },
           trackingNumber: null,
         },
+      }),
+      prisma.product.count({
+        where: { isArchived: true },
       }),
     ]);
 
@@ -38,6 +41,7 @@ export async function GET(request) {
       processing,
       awaitingWaybill,
       returned,
+      archivedProducts,
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });

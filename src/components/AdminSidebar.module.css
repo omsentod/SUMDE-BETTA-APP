@@ -11,6 +11,15 @@
   position: sticky;
   top: 70px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottomSection {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  padding-bottom: 1.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .section {

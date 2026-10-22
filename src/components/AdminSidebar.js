@@ -23,6 +23,18 @@ const iconProducts = <Icon path={<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0
 const iconUsers = <Icon path={<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>} />;
 const iconEvents = <Icon path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>} />;
 const iconReports = <Icon path={<><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>} />;
+const iconTrash = (
+  <Icon
+    path={
+      <>
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        <line x1="10" y1="11" x2="10" y2="17" />
+        <line x1="14" y1="11" x2="14" y2="17" />
+      </>
+    }
+  />
+);
 const iconMenu = <Icon path={<><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>} />;
 const iconClose = <Icon path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />;
 const iconChevron = (
@@ -47,7 +59,7 @@ function AdminSidebarInner() {
   const activeStatus = searchParams.get('status');
   const { currentUser } = useAuth();
 
-  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0 });
+  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0 });
   const [open, setOpen] = useState(false);
   const isOnOrdersRoute = pathname.startsWith('/admin/orders');
   const [ordersOpen, setOrdersOpen] = useState(false);
@@ -56,7 +68,7 @@ function AdminSidebarInner() {
 
   useEffect(() => {
     if (!currentUser) return;
-    if (!can('orders:view')) return;
+    if (!can('orders:view') && !can('products:view')) return;
     let cancelled = false;
     let inFlight = false;
     let lastLoaded = Date.now();
@@ -211,6 +223,21 @@ function AdminSidebarInner() {
                 <span className={styles.linkContent}>{iconEvents}<span className={styles.linkLabel}>Event</span></span>
               </Link>
             )}
+          </div>
+        )}
+
+        {can('products:view') && (
+          <div className={styles.bottomSection}>
+            <Link
+              href="/admin/recycle-bin"
+              className={`${styles.link} ${isActive('/admin/recycle-bin') ? styles.linkActive : ''}`.trim()}
+            >
+              <span className={styles.linkContent}>
+                {iconTrash}
+                <span className={styles.linkLabel}>Recycle Bin</span>
+              </span>
+              {counts.archivedProducts > 0 && <Badge count={counts.archivedProducts} muted />}
+            </Link>
           </div>
         )}
       </aside>
