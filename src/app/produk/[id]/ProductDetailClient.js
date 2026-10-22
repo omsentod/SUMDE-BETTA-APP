@@ -7,24 +7,93 @@ import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
 import { getSimilarProducts } from '@/lib/recommendation';
+import { parseYouTubeId } from '@/lib/productImages';
 import styles from './productDetail.module.css';
 
-// Normalisasi galeri foto ke array URL yang aman ditampilkan. Prisma Json biasa
-// sudah balik sebagai array, tapi tetap toleran kalau berupa string JSON. Kalau
-// kosong, fallback ke cover tunggal (`image`) untuk produk lama.
-function toImageArray(images, fallbackImage) {
-    let arr = [];
-    if (Array.isArray(images)) {
-        arr = images;
-    } else if (typeof images === 'string') {
+// Normalisasi galeri media (foto dan video) yang aman dan berurutan sesuai setting admin.
+function buildProductMediaGallery(product, variants = []) {
+    if (!product) return [];
+    let raw = [];
+    if (Array.isArray(product.images)) {
+        raw = product.images;
+    } else if (typeof product.images === 'string') {
         try {
-            const parsed = JSON.parse(images);
-            if (Array.isArray(parsed)) arr = parsed;
+            const parsed = JSON.parse(product.images);
+            if (Array.isArray(parsed)) raw = parsed;
         } catch { /* ignore */ }
     }
-    arr = arr.filter((u) => typeof u === 'string' && u);
-    if (arr.length === 0 && fallbackImage) arr = [fallbackImage];
-    return arr;
+
+    const items = [];
+    const seen = new Set();
+
+    const addItem = (type, url) => {
+        if (!url || typeof url !== 'string') return;
+        const trimmed = url.trim();
+        const key = `${type}:${trimmed}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        if (type === 'video') {
+            const ytId = parseYouTubeId(trimmed);
+            items.push({
+                type: 'video',
+                url: trimmed,
+                ytId,
+                thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null,
+            });
+        } else {
+            items.push({
+                type: 'image',
+                url: trimmed,
+                thumbnail: trimmed,
+            });
+        }
+    };
+
+    // 1. Masukkan media sesuai urutan yang di-set admin (Product.images)
+    for (const item of raw) {
+        if (typeof item === 'string') {
+            const s = item.trim();
+            if (s.startsWith('/')) {
+                addItem('image', s);
+            } else if (parseYouTubeId(s) || /\.(mp4|webm|mov)($|\?)/i.test(s)) {
+                addItem('video', s);
+            }
+        } else if (item && typeof item === 'object') {
+            const u = typeof item.url === 'string' ? item.url : '';
+            if (item.type === 'video' || parseYouTubeId(u)) {
+                addItem('video', u);
+            } else if (u) {
+                addItem('image', u);
+            }
+        }
+    }
+
+    // 2. Jika ada videoUrl terpisah di DB tapi belum ada di gallery, tambahkan
+    if (product.videoUrl) {
+        const trimmedVid = product.videoUrl.trim();
+        const hasVid = items.some((m) => m.type === 'video' && m.url === trimmedVid);
+        if (!hasVid) {
+            addItem('video', trimmedVid);
+        }
+    }
+
+    // 3. Fallback foto utama jika belum ada foto
+    const hasImage = items.some((m) => m.type === 'image');
+    if (!hasImage && product.image) {
+        addItem('image', product.image);
+    }
+
+    // 4. Tambahkan foto varian jika ada varian dengan foto tersendiri
+    if (Array.isArray(variants)) {
+        variants.forEach((v) => {
+            if (v.imageUrl) {
+                addItem('image', v.imageUrl);
+            }
+        });
+    }
+
+    return items;
 }
 
 export default function ProductDetailClient() {
@@ -77,14 +146,7 @@ export default function ProductDetailClient() {
     }
 
     const gallery = useMemo(() => {
-        if (!product) return [];
-        const base = toImageArray(product.images, product.image);
-        variants.forEach((v) => {
-            if (v.imageUrl && !base.includes(v.imageUrl)) {
-                base.push(v.imageUrl);
-            }
-        });
-        return base;
+        return buildProductMediaGallery(product, variants);
     }, [product, variants]);
 
     if (isLoading) {
@@ -119,7 +181,8 @@ export default function ProductDetailClient() {
             return;
         }
         setSizeError('');
-        const itemImage = activeVariant?.imageUrl || product.image;
+        const fallbackImg = gallery.find((m) => m.type === 'image')?.url || product.image;
+        const itemImage = activeVariant?.imageUrl || fallbackImg;
         buyNow({ ...product, price: currentPrice, image: itemImage, selectedSize, variantId: activeVariant?.id });
         router.push('/checkout');
     };
@@ -130,12 +193,14 @@ export default function ProductDetailClient() {
             return;
         }
         setSizeError('');
-        const itemImage = activeVariant?.imageUrl || product.image;
+        const fallbackImg = gallery.find((m) => m.type === 'image')?.url || product.image;
+        const itemImage = activeVariant?.imageUrl || fallbackImg;
         addToCart({ ...product, price: currentPrice, image: itemImage, selectedSize, variantId: activeVariant?.id });
     };
 
     const canBuy = !product.isSold && product.quantity > 0;
     const idx = gallery.length > 0 ? Math.min(activeIndex, gallery.length - 1) : 0;
+    const activeMedia = gallery[idx] || (gallery[0] || { type: 'image', url: product.image });
     const hasMultiple = gallery.length > 1;
 
     const goTo = (dir) => {
@@ -157,21 +222,43 @@ export default function ProductDetailClient() {
                 <div className="container">
                     <div className={styles.grid}>
 
-                        {/* Image gallery — geser sesuai urutan yang di-set admin */}
+                        {/* Media gallery — geser sesuai urutan yang di-set admin (foto + video) */}
                         <div>
                             <div
                                 className={styles.imageFrame}
                                 onTouchStart={onTouchStart}
                                 onTouchEnd={onTouchEnd}
                             >
-                                <Image
-                                    src={gallery[idx] || product.image}
-                                    alt={`${product.name}${hasMultiple ? ` — foto ${idx + 1} dari ${gallery.length}` : ''}`}
-                                    fill
-                                    sizes="(max-width: 900px) 100vw, 50vw"
-                                    className={styles.image}
-                                    priority
-                                />
+                                {activeMedia?.type === 'video' ? (
+                                    <div className={styles.videoEmbedWrapper}>
+                                        {activeMedia.ytId ? (
+                                            <iframe
+                                                src={`https://www.youtube-nocookie.com/embed/${activeMedia.ytId}?autoplay=0&rel=0&modestbranding=1`}
+                                                title={`Video ${product.name}`}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className={styles.videoEmbed}
+                                            />
+                                        ) : (
+                                            <video
+                                                src={activeMedia.url}
+                                                controls
+                                                playsInline
+                                                preload="metadata"
+                                                className={styles.videoEmbed}
+                                            />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Image
+                                        src={activeMedia?.url || product.image}
+                                        alt={`${product.name}${hasMultiple ? ` — media ${idx + 1} dari ${gallery.length}` : ''}`}
+                                        fill
+                                        sizes="(max-width: 900px) 100vw, 50vw"
+                                        className={styles.image}
+                                        priority={idx === 0}
+                                    />
+                                )}
 
                                 {product.isSold && (
                                     <div className={styles.soldOverlay}>
@@ -185,7 +272,7 @@ export default function ProductDetailClient() {
                                             type="button"
                                             className={`${styles.galleryNav} ${styles.galleryPrev}`}
                                             onClick={() => goTo(-1)}
-                                            aria-label="Foto sebelumnya"
+                                            aria-label="Media sebelumnya"
                                         >
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                                         </button>
@@ -193,7 +280,7 @@ export default function ProductDetailClient() {
                                             type="button"
                                             className={`${styles.galleryNav} ${styles.galleryNext}`}
                                             onClick={() => goTo(1)}
-                                            aria-label="Foto berikutnya"
+                                            aria-label="Media berikutnya"
                                         >
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                                         </button>
@@ -211,15 +298,42 @@ export default function ProductDetailClient() {
 
                             {hasMultiple && (
                                 <div className={styles.thumbStrip}>
-                                    {gallery.map((url, i) => (
+                                    {gallery.map((media, i) => (
                                         <button
-                                            key={`${url}-${i}`}
+                                            key={`${media.url}-${i}`}
                                             type="button"
                                             className={`${styles.thumb} ${i === idx ? styles.thumbActive : ''}`}
                                             onClick={() => setActiveIndex(i)}
-                                            aria-label={`Lihat foto ${i + 1}`}
+                                            aria-label={`Lihat ${media.type === 'video' ? 'video' : 'foto'} ${i + 1}`}
                                         >
-                                            <Image src={url} alt={`${product.name} ${i + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
+                                            {media.type === 'video' ? (
+                                                <div className={styles.videoThumbWrap}>
+                                                    {media.thumbnail ? (
+                                                        <Image
+                                                            src={media.thumbnail}
+                                                            alt={`Video ${product.name}`}
+                                                            fill
+                                                            sizes="80px"
+                                                            className={styles.thumbImg}
+                                                        />
+                                                    ) : (
+                                                        <div className={styles.videoThumbPlaceholder} />
+                                                    )}
+                                                    <span className={styles.playBadge} aria-hidden="true">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                                            <polygon points="5 3 19 12 5 21 5 3" />
+                                                        </svg>
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <Image
+                                                    src={media.url}
+                                                    alt={`${product.name} ${i + 1}`}
+                                                    fill
+                                                    sizes="80px"
+                                                    className={styles.thumbImg}
+                                                />
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -297,7 +411,7 @@ export default function ProductDetailClient() {
                                                         setSelectedSize(v.size);
                                                         if (sizeError) setSizeError('');
                                                         if (v.imageUrl) {
-                                                            const foundIdx = gallery.indexOf(v.imageUrl);
+                                                            const foundIdx = gallery.findIndex((m) => m.url === v.imageUrl);
                                                             if (foundIdx >= 0) setActiveIndex(foundIdx);
                                                         }
                                                     }}

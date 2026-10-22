@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requirePermission } from '@/lib/permissions';
-import { normalizeImages } from '@/lib/productImages';
+import { normalizeImages, findCoverImage } from '@/lib/productImages';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,7 +42,8 @@ export async function POST(request) {
       videoUrl, isDailyDrop, dropNumber,
     } = await request.json();
 
-    const gallery = normalizeImages(images, image);
+    const gallery = normalizeImages(images, image, videoUrl);
+    const coverImage = findCoverImage(gallery, image);
     if (!name || price === undefined || !category || !form || !coloration || !description || gallery.length === 0) {
       return NextResponse.json({ error: 'Data produk tidak lengkap (minimal 1 foto).' }, { status: 400 });
     }
@@ -72,7 +73,7 @@ export async function POST(request) {
         form,
         coloration,
         description,
-        image: gallery[0],
+        image: coverImage,
         images: gallery,
         videoUrl: videoUrl || null,
         isDailyDrop: Boolean(isDailyDrop),

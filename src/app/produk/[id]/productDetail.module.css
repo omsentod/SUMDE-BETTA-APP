@@ -154,6 +154,68 @@
     object-fit: cover;
 }
 
+/* --- Video Embed & Gallery Video Integration --- */
+.videoEmbedWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.videoEmbed {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #000;
+    object-fit: contain;
+}
+
+.videoThumbWrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+}
+
+.videoThumbPlaceholder {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklab, var(--bg-card) 60%, #000);
+}
+
+.thumbImg {
+    object-fit: cover;
+}
+
+.playBadge {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.thumb:hover .playBadge {
+    transform: scale(1.1);
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
 .soldOverlay {
     position: absolute;
     inset: 0;

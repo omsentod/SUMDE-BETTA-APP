@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requirePermission } from '@/lib/permissions';
-import { normalizeImages } from '@/lib/productImages';
+import { normalizeImages, findCoverImage } from '@/lib/productImages';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,15 +44,17 @@ export async function PUT(request, { params }) {
     if (dropNumber !== undefined) dataToUpdate.dropNumber = dropNumber;
 
     if (images !== undefined) {
-      const gallery = normalizeImages(images, image);
+      const gallery = normalizeImages(images, image, videoUrl);
+      const coverImage = findCoverImage(gallery, image);
       if (gallery.length === 0) {
         return NextResponse.json({ error: 'Produk harus punya minimal 1 foto.' }, { status: 400 });
       }
       dataToUpdate.images = gallery;
-      dataToUpdate.image = gallery[0];
+      dataToUpdate.image = coverImage;
     } else if (image !== undefined) {
-      dataToUpdate.image = image;
-      dataToUpdate.images = normalizeImages([image], image);
+      const gallery = normalizeImages([image], image, videoUrl);
+      dataToUpdate.image = findCoverImage(gallery, image);
+      dataToUpdate.images = gallery;
     }
 
     if (isPremium !== undefined) dataToUpdate.isPremium = Boolean(isPremium);

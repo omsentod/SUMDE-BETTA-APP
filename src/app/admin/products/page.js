@@ -11,6 +11,7 @@ import BulkProductModal from '@/components/admin/BulkProductModal';
 import BulkTelegramModal from '@/components/admin/BulkTelegramModal';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
+import { parseYouTubeId } from '@/lib/productImages';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const DEFAULT_CATEGORIES = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'];
@@ -25,6 +26,7 @@ const emptyProductForm = () => ({
   description: '',
   image: '/img/betta-1.png',
   images: [],
+  media: [],
   videoUrl: '',
   isPremium: false,
   isDailyDrop: false,
@@ -130,7 +132,28 @@ function AdminProductsInner() {
   }, [products, selectedIds]);
 
   // Upload satu ATAU banyak foto sekaligus, lalu tambahkan ke akhir galeri
-  // (urutan = urutan tampil). Cover selalu disinkron ke foto pertama.
+  // Helper konversi item ke format media { id, type, url, thumbnail, ytId }
+  const toMediaItem = (item) => {
+    if (typeof item === 'string') {
+      const s = item.trim();
+      const ytId = parseYouTubeId(s);
+      if (ytId || /\.(mp4|webm|mov)($|\?)/i.test(s)) {
+        return { id: `vid-${Date.now()}-${Math.random()}`, type: 'video', url: s, ytId, thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null };
+      }
+      return { id: `img-${Date.now()}-${Math.random()}`, type: 'image', url: s, thumbnail: s };
+    }
+    if (item && typeof item === 'object') {
+      const u = typeof item.url === 'string' ? item.url.trim() : '';
+      const ytId = parseYouTubeId(u);
+      if (item.type === 'video' || ytId) {
+        return { id: item.id || `vid-${Date.now()}-${Math.random()}`, type: 'video', url: u, ytId, thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null };
+      }
+      return { id: item.id || `img-${Date.now()}-${Math.random()}`, type: 'image', url: u, thumbnail: u };
+    }
+    return null;
+  };
+
+  // Upload foto multi-file lalu masukkan ke media list
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -143,49 +166,127 @@ function AdminProductsInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal mengunggah gambar.');
       const newUrls = data.urls || (data.url ? [data.url] : []);
+      const newItems = newUrls.map((u) => ({
+        id: `img-${Date.now()}-${Math.random()}`,
+        type: 'image',
+        url: u,
+        thumbnail: u,
+      }));
       setForm((prev) => {
-        const existing = Array.isArray(prev.images) ? prev.images : [];
-        const merged = [...existing, ...newUrls];
-        return { ...prev, images: merged, image: merged[0] || prev.image };
+        const existing = Array.isArray(prev.media) ? prev.media : [];
+        const merged = [...existing, ...newItems];
+        const firstImg = merged.find((m) => m.type === 'image');
+        return {
+          ...prev,
+          media: merged,
+          image: firstImg?.url || prev.image,
+          images: merged.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+        };
       });
     } catch (err) {
       setUploadError(err.message);
     } finally {
       setIsUploading(false);
-      // Reset input supaya memilih file yang sama lagi tetap memicu onChange.
       e.target.value = '';
     }
   };
 
-  // Geser posisi foto (dir -1 = kiri, +1 = kanan). Foto index 0 = cover.
-  const moveImage = (index, dir) => {
+  // Geser posisi media (foto atau video) ke kiri (-1) atau kanan (+1)
+  const moveMedia = (index, dir) => {
     setForm((prev) => {
-      const imgs = [...(prev.images || [])];
+      const list = [...(prev.media || [])];
       const j = index + dir;
-      if (j < 0 || j >= imgs.length) return prev;
-      [imgs[index], imgs[j]] = [imgs[j], imgs[index]];
-      return { ...prev, images: imgs, image: imgs[0] || prev.image };
+      if (j < 0 || j >= list.length) return prev;
+      [list[index], list[j]] = [list[j], list[index]];
+      const firstImg = list.find((m) => m.type === 'image');
+      return {
+        ...prev,
+        media: list,
+        image: firstImg?.url || prev.image,
+        images: list.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+      };
     });
   };
 
-  const removeImage = (index) => {
+  // Hapus item media (jika video dihapus, otomatis videoUrl dikosongkan)
+  const removeMedia = (index) => {
     setForm((prev) => {
-      const imgs = (prev.images || []).filter((_, i) => i !== index);
-      return { ...prev, images: imgs, image: imgs[0] || '' };
+      const removed = (prev.media || [])[index];
+      const list = (prev.media || []).filter((_, i) => i !== index);
+      const firstImg = list.find((m) => m.type === 'image');
+      const remainingVid = list.find((m) => m.type === 'video');
+      return {
+        ...prev,
+        media: list,
+        image: firstImg?.url || '',
+        images: list.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+        videoUrl: remainingVid ? remainingVid.url : (removed?.type === 'video' ? '' : prev.videoUrl),
+      };
     });
   };
 
-  // Pindahkan foto dari posisi drag ke posisi target (tarik-lepas).
-  const handleImageDrop = (targetIndex) => {
+  // Drag and drop reordering untuk semua media (foto dan video)
+  const handleMediaDrop = (targetIndex) => {
     setForm((prev) => {
       if (dragIndex === null || dragIndex === targetIndex) return prev;
-      const imgs = [...(prev.images || [])];
-      const [moved] = imgs.splice(dragIndex, 1);
-      imgs.splice(targetIndex, 0, moved);
-      return { ...prev, images: imgs, image: imgs[0] || prev.image };
+      const list = [...(prev.media || [])];
+      const [moved] = list.splice(dragIndex, 1);
+      list.splice(targetIndex, 0, moved);
+      const firstImg = list.find((m) => m.type === 'image');
+      return {
+        ...prev,
+        media: list,
+        image: firstImg?.url || prev.image,
+        images: list.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+      };
     });
     setDragIndex(null);
     setDragOverIndex(null);
+  };
+
+  // Tambah atau perbarui video di dalam urutan media
+  const handleSetVideoUrl = (rawUrl) => {
+    const trimmed = (rawUrl || '').trim();
+    setForm((prev) => {
+      const list = [...(prev.media || [])];
+      const existingIdx = list.findIndex((m) => m.type === 'video');
+
+      if (!trimmed) {
+        if (existingIdx >= 0) list.splice(existingIdx, 1);
+        const firstImg = list.find((m) => m.type === 'image');
+        return {
+          ...prev,
+          media: list,
+          videoUrl: '',
+          image: firstImg?.url || prev.image,
+          images: list.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+        };
+      }
+
+      const ytId = parseYouTubeId(trimmed);
+      const videoObj = {
+        id: existingIdx >= 0 ? list[existingIdx].id : `vid-${Date.now()}`,
+        type: 'video',
+        url: trimmed,
+        ytId,
+        thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null,
+      };
+
+      if (existingIdx >= 0) {
+        list[existingIdx] = videoObj;
+      } else {
+        list.push(videoObj);
+      }
+
+      const firstImg = list.find((m) => m.type === 'image');
+      return {
+        ...prev,
+        media: list,
+        videoUrl: trimmed,
+        image: firstImg?.url || prev.image,
+        images: list.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+      };
+    });
   };
 
   const openAdd = () => {
@@ -201,9 +302,35 @@ function AdminProductsInner() {
         parsedImages = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
       }
     } catch { /* ignore */ }
-    if (!Array.isArray(parsedImages) || parsedImages.length === 0) {
-      parsedImages = product.image ? [product.image] : [];
+
+    let mediaItems = [];
+    if (Array.isArray(parsedImages)) {
+      for (const item of parsedImages) {
+        const m = toMediaItem(item);
+        if (m) mediaItems.push(m);
+      }
     }
+    if (product.videoUrl) {
+      const vid = product.videoUrl.trim();
+      const hasVid = mediaItems.some((m) => m.type === 'video' && m.url === vid);
+      if (!hasVid) {
+        const ytId = parseYouTubeId(vid);
+        mediaItems.push({
+          id: `vid-${Date.now()}`,
+          type: 'video',
+          url: vid,
+          ytId,
+          thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null,
+        });
+      }
+    }
+    if (mediaItems.length === 0 && product.image) {
+      mediaItems.push({ id: `img-${Date.now()}`, type: 'image', url: product.image, thumbnail: product.image });
+    }
+
+    const firstImage = mediaItems.find((m) => m.type === 'image');
+    const videoItem = mediaItems.find((m) => m.type === 'video');
+
     const parsedVariants = (Array.isArray(product.variants) && product.variants.length > 0)
       ? product.variants.map((v) => ({
           id: v.id,
@@ -228,6 +355,7 @@ function AdminProductsInner() {
           } catch { }
           return [];
         })();
+
     setForm({
       name: product.name,
       price: product.price,
@@ -235,9 +363,10 @@ function AdminProductsInner() {
       form: product.form,
       coloration: product.coloration,
       description: product.description,
-      image: parsedImages[0] || product.image,
-      images: parsedImages,
-      videoUrl: product.videoUrl || '',
+      image: firstImage?.url || product.image,
+      images: mediaItems.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+      media: mediaItems,
+      videoUrl: videoItem?.url || product.videoUrl || '',
       isPremium: Boolean(product.isPremium),
       isDailyDrop: Boolean(product.isDailyDrop),
       dropNumber: product.dropNumber || '',
@@ -287,7 +416,16 @@ function AdminProductsInner() {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      await addProduct(form);
+      const mediaList = form.media || [];
+      const firstImage = mediaList.find((m) => m.type === 'image');
+      const videoItem = mediaList.find((m) => m.type === 'video');
+      const payload = {
+        ...form,
+        image: firstImage?.url || form.image,
+        videoUrl: videoItem?.url || form.videoUrl || null,
+        images: mediaList.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+      };
+      await addProduct(payload);
       setIsAddOpen(false);
       setForm(emptyProductForm());
       toast.success('Produk baru berhasil ditambahkan.');
@@ -299,7 +437,16 @@ function AdminProductsInner() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await updateProduct(currentEdit.id, form);
+      const mediaList = form.media || [];
+      const firstImage = mediaList.find((m) => m.type === 'image');
+      const videoItem = mediaList.find((m) => m.type === 'video');
+      const payload = {
+        ...form,
+        image: firstImage?.url || form.image,
+        videoUrl: videoItem?.url || form.videoUrl || null,
+        images: mediaList.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
+      };
+      await updateProduct(currentEdit.id, payload);
       setIsEditOpen(false);
       setCurrentEdit(null);
       setForm(emptyProductForm());
@@ -716,77 +863,253 @@ function AdminProductsInner() {
 
       {isModalOpen && (
         <div className={styles.modalBackdrop}>
-          <div className={styles.modalContainer}>
-            <h3 className={styles.modalTitle}>{isAddOpen ? 'Tambah Produk Baru' : 'Edit Detail Produk'}</h3>
-            <form onSubmit={isAddOpen ? handleAdd : handleEditSubmit} className={styles.formGrid}>
-              <div className={styles.formFullWidth}>
-                <label className={styles.formLabel}>Nama Produk</label>
-                <input type="text" className={styles.formInput} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              </div>
-
+          <div className={styles.productModalContainer}>
+            <div className={styles.productModalHeader}>
               <div>
-                <label className={styles.formLabel}>Harga (Rupiah)</label>
-                <input type="number" className={styles.formInput} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+                <span className={styles.productModalEyebrow}>Katalog Produk</span>
+                <h3 className={styles.productModalTitle}>
+                  {isAddOpen ? 'Tambah Produk Baru' : 'Edit Detail Produk'}
+                </h3>
+                <p className={styles.productModalSubtitle}>
+                  Kelola foto, video, harga, dan varian spesimen ikan cupang.
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.productModalCloseBtn}
+                onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
+                aria-label="Tutup modal"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={isAddOpen ? handleAdd : handleEditSubmit} className={styles.productModalBody}>
+              {/* Section 1: Informasi Dasar */}
+              <div className={styles.formCard}>
+                <div className={styles.formCardHeader}>
+                  <h4 className={styles.formCardTitle}>Informasi Dasar</h4>
+                  <p className={styles.formCardDesc}>Identitas utama produk yang tampil di etalase dan pencarian.</p>
+                </div>
+
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>Nama Produk</label>
+                  <input
+                    type="text"
+                    className={styles.fieldInput}
+                    placeholder="Contoh: Super Black Samurai Tail"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className={styles.formGridTwo}>
+                  <div className={styles.formField}>
+                    <ManageableSelect
+                      label="Kategori Form"
+                      value={form.category}
+                      onChange={(val) => setForm({ ...form, category: val, form: val })}
+                      options={categories}
+                      setOptions={setCategories}
+                    />
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>Corak Warna (Coloration)</label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      placeholder="Contoh: Multicolor, Nemo Candy"
+                      value={form.coloration}
+                      onChange={(e) => setForm({ ...form, coloration: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formGridTwo}>
+                  <div className={styles.formField}>
+                    <ManageableSelect
+                      label="Grade Bentuk"
+                      value={form.statsForm}
+                      onChange={(val) => setForm({ ...form, statsForm: val })}
+                      options={grades}
+                      setOptions={setGrades}
+                    />
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>Umur (Age)</label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      placeholder="Contoh: 4 Month, 5 Bulan"
+                      value={form.age}
+                      onChange={(e) => setForm({ ...form, age: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>Deskripsi Produk</label>
+                  <textarea
+                    className={styles.fieldTextarea}
+                    placeholder="Tuliskan spesifikasi, keunggulan genetik, dan catatan pengiriman..."
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <ManageableSelect
-                  label="Kategori Form"
-                  value={form.category}
-                  onChange={(val) => setForm({ ...form, category: val, form: val })}
-                  options={categories}
-                  setOptions={setCategories}
-                />
-              </div>
+              {/* Section 2: Galeri Media (Foto & Video) */}
+              <div className={styles.formCard}>
+                <div className={styles.formCardHeader}>
+                  <h4 className={styles.formCardTitle}>Galeri Media (Foto & Video)</h4>
+                  <p className={styles.formCardDesc}>
+                    Atur urutan foto dan video dengan menyeret (drag) atau tombol panah. Foto pertama otomatis menjadi COVER utama.
+                  </p>
+                </div>
 
-              <div>
-                <label className={styles.formLabel}>Corak Warna (Coloration)</label>
-                <input type="text" className={styles.formInput} value={form.coloration} onChange={(e) => setForm({ ...form, coloration: e.target.value })} required />
-              </div>
+                <div className={styles.mediaToolbar}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    id="product-image-upload"
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="product-image-upload" className={styles.mediaAddBtn}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    {isUploading ? 'Mengunggah...' : '+ Upload Foto'}
+                  </label>
+                </div>
 
-              <div className={styles.formFullWidth}>
-                <label className={styles.formLabel} style={{ textAlign: 'center' }}>Foto Produk (bisa lebih dari satu)</label>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                {/* Video Input Row */}
+                <div className={styles.videoInputRow}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+                    <polygon points="23 7 16 12 23 17 23 7" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Masukkan URL Video Ikan (YouTube atau link video MP4)..."
+                    className={styles.fieldInput}
+                    value={form.videoUrl || ''}
+                    onChange={(e) => handleSetVideoUrl(e.target.value)}
+                  />
+                  {form.videoUrl && (
+                    <button
+                      type="button"
+                      className={styles.outlineBtn}
+                      onClick={() => handleSetVideoUrl('')}
+                      title="Hapus video"
+                      style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', flexShrink: 0 }}
+                    >
+                      Hapus Video
+                    </button>
+                  )}
+                </div>
 
-                  {form.images && form.images.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: '0.75rem', width: '100%' }}>
-                      {form.images.map((url, index) => (
+                {uploadError && (
+                  <div style={{ color: 'var(--status-error)', fontSize: '0.8rem' }}>
+                    Error unggah: {uploadError}
+                  </div>
+                )}
+
+                {/* Unified Media Grid */}
+                {form.media && form.media.length > 0 && (
+                  <div className={styles.mediaGrid}>
+                    {form.media.map((item, index) => {
+                      const isCover = index === 0 && item.type === 'image';
+                      const isVideo = item.type === 'video';
+                      const tileClass = [
+                        styles.mediaTile,
+                        isCover && styles.mediaTileCover,
+                        dragOverIndex === index && styles.mediaTileDragOver,
+                        dragIndex === index && styles.mediaTileDragging,
+                      ].filter(Boolean).join(' ');
+
+                      return (
                         <div
-                          key={`${url}-${index}`}
+                          key={item.id || `${item.url}-${index}`}
                           draggable
                           onDragStart={() => setDragIndex(index)}
                           onDragOver={(e) => { e.preventDefault(); if (dragOverIndex !== index) setDragOverIndex(index); }}
                           onDragLeave={() => setDragOverIndex((cur) => (cur === index ? null : cur))}
-                          onDrop={() => handleImageDrop(index)}
+                          onDrop={() => handleMediaDrop(index)}
                           onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
-                          title="Seret untuk mengurutkan"
-                          style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', border: `2px solid ${dragOverIndex === index ? 'var(--primary)' : (index === 0 ? 'var(--primary)' : 'var(--border-color)')}`, background: 'var(--bg-card)', cursor: 'grab', opacity: dragIndex === index ? 0.4 : 1, transition: 'opacity 0.15s ease, border-color 0.15s ease' }}
+                          className={tileClass}
+                          title="Seret untuk mengubah urutan"
                         >
-                          <Image src={url} alt={`Foto ${index + 1}`} fill sizes="96px" draggable={false} style={{ objectFit: 'cover' }} />
+                          {isVideo ? (
+                            item.thumbnail ? (
+                              <Image
+                                src={item.thumbnail}
+                                alt="Thumbnail Video"
+                                fill
+                                sizes="110px"
+                                draggable={false}
+                                className={styles.mediaTileImg}
+                              />
+                            ) : (
+                              <div className={styles.videoTilePlaceholder}>
+                                <div className={styles.videoTilePlayIcon}>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                  </svg>
+                                </div>
+                                <span style={{ fontSize: '0.625rem' }}>Video</span>
+                              </div>
+                            )
+                          ) : (
+                            <Image
+                              src={item.url}
+                              alt={`Foto ${index + 1}`}
+                              fill
+                              sizes="110px"
+                              draggable={false}
+                              className={styles.mediaTileImg}
+                            />
+                          )}
 
-                          {index === 0 && (
-                            <span style={{ position: 'absolute', top: '4px', left: '4px', background: 'var(--primary)', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px', letterSpacing: '0.03em' }}>
-                              COVER
+                          {isCover && (
+                            <span className={styles.mediaBadgeCover}>COVER</span>
+                          )}
+
+                          {isVideo && (
+                            <span className={styles.mediaBadgeVideo}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                              </svg>
+                              VIDEO
                             </span>
                           )}
 
-                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.55)' }}>
+                          <div className={styles.mediaControlsBar}>
                             <button
                               type="button"
                               title="Geser ke kiri"
                               aria-label="Geser ke kiri"
                               disabled={index === 0}
-                              onClick={() => moveImage(index, -1)}
-                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5px 0', background: 'none', border: 'none', color: '#fff', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.35 : 1 }}
+                              onClick={() => moveMedia(index, -1)}
+                              className={styles.mediaControlBtn}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                             </button>
                             <button
                               type="button"
-                              title="Hapus foto"
-                              aria-label="Hapus foto"
-                              onClick={() => removeImage(index)}
-                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5px 0', background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', borderLeft: '1px solid rgba(255,255,255,0.15)', borderRight: '1px solid rgba(255,255,255,0.15)' }}
+                              title="Hapus media"
+                              aria-label="Hapus media"
+                              onClick={() => removeMedia(index)}
+                              className={`${styles.mediaControlBtn} ${styles.mediaControlBtnDelete}`}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                             </button>
@@ -794,249 +1117,237 @@ function AdminProductsInner() {
                               type="button"
                               title="Geser ke kanan"
                               aria-label="Geser ke kanan"
-                              disabled={index === form.images.length - 1}
-                              onClick={() => moveImage(index, 1)}
-                              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5px 0', background: 'none', border: 'none', color: '#fff', cursor: index === form.images.length - 1 ? 'not-allowed' : 'pointer', opacity: index === form.images.length - 1 ? 0.35 : 1 }}
+                              disabled={index === form.media.length - 1}
+                              onClick={() => moveMedia(index, 1)}
+                              className={styles.mediaControlBtn}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                             </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
-                  <input type="file" accept="image/*" multiple onChange={handleFileUpload} id="product-image-upload" style={{ display: 'none' }} />
-                  <label htmlFor="product-image-upload" className={styles.pillOutlineBtn} style={{ cursor: 'pointer' }}>
-                    {isUploading ? 'Mengunggah...' : (form.images?.length > 0 ? '+ Tambah Foto Lagi' : 'Pilih Foto dari Komputer')}
-                  </label>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, maxWidth: '340px' }}>
-                    Foto pertama (COVER) tampil sebagai thumbnail. Seret foto untuk mengurutkan (atau pakai tombol ◀ ▶) — user bisa geser galeri sesuai urutan ini.
+              {/* Section 3: Harga & Manajemen Varian */}
+              <div className={styles.formCard}>
+                <div className={styles.formCardHeader}>
+                  <h4 className={styles.formCardTitle}>Harga & Varian Spesimen</h4>
+                  <p className={styles.formCardDesc}>
+                    Tetapkan harga dasar atau atur varian (Male, Female, Pair) dengan stok dan foto terpisah.
                   </p>
-                  {uploadError && <p style={{ fontSize: '0.75rem', color: 'var(--status-error)' }}>Error: {uploadError}</p>}
+                </div>
+
+                <div className={styles.formGridTwo}>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>Harga Dasar (Rp)</label>
+                    <input
+                      type="number"
+                      className={styles.fieldInput}
+                      placeholder="Contoh: 350000"
+                      value={form.price}
+                      onChange={(e) => setForm({ ...form, price: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>
+                      Total Stok
+                      <span className={styles.fieldOptional}>
+                        {form.variants?.length > 0 ? '(Dihitung otomatis dari varian)' : '(Stok produk tunggal)'}
+                      </span>
+                    </label>
+                    <input
+                      type="number"
+                      className={styles.fieldInput}
+                      value={form.variants?.length > 0 ? form.quantity : (form.quantity || 0)}
+                      onChange={(e) => {
+                        if (!form.variants || form.variants.length === 0) {
+                          setForm({ ...form, quantity: parseInt(e.target.value) || 0 });
+                        }
+                      }}
+                      readOnly={form.variants?.length > 0}
+                    />
+                  </div>
+                </div>
+
+                {/* Variants Table */}
+                <div className={styles.variantContainer}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className={styles.fieldLabel} style={{ fontWeight: 600 }}>Daftar Varian Produk</label>
+                    <button
+                      type="button"
+                      className={styles.outlineBtn}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.78125rem' }}
+                      onClick={() => {
+                        const updated = [...(form.variants || []), { size: '', stock: 1, price: '', imageUrl: '' }];
+                        const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                        setForm({ ...form, variants: updated, quantity: total });
+                      }}
+                    >
+                      + Tambah Varian
+                    </button>
+                  </div>
+
+                  {form.variants && form.variants.length > 0 && (
+                    <>
+                      <div className={styles.variantHeaderRow}>
+                        <span>Nama Varian</span>
+                        <span>Stok</span>
+                        <span>Harga Khusus (Opsional)</span>
+                        <span>Foto Varian</span>
+                        <span>Aksi</span>
+                      </div>
+
+                      {form.variants.map((v, index) => (
+                        <div key={index} className={styles.variantItemRow}>
+                          <input
+                            type="text"
+                            placeholder="Contoh: Male / Female / Pair"
+                            className={styles.fieldInput}
+                            value={v.size}
+                            onChange={(e) => {
+                              const updated = [...form.variants];
+                              updated[index] = { ...updated[index], size: e.target.value };
+                              const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                              setForm({ ...form, variants: updated, quantity: total });
+                            }}
+                            required
+                          />
+                          <input
+                            type="number"
+                            placeholder="Stok"
+                            min="0"
+                            className={styles.fieldInput}
+                            value={v.stock}
+                            onChange={(e) => {
+                              const updated = [...form.variants];
+                              updated[index] = { ...updated[index], stock: parseInt(e.target.value) || 0 };
+                              const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                              setForm({ ...form, variants: updated, quantity: total });
+                            }}
+                            required
+                          />
+                          <input
+                            type="number"
+                            placeholder={`Default (${form.price || '—'})`}
+                            min="0"
+                            className={styles.fieldInput}
+                            value={v.price}
+                            onChange={(e) => {
+                              const updated = [...form.variants];
+                              updated[index] = { ...updated[index], price: e.target.value };
+                              setForm({ ...form, variants: updated });
+                            }}
+                          />
+                          <select
+                            className={styles.fieldInput}
+                            value={v.imageUrl || ''}
+                            onChange={(e) => {
+                              const updated = [...form.variants];
+                              updated[index] = { ...updated[index], imageUrl: e.target.value };
+                              setForm({ ...form, variants: updated });
+                            }}
+                          >
+                            <option value="">Foto Utama</option>
+                            {form.media?.filter((m) => m.type === 'image').map((img, i) => (
+                              <option key={img.url} value={img.url}>Foto #{i + 1}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className={styles.variantDeleteBtn}
+                            onClick={() => {
+                              const updated = form.variants.filter((_, i) => i !== index);
+                              const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                              setForm({ ...form, variants: updated, quantity: total });
+                            }}
+                            title="Hapus varian"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className={styles.formFullWidth}>
-                <label className={styles.formLabel}>Deskripsi Produk</label>
-                <textarea
-                  className={styles.formInput}
-                  style={{ minHeight: '80px', resize: 'none' }}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  required
-                />
-              </div>
+              {/* Section 4: Pengaturan Tambahan & Status Drop */}
+              <div className={styles.formCard}>
+                <div className={styles.formCardHeader}>
+                  <h4 className={styles.formCardTitle}>Pengaturan Tambahan</h4>
+                  <p className={styles.formCardDesc}>Pengaturan promosi, kode drop Telegram, dan tampilan produk.</p>
+                </div>
 
-              <div>
-                <label className={styles.formLabel}>
-                  Kode / Nomor Drop
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.35rem', fontWeight: 'normal' }}>
-                    (Contoh: #01)
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: #01"
-                  className={styles.formInput}
-                  value={form.dropNumber || ''}
-                  onChange={(e) => setForm({ ...form, dropNumber: e.target.value })}
-                />
-              </div>
+                <div className={styles.formGridTwo}>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>
+                      Kode / Nomor Drop
+                      <span className={styles.fieldOptional}>(Contoh: #01)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: #01"
+                      className={styles.fieldInput}
+                      value={form.dropNumber || ''}
+                      onChange={(e) => setForm({ ...form, dropNumber: e.target.value })}
+                    />
+                  </div>
 
-              <div>
-                <label className={styles.formLabel}>
-                  URL Video Ikan
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.35rem', fontWeight: 'normal' }}>
-                    (Opsional)
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://..."
-                  className={styles.formInput}
-                  value={form.videoUrl || ''}
-                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                />
-              </div>
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>
+                      Terjual (Display Counter)
+                      <span className={styles.fieldOptional}>(Tampilan etalase saja)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      className={styles.fieldInput}
+                      value={form.soldCount ?? 0}
+                      onChange={(e) => setForm({ ...form, soldCount: Math.max(0, parseInt(e.target.value) || 0) })}
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <ManageableSelect
-                  label="Grade Bentuk"
-                  value={form.statsForm}
-                  onChange={(val) => setForm({ ...form, statsForm: val })}
-                  options={grades}
-                  setOptions={setGrades}
-                />
-              </div>
+                <div className={styles.switchGroup}>
+                  <label className={styles.switchOption}>
+                    <input
+                      type="checkbox"
+                      className={styles.switchInput}
+                      checked={form.isPremium}
+                      onChange={(e) => setForm({ ...form, isPremium: e.target.checked })}
+                    />
+                    <span>Tandai Sebagai Ikan Premium</span>
+                  </label>
 
-              <div>
-                <label className={styles.formLabel}>Umur (Age)</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: 4 Month, 5 Bulan"
-                  className={styles.formInput}
-                  value={form.age}
-                  onChange={(e) => setForm({ ...form, age: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className={styles.formFullWidth} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
-                <label className={styles.formLabel} style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--text-main)', textAlign: 'center', marginBottom: '1rem' }}>
-                  Varian (Gender / Ukuran)
-                </label>
-                <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', border: '1px dashed var(--border-color)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {form.variants.map((v, index) => (
-                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.3fr 1.4fr auto', gap: '0.5rem', alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        placeholder="Varian (Male, Female, Pair)"
-                        className={styles.formInput}
-                        value={v.size}
-                        onChange={(e) => {
-                          const updated = [...form.variants];
-                          updated[index] = { ...updated[index], size: e.target.value };
-                          const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
-                          setForm({ ...form, variants: updated, quantity: total });
-                        }}
-                        required
-                      />
-                      <input
-                        type="number"
-                        placeholder="Stok"
-                        className={styles.formInput}
-                        value={v.stock}
-                        min="0"
-                        onChange={(e) => {
-                          const updated = [...form.variants];
-                          updated[index] = { ...updated[index], stock: parseInt(e.target.value) || 0 };
-                          const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
-                          setForm({ ...form, variants: updated, quantity: total });
-                        }}
-                        required
-                      />
-                      <input
-                        type="number"
-                        placeholder={`Harga (default: ${form.price || '—'})`}
-                        className={styles.formInput}
-                        value={v.price}
-                        min="0"
-                        onChange={(e) => {
-                          const updated = [...form.variants];
-                          updated[index] = { ...updated[index], price: e.target.value };
-                          setForm({ ...form, variants: updated });
-                        }}
-                      />
-                      <select
-                        className={styles.formInput}
-                        value={v.imageUrl || ''}
-                        onChange={(e) => {
-                          const updated = [...form.variants];
-                          updated[index] = { ...updated[index], imageUrl: e.target.value };
-                          setForm({ ...form, variants: updated });
-                        }}
-                      >
-                        <option value="">Foto Utama</option>
-                        {form.images && form.images.map((img, i) => (
-                          <option key={i} value={img}>Foto {i + 1}</option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        className={styles.tableActionBtnDanger}
-                        onClick={() => {
-                          const updated = form.variants.filter((_, i) => i !== index);
-                          const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
-                          setForm({ ...form, variants: updated, quantity: total });
-                        }}
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className={styles.outlineBtn}
-                    style={{ width: '100%', maxWidth: '300px', marginTop: form.variants.length > 0 ? '0.25rem' : 0, alignSelf: 'center' }}
-                    onClick={() => {
-                      const updated = [...form.variants, { size: '', stock: 1, price: '', imageUrl: '' }];
-                      const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
-                      setForm({ ...form, variants: updated, quantity: total });
-                    }}
-                  >
-                    + Tambah Varian
-                  </button>
+                  <label className={styles.switchOption}>
+                    <input
+                      type="checkbox"
+                      className={styles.switchInput}
+                      checked={form.isDailyDrop}
+                      onChange={(e) => setForm({ ...form, isDailyDrop: e.target.checked })}
+                    />
+                    <span>Aktifkan Daily Drop 24 Jam</span>
+                  </label>
                 </div>
               </div>
 
-              <div>
-                <label className={styles.formLabel}>Total Jumlah Produk (Dihitung Otomatis)</label>
-                <input
-                  type="number"
-                  className={styles.formInput}
-                  style={{ opacity: 0.7 }}
-                  value={form.variants.length > 0 ? form.quantity : (form.quantity || 0)}
-                  onChange={(e) => {
-                    if (!form.variants || form.variants.length === 0) {
-                      setForm({ ...form, quantity: parseInt(e.target.value) || 0 });
-                    }
-                  }}
-                  readOnly={form.variants.length > 0}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formLabel}>
-                  Terjual (Display)
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.35rem', fontWeight: 'normal' }}>
-                    (Bisa diedit manual & tidak mengubah laporan keuangan)
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  className={styles.formInput}
-                  value={form.soldCount ?? 0}
-                  onChange={(e) => setForm({ ...form, soldCount: Math.max(0, parseInt(e.target.value) || 0) })}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    id="isPremiumCheck"
-                    checked={form.isPremium}
-                    onChange={(e) => setForm({ ...form, isPremium: e.target.checked })}
-                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                  />
-                  Ikan Premium
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    id="isDailyDropCheck"
-                    checked={form.isDailyDrop}
-                    onChange={(e) => setForm({ ...form, isDailyDrop: e.target.checked })}
-                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                  />
-                  Daily Drop 24 Jam
-                </label>
-              </div>
-
-              <div className={styles.formActions}>
+              {/* Modal Footer */}
+              <div className={styles.productModalFooter}>
                 <button
                   type="button"
                   onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
                   className={styles.outlineBtn}
-                  style={{ flex: 1, padding: '0.65rem' }}
                 >
                   Batal
                 </button>
-                <button type="submit" className={styles.primaryBtn} style={{ flex: 1, padding: '0.65rem' }}>
-                  Simpan
+                <button type="submit" className={styles.primaryBtn}>
+                  {isAddOpen ? 'Tambah Produk' : 'Simpan Perubahan'}
                 </button>
               </div>
             </form>
