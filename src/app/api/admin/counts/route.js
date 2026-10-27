@@ -7,7 +7,17 @@ import { requirePermission } from '@/lib/permissions';
 // Ringan sengaja: hanya count() query, tidak fetch full row.
 export async function GET(request) {
   try {
-    await requirePermission(request, ['orders:read', 'products:view', 'dashboard:view']);
+    await requirePermission(request, [
+      'dashboard:view',
+      'orders:view',
+      'orders:read',
+      'shipping:view',
+      'products:view',
+      'reports:view',
+      'events:view',
+      'users:view',
+      'roles:view',
+    ]);
 
     // Gunakan groupBy untuk status agar hanya butuh 1 query agregat (1 koneksi DB)
     // untuk menghitung PENDING, PAID, PROCESSING, dan RETURNED secara efisien.

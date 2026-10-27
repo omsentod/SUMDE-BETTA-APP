@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission, hasPermission } from '@/lib/permissions';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED'];
 
@@ -17,14 +17,13 @@ export async function GET(request, { params }) {
     }
 
     // Full order details (name, email, phone, address, items) are PII —
-    // require the owner or an admin. Guest orders (userId = null) are NOT
-    // fetchable through this endpoint; the payment page polls the minimal
-    // /status endpoint instead, which returns only the order status.
+    // require the owner or an admin/staff with orders:view permission.
     const session = await getSession(request);
     if (!session) {
       return NextResponse.json({ error: 'Autentikasi diperlukan.' }, { status: 401 });
     }
-    if (order.userId !== session.id && session.role !== 'admin') {
+    const canManageOrders = session.role === 'admin' || (await hasPermission(session.role, 'orders:view'));
+    if (order.userId !== session.id && !canManageOrders) {
       return NextResponse.json({ error: 'Anda tidak memiliki akses ke pesanan ini.' }, { status: 403 });
     }
 

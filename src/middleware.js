@@ -27,13 +27,20 @@ async function readSession(request) {
 
 export async function middleware(request) {
   const session = await readSession(request);
-  if (!session || session.role !== 'admin') {
+  if (!session) {
     const base = process.env.APP_URL || request.url;
     const loginUrl = new URL('/login', base);
     // Preserve where they tried to go so the login page can bounce them back.
     loginUrl.searchParams.set('next', request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
+
+  // Pelanggan reguler (customer) dilarang mengakses panel /admin/*
+  if (session.role === 'customer') {
+    const base = process.env.APP_URL || request.url;
+    return NextResponse.redirect(new URL('/customer/dashboard', base));
+  }
+
   return NextResponse.next();
 }
 
