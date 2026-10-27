@@ -181,13 +181,21 @@ function AdminOrdersPageInner() {
 
     inFlightRef.current = true;
     if (!silent) setLoading(true);
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
+
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch('/api/orders', { signal: controller?.signal });
+      if (timeoutId) clearTimeout(timeoutId);
+      if (res.status === 401 || res.status === 403) {
+        return;
+      }
       if (res.ok) {
         setOrders(await res.json());
         lastLoadedRef.current = Date.now();
       }
     } catch (err) {
+      if (timeoutId) clearTimeout(timeoutId);
       console.error(err);
     } finally {
       inFlightRef.current = false;

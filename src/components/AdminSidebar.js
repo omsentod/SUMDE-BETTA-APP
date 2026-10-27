@@ -73,28 +73,43 @@ function AdminSidebarInner() {
     let inFlight = false;
     let lastLoaded = Date.now();
 
+    let timer = null;
+
     const load = (force = false) => {
       if (cancelled || inFlight) return;
       // Jangan bebani server / database jika tab sedang di latar belakang (background tab)
       if (!force && typeof document !== 'undefined' && document.hidden) return;
 
       inFlight = true;
-      fetch('/api/admin/counts')
-        .then((r) => (r.ok ? r.json() : null))
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
+
+      fetch('/api/admin/counts', { signal: controller?.signal })
+        .then((r) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (r.status === 401 || r.status === 403) {
+            // Sesi kedaluwarsa atau berubah akun di tab lain — matikan interval polling
+            if (timer) clearInterval(timer);
+            return null;
+          }
+          return r.ok ? r.json() : null;
+        })
         .then((data) => {
           if (data && !cancelled) {
             setCounts(data);
             lastLoaded = Date.now();
           }
         })
-        .catch(() => {})
+        .catch(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+        })
         .finally(() => {
           inFlight = false;
         });
     };
 
     load(true);
-    const timer = setInterval(() => load(false), REFRESH_MS);
+    timer = setInterval(() => load(false), REFRESH_MS);
 
     const onVisibilityChange = () => {
       if (typeof document !== 'undefined' && !document.hidden && Date.now() - lastLoaded >= REFRESH_MS) {
@@ -105,7 +120,7 @@ function AdminSidebarInner() {
 
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [currentUser]);

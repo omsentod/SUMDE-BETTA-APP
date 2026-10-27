@@ -3,19 +3,88 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 
 const AuthContext = createContext();
 
+// Helper to notify other open browser tabs of session state mutations
+function broadcastAuthChange() {
+    if (typeof window === 'undefined') return;
+    try {
+        if ('BroadcastChannel' in window) {
+            const bc = new BroadcastChannel('sumde_auth_channel');
+            bc.postMessage({ type: 'AUTH_STATE_CHANGED', timestamp: Date.now() });
+            bc.close();
+        }
+        localStorage.setItem('sumde_auth_sync_event', String(Date.now()));
+    } catch {
+        // BroadcastChannel / localStorage access may be blocked in some private browsing modes
+    }
+}
+
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Identity comes from the httpOnly session cookie, resolved server-side
-    // via /api/auth/me — never from localStorage (that used to be spoofable).
-    useEffect(() => {
-        fetch('/api/auth/me')
-            .then((res) => res.json())
-            .then((data) => setCurrentUser(data.user || null))
-            .catch(() => {})
-            .finally(() => setIsLoading(false));
+    const refreshSession = useCallback(async () => {
+        try {
+            const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timeoutId = controller ? setTimeout(() => controller.abort(), 5000) : null;
+            const res = await fetch('/api/auth/me', {
+                signal: controller?.signal
+            });
+            if (timeoutId) clearTimeout(timeoutId);
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentUser(data.user || null);
+            } else {
+                setCurrentUser(null);
+            }
+        } catch {
+            // Network failure or abort — retain current state
+        }
     }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial server session bootstrap
+        refreshSession().finally(() => {
+            if (mounted) setIsLoading(false);
+        });
+        return () => {
+            mounted = false;
+        };
+    }, [refreshSession]);
+
+    // Cross-tab synchronization: when user logs in or out in another tab,
+    // immediately re-sync current tab's session without waiting for polling.
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        let bc = null;
+        if ('BroadcastChannel' in window) {
+            try {
+                bc = new BroadcastChannel('sumde_auth_channel');
+                bc.onmessage = (event) => {
+                    if (event.data?.type === 'AUTH_STATE_CHANGED') {
+                        refreshSession();
+                    }
+                };
+            } catch {
+                // ignore
+            }
+        }
+
+        const handleStorage = (e) => {
+            if (e.key === 'sumde_auth_sync_event') {
+                refreshSession();
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+
+        return () => {
+            if (bc) {
+                try { bc.close(); } catch {}
+            }
+            window.removeEventListener('storage', handleStorage);
+        };
+    }, [refreshSession]);
 
     const login = useCallback(async (email, password) => {
         const response = await fetch('/api/auth/login', {
@@ -33,6 +102,7 @@ export function AuthProvider({ children }) {
             throw err;
         }
         setCurrentUser(data);
+        broadcastAuthChange();
         return data;
     }, []);
 
@@ -44,6 +114,7 @@ export function AuthProvider({ children }) {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Registrasi gagal.');
+        broadcastAuthChange();
         return data;
     }, []);
 
@@ -54,6 +125,7 @@ export function AuthProvider({ children }) {
             // ignore network errors on logout
         }
         setCurrentUser(null);
+        broadcastAuthChange();
     }, []);
 
     // Reads currentUser via functional-update-safe accessor. Since the caller

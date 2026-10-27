@@ -51,10 +51,11 @@ export default function NotificationBell() {
   const prevUnreadRef = useRef(0);
   const isFirstLoadRef = useRef(true);
   const notifInFlightRef = useRef(false);
-  const notifLastLoadedRef = useRef(Date.now());
+  const notifLastLoadedRef = useRef(0);
 
   // Load sound preference on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync sound state with localStorage
     setSoundMuted(isChimeMuted());
   }, []);
 
@@ -78,8 +79,17 @@ export default function NotificationBell() {
     if (isBackgroundPoll && typeof document !== 'undefined' && document.hidden) return;
 
     notifInFlightRef.current = true;
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
+
     try {
-      const res = await fetch('/api/notifications?limit=30');
+      const res = await fetch('/api/notifications?limit=30', { signal: controller?.signal });
+      if (timeoutId) clearTimeout(timeoutId);
+
+      if (res.status === 401 || res.status === 403) {
+        // Sesi kedaluwarsa atau berubah di tab lain
+        return;
+      }
       if (!res.ok) return;
       const data = await res.json();
       const newItems = data.notifications || [];
@@ -108,6 +118,7 @@ export default function NotificationBell() {
       prevUnreadRef.current = newUnread;
       isFirstLoadRef.current = false;
     } catch {
+      if (timeoutId) clearTimeout(timeoutId);
       // silent
     } finally {
       notifInFlightRef.current = false;
@@ -117,6 +128,7 @@ export default function NotificationBell() {
   // Initial load + Polling fallback
   useEffect(() => {
     if (!currentUser?.id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap notifications on user mount
     loadNotifications(false);
     const interval = setInterval(() => loadNotifications(true), POLL_MS);
 
@@ -197,6 +209,7 @@ export default function NotificationBell() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser capability probe
       setPushStatus('unsupported');
       return;
     }
