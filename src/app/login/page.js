@@ -22,9 +22,9 @@ function LoginPageInner() {
             const safeNext = nextParam && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextParam) ? nextParam : null;
 
             if (safeNext && !(safeNext === '/customer/dashboard' && hasAdminAccess)) {
-                router.push(safeNext);
+                router.replace(safeNext);
             } else {
-                router.push(hasAdminAccess ? '/admin/dashboard' : '/customer/dashboard');
+                router.replace(hasAdminAccess ? '/admin/dashboard' : '/customer/dashboard');
             }
         }
     }, [currentUser, router, searchParams]);
@@ -50,18 +50,8 @@ function LoginPageInner() {
         setIsLoading(true);
 
         try {
-            const user = await login(email, password);
-            const hasAdminAccess = user.role === 'admin' || user.canAccessAdmin || (Array.isArray(user.permissions) && user.permissions.length > 0);
-            const nextParam = searchParams.get('next');
-            const safeNext = nextParam && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextParam) ? nextParam : null;
-
-            if (safeNext && !(safeNext === '/customer/dashboard' && hasAdminAccess)) {
-                router.push(safeNext);
-            } else if (hasAdminAccess) {
-                router.push('/admin/dashboard');
-            } else {
-                router.push('/customer/dashboard');
-            }
+            await login(email, password);
+            // Pengalihan halaman ditangani otomatis oleh effect di atas saat currentUser terisi
         } catch (err) {
             // Backend kirim code=EMAIL_NOT_VERIFIED kalau user harus verifikasi.
             // Redirect ke /verify-email dengan email prefill supaya user

@@ -21,23 +21,36 @@ function broadcastAuthChange() {
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const refreshInFlightRef = React.useRef(false);
 
     const refreshSession = useCallback(async () => {
+        if (refreshInFlightRef.current) return;
+        refreshInFlightRef.current = true;
         try {
             const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-            const timeoutId = controller ? setTimeout(() => controller.abort(), 5000) : null;
+            const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
             const res = await fetch('/api/auth/me', {
                 signal: controller?.signal
             });
             if (timeoutId) clearTimeout(timeoutId);
             if (res.ok) {
                 const data = await res.json();
-                setCurrentUser(data.user || null);
+                const nextUser = data.user || null;
+                // Cegah cascading re-render & re-fetch jika identitas user & role tidak berubah
+                setCurrentUser((prev) => {
+                    if (!prev && !nextUser) return null;
+                    if (prev && nextUser && prev.id === nextUser.id && prev.role === nextUser.role) {
+                        return prev;
+                    }
+                    return nextUser;
+                });
             } else {
                 setCurrentUser(null);
             }
         } catch {
             // Network failure or abort — retain current state
+        } finally {
+            refreshInFlightRef.current = false;
         }
     }, []);
 
@@ -52,12 +65,14 @@ export function AuthProvider({ children }) {
         };
     }, [refreshSession]);
 
-    // Cross-tab synchronization: when user logs in or out in another tab,
-    // immediately re-sync current tab's session without waiting for polling.
+    // Cross-tab synchronization: gunakan BroadcastChannel jika didukung,
+    // fallback ke storage event hanya jika BroadcastChannel tidak ada (mencegah double-fetch di Chrome).
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
         let bc = null;
+        let handleStorage = null;
+
         if ('BroadcastChannel' in window) {
             try {
                 bc = new BroadcastChannel('sumde_auth_channel');
@@ -69,20 +84,22 @@ export function AuthProvider({ children }) {
             } catch {
                 // ignore
             }
+        } else {
+            handleStorage = (e) => {
+                if (e.key === 'sumde_auth_sync_event') {
+                    refreshSession();
+                }
+            };
+            window.addEventListener('storage', handleStorage);
         }
-
-        const handleStorage = (e) => {
-            if (e.key === 'sumde_auth_sync_event') {
-                refreshSession();
-            }
-        };
-        window.addEventListener('storage', handleStorage);
 
         return () => {
             if (bc) {
                 try { bc.close(); } catch {}
             }
-            window.removeEventListener('storage', handleStorage);
+            if (handleStorage) {
+                window.removeEventListener('storage', handleStorage);
+            }
         };
     }, [refreshSession]);
 
