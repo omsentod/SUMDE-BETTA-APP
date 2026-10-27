@@ -66,59 +66,71 @@ export async function PUT(request, { params }) {
     if (isArchived !== undefined) dataToUpdate.isArchived = Boolean(isArchived);
 
     if (Array.isArray(variants)) {
-      const sizeSet = new Set();
-      for (const v of variants) {
-        const s = (v.size || '').trim();
-        if (!s) {
-          return NextResponse.json({ error: 'Nama varian tidak boleh kosong.' }, { status: 400 });
+      if (variants.length > 0) {
+        const sizeSet = new Set();
+        for (const v of variants) {
+          const s = (v.size || '').trim();
+          if (!s) {
+            return NextResponse.json({ error: 'Nama varian tidak boleh kosong.' }, { status: 400 });
+          }
+          if (sizeSet.has(s.toLowerCase())) {
+            return NextResponse.json({ error: `Nama varian "${s}" tidak boleh duplikat.` }, { status: 400 });
+          }
+          sizeSet.add(s.toLowerCase());
         }
-        if (sizeSet.has(s.toLowerCase())) {
-          return NextResponse.json({ error: `Nama varian "${s}" tidak boleh duplikat.` }, { status: 400 });
-        }
-        sizeSet.add(s.toLowerCase());
+
+        const totalStock = variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
+        dataToUpdate.quantity = totalStock;
+        dataToUpdate.isSold = totalStock === 0;
+
+        const existingVariants = await prisma.productVariant.findMany({ where: { productId: id } });
+        const existingIds = new Set(existingVariants.map(v => v.id));
+        const incomingIds = new Set(variants.filter(v => v.id).map(v => v.id));
+        const toDelete = [...existingIds].filter(vid => !incomingIds.has(vid));
+
+        await prisma.$transaction([
+          ...(toDelete.length > 0
+            ? [prisma.productVariant.deleteMany({ where: { id: { in: toDelete } } })]
+            : []),
+          ...variants.map((v, idx) =>
+            v.id
+              ? prisma.productVariant.update({
+                  where: { id: v.id },
+                  data: {
+                    size: v.size,
+                    stock: parseInt(v.stock) || 0,
+                    price: v.price !== undefined && v.price !== '' ? parseFloat(v.price) : null,
+                    imageUrl: v.imageUrl || null,
+                    displayOrder: idx,
+                  },
+                })
+              : prisma.productVariant.create({
+                  data: {
+                    productId: id,
+                    size: v.size,
+                    stock: parseInt(v.stock) || 0,
+                    price: v.price !== undefined && v.price !== '' ? parseFloat(v.price) : null,
+                    imageUrl: v.imageUrl || null,
+                    displayOrder: idx,
+                  },
+                })
+          ),
+          prisma.product.update({ where: { id }, data: dataToUpdate }),
+        ]);
+      } else {
+        // Varian kosong (misal produk diubah menjadi produk tunggal tanpa varian)
+        const qty = quantity !== undefined ? Math.max(0, parseInt(quantity) || 0) : 0;
+        dataToUpdate.quantity = qty;
+        dataToUpdate.isSold = qty === 0;
+
+        await prisma.$transaction([
+          prisma.productVariant.deleteMany({ where: { productId: id } }),
+          prisma.product.update({ where: { id }, data: dataToUpdate }),
+        ]);
       }
-
-      const totalStock = variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
-      dataToUpdate.quantity = totalStock;
-      dataToUpdate.isSold = totalStock === 0;
-
-      const existingVariants = await prisma.productVariant.findMany({ where: { productId: id } });
-      const existingIds = new Set(existingVariants.map(v => v.id));
-      const incomingIds = new Set(variants.filter(v => v.id).map(v => v.id));
-      const toDelete = [...existingIds].filter(vid => !incomingIds.has(vid));
-
-      await prisma.$transaction([
-        ...(toDelete.length > 0
-          ? [prisma.productVariant.deleteMany({ where: { id: { in: toDelete } } })]
-          : []),
-        ...variants.map((v, idx) =>
-          v.id
-            ? prisma.productVariant.update({
-                where: { id: v.id },
-                data: {
-                  size: v.size,
-                  stock: parseInt(v.stock) || 0,
-                  price: v.price !== undefined && v.price !== '' ? parseFloat(v.price) : null,
-                  imageUrl: v.imageUrl || null,
-                  displayOrder: idx,
-                },
-              })
-            : prisma.productVariant.create({
-                data: {
-                  productId: id,
-                  size: v.size,
-                  stock: parseInt(v.stock) || 0,
-                  price: v.price !== undefined && v.price !== '' ? parseFloat(v.price) : null,
-                  imageUrl: v.imageUrl || null,
-                  displayOrder: idx,
-                },
-              })
-        ),
-        prisma.product.update({ where: { id }, data: dataToUpdate }),
-      ]);
     } else {
       if (quantity !== undefined) {
-        const qty = parseInt(quantity);
+        const qty = Math.max(0, parseInt(quantity) || 0);
         dataToUpdate.quantity = qty;
         dataToUpdate.isSold = qty === 0;
       }

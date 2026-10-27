@@ -63,7 +63,7 @@ export async function POST(request) {
 
     const totalStock = normalizedVariants.length > 0
       ? normalizedVariants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0)
-      : (parseInt(quantity) || 1);
+      : (quantity !== undefined ? Math.max(0, parseInt(quantity) || 0) : 1);
 
     const newProduct = await prisma.product.create({
       data: {

@@ -1380,6 +1380,15 @@
     box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
 }
 
+.fieldInput:disabled,
+.fieldTextarea:disabled {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+    color: var(--text-muted);
+    cursor: not-allowed;
+    border-color: var(--border-color);
+    opacity: 0.75;
+}
+
 .fieldTextarea {
     width: 100%;
     padding: 0.65rem 0.85rem;
@@ -1589,6 +1598,23 @@
     flex-direction: column;
     gap: 0.75rem;
     width: 100%;
+}
+
+.variantHeaderBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.variantHeading {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.variantAddBtn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78125rem;
 }
 
 .variantHeaderRow {

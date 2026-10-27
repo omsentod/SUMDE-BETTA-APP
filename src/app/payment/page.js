@@ -31,7 +31,7 @@ export default function PaymentPage() {
     const [loading, setLoading] = useState(false);
     const [resuming, setResuming] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('QRIS');
     // True saat user klik "Ganti Metode Pembayaran" dari waiting screen —
     // menampilkan ulang picker tapi tetap reuse order PENDING yang sama
     // (bukan bikin order baru).

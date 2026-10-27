@@ -37,23 +37,23 @@ export const PAYMENT_METHODS = {
     label: 'QRIS',
     category: 'QRIS',
     dokuType: 'QRIS',
-    fee: { percent: 0.007 },
+    fee: { flat: 1000 },
   },
 
   // ---------- Virtual Account (SNAP) ----------
-  VA_BCA: { label: 'BCA Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BCA', fee: { flat: 4000 } },
-  VA_BNI: { label: 'BNI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BNI', fee: { flat: 4000 } },
-  VA_BRI: { label: 'BRI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BRI', fee: { flat: 4000 } },
-  VA_MANDIRI: { label: 'Mandiri Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_MANDIRI', fee: { flat: 4000 } },
-  VA_BSI: { label: 'BSI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BSI', fee: { flat: 4000 } },
-  VA_PERMATA: { label: 'Permata Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_PERMATA', fee: { flat: 4000 } },
-  VA_CIMB: { label: 'CIMB Niaga Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_CIMB', fee: { flat: 4000 } },
-  VA_DANAMON: { label: 'Danamon Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_DANAMON', fee: { flat: 4000 } },
-  VA_MAYBANK: { label: 'Maybank Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_MAYBANK', fee: { flat: 4000 } },
-  VA_BTN: { label: 'BTN Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BTN', fee: { flat: 4000 } },
-  VA_BJB: { label: 'BJB Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_BJB', fee: { flat: 4000 } },
-  VA_SINARMAS: { label: 'Sinarmas Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_SINARMAS', fee: { flat: 4000 } },
-  VA_DOKU: { label: 'DOKU Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_DOKU', fee: { flat: 4000 } },
+  VA_BCA: { label: 'BCA Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BCA', fee: { flat: 4000 }, inactive: true },
+  VA_BNI: { label: 'BNI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BNI', fee: { flat: 4000 }, inactive: true },
+  VA_BRI: { label: 'BRI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BRI', fee: { flat: 4000 }, inactive: true },
+  VA_MANDIRI: { label: 'Mandiri Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_MANDIRI', fee: { flat: 4000 }, inactive: true },
+  VA_BSI: { label: 'BSI Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BSI', fee: { flat: 4000 }, inactive: true },
+  VA_PERMATA: { label: 'Permata Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_PERMATA', fee: { flat: 4000 }, inactive: true },
+  VA_CIMB: { label: 'CIMB Niaga Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_CIMB', fee: { flat: 4000 }, inactive: true },
+  VA_DANAMON: { label: 'Danamon Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_DANAMON', fee: { flat: 4000 }, inactive: true },
+  VA_MAYBANK: { label: 'Maybank Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_MAYBANK', fee: { flat: 4000 }, inactive: true },
+  VA_BTN: { label: 'BTN Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BTN', fee: { flat: 4000 }, inactive: true },
+  VA_BJB: { label: 'BJB Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_BANK_BJB', fee: { flat: 4000 }, inactive: true },
+  VA_SINARMAS: { label: 'Sinarmas Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_SINARMAS', fee: { flat: 4000 }, inactive: true },
+  VA_DOKU: { label: 'DOKU Virtual Account', category: 'VA', dokuType: 'VIRTUAL_ACCOUNT_DOKU', fee: { flat: 4000 }, inactive: true },
 
   // ---------- E-Wallet ----------
   EWALLET_DOKU: {
@@ -61,6 +61,7 @@ export const PAYMENT_METHODS = {
     category: 'E-Wallet',
     dokuType: 'EMONEY_DOKU',
     fee: { percent: 0.015 },
+    inactive: true,
   },
 
   // ---------- Paylater ----------
@@ -69,6 +70,7 @@ export const PAYMENT_METHODS = {
     category: 'Paylater',
     dokuType: 'PEER_TO_PEER_AKULAKU',
     fee: { percent: 0.015 },
+    inactive: true,
     // DOKU mewajibkan customer.address/city/state/postcode untuk channel ini;
     // dikirim dari data alamat order lewat createCheckoutSession().
   },
@@ -79,12 +81,14 @@ export const PAYMENT_METHODS = {
     category: 'Retail',
     dokuType: 'ONLINE_TO_OFFLINE_ALFA',
     fee: { flat: 5000 },
+    inactive: true,
   },
   RETAIL_INDOMARET: {
     label: 'Indomaret',
     category: 'Retail',
     dokuType: 'ONLINE_TO_OFFLINE_INDOMARET',
     fee: { flat: 6500 },
+    inactive: true,
   },
 };
 

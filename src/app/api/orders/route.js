@@ -118,8 +118,7 @@ export async function POST(request) {
     }
     const shippingFee = Number(rate.price) || 0;
     // Payment gateway admin fee — calculated server-side on subtotal + shipping.
-    // Percent methods (QRIS 0.7%, e-wallet 1.5%, paylater 1.5%) round up.
-    // Flat methods (VA Rp 4.000, Alfa Rp 5.000, Indomaret Rp 6.500) use nominal.
+    // Flat methods (QRIS Rp 1.000, VA Rp 4.000, Alfa Rp 5.000, Indomaret Rp 6.500) use nominal.
     const paymentFee = calcPaymentFee(paymentMethod, subtotal + shippingFee);
     const total = subtotal + shippingFee + paymentFee;
 

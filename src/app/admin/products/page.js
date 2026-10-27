@@ -72,6 +72,12 @@ function AdminProductsInner() {
   const [currentEdit, setCurrentEdit] = useState(null);
   const [form, setForm] = useState(emptyProductForm());
 
+  const hasVariants = Array.isArray(form.variants) && form.variants.length > 0;
+  const totalVariantStock = useMemo(() => {
+    if (!hasVariants) return 0;
+    return form.variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
+  }, [hasVariants, form.variants]);
+
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   // Drag-and-drop urutan foto: index yang sedang ditarik & target hover.
@@ -356,6 +362,10 @@ function AdminProductsInner() {
           return [];
         })();
 
+    const initialQuantity = parsedVariants.length > 0
+      ? parsedVariants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0)
+      : (product.quantity ?? 1);
+
     setForm({
       name: product.name,
       price: product.price,
@@ -373,7 +383,7 @@ function AdminProductsInner() {
       statsForm: product.statsForm || 'COMP',
       age: product.age || '4 Month',
       statsSpirit: product.statsSpirit || 'Aktif',
-      quantity: product.quantity ?? 1,
+      quantity: initialQuantity,
       variants: parsedVariants,
       soldCount: product.soldCount ?? 0,
     });
@@ -419,8 +429,12 @@ function AdminProductsInner() {
       const mediaList = form.media || [];
       const firstImage = mediaList.find((m) => m.type === 'image');
       const videoItem = mediaList.find((m) => m.type === 'video');
+      const computedQuantity = hasVariants
+        ? totalVariantStock
+        : Math.max(0, parseInt(form.quantity) || 0);
       const payload = {
         ...form,
+        quantity: computedQuantity,
         image: firstImage?.url || form.image,
         videoUrl: videoItem?.url || form.videoUrl || null,
         images: mediaList.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
@@ -440,8 +454,12 @@ function AdminProductsInner() {
       const mediaList = form.media || [];
       const firstImage = mediaList.find((m) => m.type === 'image');
       const videoItem = mediaList.find((m) => m.type === 'video');
+      const computedQuantity = hasVariants
+        ? totalVariantStock
+        : Math.max(0, parseInt(form.quantity) || 0);
       const payload = {
         ...form,
+        quantity: computedQuantity,
         image: firstImage?.url || form.image,
         videoUrl: videoItem?.url || form.videoUrl || null,
         images: mediaList.map((m) => (m.type === 'video' ? { type: 'video', url: m.url } : m.url)),
@@ -1156,31 +1174,36 @@ function AdminProductsInner() {
                     <label className={styles.fieldLabel}>
                       Total Stok
                       <span className={styles.fieldOptional}>
-                        {form.variants?.length > 0 ? '(Dihitung otomatis dari varian)' : '(Stok produk tunggal)'}
+                        {hasVariants ? '(Otomatis dari total varian aktif)' : '(Stok produk tunggal)'}
                       </span>
                     </label>
                     <input
                       type="number"
+                      min="0"
                       className={styles.fieldInput}
-                      value={form.variants?.length > 0 ? form.quantity : (form.quantity || 0)}
+                      value={hasVariants ? totalVariantStock : (form.quantity ?? '')}
                       onChange={(e) => {
-                        if (!form.variants || form.variants.length === 0) {
-                          setForm({ ...form, quantity: parseInt(e.target.value) || 0 });
+                        if (!hasVariants) {
+                          setForm({
+                            ...form,
+                            quantity: e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0),
+                          });
                         }
                       }}
-                      readOnly={form.variants?.length > 0}
+                      disabled={hasVariants}
+                      placeholder="0"
+                      required
                     />
                   </div>
                 </div>
 
                 {/* Variants Table */}
                 <div className={styles.variantContainer}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className={styles.fieldLabel} style={{ fontWeight: 600 }}>Daftar Varian Produk</label>
+                  <div className={styles.variantHeaderBar}>
+                    <label className={styles.variantHeading}>Daftar Varian Produk</label>
                     <button
                       type="button"
-                      className={styles.outlineBtn}
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.78125rem' }}
+                      className={`${styles.outlineBtn} ${styles.variantAddBtn}`}
                       onClick={() => {
                         const updated = [...(form.variants || []), { size: '', stock: 1, price: '', imageUrl: '' }];
                         const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
@@ -1191,7 +1214,7 @@ function AdminProductsInner() {
                     </button>
                   </div>
 
-                  {form.variants && form.variants.length > 0 && (
+                  {hasVariants && (
                     <>
                       <div className={styles.variantHeaderRow}>
                         <span>Nama Varian</span>
@@ -1211,8 +1234,7 @@ function AdminProductsInner() {
                             onChange={(e) => {
                               const updated = [...form.variants];
                               updated[index] = { ...updated[index], size: e.target.value };
-                              const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
-                              setForm({ ...form, variants: updated, quantity: total });
+                              setForm({ ...form, variants: updated });
                             }}
                             required
                           />
@@ -1223,8 +1245,9 @@ function AdminProductsInner() {
                             className={styles.fieldInput}
                             value={v.stock}
                             onChange={(e) => {
+                              const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0);
                               const updated = [...form.variants];
-                              updated[index] = { ...updated[index], stock: parseInt(e.target.value) || 0 };
+                              updated[index] = { ...updated[index], stock: val };
                               const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
                               setForm({ ...form, variants: updated, quantity: total });
                             }}
@@ -1261,7 +1284,9 @@ function AdminProductsInner() {
                             className={styles.variantDeleteBtn}
                             onClick={() => {
                               const updated = form.variants.filter((_, i) => i !== index);
-                              const total = updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0);
+                              const total = updated.length > 0
+                                ? updated.reduce((s, x) => s + (parseInt(x.stock) || 0), 0)
+                                : (form.quantity > 0 ? form.quantity : 1);
                               setForm({ ...form, variants: updated, quantity: total });
                             }}
                             title="Hapus varian"
