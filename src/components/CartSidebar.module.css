@@ -1,10 +1,131 @@
-/*
- * Bulk-action bar shown at the top of the cart items list when the cart is
- * non-empty. Lets the user select/deselect every item at once and bulk-delete
- * the currently selected ones. All colors resolve to CSS variables so the bar
- * flips cleanly between light and dark themes.
- */
 
+
+.container {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+    pointer-events: none;
+    visibility: hidden;
+    transition: visibility 0.35s ease;
+}
+
+.container.isOpen {
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Backdrop Overlay */
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.container.isOpen .overlay {
+    opacity: 1;
+}
+
+/* Slide-over Drawer Panel */
+.sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 440px;
+    max-width: 100vw;
+    height: 100dvh;
+    background: var(--modal-bg, var(--bg-card));
+    border-left: 1px solid var(--border-color);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.16);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.container.isOpen .sidebar {
+    transform: translateX(0);
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--modal-bg, var(--bg-card));
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.headerTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.headerIconWrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.headerTextGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.itemBadge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-glow);
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+}
+
+.closeBtn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.closeBtn:hover {
+    background: var(--glass);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+/* Bulk Selection Bar */
 .bulkBar {
     display: flex;
     align-items: center;
@@ -13,35 +134,24 @@
     padding: 0.65rem 1.25rem;
     background: var(--glass);
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    z-index: 1;
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 .selectAllLabel {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    font-size: 0.85rem;
-    font-weight: 600;
+    gap: 0.6rem;
+    font-weight: 500;
     color: var(--text-main);
     cursor: pointer;
     user-select: none;
 }
 
-.selectAllLabel input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary);
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
 .selectAllCount {
-    font-size: 0.75rem;
-    font-weight: 500;
     color: var(--text-muted);
-    margin-left: 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 400;
 }
 
 .bulkDeleteBtn {
@@ -49,29 +159,452 @@
     align-items: center;
     gap: 0.35rem;
     background: transparent;
-    border: 1px solid color-mix(in oklab, var(--status-error) 35%, transparent);
+    border: 1px solid color-mix(in oklab, var(--status-error) 30%, transparent);
     color: var(--status-error);
-    padding: 0.4rem 0.75rem;
+    padding: 0.35rem 0.65rem;
     border-radius: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 500;
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
-    white-space: nowrap;
 }
 
-.bulkDeleteBtn:hover:not(:disabled) {
+.bulkDeleteBtn:hover {
     background: var(--status-error-bg);
     border-color: var(--status-error);
 }
 
-.bulkDeleteBtn:disabled {
-    opacity: 0.45;
+/* Custom Accessible Checkbox with Pure White Checkmark */
+.checkboxWrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.checkboxInput {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.customCheckbox {
+    width: 19px;
+    height: 19px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+}
+
+.checkboxInput:focus-visible + .customCheckbox {
+    box-shadow: 0 0 0 2px var(--primary-glow);
+    border-color: var(--primary);
+}
+
+.checkboxInput:checked + .customCheckbox {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.customCheckbox svg {
+    width: 12px;
+    height: 12px;
+    stroke: #FFFFFF;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.checkboxInput:checked + .customCheckbox svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.checkboxWrapper:hover .customCheckbox {
+    border-color: var(--primary);
+}
+
+/* Cart Items Scroll Area */
+.itemsList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.itemsList::-webkit-scrollbar {
+    width: 5px;
+}
+
+.itemsList::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 9999px;
+}
+
+/* Item Card */
+.itemCard {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.itemCard:hover {
+    border-color: color-mix(in oklab, var(--primary) 30%, var(--border-color));
+}
+
+.itemCard.isSelected {
+    border-color: color-mix(in oklab, var(--primary) 35%, var(--border-color));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.itemCheckboxWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.itemImageWrapper {
+    position: relative;
+    width: 74px;
+    height: 74px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.itemImage {
+    object-fit: cover;
+    transition: transform 0.25s ease;
+}
+
+.itemImageWrapper:hover .itemImage {
+    transform: scale(1.05);
+}
+
+.itemDetails {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.itemHeaderRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.itemTitle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--text-main);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.itemTitle:hover {
+    color: var(--primary);
+}
+
+.itemDeleteBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.itemDeleteBtn:hover {
+    color: var(--status-error);
+    background: var(--status-error-bg);
+}
+
+.variantTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    width: fit-content;
+}
+
+.itemPriceAndQty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
+}
+
+.itemPrice {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+}
+
+.stepper {
+    display: inline-flex;
+    align-items: center;
+    background: var(--glass);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.stepperBtn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.stepperBtn:hover:not(:disabled) {
+    background: var(--border-color);
+    color: var(--primary);
+}
+
+.stepperBtn:disabled {
+    opacity: 0.35;
     cursor: not-allowed;
 }
 
-.bulkDeleteIcon {
-    width: 14px;
-    height: 14px;
+.stepperValue {
+    width: 28px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    user-select: none;
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    margin: auto 0;
+    gap: 0.875rem;
+}
+
+.emptyIconCircle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: var(--glass);
+    border: 1px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.emptyTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.emptyDesc {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    max-width: 280px;
+    margin: 0;
+}
+
+.emptyCta {
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--primary);
+    color: #FFFFFF;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.emptyCta:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+/* Footer & Checkout Area */
+.footer {
+    padding: 1.15rem 1.25rem calc(1.15rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border-color);
+    background: var(--modal-bg, var(--bg-card));
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    position: relative;
+    z-index: 2;
     flex-shrink: 0;
+}
+
+.summaryContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.summaryRow {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.summaryLabelGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.summaryLabel {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.summarySublabel {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0.85;
+}
+
+.summaryTotal {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+}
+
+.checkoutBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    background: var(--primary);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.checkoutBtn:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.checkoutBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--border-color);
+    color: var(--text-muted);
+}
+
+.trustBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+    .sidebar {
+        width: 100%;
+        max-width: 100vw;
+        border-left: none;
+    }
+
+    .header {
+        padding: 1rem 1rem;
+    }
+
+    .itemsList {
+        padding: 0.875rem 1rem;
+    }
+
+    .bulkBar {
+        padding: 0.6rem 1rem;
+    }
+
+    .footer {
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
 }

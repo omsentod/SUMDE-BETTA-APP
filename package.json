@@ -10,7 +10,8 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "node prisma/seed.js"
+    "db:seed": "node prisma/seed.js",
+    "products:sync-sold": "node scratch/sync_sold_count.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

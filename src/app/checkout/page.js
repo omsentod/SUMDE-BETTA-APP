@@ -64,7 +64,7 @@ export default function CheckoutPage() {
     const handleDeleteCheckoutItem = async (item) => {
         const confirmed = await confirmDialog({
             title: 'Hapus Spesimen?',
-            message: `Hapus "${item.name}"${item.selectedSize ? ` (Ukuran: ${item.selectedSize})` : ''} dari pesanan Anda?`,
+            message: `Hapus "${item.name}"${item.selectedSize ? ` (Varian: ${item.selectedSize})` : ''} dari pesanan Anda?`,
             confirmText: 'Ya, Hapus',
             cancelText: 'Batal',
             isDanger: true,
@@ -428,7 +428,7 @@ export default function CheckoutPage() {
                                             <p className="checkout-item-sub">Spesimen {item.category}</p>
                                             {item.selectedSize && (
                                                 <p className="checkout-item-size">
-                                                    Size: {item.selectedSize}
+                                                    Varian: {item.selectedSize}
                                                 </p>
                                             )}
                                         </div>

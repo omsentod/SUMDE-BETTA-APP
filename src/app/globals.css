@@ -644,76 +644,7 @@ select option,
     color: var(--primary);
 }
 
-/* Cart Sidebar (Drawer) */
-.cart-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    z-index: 2000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.4s ease;
-}
-
-.cart-overlay.open {
-    opacity: 1;
-    visibility: visible;
-}
-
-.cart-sidebar {
-    position: fixed;
-    right: -450px;
-    top: 0;
-    width: 450px;
-    height: 100vh;
-    background: var(--sidebar-bg);
-    backdrop-filter: blur(30px);
-    border-left: 1px solid var(--glass-border);
-    z-index: 2001;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex;
-    flex-direction: column;
-    box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
-}
-
-.cart-sidebar.open {
-    right: 0;
-}
-
-.cart-header {
-    padding: 2rem;
-    border-bottom: 1px solid var(--glass-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--text-main);
-}
-
-.cart-header button {
-    color: var(--text-main) !important;
-}
-
-.cart-footer {
-    padding: 2rem;
-    border-top: 1px solid var(--glass-border);
-    background: var(--glass);
-    color: var(--text-main);
-}
-
-.cart-items-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 2rem;
-}
-
-.cart-item-side {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    align-items: center;
-}
-
+/* Header Cart Badge */
 .cart-badge {
     position: absolute;
     top: -5px;
@@ -730,12 +661,6 @@ select option,
     font-weight: 700;
 }
 
-@media (max-width: 500px) {
-    .cart-sidebar {
-        width: 100%;
-        right: -100%;
-    }
-}
 
 
 /* Produk Page Styles (Consolidated from produk.module.css) */
@@ -3866,103 +3791,6 @@ select option,
     position: relative;
 }
 
-/* CartSidebar Helpers */
-.cart-header-title {
-    font-family: var(--font-serif);
-    font-size: 1.8rem;
-    font-style: italic;
-}
-
-.cart-header-close {
-    background: none;
-    border: none;
-    color: var(--text-main);
-    cursor: pointer;
-    font-size: 1.5rem;
-}
-
-.cart-empty-state {
-    text-align: center;
-    margin-top: 5rem;
-    color: var(--text-muted);
-}
-
-.cart-item-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.cart-checkbox {
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary);
-    flex-shrink: 0;
-}
-
-.cart-item-body {
-    display: flex;
-    gap: 1rem;
-    flex: 1;
-    align-items: center;
-}
-
-.cart-item-img-wrapper {
-    position: relative;
-    width: 70px;
-    height: 70px;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.cart-item-title {
-    font-size: 0.95rem;
-    margin-bottom: 0.2rem;
-    color: var(--text-main);
-}
-
-.cart-item-size {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    margin: 0 0 0.2rem 0;
-}
-
-.cart-item-price {
-    color: var(--primary);
-    font-size: 0.85rem;
-    font-weight: bold;
-}
-
-.cart-item-remove-btn {
-    background: none;
-    border: none;
-    color: var(--primary);
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 0.5rem 0;
-}
-
-.cart-footer-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-main);
-}
-
-.cart-footer-btn-group {
-    display: flex;
-    gap: 1rem;
-}
-
-.cart-footer-btn {
-    flex: 1;
-    padding: 0.8rem;
-    cursor: pointer;
-}
 
 /* Auth Page Helpers */
 .auth-page-container {

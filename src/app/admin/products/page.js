@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
@@ -518,6 +518,32 @@ function AdminProductsInner() {
     });
   };
 
+  const [isSyncingSold, setIsSyncingSold] = useState(false);
+
+  // Sinkronkan soldCount dari transaksi sah (PAID, PROCESSING, SHIPPED, COMPLETED)
+  const handleSyncSold = () => {
+    confirm.open({
+      title: 'Sinkronkan Data Terjual',
+      desc: 'Sistem akan menghitung ulang jumlah terjual (sold count) seluruh produk berdasarkan seluruh transaksi yang sah (Lunas, Diproses, Dikirim, Selesai).',
+      confirmText: 'Sinkronkan',
+      isDanger: false,
+      onConfirm: async () => {
+        setIsSyncingSold(true);
+        try {
+          const res = await fetch('/api/admin/products/sync-sold', { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Gagal menyinkronkan data.');
+          toast.success(data.message || 'Sinkronisasi berhasil.');
+          if (fetchProducts) fetchProducts({ showLoading: false });
+        } catch (err) {
+          toast.error(err.message || 'Gagal menyinkronkan data.');
+        } finally {
+          setIsSyncingSold(false);
+        }
+      },
+    });
+  };
+
   if (authLoading || !currentUser || !canView) {
     return (
       <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
@@ -568,6 +594,33 @@ function AdminProductsInner() {
                 </>
               )}
             </button>
+
+            {canUpdate && (
+              <button
+                type="button"
+                onClick={handleSyncSold}
+                disabled={isSyncingSold}
+                className={styles.outlineBtn}
+                title="Hitung ulang jumlah terjual dari riwayat transaksi sah"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={isSyncingSold ? styles.spinIcon : ''}
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                {isSyncingSold ? 'Menyinkronkan...' : 'Sinkron Terjual'}
+              </button>
+            )}
 
             {canImport && (
               <button

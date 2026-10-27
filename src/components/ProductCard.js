@@ -231,11 +231,14 @@ export default function ProductCard({
                     <div className={styles.bottomRow}>
                         <div className={styles.priceCol}>
                             <span className={styles.price}>{formattedPrice}</span>
-                            {effectiveSold ? (
-                                <span className={styles.soldBadgeMuted}>Habis</span>
-                            ) : Number(soldCount) > 0 ? (
-                                <span className={styles.soldCountText}>{soldCount} Terjual</span>
-                            ) : null}
+                            <div className={styles.statusMetaRow}>
+                                {effectiveSold && (
+                                    <span className={styles.soldBadgeMuted}>Habis</span>
+                                )}
+                                {Number(soldCount) > 0 && (
+                                    <span className={styles.soldCountText}>{soldCount} Terjual</span>
+                                )}
+                            </div>
                         </div>
 
                         {!effectiveSold && (

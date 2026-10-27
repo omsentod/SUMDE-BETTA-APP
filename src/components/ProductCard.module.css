@@ -280,6 +280,14 @@
     }
 }
 
+.statusMetaRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-height: 15px;
+}
+
 .soldCountText {
     font-size: 0.6875rem; /* 11px */
     color: var(--text-muted);
@@ -302,7 +310,7 @@
     border-radius: 4px;
     font-weight: 500;
     line-height: 1.2;
-    align-self: flex-start;
+    display: inline-block;
 }
 
 /* Quick Add to Cart Button (Bottom Right) */
