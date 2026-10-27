@@ -520,11 +520,11 @@ function AdminProductsInner() {
 
   const [isSyncingSold, setIsSyncingSold] = useState(false);
 
-  // Sinkronkan soldCount dari transaksi sah (PAID, PROCESSING, SHIPPED, COMPLETED)
+  // Sinkronkan soldCount dan sisa stok dari transaksi sah (PAID, PROCESSING, SHIPPED, COMPLETED)
   const handleSyncSold = () => {
     confirm.open({
-      title: 'Sinkronkan Data Terjual',
-      desc: 'Sistem akan menghitung ulang jumlah terjual (sold count) seluruh produk berdasarkan seluruh transaksi yang sah (Lunas, Diproses, Dikirim, Selesai).',
+      title: 'Sinkronkan Penjualan & Stok',
+      desc: 'Sistem akan menghitung ulang jumlah terjual (sold count) sekaligus memotong sisa stok produk berdasarkan seluruh transaksi sah (Lunas, Diproses, Dikirim, Selesai).',
       confirmText: 'Sinkronkan',
       isDanger: false,
       onConfirm: async () => {
@@ -601,7 +601,7 @@ function AdminProductsInner() {
                 onClick={handleSyncSold}
                 disabled={isSyncingSold}
                 className={styles.outlineBtn}
-                title="Hitung ulang jumlah terjual dari riwayat transaksi sah"
+                title="Hitung ulang jumlah terjual dan potong sisa stok dari riwayat transaksi sah"
               >
                 <svg
                   width="15"
@@ -618,7 +618,7 @@ function AdminProductsInner() {
                   <polyline points="1 20 1 14 7 14" />
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
                 </svg>
-                {isSyncingSold ? 'Menyinkronkan...' : 'Sinkron Terjual'}
+                {isSyncingSold ? 'Menyinkronkan...' : 'Sinkron Terjual & Stok'}
               </button>
             )}
 
