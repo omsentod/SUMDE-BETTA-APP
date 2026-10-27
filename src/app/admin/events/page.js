@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
@@ -58,24 +58,24 @@ export default function AdminEventsPage() {
     }
   }, [currentUser, authLoading, canView, router]);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/events');
+      const res = await fetch('/api/events', { cache: 'no-store' });
       if (res.ok) setEvents(await res.json());
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (currentUser && currentUser.role === 'admin') {
+    if (currentUser && canView) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch
       loadEvents();
     }
-  }, [currentUser]);
+  }, [currentUser, canView, loadEvents]);
 
   const filtered = useMemo(() => {
     return events.filter((e) => e.title.toLowerCase().includes(search.toLowerCase()));
@@ -232,7 +232,7 @@ export default function AdminEventsPage() {
           <p style={{ color: 'var(--text-muted)' }}>Memuat event...</p>
         ) : filtered.length === 0 ? (
           <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            Belum ada event terdaftar.
+            {search ? `Tidak ada event yang cocok dengan "${search}".` : 'Belum ada event terdaftar.'}
           </div>
         ) : (
           <div className={styles.tableCard}>

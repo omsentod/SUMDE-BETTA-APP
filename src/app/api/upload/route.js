@@ -67,7 +67,14 @@ async function saveOneFile(file, uploadDir) {
 
 export async function POST(request) {
   try {
-    await requirePermission(request, ['products:manage', 'events:manage']);
+    await requirePermission(request, [
+      'products:create',
+      'products:update',
+      'products:manage',
+      'events:create',
+      'events:update',
+      'events:manage',
+    ]);
     const formData = await request.formData();
 
     // Terima satu ATAU banyak file dari field "file". getAll menangkap semua

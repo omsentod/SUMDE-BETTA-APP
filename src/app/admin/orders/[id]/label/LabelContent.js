@@ -23,10 +23,15 @@ export default function LabelContent({ order }) {
         <div className={styles.headerLeft}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
-            src={`/img/courier/${(order.shippingCourier || 'default').toLowerCase()}.png`}
+            src={`/courier/${(order.shippingCourier || 'default').toLowerCase()}.png`}
             alt={order.shippingCourier || 'Courier'}
             className={styles.courierImageLogo}
             onError={(e) => {
+              if (!e.target.dataset.triedImg) {
+                e.target.dataset.triedImg = 'true';
+                e.target.src = `/img/courier/${(order.shippingCourier || 'default').toLowerCase()}.png`;
+                return;
+              }
               e.target.style.display = 'none';
               if (e.target.nextSibling) {
                 e.target.nextSibling.style.display = 'inline-block';
