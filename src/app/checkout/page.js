@@ -299,12 +299,18 @@ export default function CheckoutPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Gagal mengambil ongkir.');
-            setRates(data.rates || []);
+            const newRates = data.rates || [];
+            setRates(newRates);
             setSelectedRate((prev) => {
-                if (!prev) return null;
-                return (data.rates || []).find(
-                    (r) => r.courier_code === prev.courier_code && r.courier_service_code === prev.courier_service_code
-                ) || null;
+                if (newRates.length === 0) return null;
+                if (prev) {
+                    const match = newRates.find(
+                        (r) => r.courier_code === prev.courier_code && r.courier_service_code === prev.courier_service_code
+                    );
+                    if (match) return match;
+                }
+                // Otomatis pilih kurir pertama yang tersedia agar user tidak perlu klik manual
+                return newRates[0];
             });
         } catch (err) {
             setRatesError(err.message);
@@ -320,6 +326,7 @@ export default function CheckoutPage() {
     useEffect(() => {
         const postal = formData.postalCode;
         if (!/^\d{5}$/.test(postal) || cart.length === 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset shipping rates when postal code is invalid or cart empty
             setRates([]);
             setSelectedRate(null);
             setRatesError('');
@@ -368,11 +375,19 @@ export default function CheckoutPage() {
             toast.warning('Mohon lengkapi seluruh detail pengiriman.');
             return;
         }
+        if (ratesLoading) {
+            toast.info('Sedang menghitung ongkos kirim, silakan tunggu...');
+            return;
+        }
         if (ratesError) {
             toast.error(ratesError);
             return;
         }
         if (!selectedRate) {
+            if (rates.length === 0) {
+                toast.warning('Layanan pengiriman belum tersedia untuk lokasi ini.');
+                return;
+            }
             toast.warning('Pilih kurir pengiriman terlebih dahulu.');
             return;
         }
@@ -641,7 +656,7 @@ export default function CheckoutPage() {
                             {/* Shipping / courier picker */}
                             <div className="checkout-shipping-container">
                                 <div className="checkout-shipping-header">
-                                    <h3 className={styles.sectionTitle}>Pilih Kurir Pengiriman</h3>
+                                    <h3 className={styles.sectionTitle}>Kurir Pengiriman</h3>
                                     <button
                                         type="button"
                                         onClick={fetchShippingRates}
@@ -654,7 +669,7 @@ export default function CheckoutPage() {
                                 </div>
                                 {!/^\d{5}$/.test(formData.postalCode) ? (
                                     <p className="checkout-shipping-hint">
-                                        Isi kode pos untuk melihat opsi ongkir, atau klik "Cek Ongkir" setelah ganti alamat.
+                                        Isi kode pos untuk melihat opsi ongkir, atau klik &quot;Cek Ongkir&quot; setelah ganti alamat.
                                     </p>
                                 ) : ratesLoading ? (
                                     <p className="checkout-shipping-hint">Mengambil ongkir...</p>
@@ -715,7 +730,11 @@ export default function CheckoutPage() {
                                 <span>
                                     {selectedRate
                                         ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(selectedRate.price)
-                                        : <span className="color-secondary">Pilih kurir</span>}
+                                        : !/^\d{5}$/.test(formData.postalCode)
+                                            ? <span className="color-secondary">Masukkan kode pos</span>
+                                            : ratesLoading
+                                                ? <span className="color-secondary">Menghitung...</span>
+                                                : <span className="color-secondary">—</span>}
                                 </span>
                             </div>
                             <div className={styles.summaryTotalRow}>

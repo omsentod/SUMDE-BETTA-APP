@@ -8,12 +8,12 @@
 //   SHIPPING_ITEMS_PER_KG         - default 10
 
 const DEFAULT_BASE = 'https://api.biteship.com/v1';
-const DEFAULT_COURIERS = 'pos';
+const DEFAULT_COURIERS = 'pos,jnt';
 // Berapa ekor ikan per 1 kg paket. 10 ikan = 1 kg, 11 ikan = 2 kg, dst.
 const DEFAULT_ITEMS_PER_KG = 10;
 // Kode layanan yang tidak cocok untuk ikan hidup — kirim via truk cargo
 // bisa 3-7 hari, ikan bakal mati. Filter sebelum dikirim ke client.
-const EXCLUDED_SERVICES = new Set(['jtr', 'jtr250', 'jtr<250', 'trucking']);
+const EXCLUDED_SERVICES = new Set(['jtr', 'jtr250', 'jtr<250', 'trucking', 'cargo']);
 
 function baseConfig() {
   const apiKey = process.env.BITESHIP_API_KEY;
@@ -81,6 +81,11 @@ export function sanitizeShippingError(rawError, postalCode) {
   if (isPostalIssue) {
     const postalDetail = postalCode ? ` (${postalCode})` : '';
     return `Kode pos tujuan${postalDetail} tidak valid atau tidak terdaftar di sistem ekspedisi. Pastikan menggunakan 5 digit kode pos resmi sesuai kelurahan/kecamatan Anda.`;
+  }
+
+  if (/no courier available/i.test(msg) || /activate other courier/i.test(msg)) {
+    const postalDetail = postalCode ? ` (${postalCode})` : '';
+    return `Layanan kurir yang aktif saat ini belum menjangkau kode pos tujuan${postalDetail}. Silakan periksa kembali kode pos Anda atau hubungi admin.`;
   }
 
   if (/support@biteship\.com/i.test(msg) || /biteship/i.test(msg)) {
@@ -152,7 +157,7 @@ export async function fetchRates({ destinationPostal, destinationCity: _destinat
   })).filter((r) => {
     const svc = String(r.courier_service_code || '').toLowerCase().replace(/\s+/g, '');
     const name = String(r.courier_service_name || '').toLowerCase();
-    return !EXCLUDED_SERVICES.has(svc) && !name.includes('trucking');
+    return !EXCLUDED_SERVICES.has(svc) && !name.includes('trucking') && !name.includes('cargo') && !svc.includes('cargo');
   });
 }
 
