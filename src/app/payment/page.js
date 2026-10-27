@@ -53,7 +53,16 @@ export default function PaymentPage() {
                     clearCart();
                     localStorage.removeItem('temp-shipment');
                     localStorage.removeItem('active-payment');
+                } else if (orderStatus === 'CANCELLED') {
+                    // Pesanan sudah dibatalkan — bersihkan state aktif agar tidak menjebak user
+                    localStorage.removeItem('active-payment');
+                    setStatus('pending');
+                    setActivePayment(null);
                 }
+            } else if (res.status === 404) {
+                localStorage.removeItem('active-payment');
+                setStatus('pending');
+                setActivePayment(null);
             }
         } catch (err) {
             console.error('Failed to auto-check order status:', err);
@@ -63,6 +72,7 @@ export default function PaymentPage() {
     // 1. Load temp-shipment and check for active payment on mount
     useEffect(() => {
         let hasFreshShipment = false;
+        let shipmentTimestamp = 0;
         const shipData = localStorage.getItem('temp-shipment');
         if (shipData) {
             try {
@@ -70,6 +80,7 @@ export default function PaymentPage() {
                 if (isFresh(parsed.createdAt)) {
                     setShipment(parsed);
                     hasFreshShipment = true;
+                    shipmentTimestamp = parsed.createdAt || 0;
                 } else {
                     localStorage.removeItem('temp-shipment');
                 }
@@ -83,7 +94,10 @@ export default function PaymentPage() {
         if (activePayData) {
             try {
                 const parsed = JSON.parse(activePayData);
-                if (isFresh(parsed.createdAt)) {
+                // Hanya resume sesi active-payment jika sesi checkout (temp-shipment) tidak lebih baru!
+                // Jika temp-shipment lebih baru, user baru saja dari /checkout untuk pesanan baru.
+                const isNewerCheckout = hasFreshShipment && shipmentTimestamp > (parsed.createdAt || 0);
+                if (isFresh(parsed.createdAt) && !isNewerCheckout) {
                     setActivePayment(parsed);
                     setStatus('checkout_created');
                     // Auto check status immediately on load (in case they just redirected back)
@@ -294,6 +308,11 @@ export default function PaymentPage() {
                 localStorage.removeItem('temp-shipment');
                 localStorage.removeItem('active-payment');
                 toast.success('Pembayaran terverifikasi! Pesanan Anda sedang diproses.');
+            } else if (orderStatus === 'CANCELLED') {
+                localStorage.removeItem('active-payment');
+                setStatus('pending');
+                setActivePayment(null);
+                toast.info('Pesanan ini telah dibatalkan.');
             } else {
                 toast.warning('Pembayaran belum terdeteksi. Silakan selesaikan pembayaran terlebih dahulu di DOKU.');
             }
@@ -327,7 +346,13 @@ export default function PaymentPage() {
                     toast.info('Pesanan berhasil dibatalkan.');
                 } else {
                     const errData = await res.json().catch(() => ({}));
-                    toast.error(`Gagal membatalkan pesanan: ${errData.error || res.statusText}.`);
+                    // Jika order ternyata sudah berstatus CANCELLED di server, tetap bersihkan state
+                    if (res.status === 409 && errData.error?.includes('CANCELLED')) {
+                        ok = true;
+                        toast.info('Pesanan sudah berstatus dibatalkan.');
+                    } else {
+                        toast.error(`Gagal membatalkan pesanan: ${errData.error || res.statusText}.`);
+                    }
                 }
             } catch (err) {
                 console.error('Cancel order network error:', err);

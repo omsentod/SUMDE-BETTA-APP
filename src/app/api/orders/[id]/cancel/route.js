@@ -32,6 +32,11 @@ export async function POST(request, { params }) {
       }
     }
 
+    // Idempotency: Jika pesanan sudah berstatus CANCELLED, kembalikan sukses
+    if (order.status === 'CANCELLED') {
+      return NextResponse.json({ success: true, order, alreadyCancelled: true });
+    }
+
     // Hanya PENDING (belum bayar) yang boleh customer cancel. PAID+ butuh
     // proses refund via admin.
     if (order.status !== 'PENDING') {

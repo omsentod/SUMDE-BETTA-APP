@@ -383,6 +383,7 @@ export default function CheckoutPage() {
             fee: Number(selectedRate.price) || 0,
             eta: selectedRate.duration || null,
         };
+        localStorage.removeItem('active-payment');
         localStorage.setItem('temp-shipment', JSON.stringify({ ...formData, shipping, createdAt: Date.now() }));
         router.push('/payment');
     };
