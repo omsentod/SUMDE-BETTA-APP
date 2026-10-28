@@ -31,8 +31,8 @@ export function useConfirmModal() {
   return { state, open, close };
 }
 
-export default function AdminConfirmModal({ state, onClose }) {
-  if (!state.isOpen) return null;
+export default function AdminConfirmModal({ state = {}, onClose }) {
+  if (!state?.isOpen) return null;
 
   return (
     <div className={styles.modalBackdrop}>

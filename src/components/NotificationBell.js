@@ -233,6 +233,18 @@ export default function NotificationBell() {
     return () => document.removeEventListener('keydown', onEsc);
   }, [open]);
 
+  // Lock body scroll on mobile while notification dropdown is open
+  useEffect(() => {
+    if (!open) return;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+    if (!isMobile) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
   // Filtered items based on active tab
   const displayedItems = useMemo(() => {
     if (activeTab === 'unread') {
@@ -423,7 +435,8 @@ export default function NotificationBell() {
                   disabled={unread === 0}
                   title="Tandai semua dibaca"
                 >
-                  Tandai semua dibaca
+                  <span className={styles.desktopText}>Tandai semua dibaca</span>
+                  <span className={styles.mobileText}>Baca semua</span>
                 </button>
                 <button
                   type="button"
@@ -436,6 +449,18 @@ export default function NotificationBell() {
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.iconBtn} ${styles.mobileCloseBtn}`}
+                  onClick={() => setOpen(false)}
+                  title="Tutup notifikasi"
+                  aria-label="Tutup notifikasi"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               </div>

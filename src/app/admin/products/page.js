@@ -8,7 +8,6 @@ import { useProducts } from '@/context/ProductContext';
 import ManageableSelect from '@/components/admin/ManageableSelect';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
 import BulkProductModal from '@/components/admin/BulkProductModal';
-import BulkTelegramModal from '@/components/admin/BulkTelegramModal';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
 import { parseYouTubeId } from '@/lib/productImages';
@@ -68,7 +67,6 @@ function AdminProductsInner() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
-  const [isBulkTelegramOpen, setIsBulkTelegramOpen] = useState(false);
   const [currentEdit, setCurrentEdit] = useState(null);
   const [form, setForm] = useState(emptyProductForm());
 
@@ -133,28 +131,24 @@ function AdminProductsInner() {
     });
   }, [products, search, categoryFilter, stockFilter]);
 
-  const selectedProducts = useMemo(() => {
-    return products.filter((p) => selectedIds.has(p.id));
-  }, [products, selectedIds]);
-
   // Upload satu ATAU banyak foto sekaligus, lalu tambahkan ke akhir galeri
   // Helper konversi item ke format media { id, type, url, thumbnail, ytId }
-  const toMediaItem = (item) => {
+  const toMediaItem = (item, idx = 0) => {
     if (typeof item === 'string') {
       const s = item.trim();
       const ytId = parseYouTubeId(s);
       if (ytId || /\.(mp4|webm|mov)($|\?)/i.test(s)) {
-        return { id: `vid-${Date.now()}-${Math.random()}`, type: 'video', url: s, ytId, thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null };
+        return { id: `vid-${idx}-${s}`, type: 'video', url: s, ytId, thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null };
       }
-      return { id: `img-${Date.now()}-${Math.random()}`, type: 'image', url: s, thumbnail: s };
+      return { id: `img-${idx}-${s}`, type: 'image', url: s, thumbnail: s };
     }
     if (item && typeof item === 'object') {
       const u = typeof item.url === 'string' ? item.url.trim() : '';
       const ytId = parseYouTubeId(u);
       if (item.type === 'video' || ytId) {
-        return { id: item.id || `vid-${Date.now()}-${Math.random()}`, type: 'video', url: u, ytId, thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null };
+        return { id: item.id || `vid-${idx}-${u}`, type: 'video', url: u, ytId, thumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null };
       }
-      return { id: item.id || `img-${Date.now()}-${Math.random()}`, type: 'image', url: u, thumbnail: u };
+      return { id: item.id || `img-${idx}-${u}`, type: 'image', url: u, thumbnail: u };
     }
     return null;
   };
@@ -322,7 +316,7 @@ function AdminProductsInner() {
       if (!hasVid) {
         const ytId = parseYouTubeId(vid);
         mediaItems.push({
-          id: `vid-${Date.now()}`,
+          id: `vid-${product.id}`,
           type: 'video',
           url: vid,
           ytId,
@@ -331,7 +325,7 @@ function AdminProductsInner() {
       }
     }
     if (mediaItems.length === 0 && product.image) {
-      mediaItems.push({ id: `img-${Date.now()}`, type: 'image', url: product.image, thumbnail: product.image });
+      mediaItems.push({ id: `img-${product.id}`, type: 'image', url: product.image, thumbnail: product.image });
     }
 
     const firstImage = mediaItems.find((m) => m.type === 'image');
@@ -388,39 +382,6 @@ function AdminProductsInner() {
       soldCount: product.soldCount ?? 0,
     });
     setIsEditOpen(true);
-  };
-
-  const [broadcastingId, setBroadcastingId] = useState(null);
-
-  const handleBroadcastTelegram = async (product) => {
-    if (product.isSold || product.quantity === 0) {
-      toast.error('Ikan yang sudah habis atau terjual tidak dapat dibroadcast.');
-      return;
-    }
-
-    const defaultNumber = product.dropNumber || `#${product.id.slice(0, 4).toUpperCase()}`;
-    const code = window.prompt(
-      `Broadcast ikan "${product.name}" ke Grup Telegram?\nMasukkan Kode/Nomor Ikan (contoh: #01, #02):`,
-      defaultNumber
-    );
-    if (code === null) return;
-
-    setBroadcastingId(product.id);
-    try {
-      const res = await fetch(`/api/admin/products/${product.id}/broadcast-telegram`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dropNumber: code.trim() || defaultNumber, durationHours: 24 }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal broadcast ke Telegram.');
-      toast.success(data.message || 'Berhasil dibroadcast ke grup Telegram!');
-      if (fetchProducts) fetchProducts();
-    } catch (err) {
-      toast.error(err.message || 'Gagal broadcast ke Telegram.');
-    } finally {
-      setBroadcastingId(null);
-    }
   };
 
   const handleAdd = async (e) => {
@@ -717,19 +678,7 @@ function AdminProductsInner() {
               <div className={styles.bulkBar}>
                 <span className={styles.bulkBarCount}>{selectedIds.size} produk terpilih</span>
 
-                {canUpdate && (
-                  <button
-                    type="button"
-                    className={styles.bulkBtnTelegram}
-                    onClick={() => setIsBulkTelegramOpen(true)}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"></line>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                    Broadcast ke Telegram ({selectedIds.size})
-                  </button>
-                )}
+
                 {canDelete && (
                   <button
                     type="button"
@@ -890,20 +839,6 @@ function AdminProductsInner() {
                     </td>
                     <td>
                       <div className={styles.actionGroup}>
-                        {canUpdate && (
-                          <button
-                            onClick={() => handleBroadcastTelegram(product)}
-                            disabled={broadcastingId === product.id}
-                            className={styles.iconBtn}
-                            title={product.isDailyDrop ? `Broadcast Ulang ${product.dropNumber || ''} ke Telegram` : "Kirim ke Grup Telegram (Daily Drop 24 Jam)"}
-                            style={{ color: product.isDailyDrop ? '#0088cc' : 'inherit' }}
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="22" y1="2" x2="11" y2="13"></line>
-                              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
-                          </button>
-                        )}
                         {canUpdate && (
                           <button onClick={() => openEdit(product)} className={styles.iconBtn} title="Edit">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1438,15 +1373,6 @@ function AdminProductsInner() {
         isOpen={isBulkOpen}
         onClose={() => setIsBulkOpen(false)}
         onComplete={() => fetchProducts()}
-      />
-      <BulkTelegramModal
-        isOpen={isBulkTelegramOpen}
-        onClose={() => setIsBulkTelegramOpen(false)}
-        products={selectedProducts}
-        onComplete={() => {
-          setSelectedIds(new Set());
-          if (fetchProducts) fetchProducts();
-        }}
       />
     </div>
   );

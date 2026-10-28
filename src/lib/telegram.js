@@ -60,6 +60,7 @@ export function formatDropCaption(product, status = 'OPEN', buyer = null) {
   const age = product.age || '-';
   const spirit = product.statsSpirit || 'Aktif';
   const grade = product.statsForm || 'COMP';
+  const safeName = (product.name || '').replace(/_/g, ' ');
 
   let statusBadge = '🟢 TERSEDIA (OPEN)';
   if (status === 'BOOKED' || (product.bookedUntil && new Date(product.bookedUntil) > new Date())) {
@@ -72,7 +73,7 @@ export function formatDropCaption(product, status = 'OPEN', buyer = null) {
     `🐟 *SUMDE BETTA • FLASH DROP 24 JAM*\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
     `🔖 *Kode:* \`${code}\`\n` +
-    `🏷️ *Nama:* ${product.name}\n` +
+    `🏷️ *Nama:* ${safeName}\n` +
     `💰 *Harga:* *${price}*\n\n` +
     `📐 *Spesifikasi:*\n` +
     `• Form: ${form}\n` +
@@ -86,8 +87,23 @@ export function formatDropCaption(product, status = 'OPEN', buyer = null) {
 }
 
 export function isYouTubeUrl(url) {
-  if (!url) return false;
-  return /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)/i.test(url);
+  if (!url || typeof url !== 'string') return false;
+  const s = url.trim().toLowerCase();
+  return s.includes('youtube.com/') || s.includes('youtu.be/');
+}
+
+export function getYouTubeVideoId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  return match ? match[1] : null;
+}
+
+export function normalizeYouTubeUrl(url) {
+  const id = getYouTubeVideoId(url);
+  if (id) {
+    return `https://www.youtube.com/watch?v=${id}`;
+  }
+  return url;
 }
 
 export function isDirectVideoFile(url) {
@@ -109,6 +125,7 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
     : `https://sumdebetta.com/produk/${product.id}`;
 
   const hasYtVideo = isYouTubeUrl(product.videoUrl);
+  const ytCanonical = hasYtVideo ? normalizeYouTubeUrl(product.videoUrl) : null;
 
   if (isSold) {
     const catalogUrl = (appUrl && !appUrl.startsWith('http://localhost'))
@@ -125,7 +142,7 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
   if (isBooked) {
     const secondaryRow = [];
     if (hasYtVideo) {
-      secondaryRow.push({ text: '▶️ Buka di YouTube', url: product.videoUrl });
+      secondaryRow.push({ text: '▶️ Buka di YouTube', url: ytCanonical || product.videoUrl });
     }
     secondaryRow.push({ text: '🌐 Lihat di Website', url: webUrl });
 
@@ -145,7 +162,7 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
   // Status OPEN (Bisa diambil)
   const secondaryRow = [];
   if (hasYtVideo) {
-    secondaryRow.push({ text: '▶️ Buka di YouTube', url: product.videoUrl });
+    secondaryRow.push({ text: '▶️ Buka di YouTube', url: ytCanonical || product.videoUrl });
   }
   secondaryRow.push({ text: '🌐 Lihat Foto di Web', url: webUrl });
 
@@ -181,14 +198,15 @@ export async function broadcastDropToTelegram(product, targetChatId = null) {
   // Telegram Bot API tidak bisa mengunduh stream YouTube via sendVideo,
   // tetapi mendukung Rich Video Player via sendMessage + link_preview_options
   if (isYouTubeUrl(product.videoUrl)) {
-    const textWithVideo = `${caption}\n\n🎥 *Video Preview:* ${product.videoUrl}`;
+    const ytCanonical = normalizeYouTubeUrl(product.videoUrl);
+    const textWithVideo = `${caption}\n\n🎥 *Video Preview:* ${ytCanonical}`;
     try {
       result = await callTelegramApi('sendMessage', {
         chat_id: chatId,
         text: textWithVideo,
         parse_mode: 'Markdown',
         link_preview_options: {
-          url: product.videoUrl,
+          url: ytCanonical,
           prefer_large_media: true,
           show_above_text: true,
         },
@@ -196,7 +214,22 @@ export async function broadcastDropToTelegram(product, targetChatId = null) {
       });
       return { messageId: result.message_id, chatId: String(chatId) };
     } catch (err) {
-      console.warn('Gagal kirim via YouTube preview, mencoba fallback video/foto:', err.message);
+      console.warn('Gagal kirim via YouTube preview Markdown, mencoba plain text:', err.message);
+      try {
+        result = await callTelegramApi('sendMessage', {
+          chat_id: chatId,
+          text: textWithVideo.replace(/[*_`]/g, ''),
+          link_preview_options: {
+            url: ytCanonical,
+            prefer_large_media: true,
+            show_above_text: true,
+          },
+          reply_markup,
+        });
+        return { messageId: result.message_id, chatId: String(chatId) };
+      } catch (retryErr) {
+        console.warn('Gagal kirim via YouTube preview, mencoba fallback video/foto:', retryErr.message);
+      }
     }
   }
 
@@ -265,7 +298,8 @@ export async function updateTelegramDropMessage(product, newStatus, buyerName = 
   const caption = formatDropCaption(product, newStatus, buyerName);
   const reply_markup = buildDropInlineKeyboard(product, newStatus);
   const isYt = isYouTubeUrl(product.videoUrl);
-  const textContent = isYt ? `${caption}\n\n🎥 *Video Preview:* ${product.videoUrl}` : caption;
+  const ytCanonical = isYt ? normalizeYouTubeUrl(product.videoUrl) : null;
+  const textContent = isYt ? `${caption}\n\n🎥 *Video Preview:* ${ytCanonical}` : caption;
 
   try {
     // Edit caption jika pesan awal adalah video/foto (sendVideo / sendPhoto)
@@ -277,7 +311,7 @@ export async function updateTelegramDropMessage(product, newStatus, buyerName = 
       reply_markup,
     });
     return true;
-  } catch (err) {
+  } catch {
     // Jika pesan awal adalah teks (sendMessage dengan YouTube preview atau pesan biasa)
     try {
       const editBody = {
@@ -290,7 +324,7 @@ export async function updateTelegramDropMessage(product, newStatus, buyerName = 
 
       if (isYt) {
         editBody.link_preview_options = {
-          url: product.videoUrl,
+          url: ytCanonical,
           prefer_large_media: true,
           show_above_text: true,
         };

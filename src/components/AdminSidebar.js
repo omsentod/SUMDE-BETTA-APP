@@ -62,7 +62,12 @@ function AdminSidebarInner() {
   const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0 });
   const [open, setOpen] = useState(false);
   const isOnOrdersRoute = pathname.startsWith('/admin/orders');
-  const [ordersOpen, setOrdersOpen] = useState(false);
+  const [userOrdersOpen, setUserOrdersOpen] = useState(null);
+  const isOrdersOpen = userOrdersOpen !== null ? userOrdersOpen : isOnOrdersRoute;
+
+  const isOnEventsRoute = pathname.startsWith('/admin/events') || pathname.startsWith('/admin/telegram');
+  const [userEventsOpen, setUserEventsOpen] = useState(null);
+  const isEventsOpen = userEventsOpen !== null ? userEventsOpen : isOnEventsRoute;
 
   const can = (perm) => canUser(currentUser, perm);
 
@@ -147,6 +152,15 @@ function AdminSidebarInner() {
     { label: 'Retur', href: '/admin/orders?status=RETURNED', active: isOrdersStatus('RETURNED'), badge: counts.returned },
   ];
 
+  const eventSubmenuItems = [
+    ...(can('events:view')
+      ? [{ label: 'Daftar Event', href: '/admin/events', active: pathname.startsWith('/admin/events') }]
+      : []),
+    ...((can('events:view') || can('products:view'))
+      ? [{ label: 'Broadcast Telegram', href: '/admin/telegram', active: pathname.startsWith('/admin/telegram') }]
+      : []),
+  ];
+
   const showMasterData = can('products:view') || can('users:view') || can('roles:view') || can('events:view');
 
   return (
@@ -189,19 +203,19 @@ function AdminSidebarInner() {
             <button
               type="button"
               className={`${styles.link} ${styles.groupToggle} ${isOnOrdersRoute ? styles.linkActive : ''}`.trim()}
-              onClick={() => setOrdersOpen((v) => !v)}
-              aria-expanded={ordersOpen}
+              onClick={() => setUserOrdersOpen(!isOrdersOpen)}
+              aria-expanded={isOrdersOpen}
               aria-controls="admin-orders-submenu"
             >
               <span className={styles.linkContent}>{iconOrders}<span className={styles.linkLabel}>Pesanan</span></span>
               <span className={styles.groupToggleRight}>
                 {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
-                <span className={`${styles.chevronWrap} ${ordersOpen ? styles.chevronOpen : ''}`.trim()}>
+                <span className={`${styles.chevronWrap} ${isOrdersOpen ? styles.chevronOpen : ''}`.trim()}>
                   {iconChevron}
                 </span>
               </span>
             </button>
-            {ordersOpen && (
+            {isOrdersOpen && (
               <div id="admin-orders-submenu" className={styles.submenu}>
                 {orderStatusItems.map((it) => (
                   <Link
@@ -233,10 +247,41 @@ function AdminSidebarInner() {
                 <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User & Role</span></span>
               </Link>
             )}
-            {can('events:view') && (
-              <Link href="/admin/events" className={`${styles.link} ${isActive('/admin/events') ? styles.linkActive : ''}`.trim()}>
-                <span className={styles.linkContent}>{iconEvents}<span className={styles.linkLabel}>Event</span></span>
-              </Link>
+            {(can('events:view') || can('products:view')) && (
+              <>
+                <button
+                  type="button"
+                  className={`${styles.link} ${styles.groupToggle} ${isOnEventsRoute ? styles.linkActive : ''}`.trim()}
+                  onClick={() => setUserEventsOpen(!isEventsOpen)}
+                  aria-expanded={isEventsOpen}
+                  aria-controls="admin-events-submenu"
+                >
+                  <span className={styles.linkContent}>
+                    {iconEvents}
+                    <span className={styles.linkLabel}>Event</span>
+                  </span>
+                  <span className={styles.groupToggleRight}>
+                    <span className={`${styles.chevronWrap} ${isEventsOpen ? styles.chevronOpen : ''}`.trim()}>
+                      {iconChevron}
+                    </span>
+                  </span>
+                </button>
+                {isEventsOpen && (
+                  <div id="admin-events-submenu" className={styles.submenu}>
+                    {eventSubmenuItems.map((it) => (
+                      <Link
+                        key={it.href}
+                        href={it.href}
+                        className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
+                      >
+                        <span className={styles.linkContent}>
+                          <span className={styles.linkLabel}>{it.label}</span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
