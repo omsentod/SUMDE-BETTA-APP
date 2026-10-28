@@ -81,8 +81,18 @@ export function formatDropCaption(product, status = 'OPEN', buyer = null) {
     `• Mental: ${spirit}\n\n` +
     `📍 *Status:* ${statusBadge}\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
-    `⚡ _Siapa cepat dia dapat! Tekan tombol di bawah untuk mengamankan ikan ini._`
+    `_Tekan tombol di bawah untuk mengamankan ikan ini._`
   );
+}
+
+export function isYouTubeUrl(url) {
+  if (!url) return false;
+  return /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)/i.test(url);
+}
+
+export function isDirectVideoFile(url) {
+  if (!url) return false;
+  return /\.(mp4|mov|webm|m4v)(\?.*)?$/i.test(url);
 }
 
 /**
@@ -94,18 +104,31 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
   const isBooked = (status === 'BOOKED' || product.bookedUntil) && !isExpired && !product.isSold;
   const isSold = status === 'SOLD' || product.isSold;
 
-  const webUrl = `${appUrl}/produk/${product.id}`;
+  const webUrl = (appUrl && !appUrl.startsWith('http://localhost'))
+    ? `${appUrl}/produk/${product.id}`
+    : `https://sumdebetta.com/produk/${product.id}`;
+
+  const hasYtVideo = isYouTubeUrl(product.videoUrl);
 
   if (isSold) {
+    const catalogUrl = (appUrl && !appUrl.startsWith('http://localhost'))
+      ? `${appUrl}/produk`
+      : 'https://sumdebetta.com/produk';
     return {
       inline_keyboard: [
         [{ text: '❌ SUDAH TERJUAL (SOLD OUT)', callback_data: `info:sold:${product.id}` }],
-        [{ text: '🌐 Lihat Koleksi Ikan Lainnya', url: `${appUrl}/produk` }],
+        [{ text: '🌐 Lihat Koleksi Ikan Lainnya', url: catalogUrl }],
       ],
     };
   }
 
   if (isBooked) {
+    const secondaryRow = [];
+    if (hasYtVideo) {
+      secondaryRow.push({ text: '▶️ Buka di YouTube', url: product.videoUrl });
+    }
+    secondaryRow.push({ text: '🌐 Lihat di Website', url: webUrl });
+
     return {
       inline_keyboard: [
         [
@@ -114,12 +137,18 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
             callback_data: `info:booked:${product.id}`,
           },
         ],
-        [{ text: '🌐 Lihat Detail di Website', url: webUrl }],
+        secondaryRow,
       ],
     };
   }
 
   // Status OPEN (Bisa diambil)
+  const secondaryRow = [];
+  if (hasYtVideo) {
+    secondaryRow.push({ text: '▶️ Buka di YouTube', url: product.videoUrl });
+  }
+  secondaryRow.push({ text: '🌐 Lihat Foto di Web', url: webUrl });
+
   return {
     inline_keyboard: [
       [
@@ -128,7 +157,7 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
           callback_data: `take:${product.id}`,
         },
       ],
-      [{ text: '🌐 Lihat Video & Foto di Web', url: webUrl }],
+      secondaryRow,
     ],
   };
 }
@@ -148,8 +177,31 @@ export async function broadcastDropToTelegram(product, targetChatId = null) {
 
   let result = null;
 
-  // 1. Jika ada videoUrl (file MP4 lokal atau URL publik)
-  if (product.videoUrl) {
+  // 1. Jika videoUrl adalah link YouTube (termasuk YouTube Shorts)
+  // Telegram Bot API tidak bisa mengunduh stream YouTube via sendVideo,
+  // tetapi mendukung Rich Video Player via sendMessage + link_preview_options
+  if (isYouTubeUrl(product.videoUrl)) {
+    const textWithVideo = `${caption}\n\n🎥 *Video Preview:* ${product.videoUrl}`;
+    try {
+      result = await callTelegramApi('sendMessage', {
+        chat_id: chatId,
+        text: textWithVideo,
+        parse_mode: 'Markdown',
+        link_preview_options: {
+          url: product.videoUrl,
+          prefer_large_media: true,
+          show_above_text: true,
+        },
+        reply_markup,
+      });
+      return { messageId: result.message_id, chatId: String(chatId) };
+    } catch (err) {
+      console.warn('Gagal kirim via YouTube preview, mencoba fallback video/foto:', err.message);
+    }
+  }
+
+  // 2. Jika ada videoUrl langsung (file MP4 lokal atau URL publik direct)
+  if (product.videoUrl && isDirectVideoFile(product.videoUrl)) {
     let videoSource = product.videoUrl;
     if (videoSource.startsWith('/')) {
       videoSource = `${appUrl}${videoSource}`;
@@ -165,28 +217,33 @@ export async function broadcastDropToTelegram(product, targetChatId = null) {
       });
       return { messageId: result.message_id, chatId: String(chatId) };
     } catch (err) {
-      console.warn('Gagal kirim via video, mencoba fallback foto:', err.message);
+      console.warn('Gagal kirim via sendVideo, mencoba fallback foto:', err.message);
     }
   }
 
-  // 2. Fallback foto utama produk
+  // 3. Fallback foto utama produk
   if (product.image) {
     let photoSource = product.image;
     if (photoSource.startsWith('/')) {
       photoSource = `${appUrl}${photoSource}`;
     }
 
+    let photoCaption = caption;
+    if (product.videoUrl) {
+      photoCaption = `${caption}\n\n🎥 *Video Ikan:* ${product.videoUrl}`;
+    }
+
     result = await callTelegramApi('sendPhoto', {
       chat_id: chatId,
       photo: photoSource,
-      caption,
+      caption: photoCaption,
       parse_mode: 'Markdown',
       reply_markup,
     });
     return { messageId: result.message_id, chatId: String(chatId) };
   }
 
-  // 3. Fallback pesan teks biasa
+  // 4. Fallback pesan teks biasa
   result = await callTelegramApi('sendMessage', {
     chat_id: chatId,
     text: caption,
@@ -207,27 +264,39 @@ export async function updateTelegramDropMessage(product, newStatus, buyerName = 
 
   const caption = formatDropCaption(product, newStatus, buyerName);
   const reply_markup = buildDropInlineKeyboard(product, newStatus);
+  const isYt = isYouTubeUrl(product.videoUrl);
+  const textContent = isYt ? `${caption}\n\n🎥 *Video Preview:* ${product.videoUrl}` : caption;
 
   try {
-    // Edit caption jika pesan awal adalah video/foto
+    // Edit caption jika pesan awal adalah video/foto (sendVideo / sendPhoto)
     await callTelegramApi('editMessageCaption', {
       chat_id: product.telegramChatId,
       message_id: product.telegramMessageId,
-      caption,
+      caption: isYt ? caption : (product.videoUrl ? `${caption}\n\n🎥 *Video Ikan:* ${product.videoUrl}` : caption),
       parse_mode: 'Markdown',
       reply_markup,
     });
     return true;
   } catch (err) {
-    // Jika pesan awal adalah teks, gunakan editMessageText
+    // Jika pesan awal adalah teks (sendMessage dengan YouTube preview atau pesan biasa)
     try {
-      await callTelegramApi('editMessageText', {
+      const editBody = {
         chat_id: product.telegramChatId,
         message_id: product.telegramMessageId,
-        text: caption,
+        text: textContent,
         parse_mode: 'Markdown',
         reply_markup,
-      });
+      };
+
+      if (isYt) {
+        editBody.link_preview_options = {
+          url: product.videoUrl,
+          prefer_large_media: true,
+          show_above_text: true,
+        };
+      }
+
+      await callTelegramApi('editMessageText', editBody);
       return true;
     } catch (fallbackErr) {
       console.warn('Gagal update pesan Telegram drop:', fallbackErr.message);

@@ -708,7 +708,9 @@ export default function CheckoutPage() {
                                                             {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(r.price)}
                                                         </span>
                                                         {r.duration && (
-                                                            <span className="checkout-shipping-eta">{r.duration}</span>
+                                                            <span className="checkout-shipping-eta">
+                                                                {r.duration.replace(/\bdays?\b/gi, 'hari').replace(/\bhours?\b/gi, 'jam')}
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </button>
