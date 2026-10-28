@@ -82,8 +82,52 @@ export default function CatalogHome() {
 
     if (isLoading || eventsLoading) {
         return (
-            <div className="pageContainer" style={{ paddingTop: '90px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)' }}>Memuat Koleksi Elit...</h2>
+            <div className="pageContainer" style={{ paddingTop: '90px' }}>
+                <section className="container" style={{ margin: '2rem auto' }}>
+                    <div className="hero-carousel-section skeleton-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center', padding: '1rem' }}>
+                            <span style={{ fontSize: '0.85rem', letterSpacing: '0.2rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>SUMDE BETTA</span>
+                            <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Memuat Koleksi Elit...</h2>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="categories-tabs-section container">
+                    <div className="categories-tabs-container">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="category-card" style={{ pointerEvents: 'none' }}>
+                                <div className="category-circle skeleton-box" style={{ background: 'var(--input-bg)' }} />
+                                <div className="skeleton-box" style={{ height: '12px', width: '48px', marginTop: '8px' }} />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="container" style={{ margin: '3rem auto' }}>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <div className="skeleton-box" style={{ height: '28px', width: '200px', marginBottom: '0.5rem' }} />
+                        <div className="skeleton-box" style={{ height: '14px', width: '150px' }} />
+                    </div>
+                    <div className="productGrid">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                            <div key={i} style={{
+                                background: 'var(--bg-card)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <div className="skeleton-box" style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 0 }} />
+                                <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <div className="skeleton-box" style={{ height: '18px', width: '75%' }} />
+                                    <div className="skeleton-box" style={{ height: '14px', width: '50%' }} />
+                                    <div className="skeleton-box" style={{ height: '22px', width: '60%', marginTop: '0.5rem' }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
             </div>
         );
     }
@@ -227,7 +271,6 @@ export default function CatalogHome() {
                                         fill
                                         sizes="100px"
                                         className="category-image"
-                                        priority
                                     />
                                 </div>
                             </div>

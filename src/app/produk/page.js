@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/context/ProductContext";
+import Loading from "./loading";
 
 const SORT_OPTIONS = [
     { label: 'Newest', value: 'newest' },
@@ -226,8 +227,8 @@ function GalleryContent() {
 
     if (isLoading) {
         return (
-            <div className="pageContainer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)' }}>Memuat Galeri...</h2>
+            <div className="pageContainer">
+                <Loading />
             </div>
         );
     }

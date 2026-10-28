@@ -67,7 +67,7 @@ export default function Header() {
 
                     {/* Logo */}
                     <Link href="/" className="logo-link">
-                        <Image src="/img/logo.png" alt="Sumde Betta Logo" width={44} height={44} className="logo-img" />
+                        <Image src="/img/logo.png" alt="Sumde Betta Logo" width={44} height={44} className="logo-img" priority />
                         <div className="logo-text">SUMDE <span className="logo-highlight">BETTA</span></div>
                     </Link>
 
