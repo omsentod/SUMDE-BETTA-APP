@@ -27,6 +27,24 @@ export function getTelegramConfig() {
 }
 
 /**
+ * Mengambil daftar Chat ID target tujuan notifikasi.
+ * Mendukung pengiriman ke BANYAK tujuan sekaligus (dipisahkan koma di .env).
+ * Contoh: Akun Pribadi Owner, Akun Staff Packing, dan Grup Admin Operasional.
+ */
+export function getTelegramNotifTargets() {
+  const raw =
+    process.env.TELEGRAM_NOTIF_TARGETS ||
+    process.env.TELEGRAM_ADMIN_CHAT_ID ||
+    process.env.TELEGRAM_CHAT_ID ||
+    '';
+
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
  * Pemanggilan API mentah ke Telegram Bot API
  */
 export async function callTelegramApi(method, body = {}) {
@@ -471,7 +489,7 @@ export async function broadcastLiveRecap(eventId, targetChatId = null) {
   if (!eventId) return null;
 
   try {
-    const { default: prisma } = await import('@/lib/prisma');
+    const { default: prisma } = await import('./prisma.js');
     const event = await prisma.telegramBroadcastEvent.findUnique({
       where: { id: eventId },
       include: {
@@ -510,5 +528,76 @@ export async function broadcastLiveRecap(eventId, targetChatId = null) {
   } catch (err) {
     console.error('Gagal broadcastLiveRecap:', err.message);
     return null;
+  }
+}
+
+/**
+ * Notifikasi Rekap Jam Packing Toko via Bot Telegram (Kloter Jam 10.00 & 15.00 WIB)
+ * Mampu mengirim ke BANYAK tujuan sekaligus (Akun Pribadi, Staff Packing, Grup Admin).
+ * Format anti-AI-slop (hanya 2 baris ringkas):
+ * 📦 5 pesanan lunas siap dipacking.
+ * Buka dashboard: https://sumdebetta.com/admin/orders?status=PAID
+ */
+export async function sendAdminPackingDigestTelegram(kloterLabel = '', customTargets = null, options = {}) {
+  try {
+    const { default: prisma } = await import('./prisma.js');
+    const paidCount = await prisma.order.count({
+      where: {
+        status: 'PAID',
+      },
+    });
+
+    if (paidCount === 0 && !options.force) {
+      return {
+        sent: false,
+        count: 0,
+        channel: 'telegram',
+        reason: 'Tidak ada pesanan lunas yang menunggu dipacking (senyap total). Gunakan ?force=1 untuk tes kirim saat 0 pesanan.',
+      };
+    }
+
+    const { token, appUrl } = getTelegramConfig();
+    const targets = customTargets && customTargets.length > 0 ? customTargets : getTelegramNotifTargets();
+
+    if (!token || targets.length === 0) {
+      return {
+        sent: false,
+        channel: 'telegram',
+        error: 'TELEGRAM_BOT_TOKEN atau target Chat ID belum dikonfigurasi di .env.',
+      };
+    }
+
+    const displayCount = paidCount > 0 ? paidCount : (options.mockCount || 1);
+    const message = `📦 ${displayCount} pesanan lunas siap dipacking.\nBuka dashboard: ${appUrl}/admin/orders?status=PAID`;
+
+    const deliveries = [];
+    for (const chatId of targets) {
+      try {
+        const res = await callTelegramApi('sendMessage', {
+          chat_id: chatId,
+          text: message,
+          disable_web_page_preview: false,
+        });
+        deliveries.push({ chatId, ok: true, messageId: res?.message_id });
+      } catch (err) {
+        console.error(`Gagal kirim notif packing ke Chat ID ${chatId}:`, err.message);
+        deliveries.push({ chatId, ok: false, error: err.message });
+      }
+    }
+
+    const successCount = deliveries.filter((d) => d.ok).length;
+
+    return {
+      sent: successCount > 0,
+      count: paidCount,
+      channel: 'telegram',
+      message,
+      deliveries,
+      successCount,
+      totalTargets: targets.length,
+    };
+  } catch (err) {
+    console.error('Error sendAdminPackingDigestTelegram:', err.message);
+    return { sent: false, channel: 'telegram', error: err.message };
   }
 }
