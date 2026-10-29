@@ -1,17 +1,27 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { autoBookOrderShipment } from '@/lib/shipping';
 import BatchPrintSidebar from './BatchPrintSidebar';
 import LabelContent from './LabelContent';
 import styles from './label.module.css';
 
 export default async function ShippingLabelPage({ params }) {
   const { id } = await params;
-  const order = await prisma.order.findUnique({
+  let order = await prisma.order.findUnique({
     where: { id },
     include: { items: { include: { product: true } } }
   });
 
   if (!order) return notFound();
+
+  // Self-heal: jika order PAID belum memiliki shipment Biteship, lakukan auto-book sekarang
+  if (order.status === 'PAID' && !order.biteshipShipmentId) {
+    try {
+      order = await autoBookOrderShipment(order);
+    } catch (err) {
+      console.warn(`[ShippingLabelPage] Auto-book fallback failed for order ${order.id}:`, err.message);
+    }
+  }
 
   return (
     <div className={styles.viewport}>

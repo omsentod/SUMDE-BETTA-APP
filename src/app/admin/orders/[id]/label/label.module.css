@@ -359,6 +359,30 @@
   background: var(--glass-border);
 }
 
+.printStatusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.statusInfo {
+  background: rgba(0, 180, 216, 0.08);
+  border: 1px solid rgba(0, 180, 216, 0.2);
+  color: var(--secondary);
+}
+
+.statusSuccess {
+  background: var(--status-success-bg, rgba(16, 185, 129, 0.12));
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: var(--status-success, #10B981);
+  font-weight: 600;
+}
+
 /* Sections */
 .sectionBlock {
   display: flex;

@@ -91,7 +91,6 @@ function AdminOrdersPageInner() {
   const initialStatus = urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All';
 
   const canView = canUser(currentUser, 'orders:view');
-  const canPickup = canUser(currentUser, 'shipping:pickup');
   const canLabel = canUser(currentUser, 'shipping:label');
   const canUpdateStatus = canUser(currentUser, 'orders:update');
 
@@ -214,15 +213,21 @@ function AdminOrdersPageInner() {
     }, POLL_ORDERS_MS);
 
     const onVisibilityChange = () => {
-      if (typeof document !== 'undefined' && !document.hidden && Date.now() - lastLoadedRef.current >= POLL_ORDERS_MS) {
+      if (typeof document !== 'undefined' && !document.hidden && Date.now() - lastLoadedRef.current >= 5_000) {
         loadOrders(true);
       }
     };
+    const onWindowFocus = () => {
+      loadOrders(true);
+    };
+
     document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onWindowFocus);
 
     return () => {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onWindowFocus);
     };
   }, [canView]);
 
@@ -314,57 +319,9 @@ function AdminOrdersPageInner() {
     [orders, selectedIds]
   );
 
-  // Only PAID orders can call the courier — status advances to PROCESSING
-  // once pickup is booked, so PROCESSING is the "already called" state.
-  const eligiblePickup = selectedOrders.filter((o) => o.status === 'PAID' && !o.biteshipShipmentId).length;
   // Label bisa dicetak selama status aktif (PAID+). Tidak wajib punya AWB —
   // LabelContent otomatis tampilkan badge "MENUNGGU NOMOR RESI" saat kosong.
   const eligiblePrint = selectedOrders.filter((o) => PRINTABLE_STATUSES.has(o.status)).length;
-
-  const handleBulkPickup = async () => {
-    if (eligiblePickup === 0) {
-      toast.warning('Tidak ada order yang bisa di-pickup. Hanya order LUNAS (PAID) tanpa shipment yang eligible.');
-      return;
-    }
-    const confirmed = await confirmDialog({
-      title: 'Panggil Kurir?',
-      message: `Panggil kurir untuk ${eligiblePickup} order?\nOrder non-PAID atau yang sudah punya shipment akan di-skip.`,
-      confirmText: 'Panggil Kurir',
-      cancelText: 'Batal',
-    });
-    if (!confirmed) return;
-
-    setBusy(true);
-    try {
-      const res = await fetch('/api/admin/orders/bulk/pickup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderIds: Array.from(selectedIds) }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal bulk pickup');
-      const ok = data.results.filter((r) => r.ok).length;
-      const failedResults = data.results.filter((r) => !r.ok);
-      // Alasan gagal per order datang dari Biteship (lihat bulk/pickup/route.js)
-      // — tampilkan langsung di sini, jangan dibuang, supaya admin tidak perlu
-      // buka DevTools tiap kali booking gagal.
-      const failReasons = failedResults
-        .map((r) => `- #${r.orderId.slice(0, 8)}: ${r.error}`)
-        .join('\n');
-      
-      if (ok > 0) {
-        toast.success(`Selesai: ${ok} sukses dipanggil kurirnya.` + (failedResults.length > 0 ? ` (${failedResults.length} gagal)` : ''));
-      } else {
-        toast.error(`Gagal: ${failedResults.length} order gagal diproses.` + (failReasons ? `\n${failReasons}` : ''));
-      }
-      setSelectedIds(new Set());
-      loadOrders();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleBulkPrint = () => {
     const ids = selectedOrders
@@ -457,19 +414,9 @@ function AdminOrdersPageInner() {
       {selectedIds.size > 0 && (
         <div className={styles.bulkBar}>
           <span className={styles.bulkBarCount}>{selectedIds.size} terpilih</span>
-          {canPickup && (
-            <button
-              className={styles.bulkBtn}
-              onClick={handleBulkPickup}
-              disabled={busy || eligiblePickup === 0}
-              title={eligiblePickup === 0 ? 'Tidak ada order eligible untuk pickup' : ''}
-            >
-              Panggil Kurir ({eligiblePickup})
-            </button>
-          )}
           {canLabel && (
             <button
-              className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
+              className={styles.bulkBtn}
               onClick={handleBulkPrint}
               disabled={busy || eligiblePrint === 0}
             >

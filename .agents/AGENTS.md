@@ -18,7 +18,7 @@
 ## 3. Database & Stock Integrity (Prisma ORM)
 - **Atomic Stock Operations**: Stock updates (decrementing product quantity and variant sizes) must execute inside `prisma.$transaction`.
 - **Deferred Stock Reduction**: Stock is **never** decremented when an order is created (`PENDING`). Stock is only decremented upon receiving a verified `SUCCESS` status from the DOKU webhook — the same transaction flips status `PENDING` → `PAID`.
-- **Order Status Lifecycle**: `PENDING` (belum bayar) → `PAID` (webhook DOKU SUCCESS, stock decremented) → `PROCESSING` (admin klik "Panggil Kurir", Biteship shipment booked) → `SHIPPED` (Biteship webhook 'picked'/'dropping_off' atau `order.waybill_id` event) → `COMPLETED` (Biteship 'delivered'). Terminal branches: `CANCELLED` (webhook 'cancelled' — auto restock), `RETURNED` (webhook 'returned' — manual admin review, no auto restock).
+- **Order Status Lifecycle**: `PENDING` (belum bayar) → `PAID` (webhook DOKU SUCCESS, stock decremented, auto-book Biteship shipment, status tetap PAID) → `PROCESSING` (admin cetak resi pengiriman) → `SHIPPED` (Biteship webhook 'picked'/'dropping_off' atau `order.waybill_id` event) → `COMPLETED` (Biteship 'delivered'). Terminal branches: `CANCELLED` (webhook 'cancelled' — auto restock), `RETURNED` (webhook 'returned' — manual admin review, no auto restock).
 
 ## 4. UI Aesthetics & Theme System
 - **No Inline Styles in JSX**: Do NOT write inline styles (`style={{ ... }}`) inside JSX components. All styling MUST be placed in dedicated CSS files (`.css` or `.module.css`) using clean BEM/semantic CSS class names.

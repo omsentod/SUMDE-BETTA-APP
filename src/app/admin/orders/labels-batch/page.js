@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
+import { autoBookOrderShipment } from '@/lib/shipping';
 import BatchPrintSidebar from '../[id]/label/BatchPrintSidebar';
 import LabelContent from '../[id]/label/LabelContent';
 import styles from '../[id]/label/label.module.css';
@@ -52,7 +53,22 @@ export default async function LabelsBatchPage({ searchParams }) {
 
   // Urutkan sesuai urutan query string supaya prediktif.
   const orderById = new Map(orders.map((o) => [o.id, o]));
-  const ordered = ids.map((id) => orderById.get(id)).filter(Boolean);
+  const rawOrdered = ids.map((id) => orderById.get(id)).filter(Boolean);
+
+  // Self-heal: jika ada order PAID yang belum memiliki shipment Biteship, lakukan auto-book
+  const ordered = await Promise.all(
+    rawOrdered.map(async (o) => {
+      if (o.status === 'PAID' && !o.biteshipShipmentId) {
+        try {
+          return await autoBookOrderShipment(o);
+        } catch (err) {
+          console.warn(`[BatchLabelPage] Auto-booking fallback failed for order ${o.id}:`, err.message);
+          return o;
+        }
+      }
+      return o;
+    })
+  );
 
   if (ordered.length === 0) {
     return (

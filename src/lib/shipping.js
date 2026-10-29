@@ -7,6 +7,8 @@
 //   SHIPPING_COURIERS             - comma separated (default: pos)
 //   SHIPPING_ITEMS_PER_KG         - default 10
 
+import prisma from '@/lib/prisma';
+
 const DEFAULT_BASE = 'https://api.biteship.com/v1';
 const DEFAULT_COURIERS = 'pos,jnt';
 // Berapa ekor ikan per 1 kg paket. 10 ikan = 1 kg, 11 ikan = 2 kg, dst.
@@ -320,3 +322,61 @@ export async function getBiteshipOrder(biteshipOrderId) {
   }
   return data;
 }
+
+/**
+ * Otomatis memanggil kurir (booking shipment Biteship) saat pesanan lunas (PAID).
+ * PENTING: Status pesanan TETAP 'PAID' (tidak diubah ke 'PROCESSING').
+ * Status pesanan baru akan berpindah ke 'PROCESSING' saat resi dicetak oleh admin.
+ *
+ * @param {object|string} orderOrId Prisma order object (beserta items) atau order ID
+ * @returns {Promise<object>} Order yang telah terupdate biteshipShipmentId & trackingNumber
+ */
+export async function autoBookOrderShipment(orderOrId) {
+  let order = orderOrId;
+  if (typeof orderOrId === 'string' || !orderOrId?.items) {
+    const orderId = typeof orderOrId === 'string' ? orderOrId : orderOrId.id;
+    order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: { include: { product: true } } }
+    });
+  }
+
+  if (!order) {
+    throw new Error('Pesanan tidak ditemukan.');
+  }
+
+  // Idempotency guard: jika shipment sudah ada, jangan panggil ulang agar tidak duplikat di Biteship
+  if (order.biteshipShipmentId) {
+    console.log(`[AutoBook] Order ${order.id} sudah memiliki biteshipShipmentId=${order.biteshipShipmentId}.`);
+    return order;
+  }
+
+  const totalQty = (order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const shipmentData = await createShipment(order, totalQty);
+
+  const freshWaybill =
+    shipmentData.courier?.waybill_id ||
+    shipmentData.courier?.tracking_id ||
+    shipmentData.waybill_id ||
+    null;
+
+  const data = {
+    biteshipShipmentId: shipmentData.id,
+    biteshipStatus: shipmentData.status || 'allocated',
+    // Status pesanan sengaja TIDAK diubah — tetap PAID sesuai permintaan alur bisnis.
+  };
+
+  if (freshWaybill) {
+    data.trackingNumber = freshWaybill;
+  }
+
+  const updated = await prisma.order.update({
+    where: { id: order.id },
+    data,
+    include: { items: { include: { product: true } } }
+  });
+
+  console.log(`[AutoBook] Berhasil membuat shipment Biteship untuk order ${order.id}: shipmentId=${shipmentData.id}, waybill=${freshWaybill || 'PENDING'}, status=${updated.status}`);
+  return updated;
+}
+

@@ -5,6 +5,7 @@ import { generateDigest, generateSignature } from '@/lib/doku';
 import { createNotification, notifyAllAdmins } from '@/lib/notification';
 import { sendMail, orderPaidEmailTemplate } from '@/lib/email';
 import { updateTelegramDropMessage, callTelegramApi, isTelegramConfigured } from '@/lib/telegram';
+import { autoBookOrderShipment } from '@/lib/shipping';
 
 const requestTarget = '/api/payment/doku/webhook';
 
@@ -171,13 +172,21 @@ export async function POST(request) {
       }
 
       // Payment confirmed → mark PAID and decrement stock atomically (P2-b).
-      // PAID = uang masuk, belum di-pickup kurir. Status berpindah ke PROCESSING
-      // saat admin menekan "Panggil Kurir".
+      // PAID = uang masuk, order sudah lunas. Kurir otomatis dipanggil ke Biteship,
+      // tetapi status TETAP 'PAID'. Status baru berpindah ke 'PROCESSING' saat admin mencetak resi.
       await prisma.$transaction(async (tx) => {
         await decrementStockForOrder(tx, order);
         await tx.order.update({ where: { id: actualOrderId }, data: { status: 'PAID' } });
       });
       console.log(`Doku Webhook: Order ${actualOrderId} paid → PAID, stock updated.`);
+
+      // Otomatis booking shipment kurir Biteship saat pesanan lunas.
+      // Status pesanan TETAP 'PAID'.
+      try {
+        await autoBookOrderShipment(order);
+      } catch (shipmentErr) {
+        console.error(`Auto-booking Biteship failed for paid order ${actualOrderId}:`, shipmentErr.message);
+      }
 
       // Notif: customer (bell + email) + admin (bell). Best-effort — jangan
       // gagalkan webhook kalau notif error, order sudah paid di DB.

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styles from './label.module.css';
 
@@ -17,6 +18,9 @@ function getCourierBadgeClass(courier) {
 
 export default function BatchPrintSidebar({ orders = [], single = false }) {
   const totalOrders = orders.length;
+  const [printUpdated, setPrintUpdated] = useState(false);
+  const markedRef = useRef(false);
+
   const totalQty = orders.reduce(
     (sum, o) => sum + (o.items?.reduce((iSum, item) => iSum + (item.quantity || 1), 0) || 0),
     0
@@ -30,11 +34,41 @@ export default function BatchPrintSidebar({ orders = [], single = false }) {
   });
   const courierList = Object.entries(courierMap);
 
+  const markOrdersPrinted = async () => {
+    if (markedRef.current) return;
+    const paidIds = orders.filter((o) => o.status === 'PAID').map((o) => o.id);
+    if (paidIds.length === 0) return;
+
+    markedRef.current = true;
+    try {
+      const res = await fetch('/api/admin/orders/bulk/mark-printed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: paidIds }),
+      });
+      if (res.ok) {
+        setPrintUpdated(true);
+      }
+    } catch (err) {
+      console.error('Gagal memperbarui status cetak resi:', err);
+      markedRef.current = false;
+    }
+  };
+
   const handlePrint = () => {
+    markOrdersPrinted();
     if (typeof window !== 'undefined') {
       window.print();
     }
   };
+
+  useEffect(() => {
+    const onAfterPrint = () => {
+      markOrdersPrinted();
+    };
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => window.removeEventListener('afterprint', onAfterPrint);
+  }, [orders]);
 
   const handleScrollToLabel = (orderId) => {
     if (typeof document !== 'undefined') {
@@ -78,6 +112,24 @@ export default function BatchPrintSidebar({ orders = [], single = false }) {
           </svg>
           <span>{single ? 'Cetak Resi Ini' : `Cetak Semua (${totalOrders})`}</span>
         </button>
+
+        {printUpdated ? (
+          <div className={`${styles.printStatusIndicator} ${styles.statusSuccess}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span>Status diperbarui ke DIPROSES</span>
+          </div>
+        ) : (
+          <div className={`${styles.printStatusIndicator} ${styles.statusInfo}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span>Mencetak resi otomatis memindahkan status ke DIPROSES</span>
+          </div>
+        )}
 
         <Link href="/admin/orders" className={styles.backOrdersLink}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
