@@ -70,7 +70,7 @@ export function formatDropCaption(product, status = 'OPEN', buyer = null) {
   }
 
   return (
-    `🐟 *SUMDE BETTA • FLASH DROP 24 JAM*\n` +
+    `🐟 *SUMDE BETTA • FLASH DROP*\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
     `🔖 *Kode:* \`${code}\`\n` +
     `🏷️ *Nama:* ${safeName}\n` +
@@ -120,20 +120,20 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
   const isBooked = (status === 'BOOKED' || product.bookedUntil) && !isExpired && !product.isSold;
   const isSold = status === 'SOLD' || product.isSold;
 
-  const webUrl = (appUrl && !appUrl.startsWith('http://localhost'))
-    ? `${appUrl}/produk/${product.id}`
-    : `https://sumdebetta.com/produk/${product.id}`;
+  const baseUrl = (appUrl && !appUrl.startsWith('http://localhost'))
+    ? appUrl
+    : 'https://sumdebetta.com';
+
+  const webUrl = `${baseUrl}/produk/${product.id}`;
 
   const hasYtVideo = isYouTubeUrl(product.videoUrl);
   const ytCanonical = hasYtVideo ? normalizeYouTubeUrl(product.videoUrl) : null;
 
   if (isSold) {
-    const catalogUrl = (appUrl && !appUrl.startsWith('http://localhost'))
-      ? `${appUrl}/produk`
-      : 'https://sumdebetta.com/produk';
+    const catalogUrl = `${baseUrl}/produk`;
     return {
       inline_keyboard: [
-        [{ text: '❌ SUDAH TERJUAL (SOLD OUT)', callback_data: `info:sold:${product.id}` }],
+        [{ text: `🔴 SUDAH TERJUAL (SOLD OUT) ke @${product.bookedBy || 'Pembeli'}`, callback_data: `info:sold:${product.id}` }],
         [{ text: '🌐 Lihat Koleksi Ikan Lainnya', url: catalogUrl }],
       ],
     };
@@ -150,7 +150,7 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
       inline_keyboard: [
         [
           {
-            text: `⏳ Di-booking @${product.bookedBy || 'User'} (Sisa Waktu Bayar)`,
+            text: `⏳ Sedang Di-Book @${product.bookedBy || 'User'} (Batas 15 Menit)`,
             callback_data: `info:booked:${product.id}`,
           },
         ],
@@ -159,7 +159,20 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
     };
   }
 
-  // Status OPEN (Bisa diambil)
+  // Status OPEN (Bisa diambil langsung via Checkout Web App / URL)
+  const checkoutUrl = `${baseUrl}/checkout?buyNow=${product.id}&dropNumber=${encodeURIComponent(product.dropNumber || '')}&eventId=${product.broadcastEventId || ''}`;
+  const isHttps = checkoutUrl.startsWith('https://');
+
+  const dealButton = isHttps
+    ? {
+        text: `⚡ DEAL SEKARANG (${product.dropNumber || '#DROP'})`,
+        web_app: { url: checkoutUrl },
+      }
+    : {
+        text: `⚡ DEAL SEKARANG (${product.dropNumber || '#DROP'})`,
+        url: checkoutUrl,
+      };
+
   const secondaryRow = [];
   if (hasYtVideo) {
     secondaryRow.push({ text: '▶️ Buka di YouTube', url: ytCanonical || product.videoUrl });
@@ -168,12 +181,7 @@ export function buildDropInlineKeyboard(product, status = 'OPEN') {
 
   return {
     inline_keyboard: [
-      [
-        {
-          text: `⚡ AMBIL / TAKE IKAN INI (${product.dropNumber || '#DROP'})`,
-          callback_data: `take:${product.id}`,
-        },
-      ],
+      [dealButton],
       secondaryRow,
     ],
   };
@@ -351,6 +359,156 @@ export async function answerCallbackQuery(callbackQueryId, text, showAlert = fal
     });
   } catch (err) {
     console.error('Error answerCallbackQuery:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Format Tanggal Indonesia (contoh: 29 OKTOBER 2026)
+ */
+export function formatIndoDate(date = new Date()) {
+  try {
+    return new Date(date).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta',
+    }).toUpperCase();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Format Pesan Banner Pengumuman Pembuka Event Broadcast
+ */
+export function formatEventHeaderMessage(event, itemsCount = 0, firstCode = '', lastCode = '') {
+  const dateStr = formatIndoDate(event?.date || new Date());
+  const rangeStr = firstCode && lastCode && firstCode !== lastCode
+    ? ` (${firstCode} s/d ${lastCode})`
+    : (firstCode ? ` (${firstCode})` : '');
+  const durationStr = event?.isLifetime
+    ? '♾️ Sesi Lifetime (Tanpa Batas Waktu)'
+    : `${event?.durationHours || 24} Jam`;
+
+  return (
+    `✨ *UPDATE FLASH DEAL HARI INI* ✨\n` +
+    `          — ${dateStr} —\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `🔥 *Sesi:* ${event?.title || 'FLASH DEAL SPESIAL'}\n` +
+    `⏳ *Batas Waktu:* ${durationStr}\n` +
+    `📦 *Total Koleksi:* ${itemsCount} Ekor Pilihan${rangeStr}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `⚡ _Siapa cepat dia dapat! Tekan tombol DEAL pada postingan ikan yang kamu inginkan._\n` +
+    `_Selamat berburu ikan impianmu! 🐟🔥_`
+  );
+}
+
+/**
+ * Format Pesan Papan Live Recap Flash Deal
+ */
+export function formatLiveRecapMessage(event, products = []) {
+  const now = new Date();
+  const dateStr = formatIndoDate(event?.date || now);
+  const eventTitle = (event?.title || 'FLASH DEAL').toUpperCase();
+
+  const total = products.length;
+  let soldCount = 0;
+  let bookedCount = 0;
+  let openCount = 0;
+
+  const lines = products.map((p, idx) => {
+    const code = p.dropNumber || `#${String(idx + 1).padStart(2, '0')}`;
+    const isBooked = p.bookedUntil && new Date(p.bookedUntil) > now && !p.isSold;
+    const isSold = p.isSold;
+
+    if (isSold) {
+      soldCount++;
+      const buyer = p.bookedBy ? `@${p.bookedBy.replace(/^@/, '')}` : 'Pembeli';
+      return `${code} : 🔴 SOLD OUT to ${buyer} (LUNAS)`;
+    }
+    if (isBooked) {
+      bookedCount++;
+      const buyer = p.bookedBy ? `@${p.bookedBy.replace(/^@/, '')}` : 'User';
+      const diffSec = Math.max(0, Math.floor((new Date(p.bookedUntil) - now) / 1000));
+      const mins = Math.max(1, Math.ceil(diffSec / 60));
+      return `${code} : 🔒 BOOKED ${buyer} (Sisa ${mins}m)`;
+    }
+
+    openCount++;
+    return `${code} : 🟢 OPEN (Siap Diambil)`;
+  });
+
+  let timeStatus = '♾️ Lifetime';
+  if (!event?.isLifetime && event?.expiresAt) {
+    try {
+      const timeStr = new Date(event.expiresAt).toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta',
+      });
+      timeStatus = `Berakhir ${timeStr} WIB`;
+    } catch {
+      timeStatus = 'Aktif';
+    }
+  }
+
+  return (
+    `🏆 *LIVE RECAP DEAL • SUMDE BETTA*\n` +
+    `⚡ *${eventTitle} — ${dateStr}*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+    (lines.length > 0 ? lines.join('\n') : '_Belum ada produk yang terdaftar dalam sesi ini._') +
+    `\n━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `📊 *Progres:* ${total} Ikan • 🔴 ${soldCount} Sold • 🔒 ${bookedCount} Booked • 🟢 ${openCount} Open\n` +
+    `⏰ *Status Sesi:* ${timeStatus}`
+  );
+}
+
+/**
+ * Kirim atau Perbarui Papan Live Recap ke Grup Telegram
+ */
+export async function broadcastLiveRecap(eventId, targetChatId = null) {
+  if (!eventId) return null;
+
+  try {
+    const { default: prisma } = await import('@/lib/prisma');
+    const event = await prisma.telegramBroadcastEvent.findUnique({
+      where: { id: eventId },
+      include: {
+        products: {
+          orderBy: { dropNumber: 'asc' },
+        },
+      },
+    });
+
+    if (!event) return null;
+
+    const { defaultChatId } = getTelegramConfig();
+    const chatId = targetChatId || event.chatId || defaultChatId;
+    if (!chatId) return null;
+
+    const recapText = formatLiveRecapMessage(event, event.products);
+
+    // Kirim pesan baru ke grup Telegram agar langsung terlihat di chat terbawah
+    const res = await callTelegramApi('sendMessage', {
+      chat_id: chatId,
+      text: recapText,
+      parse_mode: 'Markdown',
+    });
+
+    if (res?.message_id) {
+      await prisma.telegramBroadcastEvent.update({
+        where: { id: event.id },
+        data: {
+          recapMessageId: res.message_id,
+          chatId: String(chatId),
+        },
+      });
+    }
+
+    return res;
+  } catch (err) {
+    console.error('Gagal broadcastLiveRecap:', err.message);
     return null;
   }
 }

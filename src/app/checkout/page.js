@@ -3,18 +3,26 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import SearchableSelect from '@/components/SearchableSelect';
 import CourierLogo from '@/components/CourierLogo';
 import { useToast } from '@/context/ToastContext';
 import styles from './checkout.module.css';
 
-export default function CheckoutPage() {
-    const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart } = useCart();
+function CheckoutContent() {
+    const { checkoutItems: cart, checkoutTotal: total, updateQuantity, removeFromCart, buyNow } = useCart();
     const { currentUser, fetchMyAddresses, createAddress } = useAuth();
     const { toast, confirmDialog } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const buyNowParam = searchParams.get('buyNow');
+    const dropNumberParam = searchParams.get('dropNumber');
+    const telegramUserParam = searchParams.get('telegramUser');
+    const eventIdParam = searchParams.get('eventId');
+
+    const [dropBooking, setDropBooking] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -59,6 +67,86 @@ export default function CheckoutPage() {
         setTimeout(() => {
             setSelectAlert(prev => prev.field === field ? { field: '', message: '' } : prev);
         }, 3000);
+    };
+
+    // Auto-load buyNow drop product from query params and lock booking in Telegram
+    useEffect(() => {
+        if (!buyNowParam) return;
+        let cancelled = false;
+
+        let tgUser = telegramUserParam || '';
+        if (!tgUser && typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
+            tgUser = window.Telegram.WebApp.initDataUnsafe.user.username || window.Telegram.WebApp.initDataUnsafe.user.first_name || '';
+        }
+
+        fetch(`/api/products/${buyNowParam}`)
+            .then(res => res.json())
+            .then(async (prod) => {
+                if (cancelled || !prod || prod.error) return;
+                buyNow({
+                    id: prod.id,
+                    name: prod.name,
+                    price: prod.price,
+                    image: prod.image || (prod.images && prod.images[0]) || '/img/betta-1.png',
+                    category: prod.category,
+                    dropNumber: dropNumberParam || prod.dropNumber,
+                });
+
+                if (prod.isDailyDrop || dropNumberParam) {
+                    try {
+                        const tgId = typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+                            ? String(window.Telegram.WebApp.initDataUnsafe.user.id)
+                            : null;
+
+                        const bookRes = await fetch('/api/telegram/book', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                productId: prod.id,
+                                telegramUser: tgUser || 'Pembeli',
+                                telegramId: tgId,
+                            }),
+                        });
+                        const bookData = await bookRes.json();
+                        if (bookRes.ok && !cancelled) {
+                            setDropBooking({
+                                dropNumber: dropNumberParam || prod.dropNumber || '#DROP',
+                                telegramUser: tgUser || 'Pembeli',
+                                bookedUntil: bookData.product?.bookedUntil,
+                            });
+                        }
+                    } catch (bookErr) {
+                        console.warn('Gagal book drop Telegram:', bookErr.message);
+                    }
+                }
+            })
+            .catch(err => console.error('Gagal mengambil data buyNow:', err));
+
+        return () => { cancelled = true; };
+    }, [buyNowParam, dropNumberParam, telegramUserParam, buyNow]);
+
+    const handleCancelDropBooking = async () => {
+        if (!buyNowParam) return;
+        const confirmed = await confirmDialog({
+            title: 'Batalkan Flash Deal?',
+            message: 'Apakah Anda yakin ingin membatalkan transaksi ini? Ikan akan kembali dibuka untuk anggota lain di grup Telegram.',
+            confirmText: 'Ya, Batalkan',
+            cancelText: 'Lanjutkan Transaksi',
+            isDanger: true,
+        });
+        if (!confirmed) return;
+
+        try {
+            await fetch('/api/telegram/release', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: buyNowParam }),
+            });
+            toast.info('Booking telah dibatalkan.');
+            router.push('/produk');
+        } catch {
+            router.push('/produk');
+        }
     };
 
     const handleDeleteCheckoutItem = async (item) => {
@@ -398,8 +486,15 @@ export default function CheckoutPage() {
             fee: Number(selectedRate.price) || 0,
             eta: selectedRate.duration || null,
         };
+        const tgUser = dropBooking?.telegramUser || telegramUserParam || (typeof window !== 'undefined' && (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name)) || '';
+
         localStorage.removeItem('active-payment');
-        localStorage.setItem('temp-shipment', JSON.stringify({ ...formData, shipping, createdAt: Date.now() }));
+        localStorage.setItem('temp-shipment', JSON.stringify({
+            ...formData,
+            telegramUsername: tgUser ? `@${tgUser.replace(/^@/, '')}` : null,
+            shipping,
+            createdAt: Date.now()
+        }));
         router.push('/payment');
     };
 
@@ -427,6 +522,27 @@ export default function CheckoutPage() {
             <section className="checkout-section">
                 <div className="container">
                     <h1 className="checkout-title">Ringkasan Akuisisi</h1>
+
+                    {dropBooking && (
+                        <div className={styles.telegramDropBanner}>
+                            <div className={styles.dropBannerLeft}>
+                                <span className={styles.dropBadge}>{dropBooking.dropNumber}</span>
+                                <div>
+                                    <div className={styles.dropBannerTitle}>Flash Deal Sedang Diamankan</div>
+                                    <div className={styles.dropBannerSub}>
+                                        Ikan ini terkunci untuk akun Telegram @{dropBooking.telegramUser.replace(/^@/, '')} (Batas Waktu: 15 Menit).
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleCancelDropBooking}
+                                className={styles.dropCancelBtn}
+                            >
+                                Batalkan Booking
+                            </button>
+                        </div>
+                    )}
 
                     <div className="grid-checkout-outer">
 
@@ -760,5 +876,17 @@ export default function CheckoutPage() {
                 </div>
             </section>
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className={`container ${styles.emptyStateContainer}`}>
+                <p className={styles.emptyStateSubtitle}>Memuat Halaman Checkout...</p>
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     );
 }

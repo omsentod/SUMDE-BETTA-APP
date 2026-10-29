@@ -84,6 +84,14 @@
     flex-shrink: 0;
 }
 
+.statusDotMuted {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+}
+
 .configInfoTitle {
     font-size: 0.88rem;
     font-weight: 600;
@@ -859,6 +867,262 @@
 .btnSm {
     padding: 0.35rem 0.65rem;
     font-size: 0.78rem;
+}
+
+/* Event Broadcast Cards Grid & Styles */
+.eventCardsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.eventCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.eventCard:hover {
+    border-color: rgba(255, 107, 53, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.eventCardActive {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.08);
+}
+
+.eventCardDraft {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.eventCardCompleted {
+    opacity: 0.85;
+}
+
+.eventCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.eventTitle {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+    line-height: 1.35;
+}
+
+.eventDescription {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    margin: 0.35rem 0 0.85rem 0;
+    line-height: 1.45;
+}
+
+.eventMetaRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.eventMetaTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    color: var(--text-muted);
+}
+
+.eventMetaTagPrimary {
+    color: var(--primary);
+    border-color: rgba(255, 107, 53, 0.3);
+    background: rgba(255, 107, 53, 0.06);
+    font-weight: 600;
+}
+
+.eventStatsBar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    justify-content: space-around;
+}
+
+.eventStatItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.eventStatCount {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.eventStatLabel {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.eventThumbnails {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.eventMiniThumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.eventMoreThumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.eventFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: auto;
+    flex-wrap: wrap;
+}
+
+.eventFooterLeft {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.eventFooterRight {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.formGroup {
+    margin-bottom: 1.2rem;
+}
+
+.formLabel {
+    display: block;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
+}
+
+.formInput {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease;
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.formRow2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.formRow3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.btnDangerOutline {
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    color: #ef4444 !important;
+}
+
+.btnDangerOutline:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.actionSectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.actionSectionTitle {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.actionSectionSubtitle {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0 0 0;
+}
+
+.checkboxLabelSpaced {
+    margin-top: 0.65rem;
+}
+
+.tableRowPointer {
+    cursor: pointer;
 }
 
 

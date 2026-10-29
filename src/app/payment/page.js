@@ -201,6 +201,7 @@ export default function PaymentPage() {
                     district: shipment.district,
                     village: shipment.village,
                     postalCode: shipment.postalCode,
+                    telegramUsername: shipment.telegramUsername || null,
                     items: cart.map(item => ({
                         productId: item.id,
                         quantity: item.quantity,

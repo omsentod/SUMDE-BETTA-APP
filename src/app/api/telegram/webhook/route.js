@@ -5,6 +5,7 @@ import {
   answerCallbackQuery,
   updateTelegramDropMessage,
   callTelegramApi,
+  broadcastLiveRecap,
 } from '@/lib/telegram';
 
 export const dynamic = 'force-dynamic';
@@ -121,42 +122,24 @@ export async function POST(request) {
         }
 
         // Sukses mengamankan ikan!
-        await answerCallbackQuery(queryId, 'Berhasil diamankan! Cek pesan balasan untuk link pembayaran.', false);
-
         const targetProduct = result.updated || result.product;
-        const checkoutUrl = `${appUrl}/checkout?buyNow=${targetProduct.id}&telegramUser=${encodeURIComponent(buyerDisplay)}`;
-        const timeLimitStr = formatTime(targetProduct.bookedUntil || result.bookedUntil);
+        const checkoutUrl = `${appUrl}/checkout?buyNow=${targetProduct.id}&dropNumber=${encodeURIComponent(targetProduct.dropNumber || '')}&telegramUser=${encodeURIComponent(buyerDisplay)}&eventId=${targetProduct.broadcastEventId || ''}`;
 
-        // 1. Update tombol pesan asli di grup menjadi "Sedang Di-booking"
+        await answerCallbackQuery(queryId, `Ikan ${targetProduct.dropNumber || ''} berhasil diamankan! Membuka halaman checkout...`, false);
+
+        // 1. Update tombol pesan asli di grup menjadi "Sedang Di-Book" (Deal button hilang!)
         await updateTelegramDropMessage(targetProduct, 'BOOKED', buyerDisplay);
 
-        // 2. Kirim reply pengumuman wasit di grup
-        const replyText =
-          `⚡ *DEAL TERCEPAT!*\n` +
-          `Selamat ${buyerUsername}, kamu tercepat mengamankan:\n` +
-          `🔖 *${targetProduct.dropNumber || '#IKAN'} - ${targetProduct.name}*\n\n` +
-          `⏳ *Batas Waktu Bayar:* 15 Menit (Hingga ${timeLimitStr} WIB)\n` +
-          `💳 *Selesaikan Transaksi & Ongkir di Sini:*\n` +
-          `👉 [Klik Di Sini Untuk Checkout & Pembayaran](${checkoutUrl})\n\n` +
-          `⚠️ _Jika dalam 15 menit belum dibayar di website, booking otomatis dibatalkan dan ikan kembali OPEN._`;
-
-        try {
-          await callTelegramApi('sendMessage', {
-            chat_id: chatId,
-            reply_to_message_id: message?.message_id,
-            text: replyText,
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: '💳 Bayar Sekarang di Website', url: checkoutUrl }],
-              ],
-            },
-          });
-        } catch (msgErr) {
-          console.error('Gagal mengirim reply wasit:', msgErr.message);
+        // 2. Siarkan Papan Live Recap terbaru ke grup
+        if (targetProduct.broadcastEventId) {
+          try {
+            await broadcastLiveRecap(targetProduct.broadcastEventId, targetProduct.telegramChatId || String(chatId));
+          } catch (recapErr) {
+            console.warn('Gagal broadcastLiveRecap dari webhook:', recapErr.message);
+          }
         }
 
-        return NextResponse.json({ ok: true });
+        return NextResponse.json({ ok: true, checkoutUrl });
       }
     }
 

@@ -33,7 +33,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items, shipping, paymentMethod } = await request.json();
+    const { name, email, phone, streetAddress, rtRw, province, city, district, village, postalCode, items, shipping, paymentMethod, telegramUsername } = await request.json();
     const cleanedPostal = String(postalCode || '').trim();
     if (!name || !email || !phone || !streetAddress || !rtRw || !province || !city || !district || !village || !/^\d{5}$/.test(cleanedPostal) || !items || items.length === 0) {
       return NextResponse.json({ error: 'Detail pesanan tidak lengkap atau kode pos tidak valid (harus 5 digit).' }, { status: 400 });
@@ -139,6 +139,7 @@ export async function POST(request) {
           shippingEta: rate.duration || null,
           name, email, phone, streetAddress, rtRw,
           province, city, district, village, postalCode: cleanedPostal,
+          telegramUsername: telegramUsername ? String(telegramUsername).trim() : null,
           ...(userId ? { user: { connect: { id: userId } } } : {}),
         },
       });

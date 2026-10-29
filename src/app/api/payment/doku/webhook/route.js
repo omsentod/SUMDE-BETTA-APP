@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { generateDigest, generateSignature } from '@/lib/doku';
 import { createNotification, notifyAllAdmins } from '@/lib/notification';
 import { sendMail, orderPaidEmailTemplate } from '@/lib/email';
-import { updateTelegramDropMessage, callTelegramApi, isTelegramConfigured } from '@/lib/telegram';
+import { updateTelegramDropMessage, callTelegramApi, isTelegramConfigured, broadcastLiveRecap } from '@/lib/telegram';
 import { autoBookOrderShipment } from '@/lib/shipping';
 
 const requestTarget = '/api/payment/doku/webhook';
@@ -242,6 +242,15 @@ export async function POST(request) {
                   `📦 Pesanan sedang disiapkan untuk pengiriman. Terima kasih!`,
                 parse_mode: 'Markdown',
               });
+
+              // Siarkan papan rekap terbaru ke grup
+              if (prod.broadcastEventId) {
+                try {
+                  await broadcastLiveRecap(prod.broadcastEventId, prod.telegramChatId);
+                } catch {
+                  // ignore
+                }
+              }
             }
           }
         } catch (tgErr) {

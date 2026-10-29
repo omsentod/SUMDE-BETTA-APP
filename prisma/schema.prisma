@@ -142,6 +142,8 @@ model Product {
   bookedUntil        DateTime? // Batas waktu bayar 15 menit
   telegramMessageId  Int?      // ID pesan di grup Telegram untuk auto-update status
   telegramChatId     String?   // Chat ID grup Telegram
+  broadcastEventId   String?
+  broadcastEvent     TelegramBroadcastEvent? @relation(fields: [broadcastEventId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
@@ -149,6 +151,7 @@ model Product {
 
   @@index([isDailyDrop, isSold])
   @@index([bookedUntil])
+  @@index([broadcastEventId])
 }
 
 model ProductVariant {
@@ -228,4 +231,27 @@ model PromoEvent {
   endDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model TelegramBroadcastEvent {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?   @db.Text
+  date            DateTime  @default(now())
+  prefix          String    @default("R-")
+  startNumber     Int       @default(1)
+  padZero         Boolean   @default(true)
+  durationHours   Int?
+  isLifetime      Boolean   @default(false)
+  expiresAt       DateTime?
+  status          String    @default("DRAFT") // DRAFT | ACTIVE | COMPLETED
+  headerMessageId Int?
+  recapMessageId  Int?
+  chatId          String?
+  totalItems      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  products        Product[]
+
+  @@index([status])
 }
