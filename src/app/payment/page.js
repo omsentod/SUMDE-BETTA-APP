@@ -507,6 +507,11 @@ export default function PaymentPage() {
                                         </span>
                                         <span className={styles.calcValue}>{formatIDR(breakdown.shippingFee)}</span>
                                     </div>
+                                    {shipment?.shipping?.isOuterJava && (
+                                        <div className={styles.surchargeSubtext}>
+                                            Termasuk karantina &amp; packing luar Jawa (+{formatIDR(shipment.shipping.surcharge || 10000)})
+                                        </div>
+                                    )}
 
                                     <div className={styles.summaryCalcRow}>
                                         <span className={styles.calcLabel}>

@@ -288,3 +288,50 @@
     border-color: #ef4444;
     color: #ef4444;
 }
+
+.outerJavaNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    background: rgba(255, 107, 53, 0.08);
+    border: 1px solid rgba(255, 107, 53, 0.25);
+    margin-top: 1rem;
+}
+
+.outerJavaIcon {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+    color: var(--primary);
+    margin-top: 0.15rem;
+}
+
+.outerJavaText {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.outerJavaTitle {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.02em;
+}
+
+.outerJavaSub {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.summarySurchargeNote {
+    font-size: 0.775rem;
+    color: var(--primary);
+    text-align: right;
+    margin-top: -2rem;
+    margin-bottom: 2rem;
+    line-height: 1.4;
+}

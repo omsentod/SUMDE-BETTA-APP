@@ -13,6 +13,8 @@ const DEFAULT_BASE = 'https://api.biteship.com/v1';
 const DEFAULT_COURIERS = 'pos,jnt';
 // Berapa ekor ikan per 1 kg paket. 10 ikan = 1 kg, 11 ikan = 2 kg, dst.
 const DEFAULT_ITEMS_PER_KG = 10;
+// Biaya tambahan otomatis untuk pengiriman ke Luar Pulau Jawa (karantina BKIPM & packing khusus)
+const DEFAULT_OUTER_JAVA_SURCHARGE = 10000;
 // Kode layanan yang tidak cocok untuk ikan hidup — kirim via truk cargo
 // bisa 3-7 hari, ikan bakal mati. Filter sebelum dikirim ke client.
 const EXCLUDED_SERVICES = new Set(['jtr', 'jtr250', 'jtr<250', 'trucking', 'cargo']);
@@ -30,7 +32,10 @@ function config() {
   if (!originPostal) throw configError('BITESHIP_ORIGIN_POSTAL_CODE belum di-set di .env.');
   const couriers = process.env.SHIPPING_COURIERS || DEFAULT_COURIERS;
   const itemsPerKg = Number(process.env.SHIPPING_ITEMS_PER_KG) || DEFAULT_ITEMS_PER_KG;
-  return { apiKey, base, originPostal, couriers, itemsPerKg };
+  const outerJavaSurcharge = process.env.SHIPPING_OUTER_JAVA_SURCHARGE !== undefined
+    ? (parseInt(process.env.SHIPPING_OUTER_JAVA_SURCHARGE, 10) || 0)
+    : DEFAULT_OUTER_JAVA_SURCHARGE;
+  return { apiKey, base, originPostal, couriers, itemsPerKg, outerJavaSurcharge };
 }
 
 function configError(message) {
@@ -97,7 +102,48 @@ export function sanitizeShippingError(rawError, postalCode) {
   return msg || 'Gagal memproses data pengiriman.';
 }
 
-export async function fetchRates({ destinationPostal, destinationCity: _destinationCity, items }) {
+/**
+ * Menentukan apakah alamat tujuan atau kode pos berada di luar Pulau Jawa & Madura.
+ *
+ * Standar Penomoran Kode Pos Indonesia (PT Pos Indonesia):
+ * - Digit pertama 1: Jabodetabek (DKI Jakarta, Tangerang/Banten, Bogor/Depok/Bekasi/Jabar)
+ * - Digit pertama 4: Banten & Jawa Barat
+ * - Digit pertama 5: Jawa Tengah & D.I. Yogyakarta
+ * - Digit pertama 6: Jawa Timur & Madura
+ *
+ * Digit pertama Luar Pulau Jawa:
+ * - Digit 2 & 3: Seluruh Sumatera
+ * - Digit 7: Seluruh Kalimantan
+ * - Digit 8: Bali, NTB, NTT
+ * - Digit 9: Sulawesi, Maluku, Papua
+ *
+ * @param {string|number} postalCode 5 digit kode pos
+ * @param {string?} province Nama provinsi (opsional, untuk validasi silang)
+ * @returns {boolean} true jika terdeteksi di luar pulau Jawa
+ */
+export function isOuterJava(postalCode, province = '') {
+  const cleanPostal = String(postalCode || '').trim();
+  if (cleanPostal && cleanPostal.length >= 1) {
+    const firstDigit = cleanPostal[0];
+    if (['1', '4', '5', '6'].includes(firstDigit)) {
+      return false;
+    }
+    if (['2', '3', '7', '8', '9'].includes(firstDigit)) {
+      return true;
+    }
+  }
+
+  if (province) {
+    const p = String(province).toLowerCase();
+    const javaKeywords = ['jakarta', 'banten', 'jawa barat', 'jawa tengah', 'yogyakarta', 'jogja', 'jawa timur'];
+    const isJava = javaKeywords.some((keyword) => p.includes(keyword));
+    return !isJava;
+  }
+
+  return false;
+}
+
+export async function fetchRates({ destinationPostal, destinationCity: _destinationCity, destinationProvince, items }) {
   const cfg = config();
   if (!Array.isArray(items) || items.length === 0) {
     const err = new Error('Item pesanan kosong.'); err.status = 400; throw err;
@@ -148,6 +194,8 @@ export async function fetchRates({ destinationPostal, destinationCity: _destinat
   }
 
   const pricing = Array.isArray(data.pricing) ? data.pricing : [];
+  const isOuter = isOuterJava(cleanedPostal, destinationProvince);
+  const surcharge = isOuter ? cfg.outerJavaSurcharge : 0;
   
   return pricing.map(r => ({
     courier_code: r.company || r.courier_code,
@@ -155,7 +203,10 @@ export async function fetchRates({ destinationPostal, destinationCity: _destinat
     courier_service_code: r.courier_service_code,
     courier_service_name: r.description || r.courier_service_name,
     duration: r.duration || null,
-    price: r.price
+    price: (Number(r.price) || 0) + surcharge,
+    base_price: Number(r.price) || 0,
+    is_outer_java: isOuter,
+    surcharge: surcharge
   })).filter((r) => {
     const svc = String(r.courier_service_code || '').toLowerCase().replace(/\s+/g, '');
     const name = String(r.courier_service_name || '').toLowerCase();
@@ -165,8 +216,8 @@ export async function fetchRates({ destinationPostal, destinationCity: _destinat
 
 /** Re-quote at order creation and confirm the client's chosen service still
  *  exists at the price we're about to charge. */
-export async function findAndValidateRate({ destinationPostal, destinationCity, items, courier, service }) {
-  const rates = await fetchRates({ destinationPostal, destinationCity, items });
+export async function findAndValidateRate({ destinationPostal, destinationCity, destinationProvince, items, courier, service }) {
+  const rates = await fetchRates({ destinationPostal, destinationCity, destinationProvince, items });
   return rates.find(
     (r) => r.courier_code === courier && r.courier_service_code === service
   ) || null;

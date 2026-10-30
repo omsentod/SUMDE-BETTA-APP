@@ -170,6 +170,15 @@
     color: var(--text-main);
 }
 
+.surchargeSubtext {
+    font-size: 0.725rem;
+    color: var(--primary);
+    text-align: right;
+    margin-top: -0.25rem;
+    margin-bottom: 0.45rem;
+    line-height: 1.35;
+}
+
 .summaryTotalRow {
     margin-top: 1rem;
     padding-top: 1rem;

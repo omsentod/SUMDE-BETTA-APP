@@ -16,8 +16,8 @@ export async function POST(request) {
       );
     }
 
-    const { destinationPostal, destinationCity, items } = await request.json();
-    const rates = await fetchRates({ destinationPostal, destinationCity, items });
+    const { destinationPostal, destinationCity, destinationProvince, items } = await request.json();
+    const rates = await fetchRates({ destinationPostal, destinationCity, destinationProvince, items });
     return NextResponse.json({ rates });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });

@@ -382,6 +382,7 @@ function CheckoutContent() {
                 body: JSON.stringify({
                     destinationPostal: postal,
                     destinationCity: formData.city,
+                    destinationProvince: formData.province,
                     items: cart.map((i) => ({ productId: i.id, quantity: i.quantity })),
                 }),
             });
@@ -408,9 +409,9 @@ function CheckoutContent() {
             setRatesLoading(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.postalCode, formData.city, cartFingerprint]);
+    }, [formData.postalCode, formData.city, formData.province, cartFingerprint]);
 
-    // Auto-fetch when postal code or cart contents actually change.
+    // Auto-fetch when postal code, province, or cart contents actually change.
     useEffect(() => {
         const postal = formData.postalCode;
         if (!/^\d{5}$/.test(postal) || cart.length === 0) {
@@ -422,7 +423,7 @@ function CheckoutContent() {
         }
         fetchShippingRates();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.postalCode, cartFingerprint]);
+    }, [formData.postalCode, formData.province, cartFingerprint]);
 
     // Save the currently-entered form as a new entry in the address book
     const handleSaveAddress = async () => {
@@ -485,6 +486,8 @@ function CheckoutContent() {
             serviceName: selectedRate.courier_service_name,
             fee: Number(selectedRate.price) || 0,
             eta: selectedRate.duration || null,
+            isOuterJava: Boolean(selectedRate.is_outer_java),
+            surcharge: Number(selectedRate.surcharge) || 0,
         };
         const tgUser = dropBooking?.telegramUser || telegramUserParam || (typeof window !== 'undefined' && (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name)) || '';
 
@@ -796,43 +799,60 @@ function CheckoutContent() {
                                         Tidak ada layanan kurir tersedia ke lokasi ini.
                                     </p>
                                 ) : (
-                                    <div className="checkout-shipping-list">
-                                        {rates.map((r) => {
-                                            const active =
-                                                selectedRate?.courier_code === r.courier_code &&
-                                                selectedRate?.courier_service_code === r.courier_service_code;
-                                            return (
-                                                <button
-                                                    key={`${r.courier_code}-${r.courier_service_code}`}
-                                                    type="button"
-                                                    onClick={() => setSelectedRate(r)}
-                                                    className={`checkout-shipping-option ${active ? 'active' : ''}`}
-                                                >
-                                                    <div className="checkout-shipping-option-main">
-                                                        <CourierLogo code={r.courier_code} />
-                                                        <div className="checkout-shipping-option-text">
-                                                            <span className="checkout-shipping-courier">
-                                                                {(r.courier_name || r.courier_code).toUpperCase()}
-                                                            </span>
-                                                            <span className="checkout-shipping-service">
-                                                                {r.courier_service_name}
-                                                            </span>
+                                    <>
+                                        {rates[0]?.is_outer_java && (
+                                            <div className={styles.outerJavaNotice}>
+                                                <svg className={styles.outerJavaIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                                </svg>
+                                                <div className={styles.outerJavaText}>
+                                                    <span className={styles.outerJavaTitle}>Tujuan Luar Pulau Jawa</span>
+                                                    <span className={styles.outerJavaSub}>
+                                                        Tarif ongkir otomatis mencakup biaya karantina BKIPM &amp; packing khusus luar pulau (+{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(rates[0]?.surcharge || 10000)}).
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="checkout-shipping-list">
+                                            {rates.map((r) => {
+                                                const active =
+                                                    selectedRate?.courier_code === r.courier_code &&
+                                                    selectedRate?.courier_service_code === r.courier_service_code;
+                                                return (
+                                                    <button
+                                                        key={`${r.courier_code}-${r.courier_service_code}`}
+                                                        type="button"
+                                                        onClick={() => setSelectedRate(r)}
+                                                        className={`checkout-shipping-option ${active ? 'active' : ''}`}
+                                                    >
+                                                        <div className="checkout-shipping-option-main">
+                                                            <CourierLogo code={r.courier_code} />
+                                                            <div className="checkout-shipping-option-text">
+                                                                <span className="checkout-shipping-courier">
+                                                                    {(r.courier_name || r.courier_code).toUpperCase()}
+                                                                </span>
+                                                                <span className="checkout-shipping-service">
+                                                                    {r.courier_service_name}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="checkout-shipping-option-side">
-                                                        <span className="checkout-shipping-price">
-                                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(r.price)}
-                                                        </span>
-                                                        {r.duration && (
-                                                            <span className="checkout-shipping-eta">
-                                                                {r.duration.replace(/\bdays?\b/gi, 'hari').replace(/\bhours?\b/gi, 'jam')}
+                                                        <div className="checkout-shipping-option-side">
+                                                            <span className="checkout-shipping-price">
+                                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(r.price)}
                                                             </span>
-                                                        )}
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                                            {r.duration && (
+                                                                <span className="checkout-shipping-eta">
+                                                                    {r.duration.replace(/\bdays?\b/gi, 'hari').replace(/\bhours?\b/gi, 'jam')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -855,6 +875,11 @@ function CheckoutContent() {
                                                 : <span className="color-secondary">—</span>}
                                 </span>
                             </div>
+                            {selectedRate?.is_outer_java && (
+                                <div className={styles.summarySurchargeNote}>
+                                    Termasuk karantina &amp; packing luar Jawa (+{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(selectedRate.surcharge || 10000)})
+                                </div>
+                            )}
                             <div className={styles.summaryTotalRow}>
                                 <span>Total</span>
                                 <span>

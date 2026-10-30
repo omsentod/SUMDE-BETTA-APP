@@ -100,12 +100,14 @@ export async function POST(request) {
       return sum + item.resolvedPrice * item.quantity;
     }, 0);
 
-    // Re-quote shipping from RajaOngkir right now, using the same courier+service
-    // the client picked. The fee we store is what RajaOngkir says NOW — never
-    // what the client sent — so a tampered shippingFee in the body is ignored.
+    // Re-quote shipping from Biteship right now, using the same courier+service
+    // the client picked (including outer Java surcharge if applicable). The fee we
+    // store is what Biteship says NOW — never what the client sent — so a tampered
+    // shippingFee in the body is ignored.
     const rate = await findAndValidateRate({
       destinationPostal: cleanedPostal,
       destinationCity: city,
+      destinationProvince: province,
       items: normalized,
       courier: shipping.courier,
       service: shipping.service,
