@@ -11,10 +11,13 @@ export default function ArtisticBettaEmpty({
     description = 'Belum ada ikan cupang yang sesuai dengan kriteria kurasi ini. Silakan atur ulang filter Anda.',
     actionText = 'Lihat Semua Koleksi',
     onAction,
-    className = ''
+    className = '',
+    theme = 'default'
 }) {
+    const isVip = theme === 'vip';
+
     return (
-        <div className={`${styles.emptyWrapper} ${className}`} role="status">
+        <div className={`${styles.emptyWrapper} ${isVip ? styles.emptyWrapperVip : ''} ${className}`} role="status">
             {/* Ambient Water Vignette with Animated Swimming Betta Vector */}
             <div className={styles.vignetteRing} aria-hidden="true">
                 <div className={styles.rippleCircle1} />

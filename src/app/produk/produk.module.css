@@ -581,8 +581,22 @@
     font-weight: 700;
 }
 
+.galleryToolbarVip .toolbarCountText {
+    color: #cbd5e1 !important;
+}
+
 .galleryToolbarVip .toolbarCountHighlight {
-    color: #fbbf24;
+    color: #fbbf24 !important;
+}
+
+.galleryToolbarVip .desktopFilterToggleBtn {
+    background: rgba(24, 24, 34, 0.85) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    color: #f1f5f9 !important;
+}
+
+.galleryToolbarVip .sortLabelText {
+    color: #cbd5e1 !important;
 }
 
 .toolbarRight {

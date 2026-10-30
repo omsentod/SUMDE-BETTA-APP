@@ -108,12 +108,17 @@
 /* Typography Hierarchy */
 .emptyTitle {
     font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1.75rem;
-    font-weight: 600;
+    font-style: normal;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-weight: 700;
     color: var(--text-main);
     margin: 0 0 0.5rem;
     letter-spacing: -0.015em;
+    line-height: 1.25;
+}
+
+:global([data-theme="dark"]) .emptyTitle {
+    color: #ffffff;
 }
 
 .emptyDescription {
@@ -122,6 +127,10 @@
     max-width: 440px;
     line-height: 1.6;
     margin: 0 0 1.75rem;
+}
+
+:global([data-theme="dark"]) .emptyDescription {
+    color: #cbd5e1;
 }
 
 .emptyAction {
@@ -137,6 +146,11 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:global([data-theme="dark"]) .emptyAction {
+    color: #f1f5f9;
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .emptyAction:hover {
@@ -155,5 +169,50 @@
 
 .emptyAction:hover .emptyActionIcon {
     transform: translateX(3px);
+}
+
+/* ==========================================================================
+   VIP Exhibition Chamber Empty State (Always Deep Obsidian & Luminous Gold)
+   ========================================================================== */
+
+.emptyWrapperVip {
+    background: rgba(14, 14, 20, 0.9) !important;
+    border: 1px solid rgba(245, 158, 11, 0.45) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(251, 191, 36, 0.25) !important;
+}
+
+.emptyWrapperVip .emptyTitle {
+    color: #ffffff !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.emptyWrapperVip .emptyDescription {
+    color: #cbd5e1 !important;
+}
+
+.emptyWrapperVip .emptyAction {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border: 1px solid rgba(245, 158, 11, 0.5) !important;
+    color: #fde68a !important;
+}
+
+.emptyWrapperVip .emptyAction:hover {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+}
+
+.emptyWrapperVip .bettaSvg {
+    color: #f59e0b !important;
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.6)) !important;
+}
+
+.emptyWrapperVip .rippleCircle1,
+.emptyWrapperVip .rippleCircle2 {
+    border-color: rgba(245, 158, 11, 0.35) !important;
 }
 

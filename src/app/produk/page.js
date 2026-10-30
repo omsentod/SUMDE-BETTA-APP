@@ -816,6 +816,7 @@ function GalleryContent() {
                             </div>
                         ) : (
                             <ArtisticBettaEmpty
+                                theme={activeTab === 'premium' ? 'vip' : 'default'}
                                 title={
                                     activeTab === 'premium'
                                         ? 'Belum Ada Koleksi Gallery'
