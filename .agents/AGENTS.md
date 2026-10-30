@@ -124,3 +124,11 @@
 - **Cart Item Identity**: The unique key of a cart line is `productId + selectedSize`, not `productId` alone. Two units of the same product in different sizes are two lines.
 - **Buy-Now Semantics**: "Beli Sekarang" bypasses the cart and jumps to `/checkout` with ONLY that item. It must NOT append to the shared cart. Confirm the checkout summary shows exactly one item.
 
+## 14. Brand Copy & VIP Exhibition Standards
+- **No "Kontes" Terminology**: Do NOT use the word "kontes", "juara kontes", or related competition phrasing in customer-facing copy. SUMDE BETTA operates as a premier biological aquatic breeding farm and curatorial studio. Use terms like "grade pilihan", "spesimen unggulan", "seleksi indukan murni", "estetika visual pilihan".
+- **Product Page Dual Environment**: The `/produk` page provides two distinct experiences via the switcher:
+  1. *Koleksi Reguler* (default): Clean, modern e-commerce farm catalog.
+  2. *✦ Spesimen Premium*: Transforms into an exclusive dark-luxury VIP Exhibition Chamber (`.vipRoomContainer`) with obsidian styling, dramatic lighting, gold leaf hairlines, and individual 1 of 1 masterwork presentation.
+- **Trust Assurances Placement**: Warranty details (100% DOA, oxygen packing, delivery tracking) belong directly on the product detail page (`/produk/[id]`) next to the purchase action, keeping the homepage uncluttered and contextualizing customer assurance where purchase decisions happen.
+
+

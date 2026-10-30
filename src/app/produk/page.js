@@ -1,9 +1,12 @@
 'use client';
-import { useState, useMemo, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
+import InteractiveBettaAquarium from "@/components/InteractiveBettaAquarium";
+import ArtisticBettaEmpty from "@/components/ArtisticBettaEmpty";
 import { useProducts } from "@/context/ProductContext";
 import Loading from "./loading";
+import styles from './produk.module.css';
 
 const SORT_OPTIONS = [
     { label: 'Newest', value: 'newest' },
@@ -28,13 +31,47 @@ function parseVariantSizes(product) {
 
 function GalleryContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const paramCat = (searchParams.get('category') || searchParams.get('form') || '').trim();
     const paramGender = (searchParams.get('gender') || '').trim();
     const paramColor = (searchParams.get('color') || searchParams.get('coloration') || '').trim();
+    const paramTab = (searchParams.get('tab') || '').trim().toLowerCase();
 
     const { products: allProducts, isLoading } = useProducts();
     // Hide soft-deleted (archived) products from the public gallery.
     const products = useMemo(() => allProducts.filter(p => !p.isArchived), [allProducts]);
+
+    // Hitung jumlah spesimen premium vs katalog strain
+    const counts = useMemo(() => {
+        let premium = 0;
+        let sample = 0;
+        products.forEach(p => {
+            if (p.isPremium) premium++;
+            else sample++;
+        });
+        return { premium, sample, all: products.length };
+    }, [products]);
+
+    // Tentukan tab aktif: hormati ?tab= dari URL, default ke 'sample' (Koleksi Reguler) saat masuk /produk
+    const activeTab = useMemo(() => {
+        if (paramTab === 'premium' || paramTab === 'sample' || paramTab === 'all') {
+            return paramTab;
+        }
+        // Default menampilkan koleksi reguler dahulu sesuai preferensi user
+        return 'sample';
+    }, [paramTab]);
+
+    const handleTabChange = (newTab) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (newTab === 'premium') {
+            params.set('tab', 'premium');
+        } else if (newTab === 'sample') {
+            params.set('tab', 'sample');
+        } else {
+            params.set('tab', 'all');
+        }
+        router.replace(`/produk?${params.toString()}`, { scroll: false });
+    };
 
     // Derive gender filter options by inspecting product variants (sizes) & name
     const genders = useMemo(() => {
@@ -97,6 +134,22 @@ function GalleryContent() {
 
     // State Management
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+    const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false);
+    const catalogAnchorRef = useRef(null);
+
+    // Auto-scroll halus ke kartu produk saat pertama masuk atau berganti tab
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (catalogAnchorRef.current) {
+                const rect = catalogAnchorRef.current.getBoundingClientRect();
+                // Hanya trigger jika scroll belum berada di area produk
+                if (rect.top > 200 || window.scrollY < 120) {
+                    catalogAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [activeTab]);
 
     const [filters, setFilters] = useState(() => ({
         genders: paramGender ? [paramGender] : [],
@@ -156,6 +209,13 @@ function GalleryContent() {
     // Filter Logic — case-insensitive and robust against whitespace/empty fields
     const filteredProducts = useMemo(() => {
         let result = [...products];
+
+        // 1. Filter Koleksi (Spesimen Premium 1 of 1 vs Katalog Strain)
+        if (activeTab === 'premium') {
+            result = result.filter(p => p.isPremium);
+        } else if (activeTab === 'sample') {
+            result = result.filter(p => !p.isPremium);
+        }
 
         if (filters.genders.length > 0) {
             const selectedGenders = filters.genders.map(g => g.trim().toLowerCase());
@@ -223,7 +283,7 @@ function GalleryContent() {
         }
 
         return result;
-    }, [filters, sortBy, products]);
+    }, [filters, sortBy, products, activeTab]);
 
     if (isLoading) {
         return (
@@ -258,16 +318,183 @@ function GalleryContent() {
     };
 
     return (
-        <div className="pageContainer">
+        <div className={`pageContainer ${activeTab === 'premium' ? styles.vipRoomContainer : ''}`}>
             <div className="innerContainer">
 
-                {/* Header — compact di mobile, hero penuh di desktop */}
-                <div className="produkHero">
-                    <h1 className="produkHeroTitle">Premium Collection</h1>
-                    <p className="produkHeroSubtitle">Finest Betta Genetics Ready for Acquisition</p>
-                    <p className="produkHeroCountMobile">
-                        <span className="topBarHighlight">{filteredProducts.length}</span> ikan tersedia
-                    </p>
+                {/* Atmospheric Aquatic Hero */}
+                <div className={`${styles.heroWrapper} ${activeTab === 'premium' ? styles.heroWrapperPremium : ''}`}>
+                    {/* Living Aquatic Betta Canvas */}
+                    <InteractiveBettaAquarium fishCount={1} />
+
+                    <div className={styles.ambientAquaticLayer} aria-hidden="true">
+                        <svg className={styles.finWaveSvg} viewBox="0 0 1440 320" preserveAspectRatio="none">
+                            <path d="M0,160 C320,300 420,40 720,160 C1020,280 1120,60 1440,160 L1440,320 L0,320 Z" />
+                            <path d="M0,192 C280,80 500,260 800,140 C1100,20 1280,220 1440,192 L1440,320 L0,320 Z" opacity="0.6" />
+                        </svg>
+                    </div>
+
+                    {/* Shimmering Blink-Blink Particles in Premium Mode */}
+                    {activeTab === 'premium' && (
+                        <div className={styles.heroSparklesWrapper} aria-hidden="true">
+                            <span className={`${styles.sparkleParticle} ${styles.sp1}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp2}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp3}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp4}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp5}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp6}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp7}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp8}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp9}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp10}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp11}`} />
+                            <span className={`${styles.sparkleParticle} ${styles.sp12}`} />
+                        </div>
+                    )}
+
+                    <div className={styles.heroInner}>
+                        <div className={styles.curationBadge}>
+                            <span className={activeTab === 'premium' ? styles.curationPulse : styles.curationPulseSample} />
+                            <span>
+                                {activeTab === 'premium'
+                                    ? 'Spesimen Terkurasi • Edisi Premium'
+                                    : activeTab === 'sample'
+                                    ? 'Koleksi Reguler • Farm SUMDE'
+                                    : 'Seluruh Koleksi Farm'}
+                            </span>
+                        </div>
+
+                        <h1 className={styles.heroTitle}>
+                            {activeTab === 'premium' ? (
+                                <>Spesimen Elit <span className={styles.heroTitleEmphasized}>Premium</span></>
+                            ) : activeTab === 'sample' ? (
+                                <>Koleksi Reguler <span className={styles.heroTitleEmphasized}>Pilihan</span></>
+                            ) : (
+                                <>Seluruh Koleksi <span className={styles.heroTitleEmphasized}>Akuatik</span></>
+                            )}
+                        </h1>
+
+                        <p className={styles.heroSubtitle}>
+                            {activeTab === 'premium'
+                                ? 'Setiap spesimen premium diabadikan secara individual dengan keunikan genetika tunggal dan kualitas visual pilihan tertinggi.'
+                                : activeTab === 'sample'
+                                ? 'Pilihan ikan cupang hias berkualitas langsung dari pembudidayaan farm SUMDE BETTA. Tersedia berbagai form, corak, dan pilihan varian ukuran.'
+                                : 'Eksplorasi lengkap seluruh lini spesimen premium dan katalog reguler farm SUMDE BETTA.'}
+                        </p>
+
+                        <div className={styles.editorialPills}>
+                            {activeTab === 'premium' ? (
+                                <>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                        </svg>
+                                        Jaminan Seleksi Spesimen Elit
+                                    </span>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <polygon points="6 4 20 12 6 20 6 4" fill="currentColor"/>
+                                        </svg>
+                                        Rekaman Flaring Video Aktif
+                                    </span>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
+                                        Garansi Hidup Selamat (DOA)
+                                    </span>
+                                </>
+                            ) : activeTab === 'sample' ? (
+                                <>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        Standar Grade Farm Teruji
+                                    </span>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        Pilihan Size S, M, &amp; L
+                                    </span>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
+                                        Garansi Hidup Selamat (DOA)
+                                    </span>
+                                </>
+                            ) : (
+                                <span className={styles.editorialPillItem}>
+                                    Total {filteredProducts.length} karya akuatik siap diadopsi
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Smooth Scroll Anchor */}
+                <div ref={catalogAnchorRef} className={styles.catalogAnchor} aria-hidden="true" />
+
+                {/* Tactile Luxury Segmented Switcher (Inspired by reference project .filters) */}
+                <div className={styles.switcherContainer}>
+                    <div className={styles.switcherShell} role="tablist" aria-label="Pilih Jenis Koleksi">
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === 'sample'}
+                            onClick={() => handleTabChange('sample')}
+                            className={`${styles.switcherTab} ${activeTab === 'sample' ? styles.tabActive : ''}`}
+                        >
+                            <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="3" y="3" width="7" height="7" rx="1" />
+                                <rect x="14" y="3" width="7" height="7" rx="1" />
+                                <rect x="14" y="14" width="7" height="7" rx="1" />
+                                <rect x="3" y="14" width="7" height="7" rx="1" />
+                            </svg>
+                            <span>Koleksi Reguler</span>
+                            <span className={`${styles.tabCountPill} ${activeTab === 'sample' ? styles.tabCountActive : ''}`}>
+                                {counts.sample}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === 'premium'}
+                            onClick={() => handleTabChange('premium')}
+                            className={`${styles.switcherTab} ${styles.switcherTabPremium} ${activeTab === 'premium' ? styles.tabActivePremium : ''}`}
+                        >
+                            <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                            <span>✦ Spesimen Premium</span>
+                            <span className={`${styles.tabCountPill} ${activeTab === 'premium' ? styles.tabCountActivePremium : ''}`}>
+                                {counts.premium}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === 'all'}
+                            onClick={() => handleTabChange('all')}
+                            className={`${styles.switcherTab} ${activeTab === 'all' ? styles.tabActive : ''}`}
+                        >
+                            <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <line x1="8" y1="6" x2="21" y2="6" />
+                                <line x1="8" y1="12" x2="21" y2="12" />
+                                <line x1="8" y1="18" x2="21" y2="18" />
+                                <line x1="3" y1="6" x2="3.01" y2="6" />
+                                <line x1="3" y1="12" x2="3.01" y2="12" />
+                                <line x1="3" y1="18" x2="3.01" y2="18" />
+                            </svg>
+                            <span>Semua Koleksi</span>
+                            <span className={`${styles.tabCountPill} ${activeTab === 'all' ? styles.tabCountActive : ''}`}>
+                                {counts.all}
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mobile action bar — Filter + Sort sejajar (mobile only) */}
@@ -310,7 +537,7 @@ function GalleryContent() {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="mainLayout">
+                <div className={`mainLayout ${activeTab === 'premium' ? styles.mainLayoutVip : ''}`}>
 
                     {/* Mobile Filter Toggle (desktop hide via CSS; mobile pakai action bar di atas) */}
                     <button
@@ -333,7 +560,7 @@ function GalleryContent() {
                     )}
 
                     {/* Sidebar / bottom-sheet */}
-                    <aside className={`sidebar ${isMobileFiltersOpen ? "sidebarVisible" : "sidebarHidden"}`}>
+                    <aside className={`sidebar ${isMobileFiltersOpen ? "sidebarVisible" : "sidebarHidden"} ${isDesktopFilterOpen ? styles.sidebarDesktopOpen : styles.sidebarDesktopClosed} ${activeTab === 'premium' ? styles.sidebarVip : ''}`}>
                         <div className="filterHeader">
                             <h2 className="filterHeaderTitle">Filter</h2>
                             {/* Desktop: Clear All di header (mobile: pakai Reset di footer) */}
@@ -478,23 +705,55 @@ function GalleryContent() {
                     </aside>
 
                     {/* Products Grid Area */}
-                    <div className="contentArea">
-                        {/* Top Bar — desktop only; mobile pakai action bar + hero count */}
-                        <div className="topBar hide-on-mobile">
-                            <p className="topBarText">
-                                Showing <span className="topBarHighlight">{filteredProducts.length}</span> results
-                            </p>
-                            <div className="sortContainer">
-                                <label className="sortLabel">Sort by:</label>
-                                <select
-                                    className="sortSelect"
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
+                    <div className={`contentArea ${!isDesktopFilterOpen ? styles.contentAreaExpanded : ''}`}>
+                        {/* Modern Flush Toolbar (Zero AI-slop white box) */}
+                        <div className={`${styles.galleryToolbar} ${activeTab === 'premium' ? styles.galleryToolbarVip : ''} hide-on-mobile`}>
+                            <div className={styles.toolbarLeft}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDesktopFilterOpen(prev => !prev)}
+                                    className={`${styles.desktopFilterToggleBtn} ${isDesktopFilterOpen ? styles.filterToggleActive : ''}`}
+                                    aria-expanded={isDesktopFilterOpen}
+                                    title={isDesktopFilterOpen ? "Sembunyikan panel filter" : "Tampilkan panel filter"}
                                 >
-                                    {SORT_OPTIONS.map(opt => (
-                                        <option key={opt.value} value={opt.value} className="sortOption">{opt.label}</option>
-                                    ))}
-                                </select>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <line x1="4" y1="21" x2="4" y2="14" />
+                                        <line x1="4" y1="10" x2="4" y2="3" />
+                                        <line x1="12" y1="21" x2="12" y2="12" />
+                                        <line x1="12" y1="8" x2="12" y2="3" />
+                                        <line x1="20" y1="21" x2="20" y2="16" />
+                                        <line x1="20" y1="12" x2="20" y2="3" />
+                                        <line x1="1" y1="14" x2="7" y2="14" />
+                                        <line x1="9" y1="8" x2="15" y2="8" />
+                                        <line x1="17" y1="16" x2="23" y2="16" />
+                                    </svg>
+                                    <span>{isDesktopFilterOpen ? 'Sembunyikan Filter' : 'Filter & Urutkan'}</span>
+                                    {activeFilterCount > 0 && (
+                                        <span className={styles.filterBadgeCount}>{activeFilterCount}</span>
+                                    )}
+                                </button>
+
+                                <p className={styles.toolbarCountText}>
+                                    Menampilkan <span className={styles.toolbarCountHighlight}>{filteredProducts.length}</span> spesimen
+                                </p>
+                            </div>
+
+                            <div className={styles.toolbarRight}>
+                                <div className={styles.sortWrapper}>
+                                    <label htmlFor="gallerySort" className={styles.sortLabelText}>Urutkan:</label>
+                                    <select
+                                        id="gallerySort"
+                                        className={styles.sortSelectElement}
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                    >
+                                        {SORT_OPTIONS.map(opt => (
+                                            <option key={opt.value} value={opt.value} className={styles.sortSelectOption}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -550,30 +809,44 @@ function GalleryContent() {
 
                         {/* Grid */}
                         {filteredProducts.length > 0 ? (
-                            <div className="productGrid">
+                            <div className={`productGrid ${!isDesktopFilterOpen ? styles.productGridExpanded : ''} ${activeTab === 'premium' ? styles.productGridVip : ''}`}>
                                 {filteredProducts.map((product) => (
                                     <ProductCard key={product.id} {...product} />
                                 ))}
                             </div>
                         ) : (
-                            <div className="emptyState">
-                                <div className="emptyStateIcon" aria-hidden="true">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="11" cy="11" r="8" />
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                                        <line x1="8" y1="11" x2="14" y2="11" />
-                                    </svg>
-                                </div>
-                                <h3 className="emptyStateTitle">Tidak ada spesimen ditemukan</h3>
-                                <p className="emptyStateDesc">Tidak ada ikan cupang yang cocok dengan kriteria filter saat ini.</p>
-                                <button
-                                    type="button"
-                                    onClick={clearFilters}
-                                    className="emptyStateBtn"
-                                >
-                                    Reset Filter
-                                </button>
-                            </div>
+                            <ArtisticBettaEmpty
+                                title={
+                                    activeTab === 'premium'
+                                        ? 'Belum Ada Spesimen Premium'
+                                        : activeTab === 'sample'
+                                        ? 'Koleksi Reguler Belum Tersedia'
+                                        : 'Tidak Ada Spesimen Ditemukan'
+                                }
+                                description={
+                                    activeTab === 'premium'
+                                        ? 'Seluruh spesimen premium saat ini sedang teradopsi atau dalam kurasi farm. Silakan jelajahi Koleksi Reguler kami.'
+                                        : activeTab === 'sample'
+                                        ? 'Tidak ada produk reguler yang cocok dengan kriteria filter saat ini.'
+                                        : 'Tidak ada spesimen akuatik yang cocok dengan kombinasi filter saat ini.'
+                                }
+                                actionText={
+                                    filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin > 0
+                                        ? 'Reset Filter'
+                                        : activeTab === 'premium'
+                                        ? 'Buka Koleksi Reguler'
+                                        : 'Tampilkan Seluruh Koleksi'
+                                }
+                                onAction={() => {
+                                    if (filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin > 0) {
+                                        clearFilters();
+                                    } else if (activeTab === 'premium') {
+                                        handleTabChange('sample');
+                                    } else {
+                                        handleTabChange('all');
+                                    }
+                                }}
+                            />
                         )}
                     </div>
 

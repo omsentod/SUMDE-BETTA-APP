@@ -1,0 +1,159 @@
+/* ==========================================================================
+   Artistic Betta Empty State: Calm Aquatic Animation & Restrained Typography
+   Anti-AI-Slop Standard: Zero raw emojis, living vector fins, clean human copy
+   ========================================================================== */
+
+.emptyWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4.5rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 20px;
+    background: radial-gradient(circle at 50% 30%, rgba(255, 107, 53, 0.03), transparent 70%),
+                var(--glass);
+    border: 1px dashed var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+:global([data-theme="dark"]) .emptyWrapper {
+    background: radial-gradient(circle at 50% 30%, rgba(245, 158, 11, 0.05), transparent 70%),
+                rgba(18, 18, 22, 0.4);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Aquatic Vignette with Concentric Ripples */
+.vignetteRing {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.rippleCircle1,
+.rippleCircle2 {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 180, 216, 0.2);
+    pointer-events: none;
+}
+
+.rippleCircle1 {
+    animation: aquaticPulse 4s ease-out infinite;
+}
+
+.rippleCircle2 {
+    animation: aquaticPulse 4s ease-out infinite 2s;
+}
+
+@keyframes aquaticPulse {
+    0% {
+        transform: scale(0.65);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+/* Artisanal Vector Betta Fish Icon */
+.bettaSvg {
+    width: 54px;
+    height: 54px;
+    color: var(--primary);
+    filter: drop-shadow(0 4px 12px var(--primary-glow));
+    animation: gentleDrift 6s ease-in-out infinite alternate;
+}
+
+@keyframes gentleDrift {
+    0% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    50% {
+        transform: translate3d(2px, -4px, 0) rotate(2deg);
+    }
+    100% {
+        transform: translate3d(-2px, 3px, 0) rotate(-2deg);
+    }
+}
+
+.finPath {
+    transform-origin: 35% 50%;
+    animation: finFlutter 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes finFlutter {
+    0% {
+        transform: skewY(0deg) scaleX(1);
+    }
+    50% {
+        transform: skewY(4deg) scaleX(1.04);
+    }
+    100% {
+        transform: skewY(-3deg) scaleX(0.97);
+    }
+}
+
+/* Typography Hierarchy */
+.emptyTitle {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.015em;
+}
+
+.emptyDescription {
+    font-size: 0.925rem;
+    color: var(--text-muted);
+    max-width: 440px;
+    line-height: 1.6;
+    margin: 0 0 1.75rem;
+}
+
+.emptyAction {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.6rem;
+    border-radius: 9999px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.emptyAction:hover {
+    background: var(--glass);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.emptyActionIcon {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+}
+
+.emptyAction:hover .emptyActionIcon {
+    transform: translateX(3px);
+}
+

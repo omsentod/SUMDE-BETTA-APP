@@ -21,11 +21,11 @@
 
 .title {
   font-family: var(--font-serif);
-  font-size: 2rem;
-  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: var(--text-main);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .subtitle {

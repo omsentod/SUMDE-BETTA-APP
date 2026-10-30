@@ -3,7 +3,11 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductCard from "@/components/ProductCard";
+import InteractiveBettaAquarium from "@/components/InteractiveBettaAquarium";
+import ArtisticBettaEmpty from "@/components/ArtisticBettaEmpty";
+import PokerCurvedShowcase from "@/components/PokerCurvedShowcase";
 import { useProducts } from "@/context/ProductContext";
+import styles from './home.module.css';
 
 export default function CatalogHome() {
     const { products: allProducts, isLoading } = useProducts();
@@ -39,9 +43,9 @@ export default function CatalogHome() {
         return products.filter(p => p.form.toLowerCase() === selectedCategory.toLowerCase());
     }, [selectedCategory, products]);
 
-    // Hottest drops are premium fish that are not sold
+    // Hottest drops are premium fish that are not sold (up to 7 for 3D curved poker stage)
     const hottestDrops = useMemo(() => {
-        return products.filter(p => p.isPremium && !p.isSold).slice(0, 4);
+        return products.filter(p => p.isPremium && !p.isSold).slice(0, 7);
     }, [products]);
 
     // Ambil produk premium pertama untuk fallback hero banner jika tidak ada event
@@ -82,47 +86,35 @@ export default function CatalogHome() {
 
     if (isLoading || eventsLoading) {
         return (
-            <div className="pageContainer" style={{ paddingTop: '90px' }}>
-                <section className="container" style={{ margin: '2rem auto' }}>
-                    <div className="hero-carousel-section skeleton-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ textAlign: 'center', padding: '1rem' }}>
-                            <span style={{ fontSize: '0.85rem', letterSpacing: '0.2rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>SUMDE BETTA</span>
-                            <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Memuat Koleksi Elit...</h2>
+            <div className={styles.homeContainer}>
+                <section className={`container ${styles.heroSection}`}>
+                    <div className={`${styles.heroCarousel} skeleton-box`}>
+                        <div className={styles.heroContent}>
+                            <span className={styles.heroCurationTag}>SUMDE BETTA • EXCLUSIVES</span>
+                            <h2 className={styles.heroTitle}>Memuat Koleksi Elit...</h2>
                         </div>
                     </div>
                 </section>
 
-                <section className="categories-tabs-section container">
-                    <div className="categories-tabs-container">
+                <section className={`container ${styles.categoriesSection}`}>
+                    <div className={styles.categoriesContainer}>
                         {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="category-card" style={{ pointerEvents: 'none' }}>
-                                <div className="category-circle skeleton-box" style={{ background: 'var(--input-bg)' }} />
-                                <div className="skeleton-box" style={{ height: '12px', width: '48px', marginTop: '8px' }} />
+                            <div key={i} className={styles.categoryCard}>
+                                <div className={`${styles.categoryCircle} skeleton-box`} />
                             </div>
                         ))}
                     </div>
                 </section>
 
-                <section className="container" style={{ margin: '3rem auto' }}>
-                    <div style={{ marginBottom: '2rem' }}>
-                        <div className="skeleton-box" style={{ height: '28px', width: '200px', marginBottom: '0.5rem' }} />
-                        <div className="skeleton-box" style={{ height: '14px', width: '150px' }} />
-                    </div>
+                <section className="container">
                     <div className="productGrid">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} style={{
-                                background: 'var(--bg-card)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}>
-                                <div className="skeleton-box" style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 0 }} />
-                                <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <div className="skeleton-box" style={{ height: '18px', width: '75%' }} />
-                                    <div className="skeleton-box" style={{ height: '14px', width: '50%' }} />
-                                    <div className="skeleton-box" style={{ height: '22px', width: '60%', marginTop: '0.5rem' }} />
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className={styles.skeletonCard}>
+                                <div className={`skeleton-box ${styles.skeletonImage}`} />
+                                <div className={styles.skeletonInfo}>
+                                    <div className={`skeleton-box ${styles.skeletonTitle}`} />
+                                    <div className={`skeleton-box ${styles.skeletonSub}`} />
+                                    <div className={`skeleton-box ${styles.skeletonPrice}`} />
                                 </div>
                             </div>
                         ))}
@@ -133,183 +125,203 @@ export default function CatalogHome() {
     }
 
     return (
-        <div className="pageContainer" style={{ paddingTop: '90px' }}>
-            <section className="container" style={{ margin: '2rem auto' }}>
-                {events.length > 0 ? (
-                    <div className="hero-carousel-section">
-                        {events.map((event, idx) => {
-                            const isActiveSlide = idx === currentSlide;
-                            const isExternalUrl = event.targetUrl.startsWith('http://') || event.targetUrl.startsWith('https://');
+        <div className={styles.homeContainer}>
+            {/* Cinematic Hero Carousel with Interactive Living Betta Aquarium */}
+            <section className={`container ${styles.heroSection}`}>
+                <div className={styles.heroCarousel}>
+                    {/* Living Aquatic Canvas Overlay */}
+                    <InteractiveBettaAquarium fishCount={1} />
 
-                            return (
-                                <div
-                                    key={event.id}
-                                    className={`hero-slide ${isActiveSlide ? 'hero-slide-active' : ''}`}
-                                >
-                                    {/* Background Image */}
-                                    <Image
-                                        src={event.image}
-                                        alt={event.title}
-                                        fill
-                                        sizes="(max-width: 1400px) 100vw, 1400px"
-                                        className="hero-bg-image"
-                                        priority={idx === 0}
-                                    />
+                    {events.length > 0 ? (
+                        <>
+                            {events.map((event, idx) => {
+                                const isActiveSlide = idx === currentSlide;
+                                const isExternalUrl = event.targetUrl.startsWith('http://') || event.targetUrl.startsWith('https://');
 
-                                    {/* Dark Overlay for Text Readability */}
-                                    <div className="hero-overlay"></div>
+                                return (
+                                    <div
+                                        key={event.id}
+                                        className={`${styles.heroSlide} ${isActiveSlide ? styles.heroSlideActive : ''}`}
+                                    >
+                                        <Image
+                                            src={event.image}
+                                            alt={event.title}
+                                            fill
+                                            sizes="(max-width: 1400px) 100vw, 1400px"
+                                            className={styles.heroBgImage}
+                                            priority={idx === 0}
+                                        />
 
-                                    {/* Centered Overlay Content */}
-                                    <div className="hero-content">
-                                        <span className="sub-title">
-                                            {event.subtitle || 'PROMO EVENT'}
-                                        </span>
-                                        <h1>{event.title}</h1>
-                                        <p>{event.description}</p>
+                                        <div className={styles.heroOverlay} />
 
-                                        {isExternalUrl ? (
-                                            <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary hero-btn">
-                                                {event.buttonText || 'LIHAT EVENT'}
-                                            </a>
-                                        ) : (
-                                            <Link href={event.targetUrl} className="btn btn-primary hero-btn">
-                                                {event.buttonText || 'LIHAT EVENT'}
-                                            </Link>
-                                        )}
+                                        <div className={styles.heroContent}>
+                                            <div className={styles.heroCurationTag}>
+                                                <span className={styles.heroCurationDot} />
+                                                <span>{event.subtitle || 'PROMO KURASI FARM'}</span>
+                                            </div>
+                                            <h1 className={styles.heroTitle}>{event.title}</h1>
+                                            <p className={styles.heroDescription}>{event.description}</p>
+
+                                            <div className={styles.heroActionGroup}>
+                                                {isExternalUrl ? (
+                                                    <a href={event.targetUrl} target="_blank" rel="noopener noreferrer" className={styles.heroPrimaryBtn}>
+                                                        <span>{event.buttonText || 'Eksplorasi Event'}</span>
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                                            <polyline points="12 5 19 12 12 19" />
+                                                        </svg>
+                                                    </a>
+                                                ) : (
+                                                    <Link href={event.targetUrl} className={styles.heroPrimaryBtn}>
+                                                        <span>{event.buttonText || 'Eksplorasi Event'}</span>
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                                            <polyline points="12 5 19 12 12 19" />
+                                                        </svg>
+                                                    </Link>
+                                                )}
+                                                <Link href="/produk" className={styles.heroSecondaryBtn}>
+                                                    Semua Koleksi
+                                                </Link>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
 
-                        {/* Carousel Indicators (Dots) */}
-                        {events.length > 1 && (
-                            <div className="hero-carousel-dots">
-                                {events.map((_, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setCurrentSlide(idx)}
-                                        className={`hero-dot ${idx === currentSlide ? 'hero-dot-active' : ''}`}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    /* Fallback ke Featured Premium Product Banner jika tidak ada promo event aktif */
-                    <div className="hero-carousel-section">
-                        <div className="hero-slide hero-slide-active">
-                            {/* Background Image */}
+                            {events.length > 1 && (
+                                <div className={styles.heroCarouselDots}>
+                                    {events.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setCurrentSlide(idx)}
+                                            className={`${styles.heroDot} ${idx === currentSlide ? styles.heroDotActive : ''}`}
+                                            aria-label={`Slide ${idx + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        /* Fallback Banner */
+                        <div className={`${styles.heroSlide} ${styles.heroSlideActive}`}>
                             <Image
                                 src={featuredProduct ? featuredProduct.image : "/img/betta-2.png"}
-                                alt={featuredProduct ? featuredProduct.name : "Featured Koi Galaxy"}
+                                alt={featuredProduct ? featuredProduct.name : "Featured Betta Splendens"}
                                 fill
                                 sizes="(max-width: 1400px) 100vw, 1400px"
-                                className="hero-bg-image"
+                                className={styles.heroBgImage}
                                 priority
                             />
 
-                            {/* Dark Overlay for Text Readability */}
-                            <div className="hero-overlay"></div>
+                            <div className={styles.heroOverlay} />
 
-                            {/* Centered Overlay Content */}
-                            <div className="hero-content">
-                                <span className="sub-title">
-                                    {featuredProduct ? "PREMIUM DROP" : "LIMITED DROPS"}
-                                </span>
-                                <h1>
+                            <div className={styles.heroContent}>
+                                <div className={styles.heroCurationTag}>
+                                    <span className={styles.heroCurationDot} />
+                                    <span>{featuredProduct ? "Koleksi Kurasi • 1 of 1" : "Karya Seni Hidup"}</span>
+                                </div>
+                                <h1 className={styles.heroTitle}>
                                     {featuredProduct ? (
                                         <>
-                                            Acquire the Rarest<br />
-                                            <span className="text-gradient">{featuredProduct.name}</span>
+                                            Karya Seni Akuatik<br />
+                                            <span className={styles.heroTitleSerif}>{featuredProduct.name}</span>
                                         </>
                                     ) : (
                                         <>
-                                            Acquire the Rarest<br />
-                                            <span className="text-gradient">Koi Galaxy Series</span>
+                                            Spesimen Seni Hidup<br />
+                                            <span className={styles.heroTitleSerif}>Seri Koi &amp; Avatar</span>
                                         </>
                                     )}
                                 </h1>
-                                <p>
-                                    {featuredProduct ? featuredProduct.description : "Koleksi eksklusif hasil seleksi genetik terbaik dengan mutasi warna nebula penuh. Hanya untuk kolektor sejati."}
+                                <p className={styles.heroDescription}>
+                                    {featuredProduct
+                                        ? featuredProduct.description
+                                        : "Koleksi seleksi genetik unggulan dengan mutasi warna penuh. Setiap spesimen memiliki karakter dan keunikan visual tunggal."}
                                 </p>
-                                {featuredProduct ? (
-                                    <Link href={`/produk/${featuredProduct.id}`} className="btn btn-primary hero-btn">
-                                        LIHAT DETAIL DROP
+                                <div className={styles.heroActionGroup}>
+                                    {featuredProduct ? (
+                                        <Link href={`/produk/${featuredProduct.id}`} className={styles.heroPrimaryBtn}>
+                                            <span>Detail Spesimen</span>
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                                <polyline points="12 5 19 12 12 19" />
+                                            </svg>
+                                        </Link>
+                                    ) : (
+                                        <Link href="/produk" className={styles.heroPrimaryBtn}>
+                                            <span>Jelajahi Galeri</span>
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                                <polyline points="12 5 19 12 12 19" />
+                                            </svg>
+                                        </Link>
+                                    )}
+                                    <Link href="/produk?tab=premium" className={styles.heroSecondaryBtn}>
+                                        Koleksi 1 of 1
                                     </Link>
-                                ) : (
-                                    <Link href="/produk" className="btn btn-primary hero-btn">
-                                        LIHAT KOLEKSI
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </section>
-
-            {/* Quick Categories Selector */}
-            <section className="categories-tabs-section container">
-                <div className="categories-tabs-container">
-                    {categoriesWithImages.map(cat => (
-                        <div
-                            key={cat.name}
-                            onClick={() => setSelectedCategory(cat.name)}
-                            className="category-card"
-                        >
-                            <div
-                                className="category-circle"
-                                style={{
-                                    background: selectedCategory === cat.name ? 'linear-gradient(135deg, var(--primary), var(--secondary))' : 'var(--glass-border)',
-                                    boxShadow: selectedCategory === cat.name ? '0 0 25px var(--primary-glow)' : 'none',
-                                    transform: selectedCategory === cat.name ? 'scale(1.08)' : 'scale(1)'
-                                }}
-                            >
-                                <div className="category-image-container">
-                                    <Image
-                                        src={cat.image}
-                                        alt={cat.name}
-                                        fill
-                                        sizes="100px"
-                                        className="category-image"
-                                    />
                                 </div>
                             </div>
-                            <span className={`category-name ${selectedCategory === cat.name ? 'category-name-active' : ''}`}>
-                                {cat.name}
-                            </span>
                         </div>
-                    ))}
+                    )}
                 </div>
             </section>
 
-            {/* Hottest Drops Section */}
-            {selectedCategory === 'Semua' && hottestDrops.length > 0 && (
-                <section className="hottest-drops-section container">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <div>
-                            <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem' }}>Hottest Drops</h2>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1rem' }}>Ikan Pilihan Kurator Terpopuler</p>
-                        </div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600' }}>Updated 24 hours ago</span>
-                    </div>
+            {/* Quick Categories Selector */}
+            <section className={`container ${styles.categoriesSection}`}>
+                <div className={styles.categoriesContainer}>
+                    {categoriesWithImages.map(cat => {
+                        const isSelected = selectedCategory === cat.name;
+                        return (
+                            <div
+                                key={cat.name}
+                                onClick={() => setSelectedCategory(cat.name)}
+                                className={styles.categoryCard}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        setSelectedCategory(cat.name);
+                                    }
+                                }}
+                            >
+                                <div className={`${styles.categoryCircle} ${isSelected ? styles.categoryCircleActive : ''}`}>
+                                    <div className={styles.categoryImageWrapper}>
+                                        <Image
+                                            src={cat.image}
+                                            alt={cat.name}
+                                            fill
+                                            sizes="80px"
+                                            className={styles.categoryImage}
+                                        />
+                                    </div>
+                                </div>
+                                <span className={`${styles.categoryName} ${isSelected ? styles.categoryNameActive : ''}`}>
+                                    {cat.name}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
 
-                    <div className="productGrid">
-                        {hottestDrops.map(product => (
-                            <ProductCard key={product.id} {...product} />
-                        ))}
-                    </div>
-                </section>
+            {/* Special Curated Premium Showcase Section (3D Curved Poker Arc Showcase) */}
+            {selectedCategory === 'Semua' && hottestDrops.length > 0 && (
+                <PokerCurvedShowcase products={hottestDrops} />
             )}
 
             {/* Main Listings Grid */}
-            <section className="main-listings-section container">
-                <div style={{ marginBottom: '3rem' }}>
-                    <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '2rem', marginBottom: '0.5rem' }}>
-                        {selectedCategory === 'Semua' ? 'Semua Rilis' : `${selectedCategory} Collection`}
-                    </h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1rem' }}>
-                        Menampilkan {filteredProducts.length} spesimen aktif
-                    </p>
+            <section className={`container ${styles.mainListingsSection}`}>
+                <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleGroup}>
+                        <h2 className={styles.sectionTitle}>
+                            {selectedCategory === 'Semua' ? 'Katalog Seluruh Spesimen' : `Kategori ${selectedCategory}`}
+                        </h2>
+                        <p className={styles.sectionSubtitle}>
+                            Menampilkan {filteredProducts.length} spesimen aktif siap diadopsi
+                        </p>
+                    </div>
                 </div>
 
                 {filteredProducts.length > 0 ? (
@@ -319,12 +331,12 @@ export default function CatalogHome() {
                         ))}
                     </div>
                 ) : (
-                    <div className="emptyState" style={{ padding: '6rem 2rem', textAlign: 'center', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🐟</div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem' }}>Tidak ada spesimen</h3>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Belum ada ikan cupang untuk kategori ini.</p>
-                        <button onClick={() => setSelectedCategory('Semua')} className="btn btn-outline">Lihat Semua Kategori</button>
-                    </div>
+                    <ArtisticBettaEmpty
+                        title={`Belum Ada Spesimen ${selectedCategory}`}
+                        description="Belum ada ikan cupang untuk kategori ini saat ini. Eksplorasi kategori lainnya atau periksa kembali nanti."
+                        actionText="Tampilkan Semua Spesimen"
+                        onAction={() => setSelectedCategory('Semua')}
+                    />
                 )}
             </section>
         </div>

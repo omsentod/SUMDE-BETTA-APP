@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <radialGradient id="sparkleAura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FBBF24" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#F59E0B" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <!-- Primary Starburst -->
+  <g transform="translate(200, 150)">
+    <circle cx="0" cy="0" r="16" fill="url(#sparkleAura)" />
+    <path d="M0 -24 Q0 0 24 0 Q0 0 0 24 Q0 0 -24 0 Q0 0 0 -24 Z" fill="#FDE68A" />
+    <circle cx="0" cy="0" r="2.5" fill="#FFFFFF" />
+  </g>
+  <!-- Secondary Starburst -->
+  <g transform="translate(90, 280) scale(0.65)">
+    <circle cx="0" cy="0" r="14" fill="url(#sparkleAura)" />
+    <path d="M0 -20 Q0 0 20 0 Q0 0 0 20 Q0 0 -20 0 Q0 0 0 -20 Z" fill="#FDE68A" opacity="0.85" />
+    <circle cx="0" cy="0" r="2" fill="#FFFFFF" />
+  </g>
+  <!-- Tertiary Starburst -->
+  <g transform="translate(320, 260) scale(0.5)">
+    <circle cx="0" cy="0" r="12" fill="url(#sparkleAura)" />
+    <path d="M0 -18 Q0 0 18 0 Q0 0 0 18 Q0 0 -18 0 Q0 0 0 -18 Z" fill="#FDE68A" opacity="0.75" />
+    <circle cx="0" cy="0" r="1.5" fill="#FFFFFF" />
+  </g>
+  <!-- Satellite Glimmers -->
+  <circle cx="160" cy="110" r="1.5" fill="#FDE68A" opacity="0.6" />
+  <circle cx="250" cy="180" r="1.5" fill="#FDE68A" opacity="0.7" />
+  <circle cx="120" cy="230" r="1.5" fill="#00B4D8" opacity="0.5" />
+  <circle cx="280" cy="310" r="1.5" fill="#FF6B35" opacity="0.5" />
+</svg>
+

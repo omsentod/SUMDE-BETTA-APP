@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import styles from './ProductCard.module.css';
 import { useCart } from '@/context/CartContext';
 import SizePickerModal from './SizePickerModal';
@@ -37,10 +37,19 @@ export default function ProductCard({
     sizes,
     variants,
     quantity,
-    soldCount
+    soldCount,
+    videoUrl
 }) {
     const { addToCart, isCartOpen, toggleCart } = useCart();
     const [modalAction, setModalAction] = useState(null);
+
+    const hasVideo = useMemo(() => {
+        if (typeof videoUrl === 'string' && videoUrl.trim().length > 0) return true;
+        if (Array.isArray(images)) {
+            return images.some((m) => typeof m === 'object' && m?.type === 'video');
+        }
+        return false;
+    }, [videoUrl, images]);
 
     const formattedPrice = new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -142,7 +151,7 @@ export default function ProductCard({
 
     return (
         <>
-            <Link href={`/produk/${id}`} className={styles.card} aria-label={`Lihat detail produk ${name}`}>
+            <Link href={`/produk/${id}`} className={`${styles.card} ${isPremium ? styles.cardPremium : styles.cardStandard}`} aria-label={`Lihat detail produk ${name}`}>
                 {/* Image Container */}
                 <div
                     className={styles.imageContainer}
@@ -184,18 +193,33 @@ export default function ProductCard({
 
                     {/* Badges container (Kiri Atas) */}
                     <div className={styles.badgesContainer}>
-                        {isPremium && !effectiveSold && (
-                            <span className={styles.badgePremium}>
-                                Premium
+                        {isPremium && (
+                            <span className={styles.taglinePremium}>
+                                <span className={styles.taglineSparkle}>✦</span>
+                                PREMIUM
+                            </span>
+                        )}
+                        {hasVideo && !effectiveSold && (
+                            <span className={styles.badgeVideo} title="Tersedia video gerak renang ikan">
+                                <svg className={styles.videoIcon} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <polygon points="6 4 20 12 6 20 6 4" />
+                                </svg>
+                                Flaring Video
                             </span>
                         )}
                     </div>
 
                     {/* Badge Sisa Stok (Kanan Atas) */}
-                    {isLowStock && (
-                        <span className={styles.badgeLowStock}>
-                            Sisa {totalStock}
-                        </span>
+                    {!effectiveSold && (
+                        isPremium ? (
+                            <span className={styles.badgeSingleStock}>
+                                1 Ekor Saja
+                            </span>
+                        ) : isLowStock ? (
+                            <span className={styles.badgeLowStock}>
+                                Sisa {totalStock}
+                            </span>
+                        ) : null
                     )}
 
                     {/* Overlay Terjual / Stok Habis (Tengah Foto ala Shopee) */}
@@ -212,25 +236,25 @@ export default function ProductCard({
                 <div className={styles.contentContainer}>
                     {/* Taxonomy quick details */}
                     {taxonomyItems.length > 0 && (
-                        <div className={styles.taxonomyContainer}>
+                        <div className={`${styles.taxonomyContainer} ${isPremium ? styles.taxonomyContainerPremium : ''}`}>
                             {taxonomyItems.map((item, idx) => (
                                 <span key={idx} className={styles.taxonomyItem}>
-                                    {idx > 0 && <span className={styles.dot}>•</span>}
+                                    {idx > 0 && <span className={isPremium ? styles.dotPremium : styles.dot}>•</span>}
                                     {item}
                                 </span>
                             ))}
                         </div>
                     )}
 
-                    {/* Product Title (Formal e-commerce, 2 baris konsisten) */}
-                    <h3 className={styles.title} title={name}>
+                    {/* Product Title (Premium Editorial Serif vs Regular Clean Sans) */}
+                    <h3 className={`${styles.title} ${isPremium ? styles.titlePremium : styles.titleStandard}`} title={name}>
                         {name}
                     </h3>
 
                     {/* Bottom Row: Price & Sold on Left, Quick Cart on Right */}
                     <div className={styles.bottomRow}>
                         <div className={styles.priceCol}>
-                            <span className={styles.price}>{formattedPrice}</span>
+                            <span className={`${styles.price} ${isPremium ? styles.pricePremium : ''}`}>{formattedPrice}</span>
                             <div className={styles.statusMetaRow}>
                                 {effectiveSold && (
                                     <span className={styles.soldBadgeMuted}>Habis</span>
@@ -245,7 +269,7 @@ export default function ProductCard({
                             <button
                                 type="button"
                                 onClick={handleAddToCart}
-                                className={styles.cartBtn}
+                                className={`${styles.cartBtn} ${isPremium ? styles.cartBtnPremium : ''}`}
                                 aria-label={`Tambah ${name} ke keranjang`}
                                 title="Tambah ke Keranjang"
                             >

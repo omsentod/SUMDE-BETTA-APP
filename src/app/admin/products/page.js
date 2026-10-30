@@ -796,9 +796,13 @@ function AdminProductsInner() {
                             {product.bookedBy && ` (Booked: @${product.bookedBy})`}
                           </span>
                         )}
-                        {product.isPremium && (
+                        {product.isPremium ? (
                           <span className={`${styles.badge} ${styles.badgeWarning}`} style={{ fontSize: '0.7rem' }}>
-                            ★ Premium
+                            ✦ Premium
+                          </span>
+                        ) : (
+                          <span className={styles.badge} style={{ fontSize: '0.7rem' }}>
+                            Reguler
                           </span>
                         )}
                       </div>
@@ -1335,7 +1339,7 @@ function AdminProductsInner() {
                       checked={form.isPremium}
                       onChange={(e) => setForm({ ...form, isPremium: e.target.checked })}
                     />
-                    <span>Tandai Sebagai Ikan Premium</span>
+                    <span>Koleksi Premium (Tagline Premium Khusus)</span>
                   </label>
 
                   <label className={styles.switchOption}>

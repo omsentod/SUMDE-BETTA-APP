@@ -23,8 +23,8 @@ const HERO_SLIDES = [
     {
         id: 3,
         title: "Kualitas",
-        highlight: "Grade Kontes",
-        subtitle: "Simetri sempurna dan mental petarung. Spesimen yang kami pilih secara khusus untuk standar kompetisi global.",
+        highlight: "Grade Pilihan",
+        subtitle: "Simetri sempurna dan mental prima. Spesimen yang kami pilih secara khusus untuk standar indukan unggulan.",
         image: "/img/betta-3.png",
         accent: "var(--accent)"
     }
@@ -130,7 +130,7 @@ export default function TentangPage() {
                         {[
                             { id: 1, name: "Halfmoon Rosetail Elite", desc: "Simetri sirip sempurna dengan gradasi warna nebula.", img: "/img/betta-1.png" },
                             { id: 2, name: "Plakat Koi Galaxy Multi", desc: "Mutasi warna langka hasil seleksi genetik ketat.", img: "/img/betta-2.png" },
-                            { id: 3, name: "Crowntail King Black", desc: "Karakter kuat dengan mental juara kontes.", img: "/img/betta-3.png" },
+                            { id: 3, name: "Crowntail King Black", desc: "Karakter kuat dengan mental flaring prima.", img: "/img/betta-3.png" },
                             { id: 4, name: "Avatar Gordon Copper", desc: "Kilau metalik yang berpendar dalam kegelapan.", img: "/img/betta-1.png" },
                             { id: 5, name: "HMPK Blue Rim High Grade", desc: "Kebersihan warna putih dengan garis rim presisi.", img: "/img/betta-2.png" },
                             { id: 6, name: "Hellboy Red Dragon", desc: "Warna merah pekat yang dominan dan agresif.", img: "/img/betta-3.png" }
@@ -180,8 +180,8 @@ export default function TentangPage() {
                                 </svg>
                             </span>
                             <div className="statNumber">25+</div>
-                            <h3 style={{ margin: '1rem 0' }}>Juara Kontes</h3>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Indukan pilihan yang telah memenangkan berbagai kompetisi IBC di tingkat nasional maupun internasional.</p>
+                            <h3 style={{ margin: '1rem 0' }}>Indukan Unggulan</h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Indukan pilihan bergenetika murni yang diseleksi ketat di farm kami untuk menghasilkan mutasi warna terbaik.</p>
                         </div>
                         <div className="trustCard">
                             <span className="trustIcon">

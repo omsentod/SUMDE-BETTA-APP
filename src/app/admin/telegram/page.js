@@ -99,7 +99,7 @@ function AdminTelegramContent() {
     setEventForm({
       id: null,
       title: `FLASH DEAL ${todayIndo} ${monthName.toUpperCase()}`,
-      description: 'Sesi flash deal spesial koleksi ikan cupang kontes pilihan.',
+      description: 'Sesi flash deal spesial koleksi ikan cupang pilihan farm.',
       date: today,
       durationHours: '24',
       isLifetime: false,
@@ -1002,7 +1002,7 @@ function AdminTelegramContent() {
                   <input
                     type="text"
                     className={styles.formInput}
-                    placeholder="Contoh: Spesial Cupang Kontes Edisi Terbatas"
+                    placeholder="Contoh: Spesial Cupang Pilihan Edisi Terbatas"
                     value={eventForm.description}
                     onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
                   />

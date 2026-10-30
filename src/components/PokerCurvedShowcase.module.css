@@ -1,0 +1,421 @@
+/* ==========================================================================
+   PokerCurvedShowcase: 3D Curved Arc / Coverflow Showcase for Premium Betta
+   Strict Anti-AI-Slop & Zero Inline JSX Styles (Light/Dark Parity via CSS Vars)
+   ========================================================================== */
+
+.pokerSectionContainer {
+    position: relative;
+    width: 100%;
+    margin: 3.5rem 0;
+    overflow: hidden;
+}
+
+/* Luxurious Obsidian Band with Curved Depth */
+.pokerStageBand {
+    position: relative;
+    width: 100%;
+    background: radial-gradient(circle at 50% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 60%),
+                linear-gradient(180deg, rgba(16, 16, 24, 0.95) 0%, rgba(8, 8, 12, 0.98) 100%);
+    border-top: 1px solid rgba(245, 158, 11, 0.35);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 3.5rem 1rem 4rem;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+}
+
+:global([data-theme="light"]) .pokerStageBand {
+    background: radial-gradient(circle at 50% 20%, rgba(255, 107, 53, 0.06) 0%, transparent 60%),
+                linear-gradient(180deg, #1c1917 0%, #0c0a09 100%);
+}
+
+/* Subtle Betta Fin Crest Watermark in Stage Center */
+.stageWatermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 700px;
+    height: 520px;
+    margin-top: -260px;
+    margin-left: -350px;
+    background-image: url('/img/ornaments/betta-crest-watermark.svg');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.14;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Header & Eyebrow */
+.stageHeader {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.headerLeft {
+    max-width: 600px;
+}
+
+.eyebrowBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 9999px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+}
+
+.eyebrowSparkle {
+    font-size: 0.85rem;
+    color: #fde68a;
+    animation: sparklePulse 2s infinite ease-in-out;
+}
+
+@keyframes sparklePulse {
+    0%, 100% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+.stageTitle {
+    font-family: var(--font-serif);
+    font-size: clamp(1.85rem, 3.2vw, 2.45rem);
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+}
+
+.stageTitleHighlight {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stageSubtitle {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.exploreAllLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fde68a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+}
+
+.exploreAllLink:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: #fbbf24;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+}
+
+/* 3D Perspective Stage Area */
+.stagePerspective {
+    perspective: 1300px;
+    perspective-origin: 50% 40%;
+    position: relative;
+    width: 100%;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 0 2rem;
+    user-select: none;
+}
+
+.cardsContainer {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+}
+
+/* Floor Pedestal Spotlight beneath the active center card */
+.pedestalSpotlight {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    width: 360px;
+    height: 45px;
+    margin-left: -180px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(245, 158, 11, 0.5) 0%, rgba(245, 158, 11, 0.15) 45%, transparent 75%);
+    filter: blur(12px);
+    pointer-events: none;
+    z-index: 1;
+    animation: pedestalBreath 3s infinite alternate ease-in-out;
+}
+
+@keyframes pedestalBreath {
+    0% { transform: scaleX(0.92); opacity: 0.7; }
+    100% { transform: scaleX(1.1); opacity: 1; }
+}
+
+/* Glowing Curved Table Rail Arc */
+.curvedTableRail {
+    position: absolute;
+    bottom: -15px;
+    left: 5%;
+    right: 5%;
+    height: 60px;
+    border-bottom: 2px solid rgba(245, 158, 11, 0.45);
+    border-radius: 50% / 0 0 100% 100%;
+    pointer-events: none;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
+    opacity: 0.8;
+}
+
+/* Individual 3D Card Slots */
+.cardSlot {
+    position: absolute;
+    width: 285px;
+    max-width: 85vw;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.65s ease,
+                filter 0.65s ease,
+                box-shadow 0.65s ease;
+    will-change: transform, opacity;
+}
+
+/* Center Card: Foreground, Magnified, Elevated */
+.cardCenter {
+    transform: translate3d(0, -12px, 130px) rotateY(0deg) scale(1.1);
+    z-index: 10;
+    opacity: 1;
+    filter: drop-shadow(0 25px 45px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 22px rgba(245, 158, 11, 0.35));
+    pointer-events: auto;
+}
+
+/* Left Flanking Card 1 */
+.cardLeft1 {
+    transform: translate3d(-240px, 14px, 20px) rotateY(24deg) rotateZ(-3deg) scale(0.92);
+    z-index: 8;
+    opacity: 0.82;
+    filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.5)) brightness(0.85);
+    cursor: pointer;
+}
+
+/* Right Flanking Card 1 */
+.cardRight1 {
+    transform: translate3d(240px, 14px, 20px) rotateY(-24deg) rotateZ(3deg) scale(0.92);
+    z-index: 8;
+    opacity: 0.82;
+    filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.5)) brightness(0.85);
+    cursor: pointer;
+}
+
+/* Left Flanking Card 2 */
+.cardLeft2 {
+    transform: translate3d(-440px, 42px, -80px) rotateY(38deg) rotateZ(-6deg) scale(0.78);
+    z-index: 6;
+    opacity: 0.55;
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45)) brightness(0.7);
+    cursor: pointer;
+}
+
+/* Right Flanking Card 2 */
+.cardRight2 {
+    transform: translate3d(440px, 42px, -80px) rotateY(-38deg) rotateZ(6deg) scale(0.78);
+    z-index: 6;
+    opacity: 0.55;
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45)) brightness(0.7);
+    cursor: pointer;
+}
+
+/* Off-Stage Hidden Cards */
+.cardHiddenLeft {
+    transform: translate3d(-600px, 60px, -180px) rotateY(50deg) scale(0.65);
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cardHiddenRight {
+    transform: translate3d(600px, 60px, -180px) rotateY(-50deg) scale(0.65);
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Click Overlay for Flanking Cards so clicking smoothly centers them */
+.flankingClickArea {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+}
+
+/* Navigation Arrows */
+.navArrowBtn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(18, 18, 26, 0.75);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 25;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.navArrowBtn:hover {
+    background: rgba(245, 158, 11, 0.25);
+    border-color: #fde68a;
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+}
+
+.navArrowLeft {
+    left: 1rem;
+}
+
+.navArrowRight {
+    right: 1rem;
+}
+
+/* Bottom Pagination & Index Counter */
+.stageFooterControls {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.dotsContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dotBtn {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 0;
+}
+
+.dotBtnActive {
+    width: 28px;
+    background: linear-gradient(90deg, #fbbf24, #ea580c);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+
+.counterBadge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.counterCurrent {
+    color: #fbbf24;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .pokerStageBand {
+        padding: 2.5rem 0.75rem 3rem;
+    }
+
+    .stageHeader {
+        margin-bottom: 1.25rem;
+    }
+
+    .stagePerspective {
+        min-height: 480px;
+        perspective: 900px;
+        padding: 0.5rem 0 1.5rem;
+    }
+
+    .cardsContainer {
+        height: 440px;
+    }
+
+    .cardSlot {
+        width: 250px;
+    }
+
+    .cardCenter {
+        transform: translate3d(0, 0, 70px) rotateY(0deg) scale(1.02);
+    }
+
+    .cardLeft1 {
+        transform: translate3d(-150px, 14px, -20px) rotateY(20deg) scale(0.82);
+        opacity: 0.7;
+    }
+
+    .cardRight1 {
+        transform: translate3d(150px, 14px, -20px) rotateY(-20deg) scale(0.82);
+        opacity: 0.7;
+    }
+
+    .cardLeft2,
+    .cardRight2 {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .navArrowBtn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .navArrowLeft {
+        left: 0.25rem;
+    }
+
+    .navArrowRight {
+        right: 0.25rem;
+    }
+}
+

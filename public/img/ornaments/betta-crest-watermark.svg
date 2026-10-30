@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#FF6B35" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#00B4D8" stop-opacity="0.05" />
+    </linearGradient>
+    <radialGradient id="crestGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <!-- Ambient Center Aura -->
+  <circle cx="400" cy="300" r="260" fill="url(#crestGlow)" />
+  
+  <!-- Flowing Betta Fin Contours (Architectural hairlines) -->
+  <path d="M400 120 C480 180, 560 220, 620 320 C680 420, 600 480, 500 500 C400 520, 320 460, 260 400 C200 340, 220 240, 300 180 Z" stroke="url(#crestGold)" stroke-width="1.2" />
+  <path d="M400 150 C460 200, 520 240, 570 320 C620 400, 560 450, 480 470 C400 490, 340 440, 290 390 C240 340, 260 250, 330 200 Z" stroke="url(#crestGold)" stroke-width="0.8" stroke-dasharray="3 6" opacity="0.7" />
+  
+  <!-- Radiating Fin Rays -->
+  <line x1="400" y1="300" x2="580" y2="200" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="620" y2="260" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="630" y2="330" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="600" y2="400" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="540" y2="460" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="460" y2="490" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="380" y2="500" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="300" y2="460" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="250" y2="390" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="240" y2="310" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="270" y2="230" stroke="url(#crestGold)" stroke-width="0.8" />
+  <line x1="400" y1="300" x2="330" y2="170" stroke="url(#crestGold)" stroke-width="0.8" />
+
+  <!-- Micro Accent Starlight Nodes -->
+  <circle cx="580" cy="200" r="2.5" fill="#FBBF24" opacity="0.6" />
+  <circle cx="630" cy="330" r="3" fill="#FBBF24" opacity="0.8" />
+  <circle cx="540" cy="460" r="2" fill="#FBBF24" opacity="0.5" />
+  <circle cx="270" cy="230" r="2.5" fill="#00B4D8" opacity="0.6" />
+</svg>
+

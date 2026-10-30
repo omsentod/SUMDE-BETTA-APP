@@ -6,27 +6,98 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     text-decoration: none;
     color: inherit;
     position: relative;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: transform 0.45s cubic-bezier(0.22, 0.78, 0.45, 1.02),
+                box-shadow 0.45s cubic-bezier(0.22, 0.78, 0.45, 1.02),
+                border-color 0.3s ease;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-    border-color: var(--glass-border);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+/* 1. Standard / Regular Product Card */
+.cardStandard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
 }
 
-:global([data-theme="dark"]) .card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+.cardStandard:hover {
+    transform: translateY(-5px) scale(1.01);
+    border-color: var(--primary);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.09);
 }
 
-/* Image Container (1:1 Ratio) */
+:global([data-theme="dark"]) .cardStandard:hover {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+/* 2. Premium Specimen Product Card (Obsidian & Gold Luxury Collector's Relic) */
+.cardPremium {
+    background: linear-gradient(180deg, #181822 0%, #0d0d12 100%) !important;
+    border: 1px solid rgba(245, 158, 11, 0.45) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 1px 1px rgba(245, 158, 11, 0.2);
+    color: #ffffff !important;
+    position: relative;
+}
+
+.cardPremium::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 25%, rgba(251, 191, 36, 0.12) 50%, transparent 75%);
+    transform: translateX(-100%);
+    transition: transform 0.85s cubic-bezier(0.2, 0, 0.1, 1);
+    pointer-events: none;
+    z-index: 4;
+}
+
+.cardPremium:hover::before {
+    transform: translateX(100%);
+}
+
+.cardPremium:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: #fbbf24 !important;
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.55), 0 0 25px rgba(245, 158, 11, 0.35) !important;
+}
+
+.cardPremium .imageContainer {
+    background: #09090d;
+}
+
+.cardPremium .titlePremium {
+    color: #ffffff;
+}
+
+.cardPremium:hover .titlePremium {
+    color: #fbbf24;
+}
+
+.cardPremium .pricePremium {
+    color: #fbbf24;
+    font-weight: 800;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+}
+
+.cardPremium .taxonomyContainerPremium {
+    color: #94a3b8;
+}
+
+.cardPremium .cartBtnPremium {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+}
+
+.cardPremium .cartBtnPremium:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5) !important;
+}
+
+/* Image Container (1:1 Ratio) with Aquatic Caustics Light Sweep */
 .imageContainer {
     position: relative;
     width: 100%;
@@ -35,13 +106,28 @@
     overflow: hidden;
 }
 
+.imageContainer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%);
+    transform: translateX(-100%);
+    transition: transform 0.85s cubic-bezier(0.2, 0, 0.1, 1);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card:hover .imageContainer::after {
+    transform: translateX(100%);
+}
+
 .image {
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card:hover .image {
-    transform: scale(1.04);
+    transform: scale(1.05) rotate(-0.5deg);
 }
 
 .imageSold {
@@ -102,16 +188,76 @@
     }
 }
 
-.badgePremium {
+.cardPremium .imageContainer::after {
+    background: linear-gradient(115deg, transparent 30%, rgba(254, 240, 138, 0.28) 50%, transparent 70%);
+}
+
+.taglinePremium {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: #ffffff;
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 2.5px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.08em;
+    box-shadow: 0 2px 10px rgba(245, 158, 11, 0.45);
+    text-transform: uppercase;
+}
+
+.taglineSparkle {
+    font-size: 0.65rem;
+    color: #fef08a;
+}
+
+.badgeVideo {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #38bdf8;
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.badgeIcon {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+}
+
+.videoIcon {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+}
+
+.badgeSingleStock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #f59e0b;
     font-size: 0.625rem;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 4px;
     letter-spacing: 0.02em;
-    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
-    text-transform: uppercase;
+}
+
+:global([data-theme="light"]) .badgeSingleStock {
+    background: rgba(255, 255, 255, 0.9);
+    color: #b45309;
 }
 
 .badgeLowStock {
@@ -130,15 +276,27 @@
 }
 
 @media (min-width: 640px) {
-    .badgeLowStock {
+    .badgeLowStock,
+    .badgeSingleStock {
         top: 8px;
         right: 8px;
         font-size: 0.6875rem;
         padding: 2px 8px;
     }
-    .badgePremium {
+    .badgePremium,
+    .badgeRealPict,
+    .badgeSample,
+    .badgeVideo {
         font-size: 0.6875rem;
         padding: 2px 8px;
+    }
+    .badgeIcon {
+        width: 11px;
+        height: 11px;
+    }
+    .videoIcon {
+        width: 10px;
+        height: 10px;
     }
 }
 
@@ -224,29 +382,66 @@
     margin-right: 1px;
 }
 
-/* Title (Formal E-Commerce Typography) */
+.taxonomyContainerPremium {
+    color: var(--text-muted);
+}
+
+.dotPremium {
+    color: #f59e0b;
+    font-size: 0.625rem;
+    margin-right: 1px;
+}
+
+/* Title (Base + Variations for Regular vs Premium) */
 .title {
-    font-size: 0.8125rem; /* 13px on mobile */
-    font-weight: 500;
-    color: var(--text-main);
-    line-height: 1.35;
     margin: 0 0 8px 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     min-height: 2.2rem; /* Uniform 2-line height across grid */
-    font-family: inherit;
+}
+
+/* Regular / Standard Title: Clean modern sans */
+.titleStandard {
+    font-family: var(--font-main);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.35;
     letter-spacing: -0.01em;
 }
 
 @media (min-width: 640px) {
-    .title {
-        font-size: 0.875rem; /* 14px on desktop */
-        font-weight: 600;
+    .titleStandard {
+        font-size: 0.875rem;
         min-height: 2.4rem;
         margin-bottom: 10px;
     }
+}
+
+/* Premium Specimen Title: Formal luxury serif (non-italic) */
+.titlePremium {
+    font-family: var(--font-serif);
+    font-style: normal;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    transition: color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+    .titlePremium {
+        font-size: 0.975rem;
+        min-height: 2.4rem;
+        margin-bottom: 10px;
+    }
+}
+
+.cardPremium:hover .titlePremium {
+    color: #f59e0b;
 }
 
 /* Bottom Row (Price & Sold on Left, Cart Button on Right) */
@@ -272,6 +467,15 @@
     color: var(--primary, #FF6B35);
     line-height: 1;
     letter-spacing: -0.01em;
+}
+
+.pricePremium {
+    color: #f59e0b;
+    font-weight: 800;
+}
+
+:global([data-theme="light"]) .pricePremium {
+    color: #d97706;
 }
 
 @media (min-width: 640px) {
@@ -348,7 +552,32 @@
 }
 
 .cartBtn:active {
-    transform: scale(0.93);
+    transform: scale(0.91);
+}
+
+.cartBtnPremium {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.38);
+    color: #f59e0b;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+:global([data-theme="light"]) .cartBtnPremium {
+    color: #d97706;
+    border-color: rgba(217, 119, 6, 0.38);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.cartBtnPremium:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5) !important;
+    transform: translateY(-2px) scale(1.08);
+}
+
+.cartBtnPremium:active {
+    transform: scale(0.9);
 }
 
 .cartIcon {

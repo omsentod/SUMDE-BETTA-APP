@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="waveGoldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6B35" stop-opacity="0" />
+      <stop offset="30%" stop-color="#F59E0B" stop-opacity="0.35" />
+      <stop offset="70%" stop-color="#00B4D8" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#00B4D8" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="waveAmberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00B4D8" stop-opacity="0" />
+      <stop offset="40%" stop-color="#FBBF24" stop-opacity="0.25" />
+      <stop offset="80%" stop-color="#FF6B35" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#FF6B35" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <path d="M0 200 C300 120, 450 280, 700 180 C950 80, 1050 240, 1200 190" stroke="url(#waveGoldGrad)" stroke-width="1.5" stroke-linecap="round" fill="none" />
+  <path d="M0 220 C280 150, 420 300, 680 200 C920 110, 1030 260, 1200 210" stroke="url(#waveAmberGrad)" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.8" />
+  <path d="M0 180 C320 90, 480 260, 720 160 C970 60, 1070 220, 1200 170" stroke="url(#waveGoldGrad)" stroke-width="0.8" stroke-dasharray="4 8" stroke-linecap="round" fill="none" opacity="0.6" />
+</svg>
+

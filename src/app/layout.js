@@ -1,6 +1,7 @@
 import "./globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import TopProgressBar from "@/components/TopProgressBar";
+import InteractiveAtmosphereBackground from "@/components/InteractiveAtmosphereBackground";
 import { CartProvider } from "@/context/CartContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -16,7 +17,7 @@ const inter = Inter({
 
 export const metadata = {
     title: "SUMDE BETTA | Koleksi Akuatik Eksklusif",
-    description: "Beli Ikan Cupang Hias Kualitas Kontes & Premium. Pembayaran Otomatis Menggunakan QRIS.",
+    description: "Beli Ikan Cupang Hias Kualitas Pilihan & Spesimen Premium. Pembayaran Otomatis Menggunakan QRIS.",
 };
 
 export default function RootLayout({ children }) {
@@ -24,9 +25,13 @@ export default function RootLayout({ children }) {
         <html lang="id" className={inter.variable}>
             <head>
                 <link rel="icon" href="/img/logo.png" type="image/png"/>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
             </head>
             <body>
                 <TopProgressBar />
+                <InteractiveAtmosphereBackground />
                 <ThemeProvider>
                     <AuthProvider>
                         <ProductProvider>

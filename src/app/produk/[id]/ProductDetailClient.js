@@ -369,6 +369,46 @@ export default function ProductDetailClient() {
 
                             <p className={styles.description}>{product.description}</p>
 
+                            {/* Authenticity / Specification Trust Box */}
+                            {product.isPremium ? (
+                                <div className={styles.authenticityBoxPremium}>
+                                    <div className={styles.authenticityHeader}>
+                                        <div className={styles.authenticityTitleRow}>
+                                            <svg className={styles.authenticityIconPremium} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                            </svg>
+                                            <span className={styles.authenticityTitlePremium}>
+                                                ✦ Spesimen Edisi Premium
+                                            </span>
+                                        </div>
+                                        <span className={styles.authenticityTag}>PREMIUM</span>
+                                    </div>
+                                    <p className={styles.authenticityDesc}>
+                                        Spesimen pilihan dengan mutu visual estetika tertinggi. Setiap ikan memiliki keunikan mutasi genetik tersendiri dan diabadikan secara khusus sesuai wujud fisik asli yang akan Anda terima.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className={styles.authenticityBoxSample}>
+                                    <div className={styles.authenticityHeader}>
+                                        <div className={styles.authenticityTitleRow}>
+                                            <svg className={styles.authenticityIconSample} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <rect x="3" y="3" width="7" height="7" rx="1" />
+                                                <rect x="14" y="3" width="7" height="7" rx="1" />
+                                                <rect x="14" y="14" width="7" height="7" rx="1" />
+                                                <rect x="3" y="14" width="7" height="7" rx="1" />
+                                            </svg>
+                                            <span className={styles.authenticityTitle}>
+                                                Koleksi Reguler Farm SUMDE
+                                            </span>
+                                        </div>
+                                        <span className={styles.authenticityTagNeutral}>Standar Farm</span>
+                                    </div>
+                                    <p className={styles.authenticityDesc}>
+                                        Spesimen sehat berkualitas grade pilihan farm SUMDE BETTA, diseleksi langsung dari lini farm terbaik sesuai varian ukuran dan gender pilihan Anda.
+                                    </p>
+                                </div>
+                            )}
+
                             <div className={styles.metaCard}>
                                 <div className={styles.metaItem}>
                                     <label className={styles.metaLabel}>Grade Bentuk</label>
@@ -465,6 +505,56 @@ export default function ProductDetailClient() {
                                 ) : (
                                     <span className={styles.soldOutTag}>Stok Habis / Terjual</span>
                                 )}
+                            </div>
+
+                            {/* Garansi & Standar Pengiriman Farm SUMDE */}
+                            <div className={styles.assuranceSection}>
+                                <div className={styles.assuranceItem}>
+                                    <div className={styles.assuranceIconWrapper}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                            <polyline points="9 12 11 14 15 10" />
+                                        </svg>
+                                    </div>
+                                    <div className={styles.assuranceContent}>
+                                        <h4 className={styles.assuranceTitle}>Garansi Selamat (DOA 100%)</h4>
+                                        <p className={styles.assuranceDesc}>
+                                            Garansi hidup sampai tujuan. Jika ada kendala perjalanan, sertakan video unboxing tanpa jeda untuk penggantian penuh.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className={styles.assuranceItem}>
+                                    <div className={styles.assuranceIconWrapper}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                        </svg>
+                                    </div>
+                                    <div className={styles.assuranceContent}>
+                                        <h4 className={styles.assuranceTitle}>Kemasan Oksigen Murni Ganda</h4>
+                                        <p className={styles.assuranceDesc}>
+                                            Kemasan kantong ganda dengan injeksi oksigen murni, kardus tebal, dan insulasi styrofoam penahan suhu.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className={styles.assuranceItem}>
+                                    <div className={styles.assuranceIconWrapper}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <rect x="1" y="3" width="15" height="13" />
+                                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                                            <circle cx="5.5" cy="18.5" r="2.5" />
+                                            <circle cx="18.5" cy="18.5" r="2.5" />
+                                        </svg>
+                                    </div>
+                                    <div className={styles.assuranceContent}>
+                                        <h4 className={styles.assuranceTitle}>Pengiriman Nusantara Terverifikasi</h4>
+                                        <p className={styles.assuranceDesc}>
+                                            Ekspedisi resmi terintegrasi dengan pelacakan nomor resi otomatis serta pembaruan berkala langsung ke sistem.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

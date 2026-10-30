@@ -1,0 +1,61 @@
+/* ==========================================================================
+   Interactive Betta Aquarium: Living Canvas, Fluid Caustics & Fine Art Motions
+   Anti-AI-Slop Standard: Hand-crafted physics, silken fin ripples, zero bloat
+   ========================================================================== */
+
+.aquariumContainer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.aquariumCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: auto; /* Memungkinkan interaksi mouse ripple */
+    cursor: default;
+}
+
+/* Ambient water caustics layer overlay */
+.causticsGlow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 40% 20%, rgba(0, 180, 216, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(255, 107, 53, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.8;
+}
+
+:global([data-theme="light"]) .causticsGlow {
+    background: radial-gradient(ellipse at 40% 20%, rgba(0, 180, 216, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(255, 107, 53, 0.03) 0%, transparent 60%);
+    mix-blend-mode: multiply;
+    opacity: 0.6;
+}
+
+/* Water depth vignette */
+.aquaticVignette {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(5, 5, 5, 0.1) 0%, transparent 40%, rgba(5, 5, 5, 0.35) 100%);
+    pointer-events: none;
+}
+
+:global([data-theme="light"]) .aquaticVignette {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 0%, transparent 40%, rgba(240, 240, 245, 0.25) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aquariumCanvas {
+        display: none;
+    }
+}
+
