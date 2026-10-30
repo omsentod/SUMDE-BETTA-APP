@@ -151,7 +151,7 @@ function CheckoutContent() {
 
     const handleDeleteCheckoutItem = async (item) => {
         const confirmed = await confirmDialog({
-            title: 'Hapus Spesimen?',
+            title: 'Hapus Ikan dari Pesanan?',
             message: `Hapus "${item.name}"${item.selectedSize ? ` (Varian: ${item.selectedSize})` : ''} dari pesanan Anda?`,
             confirmText: 'Ya, Hapus',
             cancelText: 'Batal',
@@ -511,7 +511,7 @@ function CheckoutContent() {
                 </svg>
                 <h2 className={styles.emptyStateTitle}>Inventaris Anda Kosong</h2>
                 <p className={styles.emptyStateSubtitle}>
-                    Belum ada spesimen pilihan yang ditambahkan ke pesanan. Silakan jelajahi galeri koleksi akuatik kami.
+                    Belum ada ikan pilihan yang ditambahkan ke pesanan. Silakan jelajahi galeri koleksi akuatik kami.
                 </p>
                 <Link href="/produk" className={`btn btn-primary ${styles.emptyStateBtn}`}>
                     Jelajahi Galeri
@@ -524,7 +524,7 @@ function CheckoutContent() {
         <div className="checkout-page">
             <section className="checkout-section">
                 <div className="container">
-                    <h1 className="checkout-title">Ringkasan Akuisisi</h1>
+                    <h1 className="checkout-title">Ringkasan Pembelian</h1>
 
                     {dropBooking && (
                         <div className={styles.telegramDropBanner}>
@@ -551,7 +551,7 @@ function CheckoutContent() {
 
                         <div className="checkout-left">
                             <div className="cart-items mb-16">
-                                <h3 className={styles.sectionTitle}>Spesimen Terpilih</h3>
+                                <h3 className={styles.sectionTitle}>Koleksi Terpilih</h3>
                                 {cart.map((item) => (
                                     <div key={`${item.id}-${item.selectedSize}`} className="checkout-item-row">
                                         <div className="checkout-item-image">
@@ -559,7 +559,7 @@ function CheckoutContent() {
                                         </div>
                                         <div className="checkout-item-info">
                                             <h3>{item.name}</h3>
-                                            <p className="checkout-item-sub">Spesimen {item.category}</p>
+                                            <p className="checkout-item-sub">Kategori {item.category}</p>
                                             {item.selectedSize && (
                                                 <p className="checkout-item-size">
                                                     Varian: {item.selectedSize}
@@ -893,7 +893,7 @@ function CheckoutContent() {
                                 Lanjutkan Ke Pembayaran
                             </button>
                             <p className={styles.disclaimerText}>
-                                Dengan melanjutkan, Anda menyetujui syarat akuisisi dan penanganan spesimen elit kami.
+                                Dengan melanjutkan, Anda menyetujui syarat pembelian dan penanganan pengiriman ikan kami.
                             </p>
                         </div>
 

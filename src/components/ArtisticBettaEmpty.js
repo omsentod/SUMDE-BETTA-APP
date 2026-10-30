@@ -7,9 +7,9 @@ import styles from './ArtisticBettaEmpty.module.css';
  * Strictly adheres to Anti-AI-Slop standards: zero emojis, restrained editorial typography.
  */
 export default function ArtisticBettaEmpty({
-    title = 'Spesimen Belum Tersedia',
+    title = 'Koleksi Belum Tersedia',
     description = 'Belum ada ikan cupang yang sesuai dengan kriteria kurasi ini. Silakan atur ulang filter Anda.',
-    actionText = 'Lihat Semua Spesimen',
+    actionText = 'Lihat Semua Koleksi',
     onAction,
     className = ''
 }) {

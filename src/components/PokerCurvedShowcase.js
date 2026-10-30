@@ -73,7 +73,7 @@ export default function PokerCurvedShowcase({ products = [] }) {
                                 <span>EDISI KOLEKTOR • 3D CURATED STAGE</span>
                             </div>
                             <h2 className={styles.stageTitle}>
-                                Kurasi Spesimen <span className={styles.stageTitleHighlight}>Elit</span>
+                                Kurasi Koleksi <span className={styles.stageTitleHighlight}>Gallery</span>
                             </h2>
                             <p className={styles.stageSubtitle}>
                                 Mahakarya pilihan kurator dengan genetika tunggal dan kualitas visual tertinggi. Format panggung kurva eksklusif 1 of 1.
@@ -81,7 +81,7 @@ export default function PokerCurvedShowcase({ products = [] }) {
                         </div>
 
                         <Link href="/produk?tab=premium" className={styles.exploreAllLink}>
-                            <span>Buka Ruang Pameran VIP</span>
+                            <span>Buka Ruang Gallery VIP</span>
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <line x1="5" y1="12" x2="19" y2="12" />
                                 <polyline points="12 5 19 12 12 19" />
@@ -109,7 +109,7 @@ export default function PokerCurvedShowcase({ products = [] }) {
                                     type="button"
                                     className={`${styles.navArrowBtn} ${styles.navArrowLeft}`}
                                     onClick={handlePrev}
-                                    aria-label="Spesimen Sebelumnya"
+                                    aria-label="Ikan Sebelumnya"
                                 >
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="15 18 9 12 15 6" />
@@ -119,7 +119,7 @@ export default function PokerCurvedShowcase({ products = [] }) {
                                     type="button"
                                     className={`${styles.navArrowBtn} ${styles.navArrowRight}`}
                                     onClick={handleNext}
-                                    aria-label="Spesimen Selanjutnya"
+                                    aria-label="Ikan Selanjutnya"
                                 >
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="9 18 15 12 9 6" />

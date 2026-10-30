@@ -230,7 +230,7 @@ export default function CatalogHome() {
                                         </>
                                     ) : (
                                         <>
-                                            Spesimen Seni Hidup<br />
+                                            Koleksi Seni Hidup<br />
                                             <span className={styles.heroTitleSerif}>Seri Koi &amp; Avatar</span>
                                         </>
                                     )}
@@ -238,12 +238,12 @@ export default function CatalogHome() {
                                 <p className={styles.heroDescription}>
                                     {featuredProduct
                                         ? featuredProduct.description
-                                        : "Koleksi seleksi genetik unggulan dengan mutasi warna penuh. Setiap spesimen memiliki karakter dan keunikan visual tunggal."}
+                                        : "Koleksi seleksi genetik unggulan dengan mutasi warna penuh. Setiap ikan memiliki karakter dan keunikan visual tunggal."}
                                 </p>
                                 <div className={styles.heroActionGroup}>
                                     {featuredProduct ? (
                                         <Link href={`/produk/${featuredProduct.id}`} className={styles.heroPrimaryBtn}>
-                                            <span>Detail Spesimen</span>
+                                            <span>Detail Ikan</span>
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                                 <line x1="5" y1="12" x2="19" y2="12" />
                                                 <polyline points="12 5 19 12 12 19" />
@@ -315,11 +315,17 @@ export default function CatalogHome() {
             <section className={`container ${styles.mainListingsSection}`}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleGroup}>
+                        <div className={styles.sectionBadge}>
+                            <span className={styles.sectionBadgePulse} />
+                            <span>
+                                {selectedCategory === 'Semua' ? 'Katalog Utama Farm' : `Kategori • ${selectedCategory}`}
+                            </span>
+                        </div>
                         <h2 className={styles.sectionTitle}>
-                            {selectedCategory === 'Semua' ? 'Katalog Seluruh Spesimen' : `Kategori ${selectedCategory}`}
+                            {selectedCategory === 'Semua' ? 'Katalog Seluruh Koleksi' : `Kategori ${selectedCategory}`}
                         </h2>
                         <p className={styles.sectionSubtitle}>
-                            Menampilkan {filteredProducts.length} spesimen aktif siap diadopsi
+                            Menampilkan {filteredProducts.length} ikan aktif siap diadopsi
                         </p>
                     </div>
                 </div>
@@ -332,9 +338,9 @@ export default function CatalogHome() {
                     </div>
                 ) : (
                     <ArtisticBettaEmpty
-                        title={`Belum Ada Spesimen ${selectedCategory}`}
+                        title={`Belum Ada Koleksi ${selectedCategory}`}
                         description="Belum ada ikan cupang untuk kategori ini saat ini. Eksplorasi kategori lainnya atau periksa kembali nanti."
-                        actionText="Tampilkan Semua Spesimen"
+                        actionText="Tampilkan Semua Koleksi"
                         onAction={() => setSelectedCategory('Semua')}
                     />
                 )}

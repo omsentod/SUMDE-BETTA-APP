@@ -114,7 +114,7 @@ export const SYSTEM_PERMISSIONS = [
         key: 'products:create',
         action: 'create',
         label: 'Tambah Produk Baru',
-        description: 'Menambahkan spesimen ikan cupang baru ke etalase.',
+        description: 'Menambahkan ikan cupang baru ke etalase.',
       },
       {
         key: 'products:update',

@@ -377,9 +377,9 @@ export default function PaymentPage() {
                                 <polyline points="20 6 9 17 4 12" />
                             </svg>
                         </div>
-                        <h1 className={styles.successTitle}>Akuisisi Dikonfirmasi</h1>
+                        <h1 className={styles.successTitle}>Pesanan Dikonfirmasi</h1>
                         <p className={styles.successDesc}>
-                            Pembayaran Anda telah sukses diverifikasi oleh DOKU. Spesimen elit pilihan Anda sedang kami persiapkan untuk proses kurasi dan pengiriman bergaransi.
+                            Pembayaran Anda telah sukses diverifikasi oleh DOKU. Ikan pilihan Anda sedang kami persiapkan untuk proses kurasi dan pengiriman bergaransi.
                         </p>
                         <button
                             type="button"

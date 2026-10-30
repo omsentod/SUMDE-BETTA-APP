@@ -2,7 +2,7 @@ import styles from './loading.module.css';
 
 export default function Loading() {
     return (
-        <div className={styles.container} aria-busy="true" aria-label="Memuat spesimen produk...">
+        <div className={styles.container} aria-busy="true" aria-label="Memuat produk ikan...">
             <div className={styles.grid}>
                 {/* Left: Gallery Skeleton */}
                 <div className={styles.galleryCol}>

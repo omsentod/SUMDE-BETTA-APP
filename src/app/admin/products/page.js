@@ -881,7 +881,7 @@ function AdminProductsInner() {
                   {isAddOpen ? 'Tambah Produk Baru' : 'Edit Detail Produk'}
                 </h3>
                 <p className={styles.productModalSubtitle}>
-                  Kelola foto, video, harga, dan varian spesimen ikan cupang.
+                  Kelola foto, video, harga, dan varian koleksi ikan cupang.
                 </p>
               </div>
               <button
@@ -1144,7 +1144,7 @@ function AdminProductsInner() {
               {/* Section 3: Harga & Manajemen Varian */}
               <div className={styles.formCard}>
                 <div className={styles.formCardHeader}>
-                  <h4 className={styles.formCardTitle}>Harga & Varian Spesimen</h4>
+                  <h4 className={styles.formCardTitle}>Harga & Varian Ikan</h4>
                   <p className={styles.formCardDesc}>
                     Tetapkan harga dasar atau atur varian (Male, Female, Pair) dengan stok dan foto terpisah.
                   </p>

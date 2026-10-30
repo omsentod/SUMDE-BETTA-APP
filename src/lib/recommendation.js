@@ -2,7 +2,7 @@
  * Content-Based Recommendation System untuk SUMDE-BETTA-APP
  *
  * Menghitung skor kemiripan (similarity score) antara produk acuan dengan
- * seluruh kandidat produk lainnya berdasarkan atribut konten spesimen cupang:
+ * seluruh kandidat produk lainnya berdasarkan atribut konten ikan cupang:
  * 1. Form / Kategori (Bobot: 35%)
  * 2. Corak Warna / Coloration Token Overlap (Bobot: 25%)
  * 3. Kesesuaian Gender (Bobot: 15%)

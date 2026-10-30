@@ -17,7 +17,7 @@ const inter = Inter({
 
 export const metadata = {
     title: "SUMDE BETTA | Koleksi Akuatik Eksklusif",
-    description: "Beli Ikan Cupang Hias Kualitas Pilihan & Spesimen Premium. Pembayaran Otomatis Menggunakan QRIS.",
+    description: "Beli Ikan Cupang Hias Kualitas Pilihan & Gallery Eksklusif. Pembayaran Otomatis Menggunakan QRIS.",
 };
 
 export default function RootLayout({ children }) {

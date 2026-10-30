@@ -71,7 +71,7 @@ export async function GET(request) {
       {
         'Kolom': 'Deskripsi',
         'Status': 'Opsional',
-        'Keterangan': 'Deskripsi lengkap spesimen dan keunggulan ikan.',
+        'Keterangan': 'Deskripsi lengkap dan keunggulan ikan.',
       },
       {
         'Kolom': 'Grade Bentuk',

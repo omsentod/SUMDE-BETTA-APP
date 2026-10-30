@@ -152,7 +152,7 @@ export default function ProductDetailClient() {
     if (isLoading) {
         return (
             <div className={`pageContainer ${styles.stateWrap}`}>
-                <h2 className={styles.stateTitle}>Memuat Spesimen...</h2>
+                <h2 className={styles.stateTitle}>Memuat Detail Ikan...</h2>
             </div>
         );
     }
@@ -378,13 +378,13 @@ export default function ProductDetailClient() {
                                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                                             </svg>
                                             <span className={styles.authenticityTitlePremium}>
-                                                ✦ Spesimen Edisi Premium
+                                                ✦ Edisi Gallery
                                             </span>
                                         </div>
-                                        <span className={styles.authenticityTag}>PREMIUM</span>
+                                        <span className={styles.authenticityTag}>GALLERY</span>
                                     </div>
                                     <p className={styles.authenticityDesc}>
-                                        Spesimen pilihan dengan mutu visual estetika tertinggi. Setiap ikan memiliki keunikan mutasi genetik tersendiri dan diabadikan secara khusus sesuai wujud fisik asli yang akan Anda terima.
+                                        Koleksi gallery pilihan dengan mutu visual estetika tertinggi. Setiap ikan memiliki keunikan mutasi genetik tersendiri dan diabadikan secara khusus sesuai wujud fisik asli yang akan Anda terima.
                                     </p>
                                 </div>
                             ) : (
@@ -404,7 +404,7 @@ export default function ProductDetailClient() {
                                         <span className={styles.authenticityTagNeutral}>Standar Farm</span>
                                     </div>
                                     <p className={styles.authenticityDesc}>
-                                        Spesimen sehat berkualitas grade pilihan farm SUMDE BETTA, diseleksi langsung dari lini farm terbaik sesuai varian ukuran dan gender pilihan Anda.
+                                        Ikan sehat berkualitas grade pilihan farm SUMDE BETTA, diseleksi langsung dari lini farm terbaik sesuai varian ukuran dan gender pilihan Anda.
                                     </p>
                                 </div>
                             )}
@@ -568,10 +568,10 @@ export default function ProductDetailClient() {
                     <div className="container">
                         <div className={styles.similarHeader}>
                             <div>
-                                <span className={styles.similarEyebrow}>Rekomendasi Spesimen</span>
+                                <span className={styles.similarEyebrow}>Rekomendasi Koleksi</span>
                                 <h2 className={styles.similarTitle}>Produk Serupa</h2>
                                 <p className={styles.similarSubtitle}>
-                                    Spesimen dengan form {product.form}, corak {product.coloration}, dan karakteristik serupa.
+                                    Ikan dengan form {product.form}, corak {product.coloration}, dan karakteristik serupa.
                                 </p>
                             </div>
                             <Link href={product.form || product.category ? `/produk?category=${encodeURIComponent((product.form || product.category).trim())}` : '/produk'} className={styles.similarViewAll}>

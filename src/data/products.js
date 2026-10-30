@@ -49,7 +49,7 @@ export const products = [
         gender: 'Female',
         form: 'Plakat',
         coloration: 'Copper',
-        description: 'Kemilau tembaga metalik. Spesimen betina siap pijah yang sangat sehat dengan aktivitas tinggi.',
+        description: 'Kemilau tembaga metalik. Ikan betina siap pijah yang sangat sehat dengan aktivitas tinggi.',
         image: '/img/betta-2.png',
         isSold: false,
         isPremium: false,

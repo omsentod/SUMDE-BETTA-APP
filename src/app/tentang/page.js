@@ -16,7 +16,7 @@ const HERO_SLIDES = [
         id: 2,
         title: "Genetik",
         highlight: "Koi Galaxy",
-        subtitle: "Perpaduan warna nebula yang langka dan menakjubkan. Koleksi terbatas bagi kolektor spesimen eksklusif.",
+        subtitle: "Perpaduan warna nebula yang langka dan menakjubkan. Koleksi terbatas bagi kolektor ikan eksklusif.",
         image: "/img/betta-2.png",
         accent: "var(--secondary)"
     },
@@ -24,7 +24,7 @@ const HERO_SLIDES = [
         id: 3,
         title: "Kualitas",
         highlight: "Grade Pilihan",
-        subtitle: "Simetri sempurna dan mental prima. Spesimen yang kami pilih secara khusus untuk standar indukan unggulan.",
+        subtitle: "Simetri sempurna dan mental prima. Ikan yang kami pilih secara khusus untuk standar indukan unggulan.",
         image: "/img/betta-3.png",
         accent: "var(--accent)"
     }
@@ -40,7 +40,7 @@ const FARM_DOCS = [
     {
         id: 2,
         title: "Ruang Karantina & Lab",
-        desc: "Proses seleksi dan sterilisasi ketat sebelum ikan siap dilepas ke pasar. Kami memastikan setiap spesimen dalam kondisi puncak.",
+        desc: "Proses seleksi dan sterilisasi ketat sebelum ikan siap dilepas ke pasar. Kami memastikan setiap ikan dalam kondisi puncak.",
         image: "/img/farm-2.png"
     },
     {
@@ -147,7 +147,7 @@ export default function TentangPage() {
 
                     <div style={{ textAlign: 'center', marginTop: '4rem' }}>
                         <Link href="/" className="btn btn-outline" style={{ padding: '1.2rem 3rem' }}>
-                            Mulai Belanja & Pilih Spesimen
+                            Mulai Belanja & Pilih Ikan
                         </Link>
                     </div>
                 </div>
@@ -194,7 +194,7 @@ export default function TentangPage() {
                             </span>
                             <div className="statNumber">1k+</div>
                             <h3 style={{ margin: '1rem 0' }}>Kolektor Loyal</h3>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Komunitas kolektor eksklusif yang mempercayakan akuisisi spesimen mereka kepada keahlian kami.</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Komunitas kolektor eksklusif yang mempercayakan koleksi ikan mereka kepada keahlian kami.</p>
                         </div>
                     </div>
                 </div>
@@ -294,7 +294,7 @@ export default function TentangPage() {
                             {[
                                 { t: "Seleksi Individu", d: "Setiap ikan dipilih secara personal oleh kurator kami berdasarkan bentuk, warna, dan mental." },
                                 { t: "Karantina Mandiri", d: "Proses pembersihan dan penguatan daya tahan selama 7 hari sebelum siap dikirim ke alamat Anda." },
-                                { t: "Jaminan Hidup (DOA)", d: "Garansi uang kembali 100% atau penggantian spesimen jika ikan tidak sampai dalam keadaan hidup." }
+                                { t: "Jaminan Hidup (DOA)", d: "Garansi uang kembali 100% atau penggantian ikan jika tidak sampai dalam keadaan hidup." }
                             ].map((point, i) => (
                                 <li key={i} style={{ marginBottom: '2.5rem' }}>
                                     <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>{point.t}</h4>

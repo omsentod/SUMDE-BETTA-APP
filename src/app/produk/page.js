@@ -41,7 +41,7 @@ function GalleryContent() {
     // Hide soft-deleted (archived) products from the public gallery.
     const products = useMemo(() => allProducts.filter(p => !p.isArchived), [allProducts]);
 
-    // Hitung jumlah spesimen premium vs katalog strain
+    // Hitung jumlah koleksi gallery vs katalog reguler
     const counts = useMemo(() => {
         let premium = 0;
         let sample = 0;
@@ -210,7 +210,7 @@ function GalleryContent() {
     const filteredProducts = useMemo(() => {
         let result = [...products];
 
-        // 1. Filter Koleksi (Spesimen Premium 1 of 1 vs Katalog Strain)
+        // 1. Filter Koleksi (Gallery 1 of 1 vs Koleksi Reguler)
         if (activeTab === 'premium') {
             result = result.filter(p => p.isPremium);
         } else if (activeTab === 'sample') {
@@ -356,7 +356,7 @@ function GalleryContent() {
                             <span className={activeTab === 'premium' ? styles.curationPulse : styles.curationPulseSample} />
                             <span>
                                 {activeTab === 'premium'
-                                    ? 'Spesimen Terkurasi • Edisi Premium'
+                                    ? 'Koleksi Terkurasi • Gallery'
                                     : activeTab === 'sample'
                                     ? 'Koleksi Reguler • Farm SUMDE'
                                     : 'Seluruh Koleksi Farm'}
@@ -365,7 +365,7 @@ function GalleryContent() {
 
                         <h1 className={styles.heroTitle}>
                             {activeTab === 'premium' ? (
-                                <>Spesimen Elit <span className={styles.heroTitleEmphasized}>Premium</span></>
+                                <>Koleksi Pilihan <span className={styles.heroTitleEmphasized}>Gallery</span></>
                             ) : activeTab === 'sample' ? (
                                 <>Koleksi Reguler <span className={styles.heroTitleEmphasized}>Pilihan</span></>
                             ) : (
@@ -375,10 +375,10 @@ function GalleryContent() {
 
                         <p className={styles.heroSubtitle}>
                             {activeTab === 'premium'
-                                ? 'Setiap spesimen premium diabadikan secara individual dengan keunikan genetika tunggal dan kualitas visual pilihan tertinggi.'
+                                ? 'Setiap ikan di gallery diabadikan secara individual dengan keunikan genetika tunggal dan kualitas visual pilihan tertinggi.'
                                 : activeTab === 'sample'
                                 ? 'Pilihan ikan cupang hias berkualitas langsung dari pembudidayaan farm SUMDE BETTA. Tersedia berbagai form, corak, dan pilihan varian ukuran.'
-                                : 'Eksplorasi lengkap seluruh lini spesimen premium dan katalog reguler farm SUMDE BETTA.'}
+                                : 'Eksplorasi lengkap seluruh lini gallery dan katalog reguler farm SUMDE BETTA.'}
                         </p>
 
                         <div className={styles.editorialPills}>
@@ -388,7 +388,7 @@ function GalleryContent() {
                                         <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                                         </svg>
-                                        Jaminan Seleksi Spesimen Elit
+                                        Jaminan Seleksi Grade Pilihan
                                     </span>
                                     <span className={styles.editorialPillItem}>
                                         <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -468,7 +468,7 @@ function GalleryContent() {
                             <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                             </svg>
-                            <span>✦ Spesimen Premium</span>
+                            <span>✦ Gallery</span>
                             <span className={`${styles.tabCountPill} ${activeTab === 'premium' ? styles.tabCountActivePremium : ''}`}>
                                 {counts.premium}
                             </span>
@@ -734,7 +734,7 @@ function GalleryContent() {
                                 </button>
 
                                 <p className={styles.toolbarCountText}>
-                                    Menampilkan <span className={styles.toolbarCountHighlight}>{filteredProducts.length}</span> spesimen
+                                    Menampilkan <span className={styles.toolbarCountHighlight}>{filteredProducts.length}</span> ikan
                                 </p>
                             </div>
 
@@ -818,17 +818,17 @@ function GalleryContent() {
                             <ArtisticBettaEmpty
                                 title={
                                     activeTab === 'premium'
-                                        ? 'Belum Ada Spesimen Premium'
+                                        ? 'Belum Ada Koleksi Gallery'
                                         : activeTab === 'sample'
                                         ? 'Koleksi Reguler Belum Tersedia'
-                                        : 'Tidak Ada Spesimen Ditemukan'
+                                        : 'Tidak Ada Ikan Ditemukan'
                                 }
                                 description={
                                     activeTab === 'premium'
-                                        ? 'Seluruh spesimen premium saat ini sedang teradopsi atau dalam kurasi farm. Silakan jelajahi Koleksi Reguler kami.'
+                                        ? 'Seluruh koleksi gallery saat ini sedang teradopsi atau dalam kurasi farm. Silakan jelajahi Koleksi Reguler kami.'
                                         : activeTab === 'sample'
                                         ? 'Tidak ada produk reguler yang cocok dengan kriteria filter saat ini.'
-                                        : 'Tidak ada spesimen akuatik yang cocok dengan kombinasi filter saat ini.'
+                                        : 'Tidak ada ikan akuatik yang cocok dengan kombinasi filter saat ini.'
                                 }
                                 actionText={
                                     filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin > 0

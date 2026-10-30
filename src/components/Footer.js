@@ -9,7 +9,7 @@ export default function Footer() {
                 <div className="footer-content">
                     <div className="footer-brand">
                         <h2 className="logo-text">SUMDE <span className="logo-highlight">BETTA</span></h2>
-                        <p>Kurasi Ikan Cupang Hias Eksklusif & Spesimen Pilihan Farm. Seni Kehidupan Dalam Air.</p>
+                        <p>Kurasi Ikan Cupang Hias Eksklusif & Koleksi Pilihan Farm. Seni Kehidupan Dalam Air.</p>
                     </div>
                     <div className="footer-links">
                         <h4>Navigasi</h4>
