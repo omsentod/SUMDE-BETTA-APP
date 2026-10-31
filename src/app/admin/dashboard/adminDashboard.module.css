@@ -1871,17 +1871,18 @@
 }
 
 .subCatChip:hover:not(.subCatChipActive) {
-    color: var(--primary);
-    border-color: var(--primary);
-    background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
+    color: var(--secondary);
+    border-color: var(--secondary);
+    background: color-mix(in oklab, var(--secondary) 10%, var(--bg-card));
 }
 
 .subCatChipActive,
 .subCatChipActive:hover {
-    background: var(--primary) !important;
+    background: linear-gradient(135deg, #0284c7, #00b4d8) !important;
     color: #ffffff !important;
-    border-color: var(--primary) !important;
+    border-color: #00b4d8 !important;
     font-weight: 600;
+    box-shadow: 0 2px 8px var(--secondary-glow);
 }
 
 .subCatChipBadge {
