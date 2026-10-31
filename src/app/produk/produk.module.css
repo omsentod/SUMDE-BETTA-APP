@@ -480,6 +480,103 @@
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
 
+/* Mobile Optimization for Switchers & Filter Bars (< 640px) */
+@media (max-width: 640px) {
+    .heroInner {
+        padding: 1.25rem 1rem 0.5rem;
+    }
+
+    .heroTitle {
+        font-size: 1.45rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .heroSubtitle {
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .editorialPills {
+        gap: 0.45rem 0.85rem;
+        font-size: 0.72rem;
+    }
+
+    .editorialPillIcon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .switcherContainer {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 0.25rem 1rem 0.5rem;
+        margin: 1rem 0 0.85rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .switcherContainer::-webkit-scrollbar {
+        display: none;
+    }
+
+    .switcherShell {
+        flex-shrink: 0;
+        padding: 6px 8px;
+        gap: 6px;
+        border-radius: 40px;
+    }
+
+    .switcherTab {
+        padding: 0.55rem 0.95rem;
+        font-size: 0.78rem;
+        gap: 0.45rem;
+        min-height: 40px;
+    }
+
+    .tabIconImg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .tabCountPill {
+        font-size: 0.65rem;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+    }
+
+    .subCategoryPillsContainer {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 0.25rem 1rem 0.5rem;
+        margin: 0 0 1.25rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .subCategoryPillsContainer::-webkit-scrollbar {
+        display: none;
+    }
+
+    .subCategoryPillsList {
+        padding: 0.2rem 0;
+        gap: 0.45rem;
+        flex-shrink: 0;
+    }
+
+    .subCategoryPill {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.76rem;
+        gap: 0.35rem;
+        min-height: 38px;
+    }
+
+    .subCatIcon {
+        width: 14px;
+        height: 14px;
+    }
+}
+
 /* ==========================================================================
    VIP Private Exhibition Room (Black-Tie Curated Salon Mode)
    ========================================================================== */
@@ -580,9 +677,21 @@
     color: #fbbf24 !important;
 }
 
-/* VIP Products Grid (Roomy gallery spacing) */
+/* VIP Products Grid (Responsive: Identical 0.75rem gap on mobile, roomy gallery spacing on desktop) */
 .productGridVip {
-    gap: 1.75rem !important;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .productGridVip {
+        gap: 1.5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .productGridVip {
+        gap: 1.75rem !important;
+    }
 }
 
 /* VIP Chamber Containment: Ensure all switcher shells, pills, and filter bars stay obsidian & gold even in Light Mode */

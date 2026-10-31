@@ -270,8 +270,40 @@
 }
 
 @media (max-width: 640px) {
+    .heroContent {
+        margin-left: 1.25rem;
+        margin-right: 1.25rem;
+    }
+
+    .heroTitle {
+        font-size: 1.45rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .heroDescription {
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .heroActionGroup {
+        gap: 0.5rem;
+    }
+
+    .heroPrimaryBtn,
+    .heroSecondaryBtn {
+        padding: 0.7rem 1.25rem;
+        font-size: 0.82rem;
+    }
+
     .categoriesContainer {
         justify-content: flex-start;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        -webkit-overflow-scrolling: touch;
     }
 }
 

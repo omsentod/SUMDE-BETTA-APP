@@ -97,13 +97,6 @@
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .modalBody {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-}
-
 .column {
   display: flex;
   flex-direction: column;
@@ -548,4 +541,78 @@
   outline: none;
   border-color: var(--primary);
 }
+
+@media (max-width: 768px) {
+  .modalBackdrop {
+    padding: 0.5rem;
+  }
+
+  .modalContainer {
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+  .modalHeader {
+    padding: 0.9rem 1.15rem;
+  }
+
+  .modalTitle {
+    font-size: 1.05rem;
+  }
+
+  .modalBody {
+    grid-template-columns: 1fr;
+    max-height: calc(94vh - 125px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .column {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .column:last-child {
+    border-bottom: none;
+  }
+
+  .listContent {
+    overflow-y: visible;
+    max-height: none;
+    padding: 0.65rem;
+  }
+
+  .iconUploadRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .uploadBtn {
+    justify-content: center;
+    width: 100%;
+    padding: 0.55rem;
+    min-height: 40px;
+  }
+
+  .inputFieldCompact {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .modalFooter {
+    padding: 0.75rem 1.15rem;
+  }
+
+  .btnCancel {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 0.55rem;
+    min-height: 42px;
+  }
+}
+
 

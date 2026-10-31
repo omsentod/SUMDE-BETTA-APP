@@ -365,10 +365,10 @@
     color: #fbbf24;
 }
 
-/* Mobile Responsiveness */
+/* Mobile Responsiveness (Card width aligned with standard mobile grid: 175px) */
 @media (max-width: 768px) {
     .pokerStageBand {
-        padding: 2.5rem 0.75rem 3rem;
+        padding: 2rem 0.5rem 2.5rem;
     }
 
     .stageHeader {
@@ -376,31 +376,40 @@
     }
 
     .stagePerspective {
-        min-height: 480px;
+        min-height: 380px;
         perspective: 900px;
-        padding: 0.5rem 0 1.5rem;
+        padding: 0.5rem 0 1rem;
+    }
+
+    .pedestalSpotlight {
+        width: 220px;
+        height: 32px;
+        margin-left: -110px;
     }
 
     .cardsContainer {
-        height: 440px;
+        height: 340px;
     }
 
     .cardSlot {
-        width: 250px;
+        width: 175px;
     }
 
     .cardCenter {
-        transform: translate3d(0, 0, 70px) rotateY(0deg) scale(1.02);
+        transform: translate3d(0, 0, 45px) rotateY(0deg) scale(1);
+        z-index: 10;
     }
 
     .cardLeft1 {
-        transform: translate3d(-150px, 14px, -20px) rotateY(20deg) scale(0.82);
-        opacity: 0.7;
+        transform: translate3d(-130px, 8px, -30px) rotateY(22deg) scale(0.8);
+        opacity: 0.5;
+        z-index: 5;
     }
 
     .cardRight1 {
-        transform: translate3d(150px, 14px, -20px) rotateY(-20deg) scale(0.82);
-        opacity: 0.7;
+        transform: translate3d(130px, 8px, -30px) rotateY(-22deg) scale(0.8);
+        opacity: 0.5;
+        z-index: 5;
     }
 
     .cardLeft2,
@@ -410,16 +419,16 @@
     }
 
     .navArrowBtn {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
     }
 
     .navArrowLeft {
-        left: 0.25rem;
+        left: 0.15rem;
     }
 
     .navArrowRight {
-        right: 0.25rem;
+        right: 0.15rem;
     }
 }
 

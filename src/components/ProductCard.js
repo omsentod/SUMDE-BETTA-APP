@@ -197,36 +197,38 @@ export default function ProductCard({
                         </div>
                     )}
 
-                    {/* Badges container (Kiri Atas) */}
-                    <div className={styles.badgesContainer}>
-                        {isPremium && (
-                            <span className={styles.taglinePremium}>
-                                <span className={styles.taglineSparkle}>✦</span>
-                                GALLERY
-                            </span>
-                        )}
-                        {hasVideo && !effectiveSold && (
-                            <span className={styles.badgeVideo} title="Tersedia video gerak renang ikan">
-                                <svg className={styles.videoIcon} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <polygon points="6 4 20 12 6 20 6 4" />
-                                </svg>
-                                Flaring Video
-                            </span>
-                        )}
-                    </div>
+                    {/* Top Badges Bar: Clean flex row, NO overlapping corners */}
+                    <div className={styles.topBadgeBar}>
+                        <div className={styles.topBadgeLeft}>
+                            {isPremium && (
+                                <span className={styles.taglinePremium}>
+                                    <span className={styles.taglineSparkle}>✦</span>
+                                    GALLERY
+                                </span>
+                            )}
+                            {!isPremium && isLowStock && !effectiveSold && (
+                                <span className={styles.badgeLowStock}>
+                                    Sisa {totalStock}
+                                </span>
+                            )}
+                        </div>
 
-                    {/* Badge Sisa Stok (Kanan Atas) */}
-                    {!effectiveSold && (
-                        isPremium ? (
-                            <span className={styles.badgeSingleStock}>
-                                {isLive ? '1 Ekor Saja' : '1 Unit Saja'}
-                            </span>
-                        ) : isLowStock ? (
-                            <span className={styles.badgeLowStock}>
-                                Sisa {totalStock}
-                            </span>
-                        ) : null
-                    )}
+                        <div className={styles.topBadgeRight}>
+                            {hasVideo && !effectiveSold && (
+                                <span className={styles.badgeVideo} title="Tersedia video renang">
+                                    <svg className={styles.videoIcon} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                        <polygon points="6 4 20 12 6 20 6 4" />
+                                    </svg>
+                                    <span className={styles.badgeVideoText}>Video</span>
+                                </span>
+                            )}
+                            {isPremium && !effectiveSold && (
+                                <span className={styles.badgeSingleStock}>
+                                    {isLive ? '1 Ekor' : '1 Unit'}
+                                </span>
+                            )}
+                        </div>
+                    </div>
 
                     {/* Overlay Terjual / Stok Habis (Tengah Foto ala Shopee) */}
                     {effectiveSold && (
