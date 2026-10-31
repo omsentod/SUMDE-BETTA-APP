@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Feed Jar Canister Gradient -->
+    <linearGradient id="feedJarGrad" x1="6" y1="18" x2="26" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EA580C"/>
+      <stop offset="50%" stop-color="#C2410C"/>
+      <stop offset="100%" stop-color="#7C2D12"/>
+    </linearGradient>
+
+    <!-- Medicine Dropper Bottle Gradient -->
+    <linearGradient id="medBottleGrad" x1="26" y1="16" x2="42" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#0369A1"/>
+      <stop offset="100%" stop-color="#0C4A6E"/>
+    </linearGradient>
+
+    <!-- Medicinal Serum Droplet Gradient -->
+    <linearGradient id="dropGrad" x1="33" y1="6" x2="37" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#00B4D8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+
+    <!-- Gold Spirulina Pellet Gradient -->
+    <linearGradient id="pelletGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left: Feed Pellets Canister / Jar -->
+  <!-- Jar Lid -->
+  <path d="M8 17C8 15.5 9.5 14 11 14H23C24.5 14 26 15.5 26 17V19H8V17Z" fill="#FBBF24" stroke="#D97706" stroke-width="0.8"/>
+  <rect x="9" y="16" width="16" height="1" fill="#FEF08A"/>
+  <!-- Jar Body -->
+  <path d="M7 19H27V36C27 38.2 25.2 40 23 40H11C8.8 40 7 38.2 7 36V19Z" fill="url(#feedJarGrad)" stroke="#EA580C" stroke-width="1"/>
+  <!-- Jar Label Banner -->
+  <rect x="7" y="24" width="20" height="9" fill="#FFFFFF" fill-opacity="0.95"/>
+  <rect x="9" y="26" width="16" height="2" fill="#EA580C" rx="1"/>
+  <rect x="9" y="29.5" width="10" height="1.5" fill="#15803D" rx="0.75"/>
+  <circle cx="22" cy="30" r="1.5" fill="#15803D"/>
+
+  <!-- Right: Amber/Aqua Aquatic Medicine & Vitamin Bottle -->
+  <!-- Rubber Dropper Squeeze Bulb -->
+  <path d="M31 10C31 8.5 32 7 34 7C36 7 37 8.5 37 10V12H31V10Z" fill="#334155"/>
+  <!-- Dropper Cap Collar -->
+  <rect x="29.5" y="12" width="9" height="3" rx="1" fill="#F1F5F9" stroke="#94A3B8" stroke-width="0.6"/>
+  <!-- Bottle Neck & Shoulder -->
+  <path d="M31 15H37L39 19H29L31 15Z" fill="#0369A1"/>
+  <!-- Bottle Body -->
+  <rect x="28" y="19" width="12" height="21" rx="2.5" fill="url(#medBottleGrad)" stroke="#38BDF8" stroke-width="1"/>
+  <!-- Medical Cross / Shield Symbol on Bottle -->
+  <circle cx="34" cy="29" r="3.5" fill="#FFFFFF" fill-opacity="0.9"/>
+  <rect x="33.2" y="26.8" width="1.6" height="4.4" rx="0.5" fill="#0284C7"/>
+  <rect x="31.8" y="28.2" width="4.4" height="1.6" rx="0.5" fill="#0284C7"/>
+
+  <!-- Glowing Vitamin Droplet suspended above bottle -->
+  <path d="M35 1C35 1 31.5 6 31.5 8.5C31.5 10.4 33.1 12 35 12C36.9 12 38.5 10.4 38.5 8.5C38.5 6 35 1 35 1Z" fill="url(#dropGrad)" stroke="#BAE6FD" stroke-width="0.8"/>
+  <circle cx="34" cy="7.5" r="0.8" fill="#FFFFFF" opacity="0.8"/>
+
+  <!-- Floating Nutrient Feed Pellets on Bottom Left -->
+  <circle cx="10" cy="42" r="1.8" fill="url(#pelletGrad)" stroke="#92400E" stroke-width="0.6"/>
+  <circle cx="15" cy="43.5" r="1.5" fill="url(#pelletGrad)" stroke="#92400E" stroke-width="0.6"/>
+  <circle cx="20" cy="42.5" r="1.6" fill="#15803D" stroke="#166534" stroke-width="0.6"/>
+  <circle cx="25" cy="43.8" r="1.4" fill="url(#pelletGrad)" stroke="#92400E" stroke-width="0.6"/>
+</svg>

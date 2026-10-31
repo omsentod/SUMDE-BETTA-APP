@@ -26,9 +26,10 @@
 }
 
 .headerTitle {
-    font-family: var(--font-serif);
+    font-family: var(--font-main);
     font-size: 1.85rem;
-    font-weight: 600;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     margin: 0;
     color: var(--text-main);
 }
@@ -249,7 +250,7 @@
     font-size: 2rem;
     font-weight: 800;
     color: var(--text-main);
-    font-family: var(--font-serif);
+    font-family: var(--font-main);
     line-height: 1.2;
 }
 
@@ -656,9 +657,10 @@
 }
 
 .modalTitle {
-    font-family: var(--font-serif);
+    font-family: var(--font-main);
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     margin-bottom: 2rem;
     color: var(--text-main);
     text-align: center;
@@ -1728,4 +1730,194 @@
 .spinIcon {
     animation: spin 1s linear infinite;
 }
+
+/* 3-Tier Hierarchy: Department Tabs & SubCategory Filter Chips */
+.deptBarWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 0.6rem 0.85rem;
+}
+
+.deptTabsGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+}
+
+.deptTabsGroup::-webkit-scrollbar {
+    display: none;
+}
+
+.deptTabBtn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.deptTabIcon {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.deptTabBtn:hover {
+    color: var(--text-main);
+    background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+}
+
+.deptTabBtnActive {
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 600;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.deptTabBtnActive:hover {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.deptTabBadge {
+    font-size: 0.72rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-weight: 600;
+}
+
+.deptTabBtn:not(.deptTabBtnActive) .deptTabBadge {
+    background: var(--input-bg);
+    color: var(--text-muted);
+}
+
+.manageDeptBtn {
+    background: transparent;
+    color: var(--text-main);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.manageDeptBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(255, 107, 53, 0.08);
+}
+
+.subCatChipsBar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.25rem 0 1rem;
+    scrollbar-width: none;
+}
+
+.subCatChipsBar::-webkit-scrollbar {
+    display: none;
+}
+
+.subCatChip {
+    background: var(--bg-surface, var(--bg-card));
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.subCatChipIcon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.subCatChip:hover:not(.subCatChipActive) {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
+}
+
+.subCatChipActive,
+.subCatChipActive:hover {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border-color: var(--primary) !important;
+    font-weight: 600;
+}
+
+.subCatChipBadge {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.cellTagLive {
+    display: inline-block;
+    font-size: 0.68rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: rgba(0, 180, 216, 0.1);
+    color: var(--secondary);
+    border: 1px solid rgba(0, 180, 216, 0.25);
+    margin-right: 0.35rem;
+}
+
+.cellTagGoods {
+    display: inline-block;
+    font-size: 0.68rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    margin-right: 0.35rem;
+}
+
+:global([data-theme="dark"]) .cellTagGoods {
+    color: #fbbf24;
+}
+
+.fieldInput option {
+    background: var(--bg-card);
+    color: var(--text-main);
+}
+
 

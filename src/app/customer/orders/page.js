@@ -142,7 +142,7 @@ export default function OrdersPage() {
                 {/* Header */}
                 <div className="orders-header">
                     <span className="text-[var(--primary)] tracking-[0.2rem] text-[0.75rem] font-bold uppercase">Customer Area</span>
-                    <h1 className="font-[var(--font-serif)] text-[2.5rem] italic mt-[0.4rem] text-[var(--text-main)]">Pesanan Saya</h1>
+                    <h1 className="text-[2.25rem] font-extrabold tracking-tight mt-[0.4rem] text-[var(--text-main)]">Pesanan Saya</h1>
                 </div>
 
                 {/* Status Tabs */}

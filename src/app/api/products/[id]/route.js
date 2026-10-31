@@ -11,6 +11,8 @@ export async function GET(request, { params }) {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
+        department: true,
+        subCategory: true,
         variants: { orderBy: { displayOrder: 'asc' } },
       },
     });
@@ -30,6 +32,7 @@ export async function PUT(request, { params }) {
       image, images, isPremium, statsForm, age, statsSpirit,
       isSold, quantity, variants, soldCount, isArchived,
       videoUrl, isDailyDrop, dropNumber,
+      departmentId, subCategoryId, brand, weight,
     } = await request.json();
 
     const dataToUpdate = {};
@@ -42,6 +45,10 @@ export async function PUT(request, { params }) {
     if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
     if (isDailyDrop !== undefined) dataToUpdate.isDailyDrop = Boolean(isDailyDrop);
     if (dropNumber !== undefined) dataToUpdate.dropNumber = dropNumber;
+    if (departmentId !== undefined) dataToUpdate.departmentId = departmentId || null;
+    if (subCategoryId !== undefined) dataToUpdate.subCategoryId = subCategoryId || null;
+    if (brand !== undefined) dataToUpdate.brand = brand ? brand.trim() : null;
+    if (weight !== undefined) dataToUpdate.weight = Math.max(50, parseInt(weight) || 1000);
 
     if (images !== undefined) {
       const gallery = normalizeImages(images, image, videoUrl);
@@ -139,7 +146,11 @@ export async function PUT(request, { params }) {
 
     const updatedProduct = await prisma.product.findUnique({
       where: { id },
-      include: { variants: { orderBy: { displayOrder: 'asc' } } },
+      include: {
+        department: true,
+        subCategory: true,
+        variants: { orderBy: { displayOrder: 'asc' } },
+      },
     });
     return NextResponse.json(updatedProduct);
   } catch (error) {

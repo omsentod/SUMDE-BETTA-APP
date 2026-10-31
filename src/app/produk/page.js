@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
 import InteractiveBettaAquarium from "@/components/InteractiveBettaAquarium";
@@ -29,6 +30,28 @@ function parseVariantSizes(product) {
     return [];
 }
 
+function getDepartmentIcon(slug, isLiveFish, customIcon) {
+    if (customIcon && (customIcon.startsWith('/') || customIcon.startsWith('http'))) return customIcon;
+    if (slug === 'all') return '/img/tab-dept-all.svg';
+    if (slug === 'ikan-hias' || isLiveFish) return '/img/tab-dept-fish.svg';
+    if (slug?.includes('alat') || slug?.includes('aquarium') || slug?.includes('peralatan')) return '/img/tab-dept-equipment.svg';
+    if (slug?.includes('pakan') || slug?.includes('obat') || slug?.includes('nutrisi')) return '/img/tab-dept-feed.svg';
+    return isLiveFish ? '/img/tab-dept-fish.svg' : '/img/tab-dept-equipment.svg';
+}
+
+function getSubCategoryIcon(slug = '', name = '', customImage = null) {
+    if (customImage && (customImage.startsWith('/') || customImage.startsWith('http'))) return customImage;
+    const s = `${slug} ${name}`.toLowerCase();
+    if (s.includes('cupang') || s.includes('betta')) return '/img/tab-betta-multicolor.svg';
+    if (s.includes('channa') || s.includes('chana') || s.includes('snakehead')) return '/img/tab-channa.svg';
+    if (s.includes('guppy') || s.includes('gapi')) return '/img/tab-guppy.svg';
+    if (s.includes('molly') || s.includes('moli')) return '/img/tab-molly.svg';
+    if (s.includes('filter') || s.includes('aerator') || s.includes('pompa')) return '/img/tab-sub-filter.svg';
+    if (s.includes('soliter') || s.includes('aquarium') || s.includes('tank')) return '/img/tab-sub-soliter.svg';
+    if (s.includes('pakan') || s.includes('pelet') || s.includes('obat') || s.includes('vitamin')) return '/img/tab-sub-feed.svg';
+    return null;
+}
+
 function GalleryContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -36,6 +59,23 @@ function GalleryContent() {
     const paramGender = (searchParams.get('gender') || '').trim();
     const paramColor = (searchParams.get('color') || searchParams.get('coloration') || '').trim();
     const paramTab = (searchParams.get('tab') || '').trim().toLowerCase();
+    const paramDept = (searchParams.get('dept') || 'ikan-hias').trim();
+    const paramSub = (searchParams.get('sub') || 'all').trim();
+
+    const [departments, setDepartments] = useState([]);
+    useEffect(() => {
+        fetch('/api/departments')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setDepartments(data);
+            })
+            .catch(err => console.error('Error fetching departments:', err));
+    }, []);
+
+    const activeDept = useMemo(() => {
+        if (!paramDept || paramDept === 'all') return null;
+        return departments.find(d => d.slug === paramDept) || null;
+    }, [departments, paramDept]);
 
     const { products: allProducts, isLoading } = useProducts();
     // Hide soft-deleted (archived) products from the public gallery.
@@ -57,7 +97,6 @@ function GalleryContent() {
         if (paramTab === 'premium' || paramTab === 'sample' || paramTab === 'all') {
             return paramTab;
         }
-        // Default menampilkan koleksi reguler dahulu sesuai preferensi user
         return 'sample';
     }, [paramTab]);
 
@@ -69,6 +108,29 @@ function GalleryContent() {
             params.set('tab', 'sample');
         } else {
             params.set('tab', 'all');
+        }
+        router.replace(`/produk?${params.toString()}`, { scroll: false });
+    };
+
+    const handleDeptChange = (deptSlug) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('dept', deptSlug);
+        params.delete('sub');
+        if (deptSlug !== 'ikan-hias' && activeTab === 'premium') {
+            params.set('tab', 'sample');
+        }
+        router.replace(`/produk?${params.toString()}`, { scroll: false });
+    };
+
+    const handleSubChange = (subSlug) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (subSlug === 'all') {
+            params.delete('sub');
+        } else {
+            params.set('sub', subSlug);
+        }
+        if (activeTab === 'premium') {
+            params.set('tab', 'sample');
         }
         router.replace(`/produk?${params.toString()}`, { scroll: false });
     };
@@ -132,6 +194,14 @@ function GalleryContent() {
         return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     }, [products]);
 
+    const brands = useMemo(() => {
+        const set = new Set();
+        products.forEach(p => {
+            if (p.brand) set.add(p.brand.trim());
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    }, [products]);
+
     // State Management
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
     const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false);
@@ -149,12 +219,13 @@ function GalleryContent() {
             }
         }, 350);
         return () => clearTimeout(timer);
-    }, [activeTab]);
+    }, [activeTab, paramDept, paramSub]);
 
     const [filters, setFilters] = useState(() => ({
         genders: paramGender ? [paramGender] : [],
         forms: paramCat ? [paramCat] : [],
         colors: paramColor ? [paramColor] : [],
+        brands: [],
         priceMin: 0,
         priceMax: 5000000,
     }));
@@ -189,8 +260,7 @@ function GalleryContent() {
         });
     }, [searchParams]);
 
-    // Lock body scroll while mobile filter sheet is open — prevents background
-    // page scroll leaking through when user drags inside the sheet.
+    // Lock body scroll while mobile filter sheet is open
     useEffect(() => {
         if (typeof document === 'undefined') return;
         const prev = document.body.style.overflow;
@@ -198,11 +268,12 @@ function GalleryContent() {
         return () => { document.body.style.overflow = prev; };
     }, [isMobileFiltersOpen]);
 
-    // Count active filters — untuk badge di action bar dan tombol Reset visibility.
+    // Count active filters
     const activeFilterCount =
         filters.genders.length +
         filters.forms.length +
         filters.colors.length +
+        (filters.brands?.length || 0) +
         (Number(filters.priceMin) > 0 ? 1 : 0) +
         (Number(filters.priceMax) < 5000000 ? 1 : 0);
 
@@ -210,11 +281,41 @@ function GalleryContent() {
     const filteredProducts = useMemo(() => {
         let result = [...products];
 
-        // 1. Filter Koleksi (Gallery 1 of 1 vs Koleksi Reguler)
+        // 1. Tingkat 1 (Departemen)
+        if (paramDept && paramDept !== 'all') {
+            const d = departments.find(x => x.slug === paramDept);
+            if (d) {
+                result = result.filter(p => {
+                    if (p.departmentId) return p.departmentId === d.id;
+                    return d.isLiveFish;
+                });
+            }
+        }
+
+        // 2. Tingkat 2 (Sub-Kategori)
+        if (paramSub && paramSub !== 'all') {
+            result = result.filter(p => {
+                if (p.subCategory?.slug) return p.subCategory.slug.toLowerCase() === paramSub.toLowerCase();
+                if (p.subCategoryId) {
+                    const currentDept = departments.find(x => x.slug === paramDept);
+                    const targetSub = currentDept?.subCategories?.find(s => s.slug.toLowerCase() === paramSub.toLowerCase());
+                    return p.subCategoryId === targetSub?.id;
+                }
+                return false;
+            });
+        }
+
+        // 3. Filter Koleksi (Gallery 1 of 1 vs Koleksi Reguler)
         if (activeTab === 'premium') {
             result = result.filter(p => p.isPremium);
         } else if (activeTab === 'sample') {
             result = result.filter(p => !p.isPremium);
+        }
+
+        // 4. Brands Filter
+        if (filters.brands && filters.brands.length > 0) {
+            const selectedBrands = filters.brands.map(b => b.trim().toLowerCase());
+            result = result.filter(p => p.brand && selectedBrands.includes(p.brand.trim().toLowerCase()));
         }
 
         if (filters.genders.length > 0) {
@@ -283,7 +384,7 @@ function GalleryContent() {
         }
 
         return result;
-    }, [filters, sortBy, products, activeTab]);
+    }, [filters, sortBy, products, activeTab, paramDept, paramSub, departments]);
 
     if (isLoading) {
         return (
@@ -314,7 +415,7 @@ function GalleryContent() {
     };
 
     const clearFilters = () => {
-        setFilters({ genders: [], forms: [], colors: [], priceMin: 0, priceMax: 5000000 });
+        setFilters({ genders: [], forms: [], colors: [], brands: [], priceMin: 0, priceMax: 5000000 });
     };
 
     return (
@@ -356,29 +457,29 @@ function GalleryContent() {
                             <span className={activeTab === 'premium' ? styles.curationPulse : styles.curationPulseSample} />
                             <span>
                                 {activeTab === 'premium'
-                                    ? 'Koleksi Terkurasi • Gallery'
-                                    : activeTab === 'sample'
-                                    ? 'Koleksi Reguler • Farm SUMDE'
-                                    : 'Seluruh Koleksi Farm'}
+                                    ? 'Koleksi Terkurasi • Gallery VIP'
+                                    : activeDept?.isLiveFish === false
+                                    ? `${activeDept.name} • Terstandarisasi Farm`
+                                    : 'Koleksi Akuatik • Farm SUMDE'}
                             </span>
                         </div>
 
                         <h1 className={styles.heroTitle}>
                             {activeTab === 'premium' ? (
                                 <>Koleksi Pilihan <span className={styles.heroTitleEmphasized}>Gallery</span></>
-                            ) : activeTab === 'sample' ? (
-                                <>Koleksi Reguler <span className={styles.heroTitleEmphasized}>Pilihan</span></>
+                            ) : activeDept?.isLiveFish === false ? (
+                                <>{activeDept.name} <span className={styles.heroTitleEmphasized}>Pilihan</span></>
                             ) : (
-                                <>Seluruh Koleksi <span className={styles.heroTitleEmphasized}>Akuatik</span></>
+                                <>Koleksi Ikan <span className={styles.heroTitleEmphasized}>Pilihan</span></>
                             )}
                         </h1>
 
                         <p className={styles.heroSubtitle}>
                             {activeTab === 'premium'
                                 ? 'Setiap ikan di gallery diabadikan secara individual dengan keunikan genetika tunggal dan kualitas visual pilihan tertinggi.'
-                                : activeTab === 'sample'
-                                ? 'Pilihan ikan cupang hias berkualitas langsung dari pembudidayaan farm SUMDE BETTA. Tersedia berbagai form, corak, dan pilihan varian ukuran.'
-                                : 'Eksplorasi lengkap seluruh lini gallery dan katalog reguler farm SUMDE BETTA.'}
+                                : activeDept?.isLiveFish === false
+                                ? (activeDept.description || 'Pilihan peralatan aquarium, sistem filter terstandar, soliter kaca bening, dan formula pakan bernutrisi tinggi.')
+                                : 'Pilihan ikan cupang hias berkualitas langsung dari pembudidayaan farm SUMDE BETTA. Tersedia berbagai form, corak, dan pilihan varian ukuran.'}
                         </p>
 
                         <div className={styles.editorialPills}>
@@ -403,7 +504,29 @@ function GalleryContent() {
                                         Garansi Hidup Selamat (DOA)
                                     </span>
                                 </>
-                            ) : activeTab === 'sample' ? (
+                            ) : activeDept?.isLiveFish === false ? (
+                                <>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        Standar Kualitas Akuatik
+                                    </span>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                        </svg>
+                                        Packing Berlapis Aman
+                                    </span>
+                                    <span className={styles.editorialPillItem}>
+                                        <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        </svg>
+                                        Jaminan Barang Sesuai Deskripsi
+                                    </span>
+                                </>
+                            ) : (
                                 <>
                                     <span className={styles.editorialPillItem}>
                                         <svg className={styles.editorialPillIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -424,10 +547,6 @@ function GalleryContent() {
                                         Garansi Hidup Selamat (DOA)
                                     </span>
                                 </>
-                            ) : (
-                                <span className={styles.editorialPillItem}>
-                                    Total {filteredProducts.length} karya akuatik siap diadopsi
-                                </span>
                             )}
                         </div>
                     </div>
@@ -436,64 +555,124 @@ function GalleryContent() {
                 {/* Smooth Scroll Anchor */}
                 <div ref={catalogAnchorRef} className={styles.catalogAnchor} aria-hidden="true" />
 
-                {/* Tactile Luxury Segmented Switcher (Inspired by reference project .filters) */}
+                {/* Tingkat 1: Departemen Switcher Tabs (Capsule Bar) */}
                 <div className={styles.switcherContainer}>
-                    <div className={styles.switcherShell} role="tablist" aria-label="Pilih Jenis Koleksi">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activeTab === 'sample'}
-                            onClick={() => handleTabChange('sample')}
-                            className={`${styles.switcherTab} ${activeTab === 'sample' ? styles.tabActive : ''}`}
-                        >
-                            <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <rect x="3" y="3" width="7" height="7" rx="1" />
-                                <rect x="14" y="3" width="7" height="7" rx="1" />
-                                <rect x="14" y="14" width="7" height="7" rx="1" />
-                                <rect x="3" y="14" width="7" height="7" rx="1" />
-                            </svg>
-                            <span>Koleksi Reguler</span>
-                            <span className={`${styles.tabCountPill} ${activeTab === 'sample' ? styles.tabCountActive : ''}`}>
-                                {counts.sample}
-                            </span>
-                        </button>
+                    <div className={styles.switcherShell} role="tablist" aria-label="Pilih Departemen">
+                        {departments.map((dept) => {
+                            const isDeptActive = (paramDept || 'ikan-hias') === dept.slug;
+                            const iconSrc = getDepartmentIcon(dept.slug, dept.isLiveFish, dept.icon);
+                            return (
+                                <button
+                                    key={dept.id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isDeptActive}
+                                    onClick={() => handleDeptChange(dept.slug)}
+                                    className={`${styles.switcherTab} ${isDeptActive ? styles.tabActive : ''}`}
+                                >
+                                    <Image
+                                        src={iconSrc}
+                                        width={18}
+                                        height={18}
+                                        unoptimized
+                                        alt=""
+                                        className={styles.tabIconImg}
+                                    />
+                                    <span>{dept.name}</span>
+                                    <span className={`${styles.tabCountPill} ${isDeptActive ? styles.tabCountActive : ''}`}>
+                                        {dept._count?.products || 0}
+                                    </span>
+                                </button>
+                            );
+                        })}
 
                         <button
                             type="button"
                             role="tab"
-                            aria-selected={activeTab === 'premium'}
-                            onClick={() => handleTabChange('premium')}
-                            className={`${styles.switcherTab} ${styles.switcherTabPremium} ${activeTab === 'premium' ? styles.tabActivePremium : ''}`}
+                            aria-selected={paramDept === 'all'}
+                            onClick={() => handleDeptChange('all')}
+                            className={`${styles.switcherTab} ${paramDept === 'all' ? styles.tabActive : ''}`}
                         >
-                            <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            <span>✦ Gallery</span>
-                            <span className={`${styles.tabCountPill} ${activeTab === 'premium' ? styles.tabCountActivePremium : ''}`}>
-                                {counts.premium}
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activeTab === 'all'}
-                            onClick={() => handleTabChange('all')}
-                            className={`${styles.switcherTab} ${activeTab === 'all' ? styles.tabActive : ''}`}
-                        >
-                            <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <line x1="8" y1="6" x2="21" y2="6" />
-                                <line x1="8" y1="12" x2="21" y2="12" />
-                                <line x1="8" y1="18" x2="21" y2="18" />
-                                <line x1="3" y1="6" x2="3.01" y2="6" />
-                                <line x1="3" y1="12" x2="3.01" y2="12" />
-                                <line x1="3" y1="18" x2="3.01" y2="18" />
-                            </svg>
-                            <span>Semua Koleksi</span>
-                            <span className={`${styles.tabCountPill} ${activeTab === 'all' ? styles.tabCountActive : ''}`}>
+                            <Image
+                                src="/img/tab-dept-all.svg"
+                                width={18}
+                                height={18}
+                                unoptimized
+                                alt=""
+                                className={styles.tabIconImg}
+                            />
+                            <span>Semua</span>
+                            <span className={`${styles.tabCountPill} ${paramDept === 'all' ? styles.tabCountActive : ''}`}>
                                 {counts.all}
                             </span>
                         </button>
+                    </div>
+                </div>
+
+                {/* Tingkat 2: Sub-Kategori Pills Bar */}
+                <div className={styles.subCategoryPillsContainer}>
+                    <div className={styles.subCategoryPillsList}>
+                        <button
+                            type="button"
+                            className={`${styles.subCategoryPill} ${(!paramSub || paramSub === 'all') && activeTab !== 'premium' ? styles.subCategoryPillActive : ''}`}
+                            onClick={() => handleSubChange('all')}
+                        >
+                            <Image
+                                src="/img/tab-dept-all.svg"
+                                width={16}
+                                height={16}
+                                unoptimized
+                                alt=""
+                                className={styles.subCatIcon}
+                            />
+                            <span>Semua {activeDept ? activeDept.name : 'Produk'}</span>
+                        </button>
+
+                        {/* Akses ke ✦ Gallery VIP ketika melihat ikan */}
+                        {(activeDept?.isLiveFish || !activeDept) && (
+                            <button
+                                type="button"
+                                className={`${styles.subCategoryPill} ${styles.subCategoryPillVip} ${activeTab === 'premium' ? styles.subCategoryPillVipActive : ''}`}
+                                onClick={() => handleTabChange(activeTab === 'premium' ? 'sample' : 'premium')}
+                            >
+                                <Image
+                                    src="/img/tab-vip-gallery.svg"
+                                    width={16}
+                                    height={16}
+                                    unoptimized
+                                    alt=""
+                                    className={styles.subCatIcon}
+                                />
+                                <span>✦ Gallery VIP ({counts.premium})</span>
+                            </button>
+                        )}
+
+                        {activeDept?.subCategories?.map((sub) => {
+                            const isSubActive = paramSub === sub.slug && activeTab !== 'premium';
+                            const count = sub._count?.products || 0;
+                            const subIcon = getSubCategoryIcon(sub.slug, sub.name, sub.image);
+                            return (
+                                <button
+                                    key={sub.id}
+                                    type="button"
+                                    className={`${styles.subCategoryPill} ${isSubActive ? styles.subCategoryPillActive : ''}`}
+                                    onClick={() => handleSubChange(sub.slug)}
+                                >
+                                    {subIcon && (
+                                        <Image
+                                            src={subIcon}
+                                            width={16}
+                                            height={16}
+                                            unoptimized
+                                            alt=""
+                                            className={styles.subCatIcon}
+                                        />
+                                    )}
+                                    <span>{sub.name}</span>
+                                    {count > 0 && <span className={styles.subCatCount}>({count})</span>}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -580,67 +759,95 @@ function GalleryContent() {
                             </button>
                         </div>
 
-                        <div className="filterSheetBody">
+                        <div className={styles.filterSheetBody || "filterSheetBody"}>
 
-                        {/* Gender Filter */}
-                        <div className="filterSection">
-                            <h3 className="filterSectionTitle">Gender</h3>
-                            <div className="checkboxGroup">
-                                {genders.map(gender => (
-                                    <label key={gender} className="checkboxLabel">
-                                        <input
-                                            type="checkbox"
-                                            className="checkboxInput"
-                                            checked={filters.genders.some(g => g.trim().toLowerCase() === gender.trim().toLowerCase())}
-                                            onChange={() => handleCheckboxChange('genders', gender)}
-                                        />
-                                        <span className="checkboxText">{gender}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+                        {/* Filter Khusus Ikan Hidup */}
+                        {(activeDept?.isLiveFish !== false) ? (
+                            <>
+                                {/* Gender Filter */}
+                                <div className="filterSection">
+                                    <h3 className="filterSectionTitle">Gender</h3>
+                                    <div className="checkboxGroup">
+                                        {genders.map(gender => (
+                                            <label key={gender} className="checkboxLabel">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkboxInput"
+                                                    checked={filters.genders.some(g => g.trim().toLowerCase() === gender.trim().toLowerCase())}
+                                                    onChange={() => handleCheckboxChange('genders', gender)}
+                                                />
+                                                <span className="checkboxText">{gender}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
 
-                        <hr className="divider" />
+                                <hr className="divider" />
 
-                        {/* Form Filter */}
-                        <div className="filterSection">
-                            <h3 className="filterSectionTitle">Form / Tail Type</h3>
-                            <div className="checkboxGroupScrollable">
-                                {forms.map(form => (
-                                    <label key={form} className="checkboxLabel">
-                                        <input
-                                            type="checkbox"
-                                            className="checkboxInput"
-                                            checked={filters.forms.some(f => f.trim().toLowerCase() === form.trim().toLowerCase())}
-                                            onChange={() => handleCheckboxChange('forms', form)}
-                                        />
-                                        <span className="checkboxText">{form}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+                                {/* Form Filter */}
+                                <div className="filterSection">
+                                    <h3 className="filterSectionTitle">Form / Tail Type</h3>
+                                    <div className="checkboxGroupScrollable">
+                                        {forms.map(form => (
+                                            <label key={form} className="checkboxLabel">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkboxInput"
+                                                    checked={filters.forms.some(f => f.trim().toLowerCase() === form.trim().toLowerCase())}
+                                                    onChange={() => handleCheckboxChange('forms', form)}
+                                                />
+                                                <span className="checkboxText">{form}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
 
-                        <hr className="divider" />
+                                <hr className="divider" />
 
-                        {/* Coloration Filter */}
-                        <div className="filterSection">
-                            <h3 className="filterSectionTitle">Coloration</h3>
-                            <div className="checkboxGroupScrollable">
-                                {colors.map(color => (
-                                    <label key={color} className="checkboxLabel">
-                                        <input
-                                            type="checkbox"
-                                            className="checkboxInput"
-                                            checked={filters.colors.some(c => c.trim().toLowerCase() === color.trim().toLowerCase())}
-                                            onChange={() => handleCheckboxChange('colors', color)}
-                                        />
-                                        <span className="checkboxText">{color}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+                                {/* Coloration Filter */}
+                                <div className="filterSection">
+                                    <h3 className="filterSectionTitle">Coloration</h3>
+                                    <div className="checkboxGroupScrollable">
+                                        {colors.map(color => (
+                                            <label key={color} className="checkboxLabel">
+                                                <input
+                                                    type="checkbox"
+                                                    className="checkboxInput"
+                                                    checked={filters.colors.some(c => c.trim().toLowerCase() === color.trim().toLowerCase())}
+                                                    onChange={() => handleCheckboxChange('colors', color)}
+                                                />
+                                                <span className="checkboxText">{color}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
 
-                        <hr className="divider" />
+                                <hr className="divider" />
+                            </>
+                        ) : (
+                            /* Filter Khusus Barang Kering / Peralatan / Pakan */
+                            brands.length > 0 && (
+                                <>
+                                    <div className="filterSection">
+                                        <h3 className="filterSectionTitle">Merk / Brand</h3>
+                                        <div className="checkboxGroup">
+                                            {brands.map(brand => (
+                                                <label key={brand} className="checkboxLabel">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="checkboxInput"
+                                                        checked={(filters.brands || []).some(b => b.trim().toLowerCase() === brand.trim().toLowerCase())}
+                                                        onChange={() => handleCheckboxChange('brands', brand)}
+                                                    />
+                                                    <span className="checkboxText">{brand}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <hr className="divider" />
+                                </>
+                            )
+                        )}
 
                         {/* Price Filter */}
                         <div className="filterSection">
@@ -820,16 +1027,20 @@ function GalleryContent() {
                                 title={
                                     activeTab === 'premium'
                                         ? 'Belum Ada Koleksi Gallery'
+                                        : activeDept?.isLiveFish === false
+                                        ? `Belum Ada Produk di ${activeDept.name}`
                                         : activeTab === 'sample'
                                         ? 'Koleksi Reguler Belum Tersedia'
-                                        : 'Tidak Ada Ikan Ditemukan'
+                                        : 'Tidak Ada Produk Ditemukan'
                                 }
                                 description={
                                     activeTab === 'premium'
                                         ? 'Seluruh koleksi gallery saat ini sedang teradopsi atau dalam kurasi farm. Silakan jelajahi Koleksi Reguler kami.'
+                                        : activeDept?.isLiveFish === false
+                                        ? `Produk untuk kategori ${activeDept.name} sedang dalam proses restock.`
                                         : activeTab === 'sample'
                                         ? 'Tidak ada produk reguler yang cocok dengan kriteria filter saat ini.'
-                                        : 'Tidak ada ikan akuatik yang cocok dengan kombinasi filter saat ini.'
+                                        : 'Tidak ada produk yang cocok dengan kombinasi filter saat ini.'
                                 }
                                 actionText={
                                     filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin > 0

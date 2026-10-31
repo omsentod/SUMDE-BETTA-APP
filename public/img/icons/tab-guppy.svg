@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <!-- Background subtle aura -->
+    <radialGradient id="guppyGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Guppy slender body gradient (Cobalt -> Cyan -> Iridescent Emerald) -->
+    <linearGradient id="guppyBody" x1="10%" y1="30%" x2="90%" y2="70%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="35%" stop-color="#0284c7" />
+      <stop offset="70%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+
+    <!-- Belly silver pearlescent glow -->
+    <linearGradient id="guppyBelly" x1="20%" y1="20%" x2="40%" y2="90%">
+      <stop offset="0%" stop-color="#e0f2fe" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Gigantic flowing delta veil caudal tail fin (Magenta -> Violet -> Electric Cyan) -->
+    <linearGradient id="guppyTailMain" x1="25%" y1="20%" x2="100%" y2="85%">
+      <stop offset="0%" stop-color="#ec4899" />
+      <stop offset="30%" stop-color="#a855f7" />
+      <stop offset="65%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+
+    <!-- Tail translucent flutter layer -->
+    <linearGradient id="guppyTailRipples" x1="10%" y1="0%" x2="95%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#c084fc" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Dorsal fin delicate veil -->
+    <linearGradient id="guppyDorsal" x1="0%" y1="100%" x2="70%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="40%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#f472b6" />
+    </linearGradient>
+
+    <!-- Pectoral & ventral fin -->
+    <linearGradient id="guppyPectoral" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0f2fe" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="34" cy="32" r="28" fill="url(#guppyGlow)" />
+
+  <!-- DORSAL FIN (High, flowing sinuous ribbon) -->
+  <path d="M22 28 C20 18, 25 10, 36 8 C33 14, 30 18, 34 23 C31 24, 27 26, 22 28 Z" 
+        fill="url(#guppyDorsal)" opacity="0.92" />
+  <!-- Dorsal Ray Highlights -->
+  <path d="M23 27 C24 19, 28 13, 35 9" stroke="#ffffff" stroke-width="0.75" stroke-linecap="round" opacity="0.7" />
+  <path d="M25 26 C26 20, 29 16, 33 13" stroke="#fbcfe8" stroke-width="0.6" stroke-linecap="round" opacity="0.6" />
+
+  <!-- GIGANTIC VEIL CAUDAL TAIL (Delta Fan, broad and luxurious) -->
+  <!-- Tail Under Layer -->
+  <path d="M34 32 C38 27, 45 14, 57 12 C60 17, 61 28, 59 36 C57 46, 59 52, 54 55 C44 54, 39 42, 34 35 Z" 
+        fill="url(#guppyTailMain)" />
+  
+  <!-- Tail Upper Shimmer Ribbon (Rippling folds) -->
+  <path d="M34 33 C39 24, 47 18, 56 16 C53 23, 56 31, 58 38 C53 43, 49 45, 43 41 C37 38, 35 34, 34 33 Z" 
+        fill="url(#guppyTailRipples)" />
+
+  <!-- Fine fin rays radiating across tail -->
+  <path d="M35 33 C42 27, 50 20, 56 16" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.65" />
+  <path d="M35 34 C44 30, 52 26, 58 24" stroke="#ffffff" stroke-width="0.6" stroke-linecap="round" opacity="0.5" />
+  <path d="M35 34 C45 35, 53 34, 59 35" stroke="#fdf4ff" stroke-width="0.6" stroke-linecap="round" opacity="0.5" />
+  <path d="M35 35 C44 39, 52 43, 56 48" stroke="#38bdf8" stroke-width="0.6" stroke-linecap="round" opacity="0.6" />
+  <path d="M35 35 C41 43, 47 48, 53 53" stroke="#06b6d4" stroke-width="0.75" stroke-linecap="round" opacity="0.5" />
+
+  <!-- Iridescent tail margin edge rim -->
+  <path d="M57 12 C60 18, 61 28, 59 36 C57 46, 59 52, 54 55" 
+        stroke="#67e8f9" stroke-width="1.2" stroke-linecap="round" opacity="0.8" />
+
+  <!-- Mosaic/Galaxy Sparkle Dots on Tail -->
+  <circle cx="44" cy="24" r="1" fill="#ffffff" opacity="0.9" />
+  <circle cx="49" cy="20" r="0.8" fill="#fbcfe8" opacity="0.8" />
+  <circle cx="48" cy="30" r="1.1" fill="#fdf4ff" opacity="0.85" />
+  <circle cx="53" cy="32" r="0.8" fill="#a5f3fc" opacity="0.8" />
+  <circle cx="45" cy="38" r="0.9" fill="#fed7aa" opacity="0.75" />
+  <circle cx="50" cy="42" r="1" fill="#fbcfe8" opacity="0.8" />
+
+  <!-- ANAL FIN (Graceful flutter beneath body) -->
+  <path d="M26 37 C29 42, 33 46, 37 43 C35 39, 34 36, 31 35 Z" 
+        fill="url(#guppyDorsal)" opacity="0.85" />
+
+  <!-- SLENDER GUPPY BODY (Dynamic streamlined swimming posture) -->
+  <path d="M8 32 C9 26, 17 24, 27 27 C33 29, 36 32, 36 34 C36 36, 32 38, 25 38 C17 38, 10 37, 8 32 Z" 
+        fill="url(#guppyBody)" />
+  
+  <!-- Belly Pearlescent Highlight -->
+  <path d="M12 33 C14 30, 19 28, 25 30 C27 34, 23 37, 16 36 C13 36, 12 34, 12 33 Z" 
+        fill="url(#guppyBelly)" />
+
+  <!-- PECTORAL FIN (Translucent fan near head) -->
+  <path d="M16 32 C17 36, 19 39, 22 38 C21 35, 19 33, 17 32 Z" 
+        fill="url(#guppyPectoral)" stroke="#e0f2fe" stroke-width="0.5" />
+
+  <!-- EYE & FACE DETAILS -->
+  <!-- Eye Outer Ring -->
+  <circle cx="13" cy="30" r="2.4" fill="#0284c7" />
+  <circle cx="13" cy="30" r="1.8" fill="#0f172a" />
+  <!-- Eye Catchlight -->
+  <circle cx="12.5" cy="29.5" r="0.7" fill="#ffffff" />
+  
+  <!-- Gill arch curved hairline -->
+  <path d="M17 28 C18 31, 18 34, 16 36" stroke="#38bdf8" stroke-width="0.75" stroke-linecap="round" opacity="0.7" />
+
+  <!-- Body Iridescent Lateral Stripe -->
+  <path d="M18 31 C22 30, 28 32, 34 33" stroke="#67e8f9" stroke-width="1" stroke-linecap="round" opacity="0.75" />
+</svg>

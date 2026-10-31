@@ -93,12 +93,12 @@
 }
 
 .stageTitle {
-    font-family: var(--font-serif);
-    font-size: clamp(1.85rem, 3.2vw, 2.45rem);
-    font-weight: 700;
+    font-family: var(--font-main);
+    font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+    font-weight: 800;
     color: #ffffff;
     margin: 0 0 0.5rem;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     line-height: 1.2;
 }
 

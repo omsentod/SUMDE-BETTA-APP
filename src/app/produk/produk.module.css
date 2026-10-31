@@ -142,14 +142,14 @@
     }
 }
 
-/* Formal Editorial Serif Title (Restrained & Balanced) */
+/* Professional Hero Title (Clean, Modern Typography) */
 .heroTitle {
-    font-family: var(--font-serif);
+    font-family: var(--font-main);
     font-style: normal;
-    font-size: clamp(1.4rem, 2.5vw, 1.95rem);
-    font-weight: 700;
+    font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+    font-weight: 800;
     line-height: 1.22;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     color: var(--text-main);
     margin: 0 0 0.65rem;
 }
@@ -211,8 +211,114 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 1.5rem 0 2.75rem;
+    margin: 1.5rem 0 1.25rem;
     width: 100%;
+}
+
+.subCategoryPillsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 0 2rem;
+    width: 100%;
+}
+
+.subCategoryPillsList {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.25rem 0.5rem;
+    max-width: 100%;
+    scrollbar-width: none;
+}
+
+.subCategoryPillsList::-webkit-scrollbar {
+    display: none;
+}
+
+.subCategoryPill {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.subCatIcon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.subCategoryPill:hover .subCatIcon {
+    transform: scale(1.18);
+}
+
+.subCatCount {
+    opacity: 0.75;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.subCategoryPill:hover:not(.subCategoryPillActive):not(.subCategoryPillVipActive) {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
+    transform: translateY(-1px);
+}
+
+.subCategoryPillActive,
+.subCategoryPillActive:hover {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border-color: var(--primary) !important;
+    font-weight: 600;
+    box-shadow: 0 4px 14px var(--primary-glow) !important;
+    transform: translateY(-1px);
+}
+
+.subCategoryPillVip {
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+}
+
+:global([data-theme="light"]) .subCategoryPillVip {
+    color: #b45309;
+    border-color: rgba(217, 119, 6, 0.4);
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.subCategoryPillVip:hover:not(.subCategoryPillVipActive) {
+    background: rgba(245, 158, 11, 0.18) !important;
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+}
+
+:global([data-theme="light"]) .subCategoryPillVip:hover:not(.subCategoryPillVipActive) {
+    color: #92400e !important;
+    border-color: #b45309 !important;
+    background: rgba(245, 158, 11, 0.18) !important;
+}
+
+.subCategoryPillVipActive,
+.subCategoryPillVipActive:hover {
+    background: linear-gradient(135deg, #d97706, #fbbf24) !important;
+    color: #0d0d12 !important;
+    border-color: #fbbf24 !important;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45) !important;
 }
 
 .switcherShell {
@@ -329,6 +435,23 @@
     height: 15px;
     flex-shrink: 0;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tabIconImg {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.switcherTab:hover .tabIconImg {
+    transform: scale(1.18);
+}
+
+.tabActive .tabIconImg {
+    transform: scale(1.12);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
 }
 
 .tabCountPill {
@@ -460,6 +583,82 @@
 /* VIP Products Grid (Roomy gallery spacing) */
 .productGridVip {
     gap: 1.75rem !important;
+}
+
+/* VIP Chamber Containment: Ensure all switcher shells, pills, and filter bars stay obsidian & gold even in Light Mode */
+.vipRoomContainer .switcherShell {
+    background: linear-gradient(145deg, #181822, #0d0d12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    box-shadow: 4px 10px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 158, 11, 0.12) !important;
+}
+
+.vipRoomContainer .switcherTab {
+    color: #94a3b8 !important;
+}
+
+.vipRoomContainer .switcherTab:hover:not(.tabActive) {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.vipRoomContainer .switcherTab .tabCountPill {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+}
+
+.vipRoomContainer .switcherTab.tabActive .tabCountPill {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+.vipRoomContainer .subCategoryPill {
+    background: rgba(22, 22, 32, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #94a3b8 !important;
+}
+
+.vipRoomContainer .subCategoryPill:hover:not(.subCategoryPillActive):not(.subCategoryPillVipActive) {
+    background: rgba(30, 30, 42, 0.95) !important;
+    color: #ffffff !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.vipRoomContainer .subCategoryPillActive,
+.vipRoomContainer .subCategoryPillActive:hover {
+    background: linear-gradient(135deg, #d97706, #fbbf24) !important;
+    color: #0d0d12 !important;
+    border-color: #fbbf24 !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45) !important;
+}
+
+.vipRoomContainer :global(.activeFiltersBar) {
+    background: rgba(16, 16, 24, 0.9) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.vipRoomContainer :global(.activeFiltersLabel) {
+    color: #fbbf24 !important;
+}
+
+.vipRoomContainer :global(.filterChip) {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    color: #fde68a !important;
+}
+
+.vipRoomContainer :global(.filterChip:hover) {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    color: #ffffff !important;
+    border-color: #fbbf24 !important;
+}
+
+.vipRoomContainer :global(.clearAllChipsBtn) {
+    color: #cbd5e1 !important;
+}
+
+.vipRoomContainer :global(.clearAllChipsBtn:hover) {
+    color: #fbbf24 !important;
 }
 
 /* ==========================================================================

@@ -8,6 +8,7 @@ import { useProducts } from '@/context/ProductContext';
 import ManageableSelect from '@/components/admin/ManageableSelect';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
 import BulkProductModal from '@/components/admin/BulkProductModal';
+import ManageHierarchyModal from '@/components/admin/ManageHierarchyModal';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
 import { parseYouTubeId } from '@/lib/productImages';
@@ -36,7 +37,33 @@ const emptyProductForm = () => ({
   quantity: 1,
   variants: [],
   soldCount: 0,
+  departmentId: '',
+  subCategoryId: '',
+  brand: '',
+  weight: 1000,
 });
+
+function getDepartmentIcon(slug, isLiveFish, customIcon) {
+  if (customIcon && (customIcon.startsWith('/') || customIcon.startsWith('http'))) return customIcon;
+  if (slug === 'all') return '/img/tab-dept-all.svg';
+  if (slug === 'ikan-hias' || isLiveFish) return '/img/tab-dept-fish.svg';
+  if (slug?.includes('alat') || slug?.includes('aquarium') || slug?.includes('peralatan')) return '/img/tab-dept-equipment.svg';
+  if (slug?.includes('pakan') || slug?.includes('obat') || slug?.includes('nutrisi')) return '/img/tab-dept-feed.svg';
+  return isLiveFish ? '/img/tab-dept-fish.svg' : '/img/tab-dept-equipment.svg';
+}
+
+function getSubCategoryIcon(slug = '', name = '', customImage = null) {
+  if (customImage && (customImage.startsWith('/') || customImage.startsWith('http'))) return customImage;
+  const s = `${slug} ${name}`.toLowerCase();
+  if (s.includes('cupang') || s.includes('betta')) return '/img/tab-betta-multicolor.svg';
+  if (s.includes('channa') || s.includes('chana') || s.includes('snakehead')) return '/img/tab-channa.svg';
+  if (s.includes('guppy') || s.includes('gapi')) return '/img/tab-guppy.svg';
+  if (s.includes('molly') || s.includes('moli')) return '/img/tab-molly.svg';
+  if (s.includes('filter') || s.includes('aerator') || s.includes('pompa')) return '/img/tab-sub-filter.svg';
+  if (s.includes('soliter') || s.includes('aquarium') || s.includes('tank')) return '/img/tab-sub-soliter.svg';
+  if (s.includes('pakan') || s.includes('pelet') || s.includes('obat') || s.includes('vitamin')) return '/img/tab-sub-feed.svg';
+  return null;
+}
 
 const formatCurrency = (v) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
@@ -55,6 +82,28 @@ function AdminProductsInner() {
 
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [grades, setGrades] = useState(DEFAULT_GRADES);
+
+  // 3-Tier Hierarchy State
+  const [departments, setDepartments] = useState([]);
+  const [selectedDeptId, setSelectedDeptId] = useState('all');
+  const [selectedSubCatId, setSelectedSubCatId] = useState('all');
+  const [isHierarchyModalOpen, setIsHierarchyModalOpen] = useState(false);
+
+  const loadDepartments = async () => {
+    try {
+      const res = await fetch('/api/admin/departments');
+      if (res.ok) {
+        const data = await res.json();
+        setDepartments(data);
+      }
+    } catch (err) {
+      console.error('Failed to load departments:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadDepartments();
+  }, []);
 
   // Mode pemilihan (Selection Mode): checkbox tersembunyi sampai tombol 'Pilih' diklik
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -109,13 +158,45 @@ function AdminProductsInner() {
     }
   }, [products]);
 
+  const activeDept = departments.find((d) => d.id === selectedDeptId);
+
+  const deptCounts = useMemo(() => {
+    const counts = { all: 0 };
+    products.forEach((p) => {
+      if (p.isArchived) return;
+      counts.all += 1;
+      const dId = p.departmentId || 'legacy';
+      counts[dId] = (counts[dId] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
   const filtered = useMemo(() => {
     return products.filter((p) => {
       // Halaman ini khusus katalog produk aktif (bukan yang diarsipkan di Recycle Bin)
       if (p.isArchived) return false;
 
+      // Filter Tingkat 1 (Departemen)
+      if (selectedDeptId !== 'all') {
+        if (p.departmentId) {
+          if (p.departmentId !== selectedDeptId) return false;
+        } else {
+          // Legacy item without departmentId -> treat as Live Fish
+          if (!activeDept?.isLiveFish) return false;
+        }
+      }
+
+      // Filter Tingkat 2 (Sub-Kategori)
+      if (selectedSubCatId !== 'all') {
+        if (p.subCategoryId && p.subCategoryId !== selectedSubCatId) return false;
+      }
+
       const q = search.toLowerCase();
-      const matchSearch = p.name.toLowerCase().includes(q) || (p.form && p.form.toLowerCase().includes(q));
+      const matchSearch =
+        p.name.toLowerCase().includes(q) ||
+        (p.form && p.form.toLowerCase().includes(q)) ||
+        (p.brand && p.brand.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q));
 
       const pForm = (p.form || '').trim().toLowerCase();
       const pCat = (p.category || '').trim().toLowerCase();
@@ -129,7 +210,7 @@ function AdminProductsInner() {
 
       return matchSearch && matchCategory && matchStock;
     });
-  }, [products, search, categoryFilter, stockFilter]);
+  }, [products, search, categoryFilter, stockFilter, selectedDeptId, selectedSubCatId, activeDept]);
 
   // Upload satu ATAU banyak foto sekaligus, lalu tambahkan ke akhir galeri
   // Helper konversi item ke format media { id, type, url, thumbnail, ytId }
@@ -290,7 +371,13 @@ function AdminProductsInner() {
   };
 
   const openAdd = () => {
-    setForm(emptyProductForm());
+    const defaultDept = (selectedDeptId !== 'all' ? departments.find((d) => d.id === selectedDeptId) : null) || departments[0] || null;
+    const defaultSub = defaultDept?.subCategories?.[0] || null;
+    setForm({
+      ...emptyProductForm(),
+      departmentId: defaultDept?.id || '',
+      subCategoryId: defaultSub?.id || '',
+    });
     setIsAddOpen(true);
   };
 
@@ -380,6 +467,10 @@ function AdminProductsInner() {
       quantity: initialQuantity,
       variants: parsedVariants,
       soldCount: product.soldCount ?? 0,
+      departmentId: product.departmentId || '',
+      subCategoryId: product.subCategoryId || '',
+      brand: product.brand || '',
+      weight: product.weight || 1000,
     });
     setIsEditOpen(true);
   };
@@ -612,6 +703,88 @@ function AdminProductsInner() {
           </div>
         </div>
 
+        {/* Tingkat 1: Departemen Switcher Tabs */}
+        <div className={styles.deptBarWrapper}>
+          <div className={styles.deptTabsGroup}>
+            <button
+              type="button"
+              className={`${styles.deptTabBtn} ${selectedDeptId === 'all' ? styles.deptTabBtnActive : ''}`}
+              onClick={() => {
+                setSelectedDeptId('all');
+                setSelectedSubCatId('all');
+              }}
+            >
+              <Image src="/img/tab-dept-all.svg" width={15} height={15} unoptimized alt="" className={styles.deptTabIcon} />
+              Semua Departemen
+              <span className={styles.deptTabBadge}>{deptCounts.all || 0}</span>
+            </button>
+            {departments.map((dept) => {
+              const count = dept._count?.products || 0;
+              const isActive = selectedDeptId === dept.id;
+              const iconSrc = getDepartmentIcon(dept.slug, dept.isLiveFish, dept.icon);
+              return (
+                <button
+                  key={dept.id}
+                  type="button"
+                  className={`${styles.deptTabBtn} ${isActive ? styles.deptTabBtnActive : ''}`}
+                  onClick={() => {
+                    setSelectedDeptId(dept.id);
+                    setSelectedSubCatId('all');
+                  }}
+                >
+                  <Image src={iconSrc} width={15} height={15} unoptimized alt="" className={styles.deptTabIcon} />
+                  {dept.name}
+                  <span className={styles.deptTabBadge}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            className={styles.manageDeptBtn}
+            onClick={() => setIsHierarchyModalOpen(true)}
+            title="Atur Tingkat 1 (Departemen) dan Tingkat 2 (Sub-Kategori)"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+            Kelola Departemen &amp; Kategori
+          </button>
+        </div>
+
+        {/* Tingkat 2: Sub-Kategori Filter Chips (ketika departemen spesifik dipilih) */}
+        {activeDept && activeDept.subCategories && activeDept.subCategories.length > 0 && (
+          <div className={styles.subCatChipsBar}>
+            <button
+              type="button"
+              className={`${styles.subCatChip} ${selectedSubCatId === 'all' ? styles.subCatChipActive : ''}`}
+              onClick={() => setSelectedSubCatId('all')}
+            >
+              <Image src="/img/tab-dept-all.svg" width={14} height={14} unoptimized alt="" className={styles.subCatChipIcon} />
+              Semua {activeDept.name}
+            </button>
+            {activeDept.subCategories.map((sub) => {
+              const isActive = selectedSubCatId === sub.id;
+              const count = sub._count?.products || 0;
+              const subIcon = getSubCategoryIcon(sub.slug, sub.name, sub.image);
+              return (
+                <button
+                  key={sub.id}
+                  type="button"
+                  className={`${styles.subCatChip} ${isActive ? styles.subCatChipActive : ''}`}
+                  onClick={() => setSelectedSubCatId(sub.id)}
+                >
+                  {subIcon && <Image src={subIcon} width={14} height={14} unoptimized alt="" className={styles.subCatChipIcon} />}
+                  {sub.name}
+                  <span className={styles.subCatChipBadge}>({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className={styles.controlBar}>
           <div className={styles.searchBox}>
             <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -730,7 +903,10 @@ function AdminProductsInner() {
                     )}
                     <th className={styles.hideOnMobile}>Gambar</th>
                     <th>Nama Produk</th>
-                    <th className={styles.hideOnMobile}>Kategori & Ukuran</th>
+                    <th className={styles.hideOnMobile}>
+                      {activeDept?.isLiveFish === false ? 'Sub-Kategori & Merk' : 'Kategori & Ukuran'}
+                    </th>
+                    {activeDept?.isLiveFish === false && <th className={styles.hideOnMobile}>Berat</th>}
                     <th>Harga</th>
                     <th>Status Stok</th>
                     <th>Terjual</th>
@@ -776,6 +952,11 @@ function AdminProductsInner() {
                     <td style={{ fontWeight: '600' }}>
                       <div>{product.name}</div>
                       <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                        {selectedDeptId === 'all' && (
+                          <span className={product.department?.isLiveFish === false ? styles.cellTagGoods : styles.cellTagLive}>
+                            {product.department?.name || 'Ikan Hias'}
+                          </span>
+                        )}
                         {product.isDailyDrop && (
                           <span
                             className={styles.badge}
@@ -808,7 +989,23 @@ function AdminProductsInner() {
                       </div>
                     </td>
                     <td className={styles.hideOnMobile}>
-                      <div>{product.form}</div>
+                      {product.department?.isLiveFish === false ? (
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{product.subCategory?.name || product.category || 'Peralatan'}</div>
+                          {product.brand && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.15rem' }}>
+                              Merk: {product.brand}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <div>{product.form}</div>
+                          {product.coloration && product.coloration !== 'Standard' && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{product.coloration}</div>
+                          )}
+                        </div>
+                      )}
                       {(() => {
                         const vList = (Array.isArray(product.variants) && product.variants.length > 0)
                           ? product.variants.map((v) => `${v.size} (${v.stock}${v.price ? ' • ' + formatCurrency(v.price) : ''})`)
@@ -826,6 +1023,11 @@ function AdminProductsInner() {
                         );
                       })()}
                     </td>
+                    {activeDept?.isLiveFish === false && (
+                      <td className={styles.hideOnMobile} style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        {product.weight ? `${product.weight} gr` : '1.000 gr'}
+                      </td>
+                    )}
                     <td style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>{formatCurrency(product.price)}</td>
                     <td>
                       {product.quantity > 0 ? (
@@ -909,58 +1111,144 @@ function AdminProductsInner() {
                   <input
                     type="text"
                     className={styles.fieldInput}
-                    placeholder="Contoh: Super Black Samurai Tail"
+                    placeholder="Contoh: Super Black Samurai Tail / Soliter Kaca 15x15"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     required
                   />
                 </div>
 
+                {/* Tingkat 1 (Departemen) & Tingkat 2 (Sub-Kategori) */}
                 <div className={styles.formGridTwo}>
                   <div className={styles.formField}>
-                    <ManageableSelect
-                      label="Kategori Form"
-                      value={form.category}
-                      onChange={(val) => setForm({ ...form, category: val, form: val })}
-                      options={categories}
-                      setOptions={setCategories}
-                    />
-                  </div>
-                  <div className={styles.formField}>
-                    <label className={styles.fieldLabel}>Corak Warna (Coloration)</label>
-                    <input
-                      type="text"
+                    <label className={styles.fieldLabel}>Tingkat 1: Departemen Utama</label>
+                    <select
                       className={styles.fieldInput}
-                      placeholder="Contoh: Multicolor, Nemo Candy"
-                      value={form.coloration}
-                      onChange={(e) => setForm({ ...form, coloration: e.target.value })}
+                      value={form.departmentId || ''}
+                      onChange={(e) => {
+                        const dId = e.target.value;
+                        const d = departments.find((x) => x.id === dId);
+                        const firstSub = d?.subCategories?.[0]?.id || '';
+                        setForm({
+                          ...form,
+                          departmentId: dId,
+                          subCategoryId: firstSub,
+                          category: d?.isLiveFish ? form.category : (d?.subCategories?.[0]?.name || 'Peralatan'),
+                        });
+                      }}
                       required
-                    />
+                    >
+                      <option value="" disabled>-- Pilih Departemen --</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d.isLiveFish ? 'Ikan Hidup' : 'Barang Kering / Alat'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={styles.formField}>
+                    <label className={styles.fieldLabel}>Tingkat 2: Jenis / Sub-Kategori</label>
+                    <select
+                      className={styles.fieldInput}
+                      value={form.subCategoryId || ''}
+                      onChange={(e) => {
+                        const sId = e.target.value;
+                        const currentDept = departments.find((d) => d.id === form.departmentId) || departments[0];
+                        const s = currentDept?.subCategories?.find((x) => x.id === sId);
+                        setForm({
+                          ...form,
+                          subCategoryId: sId,
+                          category: s?.name || form.category,
+                        });
+                      }}
+                      required
+                    >
+                      <option value="" disabled>-- Pilih Sub-Kategori --</option>
+                      {(departments.find((d) => d.id === form.departmentId) || departments[0])?.subCategories?.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                <div className={styles.formGridTwo}>
-                  <div className={styles.formField}>
-                    <ManageableSelect
-                      label="Grade Bentuk"
-                      value={form.statsForm}
-                      onChange={(val) => setForm({ ...form, statsForm: val })}
-                      options={grades}
-                      setOptions={setGrades}
-                    />
+                {/* Spesifikasi Khusus: Ikan Hidup vs Barang Kering */}
+                {(departments.find((d) => d.id === form.departmentId)?.isLiveFish !== false) ? (
+                  <>
+                    <div className={styles.formGridTwo}>
+                      <div className={styles.formField}>
+                        <ManageableSelect
+                          label="Kategori Form"
+                          value={form.category}
+                          onChange={(val) => setForm({ ...form, category: val, form: val })}
+                          options={categories}
+                          setOptions={setCategories}
+                        />
+                      </div>
+                      <div className={styles.formField}>
+                        <label className={styles.fieldLabel}>Corak Warna (Coloration)</label>
+                        <input
+                          type="text"
+                          className={styles.fieldInput}
+                          placeholder="Contoh: Multicolor, Nemo Candy"
+                          value={form.coloration}
+                          onChange={(e) => setForm({ ...form, coloration: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.formGridTwo}>
+                      <div className={styles.formField}>
+                        <ManageableSelect
+                          label="Grade Bentuk"
+                          value={form.statsForm}
+                          onChange={(val) => setForm({ ...form, statsForm: val })}
+                          options={grades}
+                          setOptions={setGrades}
+                        />
+                      </div>
+                      <div className={styles.formField}>
+                        <label className={styles.fieldLabel}>Umur (Age)</label>
+                        <input
+                          type="text"
+                          className={styles.fieldInput}
+                          placeholder="Contoh: 4 Month, 5 Bulan"
+                          value={form.age}
+                          onChange={(e) => setForm({ ...form, age: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.formGridTwo}>
+                    <div className={styles.formField}>
+                      <label className={styles.fieldLabel}>Merk / Brand Produk</label>
+                      <input
+                        type="text"
+                        className={styles.fieldInput}
+                        placeholder="Contoh: Sumde Aquatics, Sobo, Hikari"
+                        value={form.brand || ''}
+                        onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.formField}>
+                      <label className={styles.fieldLabel}>Berat Pengiriman (Gram)</label>
+                      <input
+                        type="number"
+                        min="50"
+                        className={styles.fieldInput}
+                        placeholder="Contoh: 500 (untuk kalkulasi ongkir kurir)"
+                        value={form.weight || 1000}
+                        onChange={(e) => setForm({ ...form, weight: Math.max(50, parseInt(e.target.value) || 1000) })}
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className={styles.formField}>
-                    <label className={styles.fieldLabel}>Umur (Age)</label>
-                    <input
-                      type="text"
-                      className={styles.fieldInput}
-                      placeholder="Contoh: 4 Month, 5 Bulan"
-                      value={form.age}
-                      onChange={(e) => setForm({ ...form, age: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className={styles.formField}>
                   <label className={styles.fieldLabel}>Deskripsi Produk</label>
@@ -1377,6 +1665,14 @@ function AdminProductsInner() {
         isOpen={isBulkOpen}
         onClose={() => setIsBulkOpen(false)}
         onComplete={() => fetchProducts()}
+      />
+      <ManageHierarchyModal
+        isOpen={isHierarchyModalOpen}
+        onClose={() => setIsHierarchyModalOpen(false)}
+        onHierarchyUpdated={() => {
+          loadDepartments();
+          fetchProducts();
+        }}
       />
     </div>
   );

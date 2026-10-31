@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Delta Fan Caudal Tail Fin Gradient -->
+    <linearGradient id="guppyTail" x1="16" y1="24" x2="2" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="30%" stop-color="#EC4899"/>
+      <stop offset="65%" stop-color="#F97316"/>
+      <stop offset="90%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+
+    <!-- Graceful Top Dorsal Ribbon Gradient -->
+    <linearGradient id="guppyDorsal" x1="26" y1="18" x2="16" y2="6" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="50%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+
+    <!-- Sleek Iridescent Guppy Body -->
+    <linearGradient id="guppyBody" x1="16" y1="26" x2="42" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="35%" stop-color="#06B6D4"/>
+      <stop offset="70%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+
+    <!-- Belly Silver Luster -->
+    <linearGradient id="guppyBelly" x1="28" y1="28" x2="36" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Giant Flowing Guppy Delta Veil Tail -->
+  <path d="M17 24C14 17 6 6 2 9C-1 12 1 20 2 24C3 30 1 38 4 41C8 44 14 33 17 25Z" fill="url(#guppyTail)"/>
+
+  <!-- Guppy Tail Mosaic Dots / Leopard Pattern -->
+  <circle cx="8" cy="18" r="1.3" fill="#38BDF8"/>
+  <circle cx="12" cy="16" r="1.1" fill="#FEF08A"/>
+  <circle cx="6" cy="24" r="1.5" fill="#4F46E5"/>
+  <circle cx="9" cy="27" r="1.2" fill="#F43F5E"/>
+  <circle cx="7" cy="33" r="1.3" fill="#38BDF8"/>
+  <circle cx="11" cy="32" r="1.1" fill="#FEF08A"/>
+
+  <!-- Delicate Tail Flow Rays -->
+  <path d="M17 24C11 19 6 14 3 11M17 25C10 25 5 25 3 24M17 25C11 29 6 36 4 40" stroke="rgba(255,255,255,0.45)" stroke-width="0.8" stroke-linecap="round"/>
+
+  <!-- High Flowing Dorsal Ribbon -->
+  <path d="M25 18C22 11 18 6 13 8C11 9 13 14 16 17C19 19 22 19 25 18Z" fill="url(#guppyDorsal)"/>
+  <path d="M23 18C20 13 16 8 13 8" stroke="rgba(255,255,255,0.5)" stroke-width="0.75" stroke-linecap="round"/>
+
+  <!-- Small Lower Anal / Gonopodium Fin -->
+  <path d="M20 27C17 31 16 35 18 37C20 38 22 34 25 29Z" fill="#EC4899"/>
+
+  <!-- Curvaceous Compact Fish Body -->
+  <path d="M16 24.5C18 20 25 17 32 17C38 17 43 19 45 22.5C46 24 43 26 39 27C34 28.5 25 29 20 27.5C17 26.5 16 25 16 24.5Z" fill="url(#guppyBody)"/>
+  <!-- Silver Belly Sheen -->
+  <ellipse cx="32" cy="24" rx="6" ry="2" fill="url(#guppyBelly)"/>
+
+  <!-- Iridescent Side Spots (Platinum & Tangerine) -->
+  <circle cx="24" cy="23" r="1" fill="#FEF08A"/>
+  <circle cx="28" cy="24" r="1.2" fill="#38BDF8"/>
+  <circle cx="33" cy="23" r="1" fill="#F43F5E"/>
+
+  <!-- Translucent Fluttering Pectoral Fin -->
+  <path d="M35 24C33 28 32 30 34 31C36 31 38 28 37 25Z" fill="#38BDF8" fill-opacity="0.8" stroke="#FFFFFF" stroke-width="0.5"/>
+
+  <!-- Cute Expressive Molly Eye -->
+  <circle cx="41.5" cy="21.5" r="2.2" fill="#0F172A"/>
+  <circle cx="41.5" cy="21.5" r="1.7" fill="#1E293B"/>
+  <circle cx="41.8" cy="21.2" r="1" fill="#38BDF8"/>
+  <circle cx="42" cy="21" r="0.6" fill="#000000"/>
+  <circle cx="42.4" cy="20.6" r="0.4" fill="#FFFFFF"/>
+
+  <!-- Small Cute Mouth -->
+  <path d="M45.5 23C44.5 23.5 44 24 43 24" stroke="#BE185D" stroke-width="0.8" stroke-linecap="round"/>
+</svg>

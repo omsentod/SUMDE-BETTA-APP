@@ -38,7 +38,10 @@ export default function ProductCard({
     variants,
     quantity,
     soldCount,
-    videoUrl
+    videoUrl,
+    brand,
+    department,
+    subCategory,
 }) {
     const { addToCart, isCartOpen, toggleCart } = useCart();
     const [modalAction, setModalAction] = useState(null);
@@ -147,7 +150,10 @@ export default function ProductCard({
     };
 
     // Sub-info taksonomi ringkas
-    const taxonomyItems = [form, coloration, age].filter(Boolean);
+    const isLive = department?.isLiveFish !== false && !brand;
+    const taxonomyItems = isLive
+        ? [form, coloration, age].filter(Boolean)
+        : [brand, subCategory?.name || category].filter(Boolean);
 
     return (
         <>
@@ -196,7 +202,7 @@ export default function ProductCard({
                         {isPremium && (
                             <span className={styles.taglinePremium}>
                                 <span className={styles.taglineSparkle}>✦</span>
-                                PREMIUM
+                                GALLERY
                             </span>
                         )}
                         {hasVideo && !effectiveSold && (
@@ -213,7 +219,7 @@ export default function ProductCard({
                     {!effectiveSold && (
                         isPremium ? (
                             <span className={styles.badgeSingleStock}>
-                                1 Ekor Saja
+                                {isLive ? '1 Ekor Saja' : '1 Unit Saja'}
                             </span>
                         ) : isLowStock ? (
                             <span className={styles.badgeLowStock}>

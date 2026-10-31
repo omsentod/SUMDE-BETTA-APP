@@ -387,6 +387,24 @@ export default function ProductDetailClient() {
                                         Koleksi gallery pilihan dengan mutu visual estetika tertinggi. Setiap ikan memiliki keunikan mutasi genetik tersendiri dan diabadikan secara khusus sesuai wujud fisik asli yang akan Anda terima.
                                     </p>
                                 </div>
+                            ) : product.department?.isLiveFish === false ? (
+                                <div className={styles.authenticityBoxSample}>
+                                    <div className={styles.authenticityHeader}>
+                                        <div className={styles.authenticityTitleRow}>
+                                            <svg className={styles.authenticityIconSample} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                            </svg>
+                                            <span className={styles.authenticityTitle}>
+                                                Standar Farm SUMDE Aquatics
+                                            </span>
+                                        </div>
+                                        <span className={styles.authenticityTagNeutral}>Perlengkapan Terstandar</span>
+                                    </div>
+                                    <p className={styles.authenticityDesc}>
+                                        Produk terstandarisasi untuk perawatan ikan cupang dan ekosistem akuatik sehat. Telah diuji kelayakan dan dikemas aman untuk pengiriman ke seluruh Indonesia.
+                                    </p>
+                                </div>
                             ) : (
                                 <div className={styles.authenticityBoxSample}>
                                     <div className={styles.authenticityHeader}>
@@ -409,22 +427,39 @@ export default function ProductDetailClient() {
                                 </div>
                             )}
 
-                            <div className={styles.metaCard}>
-                                <div className={styles.metaItem}>
-                                    <label className={styles.metaLabel}>Grade Bentuk</label>
-                                    <span className={styles.metaValue}>{product.statsForm || 'COMP'}</span>
+                            {product.department?.isLiveFish === false ? (
+                                <div className={styles.metaCard}>
+                                    <div className={styles.metaItem}>
+                                        <label className={styles.metaLabel}>Sub-Kategori</label>
+                                        <span className={styles.metaValue}>{product.subCategory?.name || product.category || 'Peralatan'}</span>
+                                    </div>
+                                    <div className={styles.metaItem}>
+                                        <label className={styles.metaLabel}>Merk / Brand</label>
+                                        <span className={styles.metaValue}>{product.brand || 'Sumde Aquatics'}</span>
+                                    </div>
+                                    <div className={styles.metaItem}>
+                                        <label className={styles.metaLabel}>Berat Ongkir</label>
+                                        <span className={styles.metaValue}>{product.weight ? `${product.weight} gr` : '1.000 gr'}</span>
+                                    </div>
                                 </div>
-                                <div className={styles.metaItem}>
-                                    <label className={styles.metaLabel}>Umur</label>
-                                    <span className={styles.metaValue}>{product.age || '4 Month'}</span>
+                            ) : (
+                                <div className={styles.metaCard}>
+                                    <div className={styles.metaItem}>
+                                        <label className={styles.metaLabel}>Grade Bentuk</label>
+                                        <span className={styles.metaValue}>{product.statsForm || 'COMP'}</span>
+                                    </div>
+                                    <div className={styles.metaItem}>
+                                        <label className={styles.metaLabel}>Umur</label>
+                                        <span className={styles.metaValue}>{product.age || '4 Month'}</span>
+                                    </div>
+                                    <div className={styles.metaItem}>
+                                        <label className={styles.metaLabel}>Tipe Form</label>
+                                        <span className={`${styles.metaValue} ${styles.metaValueUpper}`}>
+                                            {product.form || product.category || 'PLAKAT'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className={styles.metaItem}>
-                                    <label className={styles.metaLabel}>Tipe Form</label>
-                                    <span className={`${styles.metaValue} ${styles.metaValueUpper}`}>
-                                        {product.form || product.category || 'PLAKAT'}
-                                    </span>
-                                </div>
-                            </div>
+                            )}
 
                             {hasSizes && (
                                 <div className={`${styles.sizeSection} ${sizeError ? styles.sizeSectionInvalid : ''}`}>

@@ -132,4 +132,22 @@
   2. *✦ Gallery*: Transforms into an exclusive dark-luxury VIP Exhibition Chamber (`.vipRoomContainer`) with obsidian styling, dramatic lighting, gold leaf hairlines, and individual 1 of 1 masterwork presentation.
 - **Trust Assurances Placement**: Warranty details (100% DOA, oxygen packing, delivery tracking) belong directly on the product detail page (`/produk/[id]`) next to the purchase action, keeping the homepage uncluttered and contextualizing customer assurance where purchase decisions happen.
 
+## 15. 3-Tier Product Catalog Hierarchy (Department -> SubCategory -> Product)
+- **Hierarchy Structure**:
+  - **Tingkat 1 (Department)**: Master grouping (e.g. `Ikan Hias`, `Peralatan & Aquarium`, `Pakan & Obat`). Admin can add, rename, reorder, and delete departments via `ManageHierarchyModal` (`/api/admin/departments`).
+  - **Tingkat 2 (SubCategory)**: Sub-types under a department (e.g. under `Ikan Hias`: `Cupang (Betta)`, `Channa`, `Molly & Guppy`; under `Peralatan`: `Filter & Aerator`, `Soliter & Aquarium`). Admin can add, rename, reorder, and delete subcategories via `/api/admin/subcategories`.
+  - **Tingkat 3 (Product)**: Actual inventory item assigned to a `departmentId` and `subCategoryId`.
+- **Live Animals vs Dry Goods (`isLiveFish: Boolean`)**:
+  - When `isLiveFish === true` (Live Fish): requires form/tail type, coloration, flaring video URL, age, and 100% DOA live arrival guarantee.
+  - When `isLiveFish === false` (Equipment, feeds, accessories): enables `brand` (Merk) and `weight` in grams (critical for automated Biteship courier shipping rate calculation). Form and tail types are not required.
+- **Admin Table Segmentation**:
+  - In `/admin/products`, products across different departments MUST NOT be mixed when a department tab is selected.
+  - The admin page features Department Tabs at the top, followed by SubCategory chips, with adaptive table columns that dynamically switch between live animal metadata and dry goods metadata (Brand, Weight, Pack size).
+  - Deleting a Department or SubCategory that still has products assigned is blocked by default (`400 Bad Request`) to protect inventory integrity.
+- **Customer Catalog Navigation (`/produk`)**:
+  - Level 1 Departemen switcher tabs at the top allow customers to easily browse between Live Fish, Equipment, and Feeds.
+  - Level 2 SubCategory pill chips appear beneath the switcher to filter specific product types.
+  - The exclusive "✦ Gallery" VIP chamber remains accessible under Live Fish for 1-of-1 pieces.
+
+
 

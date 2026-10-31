@@ -144,6 +144,17 @@ model Product {
   telegramChatId     String?   // Chat ID grup Telegram
   broadcastEventId   String?
   broadcastEvent     TelegramBroadcastEvent? @relation(fields: [broadcastEventId], references: [id], onDelete: SetNull)
+
+  // Relasi Hierarki 3 Tingkat (Departemen -> Sub-Kategori -> Produk)
+  departmentId       String?
+  department         Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  subCategoryId      String?
+  subCategory        SubCategory? @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+
+  // Atribut Fisik Alat & Pakan
+  brand              String?      // Merk produk (Sobo, Hikari, Atman, dsb)
+  weight             Int          @default(1000) // Berat dalam gram untuk perhitungan Biteship
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
@@ -152,6 +163,8 @@ model Product {
   @@index([isDailyDrop, isSold])
   @@index([bookedUntil])
   @@index([broadcastEventId])
+  @@index([departmentId])
+  @@index([subCategoryId])
 }
 
 model ProductVariant {
@@ -255,3 +268,38 @@ model TelegramBroadcastEvent {
 
   @@index([status])
 }
+
+model Department {
+  id            String        @id @default(uuid())
+  name          String
+  slug          String        @unique
+  description   String?       @db.Text
+  icon          String?       // vector icon identifier: fish | equipment | feed
+  isLiveFish    Boolean       @default(true) // Live animals need form/gender/flaring/DOA; dry goods need brand/weight/warranty
+  orderIndex    Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  subCategories SubCategory[]
+  products      Product[]
+
+  @@index([orderIndex])
+}
+
+model SubCategory {
+  id           String      @id @default(uuid())
+  name         String
+  slug         String
+  description  String?     @db.Text
+  image        String?
+  departmentId String
+  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  orderIndex   Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  products     Product[]
+
+  @@unique([departmentId, slug])
+  @@index([departmentId])
+  @@index([orderIndex])
+}
+

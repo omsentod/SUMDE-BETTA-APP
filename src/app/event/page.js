@@ -83,7 +83,7 @@ export default function EventsPage() {
                     <span style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>
                         Jadwal & Penawaran
                     </span>
-                    <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontStyle: 'italic', marginTop: '0.5rem', lineHeight: 1.2 }}>
+                    <h1 style={{ fontFamily: 'var(--font-main)', fontSize: 'clamp(2.2rem, 5vw, 3.2rem)', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '0.5rem', lineHeight: 1.2 }}>
                         Events & Promosi
                     </h1>
                     <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '1rem auto 0 auto', fontSize: '0.95rem' }}>
@@ -123,7 +123,7 @@ export default function EventsPage() {
                 {/* Content Area */}
                 {isLoading ? (
                     <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-                        <h3 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '1.5rem', color: 'var(--text-muted)' }}>Memuat Jadwal Seru...</h3>
+                        <h3 style={{ fontFamily: 'var(--font-main)', fontWeight: 600, fontSize: '1.25rem', color: 'var(--text-muted)' }}>Memuat Jadwal Seru...</h3>
                     </div>
                 ) : filteredEvents.length > 0 ? (
                     <div style={{ 
@@ -224,7 +224,7 @@ export default function EventsPage() {
                                                 </div>
                                             )}
                                             {!event.startDate && !event.endDate && (
-                                                <div style={{ fontStyle: 'italic' }}>Event aktif tanpa batasan waktu.</div>
+                                                <div style={{ color: 'var(--text-muted)' }}>Event aktif tanpa batasan waktu.</div>
                                             )}
                                         </div>
 

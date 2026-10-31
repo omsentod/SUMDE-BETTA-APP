@@ -122,7 +122,7 @@ export default function TentangPage() {
             <section id="galeri" style={{ padding: '10rem 0' }}>
                 <div className="container">
                     <div style={{ marginBottom: '5rem', textAlign: 'center' }}>
-                        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '4rem', fontStyle: 'italic', marginBottom: '1rem' }}>Galeri Keindahan</h2>
+                        <h2 style={{ fontFamily: 'var(--font-main)', fontSize: '3.5rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '1rem' }}>Galeri Keindahan</h2>
                         <p style={{ color: 'var(--text-muted)', fontSize: '1rem', letterSpacing: '0.2rem', textTransform: 'uppercase' }}>Mahakarya Hidup dari Sumde Betta</p>
                     </div>
 
@@ -138,7 +138,7 @@ export default function TentangPage() {
                             <div key={item.id} className="galleryItem">
                                 <Image src={item.img} alt={item.name} fill style={{ objectFit: 'cover' }} />
                                 <div className="galleryCaption">
-                                    <h3 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '1.4rem' }}>{item.name}</h3>
+                                    <h3 style={{ fontFamily: 'var(--font-main)', fontWeight: 700, fontSize: '1.4rem' }}>{item.name}</h3>
                                     <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.5rem' }}>{item.desc}</p>
                                 </div>
                             </div>
@@ -204,7 +204,7 @@ export default function TentangPage() {
                 <div className="container">
                     <div className="historyContent">
                         <div className="historyText">
-                            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3.5rem', fontStyle: 'italic', marginBottom: '2rem' }}>Sebuah Legasi <br /> Dari Kedalaman</h2>
+                            <h2 style={{ fontFamily: 'var(--font-main)', fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '2rem' }}>Sebuah Legasi <br /> Dari Kedalaman</h2>
                             <p style={{ color: 'var(--text-muted)', lineHeight: '1.8', marginBottom: '2rem' }}>
                                 Dimulai pada tahun 2018 di sebuah sudut kecil di Jakarta, Sumde Betta lahir dari gairah yang mendalam terhadap estetika akuatik. Apa yang awalnya merupakan hobi koleksi pribadi, berkembang menjadi dedikasi untuk mengkurasi dan menghasilkan ikan cupang hias dengan standar genetik tertinggi.
                             </p>
@@ -232,7 +232,7 @@ export default function TentangPage() {
             <section style={{ padding: '10rem 0' }}>
                 <div className="container">
                     <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3.5rem', fontStyle: 'italic' }}>Dokumentasi Farm</h2>
+                        <h2 style={{ fontFamily: 'var(--font-main)', fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Dokumentasi Farm</h2>
                         <p style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2rem', marginTop: '1rem' }}>Fasilitas & Standar Perawatan kami</p>
                     </div>
 
@@ -289,7 +289,7 @@ export default function TentangPage() {
             <section style={{ padding: '10rem 0', borderTop: '1px solid var(--glass-border)' }}>
                 <div className="container" style={{ display: 'flex', gap: '5rem', alignItems: 'center' }}>
                     <div style={{ flex: 1 }}>
-                        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontStyle: 'italic', marginBottom: '2rem' }}>Komitmen Kualitas</h2>
+                        <h2 style={{ fontFamily: 'var(--font-main)', fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '2rem' }}>Komitmen Kualitas</h2>
                         <ul style={{ listStyle: 'none', padding: 0 }}>
                             {[
                                 { t: "Seleksi Individu", d: "Setiap ikan dipilih secara personal oleh kurator kami berdasarkan bentuk, warna, dan mental." },

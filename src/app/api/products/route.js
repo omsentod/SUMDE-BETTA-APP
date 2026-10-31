@@ -10,16 +10,36 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
+    const departmentId = searchParams.get('departmentId');
+    const subCategoryId = searchParams.get('subCategoryId');
+    const includeArchived = searchParams.get('archived') === 'true';
+
+    const where = {};
+    if (!includeArchived) {
+      where.isArchived = false;
+    }
+    if (departmentId && departmentId !== 'all') {
+      where.departmentId = departmentId;
+    }
+    if (subCategoryId && subCategoryId !== 'all') {
+      where.subCategoryId = subCategoryId;
+    }
+
     const products = await prisma.product.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
+        department: true,
+        subCategory: true,
         variants: { orderBy: { displayOrder: 'asc' } },
       },
     });
+
     let filtered = products;
     if (category && category !== 'Semua') {
       filtered = products.filter(p => p.form.toLowerCase() === category.toLowerCase());
     }
+
     return NextResponse.json(filtered, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -34,18 +54,25 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    await requirePermission(request, 'products:manage');
+    await requirePermission(request, ['products:create', 'products:manage']);
     const {
       name, price, category, form, coloration, description,
       image, images, isPremium, statsForm, age, statsSpirit,
       quantity, variants, soldCount,
       videoUrl, isDailyDrop, dropNumber,
+      departmentId, subCategoryId, brand, weight,
     } = await request.json();
 
     const gallery = normalizeImages(images, image, videoUrl);
     const coverImage = findCoverImage(gallery, image);
-    if (!name || price === undefined || !category || !form || !coloration || !description || gallery.length === 0) {
-      return NextResponse.json({ error: 'Data produk tidak lengkap (minimal 1 foto).' }, { status: 400 });
+    
+    // Fallback defaults for dry goods / equipment
+    const finalForm = (form && form.trim()) || 'Standard';
+    const finalColoration = (coloration && coloration.trim()) || 'Standard';
+    const finalCategory = (category && category.trim()) || 'Umum';
+
+    if (!name || price === undefined || !description || gallery.length === 0) {
+      return NextResponse.json({ error: 'Data produk tidak lengkap (nama, harga, deskripsi, dan minimal 1 foto wajib diisi).' }, { status: 400 });
     }
 
     const normalizedVariants = Array.isArray(variants) ? variants : [];
@@ -69,9 +96,9 @@ export async function POST(request) {
       data: {
         name,
         price: parseFloat(price),
-        category,
-        form,
-        coloration,
+        category: finalCategory,
+        form: finalForm,
+        coloration: finalColoration,
         description,
         image: coverImage,
         images: gallery,
@@ -85,6 +112,10 @@ export async function POST(request) {
         quantity: totalStock,
         isSold: totalStock === 0,
         soldCount: soldCount !== undefined ? Math.max(0, parseInt(soldCount) || 0) : 0,
+        departmentId: departmentId || null,
+        subCategoryId: subCategoryId || null,
+        brand: brand ? brand.trim() : null,
+        weight: weight !== undefined ? Math.max(50, parseInt(weight) || 1000) : 1000,
         variants: normalizedVariants.length > 0
           ? {
               create: normalizedVariants.map((v, idx) => ({
@@ -98,6 +129,8 @@ export async function POST(request) {
           : undefined,
       },
       include: {
+        department: true,
+        subCategory: true,
         variants: { orderBy: { displayOrder: 'asc' } },
       },
     });

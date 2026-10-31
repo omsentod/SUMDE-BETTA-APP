@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Organic Leaf / Nutrition Glow -->
+    <linearGradient id="leafGrad" x1="14" y1="8" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+
+    <!-- Golden Micro Pellets -->
+    <linearGradient id="pelletA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <!-- Red Carotenoid Color-Enhancing Pellets -->
+    <linearGradient id="pelletB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCA5A5"/>
+      <stop offset="50%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Nutrition Bowl / Petri Dish Base -->
+  <ellipse cx="24" cy="34" rx="18" ry="7" fill="#1E293B" stroke="#475569" stroke-width="1"/>
+  <ellipse cx="24" cy="33" rx="16" ry="5.5" fill="#0F172A"/>
+
+  <!-- Nutrient Spirulina Leaf Crest in Background -->
+  <path d="M24 6C24 6 12 14 12 24C12 27.5 14 30.5 17 32C19 28 22 25 24 25C26 25 29 28 31 32C34 30.5 36 27.5 36 24C36 14 24 6 24 6Z" fill="url(#leafGrad)" opacity="0.35"/>
+  <path d="M24 7V26" stroke="#4ADE80" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Color-Enhancing & Growth Pellets Array in Dish -->
+  <!-- Golden High-Protein Pellets -->
+  <circle cx="16" cy="32" r="3.2" fill="url(#pelletA)" stroke="#78350F" stroke-width="0.6"/>
+  <circle cx="15.2" cy="31" r="1" fill="#FFFFFF" opacity="0.8"/>
+
+  <circle cx="23" cy="31" r="3.4" fill="url(#pelletA)" stroke="#78350F" stroke-width="0.6"/>
+  <circle cx="22" cy="30" r="1" fill="#FFFFFF" opacity="0.8"/>
+
+  <circle cx="31" cy="33" r="3.1" fill="url(#pelletA)" stroke="#78350F" stroke-width="0.6"/>
+  <circle cx="30" cy="32" r="0.9" fill="#FFFFFF" opacity="0.8"/>
+
+  <!-- Red Carotenoid Pellets (Color Booster) -->
+  <circle cx="19.5" cy="34" r="3" fill="url(#pelletB)" stroke="#7F1D1D" stroke-width="0.6"/>
+  <circle cx="18.8" cy="33" r="0.9" fill="#FFFFFF" opacity="0.8"/>
+
+  <circle cx="27" cy="33.5" r="3.2" fill="url(#pelletB)" stroke="#7F1D1D" stroke-width="0.6"/>
+  <circle cx="26" cy="32.5" r="1" fill="#FFFFFF" opacity="0.8"/>
+
+  <circle cx="35" cy="32" r="2.6" fill="url(#pelletB)" stroke="#7F1D1D" stroke-width="0.6"/>
+
+  <!-- Green Spirulina Micro-Nutrient Flakes -->
+  <circle cx="20" cy="27" r="2.2" fill="#16A34A" stroke="#14532D" stroke-width="0.5"/>
+  <circle cx="27.5" cy="28" r="2.4" fill="#16A34A" stroke="#14532D" stroke-width="0.5"/>
+  <circle cx="32" cy="28.5" r="1.8" fill="#16A34A" stroke="#14532D" stroke-width="0.5"/>
+
+  <!-- Floating Falling Food Particles -->
+  <circle cx="22" cy="19" r="1.5" fill="url(#pelletA)"/>
+  <circle cx="26" cy="15" r="1.3" fill="url(#pelletB)"/>
+  <circle cx="20" cy="13" r="1.1" fill="#22C55E"/>
+</svg>

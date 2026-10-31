@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Tank Glass Gradient -->
+    <linearGradient id="tankGlass" x1="8" y1="14" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#0284C7" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0369A1" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Water Fill Gradient -->
+    <linearGradient id="tankWater" x1="8" y1="22" x2="40" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#00B4D8" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.85"/>
+    </linearGradient>
+
+    <!-- Filter Mechanism Gradient -->
+    <linearGradient id="filterGrad" x1="28" y1="6" x2="38" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#64748B"/>
+      <stop offset="50%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <!-- LED Lighting Bar Gradient -->
+    <linearGradient id="ledLight" x1="10" y1="8" x2="30" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="50%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Slim LED Aquarium Light Fixture on top left -->
+  <path d="M7 11C7 10 8 9 9 9H27C28 9 29 10 29 11V12H7V11Z" fill="url(#ledLight)"/>
+  <rect x="10" y="12" width="16" height="1" fill="#FFFFFF" opacity="0.9"/>
+  <!-- Light Stand Clip -->
+  <path d="M7 11V16H5V11H7Z" fill="#94A3B8"/>
+
+  <!-- Rimless Glass Tank Body -->
+  <rect x="7" y="15" width="34" height="24" rx="3" fill="url(#tankGlass)" stroke="#38BDF8" stroke-width="1.4"/>
+  <!-- Glass Reflection Hairline -->
+  <path d="M10 18L10 35" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Water Surface Wave & Fill -->
+  <path d="M8 23C13 21.5 17 24.5 22 23C27 21.5 31 24.5 40 23V36C40 37.65 38.65 39 37 39H11C9.35 39 8 37.65 8 36V23Z" fill="url(#tankWater)"/>
+  <path d="M8 23C13 21.5 17 24.5 22 23C27 21.5 31 24.5 40 23" stroke="#BAE6FD" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- Modern Hang-On Filter (HOB Filter Unit) on Top Right Rim -->
+  <path d="M30 8C30 6.9 30.9 6 32 6H39C40.1 6 41 6.9 41 8V20C41 20.6 40.6 21 40 21H37V18H32V20C32 20.6 31.6 21 31 21C30.4 21 30 20.6 30 20V8Z" fill="url(#filterGrad)" stroke="#475569" stroke-width="0.8"/>
+  <!-- Filter Water Cascade Waterfall Outflow -->
+  <path d="M32 18C30 19 29 21 29 24C30 24.5 31 24.5 32 24C33 22 34 20 35 18H32Z" fill="#38BDF8" opacity="0.85"/>
+  <path d="M30 20V23" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round"/>
+
+  <!-- Oxygen Bubbles Rising -->
+  <circle cx="16" cy="32" r="1.8" fill="#FFFFFF" fill-opacity="0.8"/>
+  <circle cx="17.5" cy="26" r="1.2" fill="#BAE6FD" fill-opacity="0.9"/>
+  <circle cx="21" cy="34" r="1.4" fill="#FFFFFF" fill-opacity="0.75"/>
+  <circle cx="24" cy="28" r="1.6" fill="#BAE6FD" fill-opacity="0.85"/>
+  <circle cx="29" cy="33" r="1.2" fill="#FFFFFF" fill-opacity="0.8"/>
+
+  <!-- Aerator Stone / Filter Sponge at Tank Floor -->
+  <rect x="14" y="35" width="8" height="3" rx="1.5" fill="#0284C7" stroke="#38BDF8" stroke-width="0.75"/>
+</svg>

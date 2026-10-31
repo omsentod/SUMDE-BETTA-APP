@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <!-- Molly Golden Aura Glow -->
+    <radialGradient id="mollyGlow" cx="45%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Molly Body Gradient: Golden Tangerine -> Obsidian Black Dalmatian -> Pearlescent -->
+    <linearGradient id="mollyBody" x1="15%" y1="20%" x2="85%" y2="80%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="35%" stop-color="#f97316" />
+      <stop offset="70%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+
+    <!-- Plump Belly Pearl Highlight -->
+    <linearGradient id="mollyBelly" x1="30%" y1="0%" x2="45%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#fde68a" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Sailfin High Dorsal Fin (The defining Molly feature) -->
+    <linearGradient id="mollySailfin" x1="10%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="45%" stop-color="#f59e0b" />
+      <stop offset="85%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#ffffff" />
+    </linearGradient>
+
+    <!-- Broad Fan Caudal Tail Fin -->
+    <linearGradient id="mollyTail" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="80%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+
+    <!-- Pectoral Fin -->
+    <linearGradient id="mollyPectoral" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Golden Glow -->
+  <circle cx="32" cy="34" r="28" fill="url(#mollyGlow)" />
+
+  <!-- HIGH SAILFIN DORSAL FIN (Distinctive Sailfin Molly) -->
+  <path d="M21 27 C20 16, 26 8, 38 7 C44 7, 47 11, 46 17 C45 22, 42 27, 39 29 C32 28, 26 27, 21 27 Z" 
+        fill="url(#mollySailfin)" />
+
+  <!-- Sailfin Spine Rays -->
+  <path d="M24 26 C24 18, 28 12, 36 9" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.8" />
+  <path d="M28 26 C29 19, 33 14, 40 10" stroke="#ffffff" stroke-width="0.75" stroke-linecap="round" opacity="0.75" />
+  <path d="M33 27 C34 21, 38 16, 44 12" stroke="#fef08a" stroke-width="0.7" stroke-linecap="round" opacity="0.7" />
+  <path d="M37 28 C39 24, 42 19, 45 15" stroke="#fed7aa" stroke-width="0.65" stroke-linecap="round" opacity="0.65" />
+
+  <!-- Dalmatian / Gold Leopard Dots on Sailfin -->
+  <circle cx="28" cy="16" r="1.1" fill="#18181b" opacity="0.75" />
+  <circle cx="33" cy="14" r="1" fill="#18181b" opacity="0.8" />
+  <circle cx="38" cy="13" r="1.2" fill="#18181b" opacity="0.7" />
+  <circle cx="33" cy="21" r="0.9" fill="#18181b" opacity="0.6" />
+  <circle cx="39" cy="19" r="1.1" fill="#18181b" opacity="0.75" />
+  <circle cx="43" cy="17" r="0.8" fill="#18181b" opacity="0.7" />
+
+  <!-- Sailfin Edge Highlight -->
+  <path d="M21 22 C22 13, 29 8, 38 7 C44 7, 47 11, 46 17" 
+        stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.9" />
+
+  <!-- BROAD FAN CAUDAL TAIL (Rounded Fan Shape) -->
+  <path d="M42 32 C46 26, 52 20, 58 22 C61 27, 61 41, 57 46 C51 47, 45 42, 42 37 Z" 
+        fill="url(#mollyTail)" />
+  
+  <!-- Caudal Fin Fluting / Rays -->
+  <path d="M43 33 C48 29, 53 25, 57 24" stroke="#ffffff" stroke-width="0.7" stroke-linecap="round" opacity="0.7" />
+  <path d="M43 34 C49 32, 55 31, 59 32" stroke="#fef08a" stroke-width="0.65" stroke-linecap="round" opacity="0.65" />
+  <path d="M43 35 C49 37, 54 39, 58 41" stroke="#fef08a" stroke-width="0.65" stroke-linecap="round" opacity="0.6" />
+  <path d="M43 36 C47 41, 51 44, 55 45" stroke="#f97316" stroke-width="0.7" stroke-linecap="round" opacity="0.6" />
+
+  <!-- Tail Edge Dark Rim (Classic Molly contrast) -->
+  <path d="M58 22 C61 27, 61 41, 57 46" stroke="#18181b" stroke-width="1.2" stroke-linecap="round" opacity="0.85" />
+
+  <!-- ANAL FIN -->
+  <path d="M34 43 C36 49, 41 50, 42 46 C41 42, 38 39, 34 43 Z" 
+        fill="#ea580c" opacity="0.9" />
+
+  <!-- PLUMP ROTUND MOLLY BODY (Distinctive deep, cute belly) -->
+  <path d="M9 34 C10 27, 18 24, 28 25 C37 26, 44 30, 43 35 C42 41, 38 47, 28 47 C16 47, 9 42, 9 34 Z" 
+        fill="url(#mollyBody)" />
+
+  <!-- Big Rounded Deep Belly Pearlescent Glow -->
+  <path d="M14 36 C15 42, 21 46, 29 46 C36 46, 39 42, 38 37 C34 35, 23 35, 14 36 Z" 
+        fill="url(#mollyBelly)" />
+
+  <!-- Dalmatian Scales Texture (Mottled pattern on flank) -->
+  <circle cx="25" cy="32" r="1.5" fill="#18181b" opacity="0.8" />
+  <circle cx="31" cy="31" r="1.2" fill="#18181b" opacity="0.85" />
+  <circle cx="28" cy="36" r="1.8" fill="#18181b" opacity="0.75" />
+  <circle cx="35" cy="35" r="1.3" fill="#18181b" opacity="0.8" />
+  <circle cx="38" cy="33" r="1.1" fill="#18181b" opacity="0.7" />
+  <circle cx="22" cy="38" r="1.3" fill="#18181b" opacity="0.7" />
+
+  <!-- Shimmering Gold Scales Highlights -->
+  <path d="M22 30 C24 29, 26 29, 28 30" stroke="#fef08a" stroke-width="0.8" stroke-linecap="round" opacity="0.8" />
+  <path d="M27 34 C29 33, 31 33, 33 34" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.85" />
+  <path d="M33 32 C35 31, 37 31, 39 32" stroke="#fef08a" stroke-width="0.75" stroke-linecap="round" opacity="0.8" />
+
+  <!-- PECTORAL FIN (Cute fluttering fin) -->
+  <path d="M18 35 C19 40, 23 43, 26 40 C25 36, 22 34, 18 35 Z" 
+        fill="url(#mollyPectoral)" stroke="#fef08a" stroke-width="0.6" />
+
+  <!-- CURIOUS EYE & FACE -->
+  <!-- Eye Base -->
+  <circle cx="14" cy="31" r="2.8" fill="#f59e0b" />
+  <circle cx="14" cy="31" r="2.1" fill="#0f172a" />
+  <!-- Catchlights -->
+  <circle cx="13.2" cy="30.2" r="0.8" fill="#ffffff" />
+  <circle cx="15" cy="32" r="0.4" fill="#ffffff" opacity="0.7" />
+
+  <!-- Cute Snout & Mouth Line -->
+  <path d="M8 34 C9 33, 11 34, 12 35" stroke="#d97706" stroke-width="0.8" stroke-linecap="round" />
+  
+  <!-- Operculum / Gill Arch -->
+  <path d="M18 29 C20 33, 20 37, 18 40" stroke="#fbbf24" stroke-width="0.85" stroke-linecap="round" opacity="0.75" />
+</svg>

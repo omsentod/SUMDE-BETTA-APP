@@ -107,13 +107,13 @@
 
 /* Typography Hierarchy */
 .emptyTitle {
-    font-family: var(--font-serif);
+    font-family: var(--font-main);
     font-style: normal;
     font-size: clamp(1.4rem, 2.2vw, 1.85rem);
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-main);
     margin: 0 0 0.5rem;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     line-height: 1.25;
 }
 

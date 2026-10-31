@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="allGrad1" x1="6" y1="6" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+    <linearGradient id="allGrad2" x1="26" y1="6" x2="42" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="allGrad3" x1="6" y1="26" x2="22" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="allGrad4" x1="26" y1="26" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Top-Left Card: Live Fish Symbol -->
+  <rect x="6" y="6" width="16" height="16" rx="4" fill="url(#allGrad1)" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+  <path d="M11 14C13 11 17 11 19 14C17 17 13 17 11 14Z" fill="#FFFFFF"/>
+  <circle cx="17.5" cy="13.5" r="0.75" fill="#EA580C"/>
+  <path d="M9.5 13L11.5 14L9.5 15Z" fill="#FFFFFF"/>
+
+  <!-- Top-Right Card: Equipment / Tank -->
+  <rect x="26" y="6" width="16" height="16" rx="4" fill="url(#allGrad2)" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+  <rect x="29" y="10" width="10" height="8" rx="1.5" fill="#BAE6FD" fill-opacity="0.3" stroke="#FFFFFF" stroke-width="1"/>
+  <circle cx="33" cy="15" r="1" fill="#FFFFFF"/>
+  <circle cx="35" cy="13" r="0.8" fill="#FFFFFF"/>
+
+  <!-- Bottom-Left Card: Gallery VIP Crown -->
+  <rect x="6" y="26" width="16" height="16" rx="4" fill="url(#allGrad3)" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+  <path d="M10 36L11 31L14 34L17 31L18 36H10Z" fill="#FFFFFF"/>
+  <circle cx="11" cy="30" r="0.75" fill="#FFFFFF"/>
+  <circle cx="14" cy="32.5" r="0.75" fill="#FFFFFF"/>
+  <circle cx="17" cy="30" r="0.75" fill="#FFFFFF"/>
+
+  <!-- Bottom-Right Card: Feed & Nutrients -->
+  <rect x="26" y="26" width="16" height="16" rx="4" fill="url(#allGrad4)" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+  <circle cx="32" cy="33" r="2.2" fill="#FFFFFF"/>
+  <circle cx="36" cy="35" r="1.6" fill="#FEF08A"/>
+  <circle cx="36.5" cy="30.5" r="1.8" fill="#FFFFFF" fill-opacity="0.8"/>
+</svg>
