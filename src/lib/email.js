@@ -133,7 +133,7 @@ export function orderPaidEmailTemplate({ name, orderId, total, orderUrl }) {
     </div>
     <div style="text-align:center;margin:20px 0;">
       <a href="${orderUrl}" style="display:inline-block;background:${BRAND.primary};color:#1a1a1a;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:800;font-size:14px;">
-        Lihat Detail Pesanan
+        Lacak Status Pesanan
       </a>
     </div>
     <p style="margin:0;font-size:12px;color:${BRAND.muted};line-height:1.6;">

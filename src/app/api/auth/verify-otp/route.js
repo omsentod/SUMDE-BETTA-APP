@@ -82,6 +82,11 @@ export async function POST(request) {
         data: { emailVerified: new Date() },
       }),
       prisma.emailVerification.delete({ where: { email: normalizedEmail } }),
+      // Auto-claim pesanan tamu yang pernah dibuat dengan email ini
+      prisma.order.updateMany({
+        where: { email: normalizedEmail, userId: null },
+        data: { userId: user.id },
+      }),
     ]);
 
     // Auto-login setelah verify — customer experience lebih smooth.

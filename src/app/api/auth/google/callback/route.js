@@ -91,6 +91,16 @@ export async function GET(request) {
       });
     }
 
+    // Auto-claim pesanan tamu (guest orders) yang dibuat sebelum mendaftar/login Google
+    try {
+      await prisma.order.updateMany({
+        where: { email: normalizedEmail, userId: null },
+        data: { userId: user.id },
+      });
+    } catch (claimErr) {
+      console.error('Auto-claim guest orders on Google login failed:', claimErr.message);
+    }
+
     const token = await signSession({ id: user.id, role: user.role });
     const permissions = await getRolePermissions(user.role);
     const hasAdminAccess = user.role === 'admin' || (Array.isArray(permissions) && permissions.length > 0);

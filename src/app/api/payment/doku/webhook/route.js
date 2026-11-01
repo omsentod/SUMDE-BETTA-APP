@@ -211,6 +211,7 @@ export async function POST(request) {
         });
         if (order.email) {
           const appUrl = process.env.APP_URL || 'https://sumdebetta.com';
+          const trackingLink = `${appUrl}/lacak-pesanan?orderId=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email)}`;
           await sendMail({
             to: order.email,
             subject: `Pembayaran Diterima — Order #${order.id.slice(0, 8)}`,
@@ -218,7 +219,7 @@ export async function POST(request) {
               name: order.name,
               orderId: order.id,
               total: order.total,
-              orderUrl: `${appUrl}/customer/orders`,
+              orderUrl: trackingLink,
             }),
           });
         }

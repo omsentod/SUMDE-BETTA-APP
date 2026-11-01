@@ -76,6 +76,7 @@ export default function Header() {
                         <Link href="/">Beranda</Link>
                         <Link href="/produk">Produk</Link>
                         <Link href="/event">Event</Link>
+                        <Link href="/lacak-pesanan">Lacak Pesanan</Link>
                         <Link href="/tentang">Tentang Kami</Link>
                     </nav>
 
@@ -193,6 +194,7 @@ export default function Header() {
 
                 {/* Hamburger = menu sekunder saja; primary nav sudah di MobileBottomNav */}
                 <nav className="mobile-nav-links">
+                    <Link href="/lacak-pesanan" className="mobile-nav-link" onClick={closeMenu}>Lacak Pesanan</Link>
                     <Link href="/event" className="mobile-nav-link" onClick={closeMenu}>Event</Link>
                     <Link href="/tentang" className="mobile-nav-link" onClick={closeMenu}>Tentang Kami</Link>
                     {/* Theme toggle (mobile) DINONAKTIFKAN SEMENTARA — app dikunci mode terang.

@@ -125,6 +125,7 @@ async function sendShippedNotifications(order, waybill) {
     });
     if (order.email) {
       const appUrl = process.env.APP_URL || 'https://sumdebetta.com';
+      const trackingLink = `${appUrl}/lacak-pesanan?orderId=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email)}`;
       await sendMail({
         to: order.email,
         subject: `Pesanan Dikirim — Order #${order.id.slice(0, 8)}`,
@@ -133,7 +134,7 @@ async function sendShippedNotifications(order, waybill) {
           orderId: order.id,
           courier: order.shippingCourier,
           waybill: waybill || order.trackingNumber || '-',
-          orderUrl: `${appUrl}/customer/orders`,
+          orderUrl: trackingLink,
         }),
       });
     }
