@@ -56,7 +56,13 @@ export async function PUT(request, { params }) {
       where: { id },
       data: dataToUpdate,
       include: {
-        _count: { select: { products: true } },
+        _count: {
+          select: {
+            products: {
+              where: { isArchived: false },
+            },
+          },
+        },
       },
     });
 
@@ -73,23 +79,33 @@ export async function DELETE(request, { params }) {
 
     const existing = await prisma.subCategory.findUnique({
       where: { id },
-      include: {
-        _count: { select: { products: true } },
-      },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Sub-kategori tidak ditemukan.' }, { status: 404 });
     }
 
-    if (existing._count.products > 0) {
+    const activeProductsCount = await prisma.product.count({
+      where: {
+        subCategoryId: id,
+        isArchived: false,
+      },
+    });
+
+    if (activeProductsCount > 0) {
       return NextResponse.json(
         {
-          error: `Sub-kategori "${existing.name}" tidak dapat dihapus karena masih digunakan oleh ${existing._count.products} produk. Pindahkan produk ke kategori lain terlebih dahulu.`,
+          error: `Sub-kategori "${existing.name}" tidak dapat dihapus karena masih digunakan oleh ${activeProductsCount} produk aktif. Pindahkan atau hapus produk aktif terlebih dahulu.`,
         },
         { status: 400 }
       );
     }
+
+    // Lepas referensi dari produk yang ada di recycle bin agar tidak dangling
+    await prisma.product.updateMany({
+      where: { subCategoryId: id },
+      data: { subCategoryId: null },
+    });
 
     await prisma.subCategory.delete({ where: { id } });
 

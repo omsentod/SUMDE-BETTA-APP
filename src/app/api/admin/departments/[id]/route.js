@@ -50,7 +50,12 @@ export async function PUT(request, { params }) {
       include: {
         subCategories: { orderBy: { orderIndex: 'asc' } },
         _count: {
-          select: { products: true, subCategories: true },
+          select: {
+            products: {
+              where: { isArchived: false },
+            },
+            subCategories: true,
+          },
         },
       },
     });
@@ -69,7 +74,7 @@ export async function DELETE(request, { params }) {
     const existing = await prisma.department.findUnique({
       where: { id },
       include: {
-        _count: { select: { products: true, subCategories: true } },
+        _count: { select: { subCategories: true } },
       },
     });
 
@@ -77,14 +82,36 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Departemen tidak ditemukan.' }, { status: 404 });
     }
 
-    if (existing._count.products > 0) {
+    if (existing._count.subCategories > 0) {
       return NextResponse.json(
         {
-          error: `Departemen "${existing.name}" tidak dapat dihapus karena masih memiliki ${existing._count.products} produk. Silakan ubah atau hapus produk di dalamnya terlebih dahulu.`,
+          error: `Departemen "${existing.name}" tidak dapat dihapus karena masih memiliki ${existing._count.subCategories} sub-kategori. Hapus sub-kategori di dalamnya terlebih dahulu.`,
         },
         { status: 400 }
       );
     }
+
+    const activeProductsCount = await prisma.product.count({
+      where: {
+        departmentId: id,
+        isArchived: false,
+      },
+    });
+
+    if (activeProductsCount > 0) {
+      return NextResponse.json(
+        {
+          error: `Departemen "${existing.name}" tidak dapat dihapus karena masih memiliki ${activeProductsCount} produk aktif. Silakan ubah atau hapus produk aktif di dalamnya terlebih dahulu.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Lepas referensi dari produk yang ada di recycle bin agar tidak dangling
+    await prisma.product.updateMany({
+      where: { departmentId: id },
+      data: { departmentId: null },
+    });
 
     await prisma.department.delete({ where: { id } });
 

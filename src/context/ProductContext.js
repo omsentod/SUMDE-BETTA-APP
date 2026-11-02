@@ -85,14 +85,9 @@ export function ProductProvider({ children }) {
         const res = await fetch(url, { method: 'DELETE' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Gagal menghapus produk.');
-        // The endpoint may soft-delete (returns { archived: true }) — in that
-        // case flip the local flag instead of removing the row, so admin can
-        // still see + restore it.
-        setProducts((prev) =>
-            data.archived
-                ? prev.map((p) => (p.id === id ? { ...p, isArchived: true } : p))
-                : prev.filter((p) => p.id !== id)
-        );
+        // Produk yang dihapus (baik soft-delete / masuk recycle-bin maupun permanent)
+        // dikeluarkan dari daftar produk aktif toko.
+        setProducts((prev) => prev.filter((p) => p.id !== id));
         return data;
     }, []);
 

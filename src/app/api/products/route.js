@@ -12,10 +12,18 @@ export async function GET(request) {
     const category = searchParams.get('category');
     const departmentId = searchParams.get('departmentId');
     const subCategoryId = searchParams.get('subCategoryId');
-    const includeArchived = searchParams.get('archived') === 'true';
+    const archivedParam = searchParams.get('archived');
+    const includeArchived = archivedParam === 'true';
+    const archivedOnly = archivedParam === 'only';
+
+    if (includeArchived || archivedOnly) {
+      await requirePermission(request, ['products:view', 'products:manage']);
+    }
 
     const where = {};
-    if (!includeArchived) {
+    if (archivedOnly) {
+      where.isArchived = true;
+    } else if (!includeArchived) {
       where.isArchived = false;
     }
     if (departmentId && departmentId !== 'all') {
@@ -48,7 +56,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }
 }
 

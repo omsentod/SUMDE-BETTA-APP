@@ -24,7 +24,7 @@ function parseVariants(input) {
     } catch { }
   }
 
-  const parts = str.split(/[,;\\n]+/).map((p) => p.trim()).filter(Boolean);
+  const parts = str.split(/[,;\n]+/).map((p) => p.trim()).filter(Boolean);
   const result = [];
   for (const part of parts) {
     const segments = part.split(':').map((s) => s.trim());
@@ -44,6 +44,49 @@ function getField(row, keys, fallback = '') {
     }
   }
   return fallback;
+}
+
+function cleanStr(val) {
+  if (val === undefined || val === null) return '';
+  return String(val).trim();
+}
+
+function normalizeKey(str) {
+  return cleanStr(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findDepartment(rawDept, depts) {
+  if (!rawDept || !Array.isArray(depts)) return null;
+  const target = normalizeKey(rawDept);
+  if (!target) return null;
+
+  // 1. Exact match by name or slug
+  let found = depts.find((d) => normalizeKey(d.name) === target || normalizeKey(d.slug) === target);
+  if (found) return found;
+
+  // 2. Substring match
+  found = depts.find((d) => {
+    const dNorm = normalizeKey(d.name);
+    return dNorm.includes(target) || target.includes(dNorm);
+  });
+  return found || null;
+}
+
+function findSubCategory(rawSub, subCategories) {
+  if (!rawSub || !Array.isArray(subCategories) || subCategories.length === 0) return null;
+  const target = normalizeKey(rawSub);
+  if (!target) return null;
+
+  // 1. Exact match by name or slug
+  let found = subCategories.find((s) => normalizeKey(s.name) === target || normalizeKey(s.slug) === target);
+  if (found) return found;
+
+  // 2. Substring match
+  found = subCategories.find((s) => {
+    const sNorm = normalizeKey(s.name);
+    return sNorm.includes(target) || target.includes(sNorm);
+  });
+  return found || null;
 }
 
 export async function POST(request) {
@@ -81,7 +124,7 @@ export async function POST(request) {
 
     const sheet = workbook.Sheets[sheetName];
     if (!sheet) {
-      return NextResponse.json({ error: 'Sheet kosong atau tidak ditemukan dalam file Excel.' }, { status: 400 });
+      return NextResponse.json({ error: 'Sheet "Data Produk" kosong atau tidak ditemukan dalam file Excel.' }, { status: 400 });
     }
 
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
@@ -89,13 +132,20 @@ export async function POST(request) {
       return NextResponse.json({ error: 'File Excel tidak memiliki baris data.' }, { status: 400 });
     }
 
+    // Pre-fetch all departments and their subcategories for fast, safe in-memory validation
+    const allDepartments = await prisma.department.findMany({
+      include: {
+        subCategories: true,
+      },
+    });
+
     const results = { created: [], updated: [], errors: [] };
 
     for (let index = 0; index < rows.length; index++) {
       const row = rows[index];
       const rowNumber = index + 2;
 
-      const name = String(getField(row, ['Nama Produk', 'Nama', 'name', 'Title', 'Product Name'])).trim();
+      const name = cleanStr(getField(row, ['Nama Produk', 'Nama', 'name', 'Title', 'Product Name']));
       const rawPrice = getField(row, ['Harga', 'price', 'Price', 'Harga (Rp)']);
 
       if (!name) {
@@ -112,13 +162,117 @@ export async function POST(request) {
         continue;
       }
 
-      const category = String(getField(row, ['Kategori', 'category', 'Kategori Form', 'form'], 'Plakat')).trim() || 'Plakat';
-      const form = category;
-      const coloration = String(getField(row, ['Corak Warna', 'coloration', 'Warna'], 'Multicolor')).trim() || 'Multicolor';
-      const description = String(getField(row, ['Deskripsi', 'description', 'Keterangan'], '')).trim();
-      const statsForm = String(getField(row, ['Grade Bentuk', 'statsForm', 'Grade'], 'COMP')).trim() || 'COMP';
-      const age = String(getField(row, ['Umur', 'age', 'Age'], '4 Month')).trim() || '4 Month';
+      // 1. Departemen & Sub-Kategori Matching
+      const rawDept = cleanStr(getField(row, ['Departemen', 'departemen', 'Department', 'department', 'Tingkat 1']));
+      const rawSubCat = cleanStr(getField(row, ['Sub-Kategori', 'Sub Kategori', 'subCategory', 'sub_category', 'Subcategory', 'Sub Kategori (Tingkat 2)', 'Tingkat 2', 'Jenis']));
 
+      let matchedDept = null;
+      if (rawDept) {
+        matchedDept = findDepartment(rawDept, allDepartments);
+        if (!matchedDept) {
+          results.errors.push({
+            rowNumber,
+            productName: name,
+            error: `Departemen "${rawDept}" tidak ditemukan di database. Silakan gunakan nama departemen yang terdaftar di sheet "Daftar Departemen & Kategori".`,
+          });
+          continue;
+        }
+      }
+
+      // Jika Departemen tidak diisi tetapi Sub-Kategori terisi, coba inferensikan dari Sub-Kategori
+      if (!matchedDept && rawSubCat) {
+        for (const dept of allDepartments) {
+          const subMatch = findSubCategory(rawSubCat, dept.subCategories);
+          if (subMatch) {
+            matchedDept = dept;
+            break;
+          }
+        }
+      }
+
+      // Jika tetap belum ada departemen, fallback ke departemen live fish atau yang pertama
+      if (!matchedDept && allDepartments.length > 0) {
+        matchedDept = allDepartments.find((d) => d.isLiveFish) || allDepartments[0];
+      }
+
+      // Validasi Sub-Kategori di bawah Departemen terpilih
+      let matchedSub = null;
+      if (matchedDept && rawSubCat) {
+        matchedSub = findSubCategory(rawSubCat, matchedDept.subCategories);
+        if (!matchedSub) {
+          // Deteksi apakah sub-kategori ini sebenarnya milik departemen lain
+          let wrongDept = null;
+          for (const other of allDepartments) {
+            if (other.id === matchedDept.id) continue;
+            if (findSubCategory(rawSubCat, other.subCategories)) {
+              wrongDept = other;
+              break;
+            }
+          }
+
+          if (wrongDept) {
+            results.errors.push({
+              rowNumber,
+              productName: name,
+              error: `Sub-kategori "${rawSubCat}" terdaftar di bawah departemen "${wrongDept.name}", bukan "${matchedDept.name}". Silakan sesuaikan departemennya.`,
+            });
+            continue;
+          } else {
+            results.errors.push({
+              rowNumber,
+              productName: name,
+              error: `Sub-kategori "${rawSubCat}" tidak terdaftar di departemen "${matchedDept.name}". Silakan gunakan sub-kategori dari sheet "Daftar Departemen & Kategori".`,
+            });
+            continue;
+          }
+        }
+      }
+
+      const isLiveFish = matchedDept ? Boolean(matchedDept.isLiveFish) : true;
+
+      // 2. Atribut Fisik Alat / Pakan
+      const rawBrand = cleanStr(getField(row, ['Merk / Brand', 'Brand', 'brand', 'Merk', 'merek', 'Merek']));
+      const brand = rawBrand || null;
+
+      const rawWeight = getField(row, ['Berat (Gram)', 'Berat', 'berat', 'weight', 'Weight', 'Berat(gr)']);
+      const parsedWeight = parseInt(rawWeight);
+      const weight = Number.isFinite(parsedWeight) && parsedWeight >= 50 ? parsedWeight : 1000;
+
+      // 3. Link Video (Flaring / Demo)
+      const videoUrl = cleanStr(getField(row, ['Link Video', 'videoUrl', 'Video', 'Video URL', 'Link Flaring', 'video'])) || null;
+
+      // 4. Kategori, Form, Corak Warna, Umur, Grade
+      const rawCategory = cleanStr(getField(row, ['Kategori Form', 'Kategori', 'category', 'form']));
+      const rawColoration = cleanStr(getField(row, ['Corak Warna', 'coloration', 'Warna']));
+      const rawStatsForm = cleanStr(getField(row, ['Grade Bentuk', 'statsForm', 'Grade']));
+      const rawAge = cleanStr(getField(row, ['Umur', 'age', 'Age']));
+      const description = cleanStr(getField(row, ['Deskripsi', 'description', 'Keterangan']));
+
+      let category = rawCategory;
+      let form = rawCategory;
+      let coloration = rawColoration;
+      let statsForm = rawStatsForm;
+      let statsSpirit = 'Aktif';
+      let age = rawAge;
+
+      if (isLiveFish) {
+        category = category || (matchedSub ? matchedSub.name : 'Plakat');
+        form = form || category;
+        coloration = coloration || 'Multicolor';
+        statsForm = statsForm || 'COMP';
+        statsSpirit = 'Aktif';
+        age = age || '4 Month';
+      } else {
+        // Barang kering (Peralatan & Pakan)
+        category = category && category !== '-' ? category : (matchedSub ? matchedSub.name : (matchedDept ? matchedDept.name : 'Peralatan'));
+        form = form && form !== '-' ? form : category;
+        coloration = coloration && coloration !== '-' ? coloration : '-';
+        statsForm = statsForm && statsForm !== '-' ? statsForm : '-';
+        statsSpirit = '-';
+        age = age && age !== '-' ? age : '-';
+      }
+
+      // 5. Varian & Stok
       const rawVariants = getField(row, ['Varian', 'varian', 'Varian / Ukuran', 'Ukuran', 'sizes', 'Sizes', 'Variants']);
       const variants = parseVariants(rawVariants);
 
@@ -130,7 +284,7 @@ export async function POST(request) {
         const parsedQty = parseInt(rawQty);
         quantity = Number.isFinite(parsedQty) && parsedQty >= 0 ? parsedQty : 1;
 
-        const rawGender = String(getField(row, ['Gender', 'gender', 'Jenis Kelamin'], '')).trim();
+        const rawGender = cleanStr(getField(row, ['Gender', 'gender', 'Jenis Kelamin']));
         if (rawGender) {
           variants.push({ size: rawGender, stock: quantity, price: null });
         }
@@ -140,7 +294,7 @@ export async function POST(request) {
       const parsedSold = parseInt(rawSold);
       const soldCount = Number.isFinite(parsedSold) && parsedSold >= 0 ? parsedSold : 0;
 
-      const rawPrem = String(getField(row, ['Premium', 'isPremium'], 'Tidak')).toLowerCase();
+      const rawPrem = cleanStr(getField(row, ['Premium', 'isPremium'], 'Tidak')).toLowerCase();
       const isPremium = ['ya', 'yes', 'true', '1'].includes(rawPrem);
 
       try {
@@ -148,6 +302,9 @@ export async function POST(request) {
           where: { name: { equals: name } },
           include: { variants: true },
         });
+
+        const departmentId = matchedDept ? matchedDept.id : null;
+        const subCategoryId = matchedSub ? matchedSub.id : null;
 
         if (existing) {
           await prisma.$transaction(async (tx) => {
@@ -161,11 +318,16 @@ export async function POST(request) {
                 description: description || existing.description,
                 statsForm,
                 age,
-                statsSpirit: 'Aktif',
+                statsSpirit,
                 quantity,
                 isSold: quantity === 0,
                 soldCount: soldCount > 0 ? soldCount : existing.soldCount,
                 isPremium,
+                departmentId: departmentId || existing.departmentId,
+                subCategoryId: subCategoryId !== null ? subCategoryId : (rawSubCat ? null : existing.subCategoryId),
+                brand: brand !== null ? brand : existing.brand,
+                weight,
+                videoUrl: videoUrl || existing.videoUrl,
               },
             });
 
@@ -192,16 +354,21 @@ export async function POST(request) {
               category,
               form,
               coloration,
-              description: description || `Ikan Cupang ${name} kualitas pilihan SUMDE BETTA.`,
+              description: description || `Produk ${name} kualitas pilihan SUMDE BETTA.`,
               image: '',
               images: [],
+              videoUrl,
               statsForm,
               age,
-              statsSpirit: 'Aktif',
+              statsSpirit,
               quantity,
               isSold: quantity === 0,
               soldCount,
               isPremium,
+              departmentId,
+              subCategoryId,
+              brand,
+              weight,
               variants: variants.length > 0
                 ? {
                     create: variants.map((v, idx) => ({

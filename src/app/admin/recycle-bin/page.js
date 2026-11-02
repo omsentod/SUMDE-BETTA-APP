@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ const formatCurrency = (v) =>
 
 function AdminRecycleBinInner() {
   const { currentUser, isLoading: authLoading } = useAuth();
-  const { products, isLoading: productsLoading, fetchProducts } = useProducts();
+  const { fetchProducts } = useProducts();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -24,6 +24,8 @@ function AdminRecycleBinInner() {
   const canUpdate = canUser(currentUser, 'products:update');
   const canDelete = canUser(currentUser, 'products:delete');
 
+  const [archivedProducts, setArchivedProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [search, setSearch] = useState('');
@@ -36,9 +38,30 @@ function AdminRecycleBinInner() {
     }
   }, [currentUser, authLoading, canView, router]);
 
-  const archivedProducts = useMemo(() => {
-    return products.filter((p) => Boolean(p.isArchived));
-  }, [products]);
+  const fetchArchived = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/products?archived=only', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setArchivedProducts(Array.isArray(data) ? data : []);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Gagal memuat data produk recycle bin.');
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data recycle bin:', err);
+      toast.error(err.message || 'Gagal memuat produk terhapus.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (!authLoading && currentUser && canView) {
+      fetchArchived();
+    }
+  }, [authLoading, currentUser, canView, fetchArchived]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -66,7 +89,11 @@ function AdminRecycleBinInner() {
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Gagal memulihkan produk.');
           toast.success(`Produk "${product.name}" berhasil dipulihkan.`);
+          fetchArchived();
           if (fetchProducts) fetchProducts();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal memulihkan produk.');
         }
@@ -93,7 +120,10 @@ function AdminRecycleBinInner() {
           } else {
             toast.success(`Produk "${product.name}" berhasil dihapus secara permanen.`);
           }
-          if (fetchProducts) fetchProducts();
+          fetchArchived();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus produk permanen.');
         }
@@ -120,7 +150,11 @@ function AdminRecycleBinInner() {
           toast.success(data.message || `${count} produk berhasil dipulihkan.`);
           setSelectedIds(new Set());
           setIsSelectMode(false);
+          fetchArchived();
           if (fetchProducts) fetchProducts();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal memulihkan produk.');
         }
@@ -147,7 +181,10 @@ function AdminRecycleBinInner() {
           toast.success(data.message || `${data.deletedCount} produk berhasil dihapus permanen.`);
           setSelectedIds(new Set());
           setIsSelectMode(false);
-          if (fetchProducts) fetchProducts();
+          fetchArchived();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus produk permanen.');
         }
@@ -235,7 +272,7 @@ function AdminRecycleBinInner() {
           </span>
         </div>
 
-        {productsLoading ? (
+        {isLoading ? (
           <div className={styles.tableCard} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
             <p>Memuat data recycle bin...</p>
           </div>

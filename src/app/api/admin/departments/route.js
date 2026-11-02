@@ -25,12 +25,21 @@ export async function GET(request) {
           orderBy: { orderIndex: 'asc' },
           include: {
             _count: {
-              select: { products: true },
+              select: {
+                products: {
+                  where: { isArchived: false },
+                },
+              },
             },
           },
         },
         _count: {
-          select: { products: true, subCategories: true },
+          select: {
+            products: {
+              where: { isArchived: false },
+            },
+            subCategories: true,
+          },
         },
       },
     });
@@ -82,7 +91,12 @@ export async function POST(request) {
       include: {
         subCategories: true,
         _count: {
-          select: { products: true, subCategories: true },
+          select: {
+            products: {
+              where: { isArchived: false },
+            },
+            subCategories: true,
+          },
         },
       },
     });

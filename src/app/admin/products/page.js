@@ -546,6 +546,9 @@ function AdminProductsInner() {
           setSelectedIds(new Set());
           setIsSelectMode(false);
           if (fetchProducts) fetchProducts();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus produk.');
         }
@@ -563,6 +566,9 @@ function AdminProductsInner() {
           await deleteProduct(product.id);
           toast.success(`Produk "${product.name}" berhasil dihapus.`);
           if (fetchProducts) fetchProducts();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus produk.');
         }

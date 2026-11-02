@@ -538,7 +538,7 @@ export default function ProductDetailClient() {
                                         </button>
                                     </>
                                 ) : (
-                                    <span className={styles.soldOutTag}>Stok Habis / Terjual</span>
+                                    <span className={styles.soldOutTag}>Habis</span>
                                 )}
                             </div>
 

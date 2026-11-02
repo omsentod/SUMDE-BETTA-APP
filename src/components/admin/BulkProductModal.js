@@ -209,6 +209,11 @@ export default function BulkProductModal({ isOpen, onClose, onComplete }) {
                 </button>
               </div>
 
+              {/* Petunjuk Singkat Excel */}
+              <div className={styles.helperNote}>
+                Gunakan template resmi di atas. Sheet <strong>Data Produk</strong> untuk mengisi produk, dan Sheet <strong>Daftar Departemen & Kategori</strong> memuat master data aktif dari sistem agar penulisan kategori akurat dan seragam.
+              </div>
+
               {/* Dropzone Excel */}
               <input
                 ref={excelInputRef}

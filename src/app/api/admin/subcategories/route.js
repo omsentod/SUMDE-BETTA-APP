@@ -74,7 +74,11 @@ export async function POST(request) {
       },
       include: {
         _count: {
-          select: { products: true },
+          select: {
+            products: {
+              where: { isArchived: false },
+            },
+          },
         },
       },
     });

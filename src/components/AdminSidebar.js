@@ -123,10 +123,18 @@ function AdminSidebarInner() {
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
 
+    const onRefreshCounts = () => load(true);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('admin:refresh-counts', onRefreshCounts);
+    }
+
     return () => {
       cancelled = true;
       if (timer) clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('admin:refresh-counts', onRefreshCounts);
+      }
     };
   }, [currentUser]);
 

@@ -234,7 +234,7 @@ export default function ProductCard({
                     {effectiveSold && (
                         <div className={styles.soldOverlay}>
                             <div className={styles.soldOverlayCircle}>
-                                <span>TERJUAL</span>
+                                <span>HABIS</span>
                             </div>
                         </div>
                     )}
