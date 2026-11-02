@@ -69,7 +69,10 @@ export default function RoleManagementTab({
           const data = await res.json();
           if (res.ok) {
             setRoles((prev) => prev.filter((r) => r.id !== role.id));
-            toast.success(data.message || `Role "${role.name}" berhasil dihapus.`);
+            toast.success(data.message || `Role "${role.name}" dipindahkan ke Recycle Bin.`);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+            }
           } else {
             toast.error(data.error || 'Gagal menghapus role.');
           }

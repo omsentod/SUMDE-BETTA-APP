@@ -68,7 +68,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await requirePermission(request, ['products:delete', 'products:manage']);
+    const session = await requirePermission(request, ['products:delete', 'products:manage']);
     const { id } = await params;
 
     const existing = await prisma.department.findUnique({
@@ -113,9 +113,20 @@ export async function DELETE(request, { params }) {
       data: { departmentId: null },
     });
 
+    // Pindahkan snapshot ke Recycle Bin
+    const { moveToRecycleBin } = await import('@/lib/recycleBin');
+    await moveToRecycleBin({
+      entityType: 'DEPARTMENT',
+      entityId: id,
+      name: existing.name,
+      summary: `Departemen • Slug: ${existing.slug} • ${existing.isLiveFish ? 'Ikan Hias' : 'Peralatan/Pakan'}`,
+      data: existing,
+      deletedBy: session?.name || session?.email || 'Admin',
+    });
+
     await prisma.department.delete({ where: { id } });
 
-    return NextResponse.json({ message: `Departemen "${existing.name}" berhasil dihapus.` });
+    return NextResponse.json({ message: `Departemen "${existing.name}" dipindahkan ke Recycle Bin.` });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

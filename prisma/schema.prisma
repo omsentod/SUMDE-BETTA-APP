@@ -303,3 +303,17 @@ model SubCategory {
   @@index([orderIndex])
 }
 
+model RecycleBinItem {
+  id         String   @id @default(uuid())
+  entityType String   // PRODUCT | EVENT | DEPARTMENT | SUBCATEGORY | USER | ROLE | TELEGRAM_EVENT
+  entityId   String
+  name       String
+  summary    String?  @db.Text
+  data       Json
+  deletedAt  DateTime @default(now())
+  deletedBy  String?
+
+  @@index([entityType])
+  @@index([deletedAt])
+}
+

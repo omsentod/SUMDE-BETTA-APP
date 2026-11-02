@@ -21,7 +21,7 @@ export async function GET(request) {
 
     // Gunakan groupBy untuk status agar hanya butuh 1 query agregat (1 koneksi DB)
     // untuk menghitung PENDING, PAID, PROCESSING, dan RETURNED secara efisien.
-    const [statusGroups, awaitingWaybill, archivedProducts] = await Promise.all([
+    const [statusGroups, awaitingWaybill, archivedProducts, otherRecycledCount] = await Promise.all([
       prisma.order.groupBy({
         by: ['status'],
         _count: { id: true },
@@ -35,6 +35,7 @@ export async function GET(request) {
       prisma.product.count({
         where: { isArchived: true },
       }),
+      prisma.recycleBinItem.count().catch(() => 0),
     ]);
 
     const countsByStatus = {};
@@ -45,13 +46,14 @@ export async function GET(request) {
     const pendingOrders = (countsByStatus['PENDING'] || 0) + (countsByStatus['PAID'] || 0);
     const processing = countsByStatus['PROCESSING'] || 0;
     const returned = countsByStatus['RETURNED'] || 0;
+    const totalRecycled = (archivedProducts || 0) + (otherRecycledCount || 0);
 
     return NextResponse.json({
       pendingOrders,
       processing,
       awaitingWaybill,
       returned,
-      archivedProducts,
+      archivedProducts: totalRecycled,
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });

@@ -634,13 +634,27 @@ export async function POST(request) {
  */
 export async function DELETE(request) {
   try {
-    await requirePermission(request, ['products:manage', 'events:manage']);
+    const session = await requirePermission(request, ['products:manage', 'events:manage']);
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('eventId');
     const productId = searchParams.get('productId');
 
     if (eventId) {
+      const existing = await prisma.telegramBroadcastEvent.findUnique({ where: { id: eventId } });
+
+      if (existing) {
+        const { moveToRecycleBin } = await import('@/lib/recycleBin');
+        await moveToRecycleBin({
+          entityType: 'TELEGRAM_EVENT',
+          entityId: eventId,
+          name: existing.title,
+          summary: `Sesi Telegram • Prefix: ${existing.prefix} • ${existing.totalItems || 0} item`,
+          data: existing,
+          deletedBy: session?.name || session?.email || 'Admin',
+        });
+      }
+
       // Lepaskan semua produk yang terhubung ke event ini
       await prisma.product.updateMany({
         where: { broadcastEventId: eventId },
@@ -653,7 +667,7 @@ export async function DELETE(request) {
 
       return NextResponse.json({
         success: true,
-        message: 'Event broadcast berhasil dihapus.',
+        message: 'Event broadcast dipindahkan ke Recycle Bin.',
       });
     }
 

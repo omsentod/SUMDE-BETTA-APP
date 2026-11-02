@@ -116,7 +116,10 @@ export default function AdminUsersPage() {
           if (res.ok) {
             setUsers((prev) => prev.filter((u) => u.id !== user.id));
             loadRoles(); // refresh role counts
-            toast.success(`Akun "${user.name}" berhasil dihapus.`);
+            toast.success(`Akun "${user.name}" berhasil dipindahkan ke Recycle Bin.`);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+            }
           } else {
             const data = await res.json().catch(() => ({}));
             toast.error(data.error || 'Gagal menghapus user.');

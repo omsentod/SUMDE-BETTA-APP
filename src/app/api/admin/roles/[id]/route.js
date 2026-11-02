@@ -116,7 +116,7 @@ export async function PUT(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
-    await requirePermission(request, 'roles:manage');
+    const session = await requirePermission(request, 'roles:manage');
     const { id } = await params;
 
     const existing = await prisma.role.findUnique({ where: { id } });
@@ -142,11 +142,22 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    // Pindahkan snapshot ke Recycle Bin
+    const { moveToRecycleBin } = await import('@/lib/recycleBin');
+    await moveToRecycleBin({
+      entityType: 'ROLE',
+      entityId: id,
+      name: existing.name,
+      summary: `Peran • Slug: ${existing.slug}`,
+      data: existing,
+      deletedBy: session?.name || session?.email || 'Admin',
+    });
+
     await prisma.role.delete({ where: { id } });
     invalidateRoleCache(existing.slug);
 
     return NextResponse.json({
-      message: `Role "${existing.name}" berhasil dihapus.`,
+      message: `Role "${existing.name}" dipindahkan ke Recycle Bin.`,
     });
   } catch (error) {
     return NextResponse.json(

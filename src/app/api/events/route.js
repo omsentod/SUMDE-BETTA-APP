@@ -143,10 +143,10 @@ export async function PUT(request) {
   }
 }
 
-// DELETE: Menghapus event
+// DELETE: Menghapus event (dipindahkan ke Recycle Bin)
 export async function DELETE(request) {
   try {
-    await requirePermission(request, ['events:delete', 'events:manage']);
+    const session = await requirePermission(request, ['events:delete', 'events:manage']);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -154,11 +154,27 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'ID event wajib disertakan.' }, { status: 400 });
     }
 
-    await prisma.promoEvent.delete({
-      where: { id }
+    const event = await prisma.promoEvent.findUnique({ where: { id } });
+    if (!event) {
+      return NextResponse.json({ error: 'Event tidak ditemukan.' }, { status: 404 });
+    }
+
+    // Pindahkan snapshot ke Recycle Bin
+    const { moveToRecycleBin } = await import('@/lib/recycleBin');
+    await moveToRecycleBin({
+      entityType: 'EVENT',
+      entityId: id,
+      name: event.title,
+      summary: event.subtitle || event.targetUrl || 'Promo Event',
+      data: event,
+      deletedBy: session?.name || session?.email || 'Admin',
     });
 
-    return NextResponse.json({ message: 'Event berhasil dihapus.' });
+    await prisma.promoEvent.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: `Event "${event.title}" dipindahkan ke Recycle Bin.` });
   } catch (error) {
     if (error.status) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('Error DELETE event:', error);

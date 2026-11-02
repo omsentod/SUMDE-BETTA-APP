@@ -170,7 +170,10 @@ export default function AdminEventsPage() {
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Gagal menghapus event.');
           setEvents((prev) => prev.filter((ev) => ev.id !== event.id));
-          toast.success(`Event "${event.title}" berhasil dihapus.`);
+          toast.success(`Event "${event.title}" berhasil dipindahkan ke Recycle Bin.`);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus event.');
         }

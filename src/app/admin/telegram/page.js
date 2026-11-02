@@ -317,7 +317,10 @@ function AdminTelegramContent() {
           const res = await fetch(`/api/admin/telegram?eventId=${event.id}`, { method: 'DELETE' });
           const resData = await res.json();
           if (!res.ok) throw new Error(resData.error || 'Gagal menghapus event.');
-          toast.success('Event berhasil dihapus.');
+          toast.success('Event dipindahkan ke Recycle Bin.');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
           loadData();
         } catch (err) {
           toast.error(err.message || 'Gagal menghapus event.');

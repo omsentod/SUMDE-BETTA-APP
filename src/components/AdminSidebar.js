@@ -294,7 +294,7 @@ function AdminSidebarInner() {
           </div>
         )}
 
-        {can('products:view') && (
+        {(can('products:view') || can('dashboard:view')) && (
           <div className={styles.bottomSection}>
             <Link
               href="/admin/recycle-bin"

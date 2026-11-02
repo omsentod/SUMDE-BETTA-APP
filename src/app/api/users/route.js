@@ -169,8 +169,19 @@ export async function DELETE(request) {
       }
     }
 
+    // Pindahkan snapshot ke Recycle Bin
+    const { moveToRecycleBin } = await import('@/lib/recycleBin');
+    await moveToRecycleBin({
+      entityType: 'USER',
+      entityId: id,
+      name: targetUser.name,
+      summary: `Email: ${targetUser.email} • Peran: ${targetUser.role}`,
+      data: targetUser,
+      deletedBy: session?.name || session?.email || 'Admin',
+    });
+
     await prisma.user.delete({ where: { id } });
-    return NextResponse.json({ message: 'User berhasil dihapus.' });
+    return NextResponse.json({ message: `Pengguna "${targetUser.name}" dipindahkan ke Recycle Bin.` });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

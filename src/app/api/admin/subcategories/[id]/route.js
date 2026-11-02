@@ -74,7 +74,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await requirePermission(request, ['products:delete', 'products:manage']);
+    const session = await requirePermission(request, ['products:delete', 'products:manage']);
     const { id } = await params;
 
     const existing = await prisma.subCategory.findUnique({
@@ -107,9 +107,20 @@ export async function DELETE(request, { params }) {
       data: { subCategoryId: null },
     });
 
+    // Pindahkan snapshot ke Recycle Bin
+    const { moveToRecycleBin } = await import('@/lib/recycleBin');
+    await moveToRecycleBin({
+      entityType: 'SUBCATEGORY',
+      entityId: id,
+      name: existing.name,
+      summary: `Sub-Kategori • Slug: ${existing.slug}`,
+      data: existing,
+      deletedBy: session?.name || session?.email || 'Admin',
+    });
+
     await prisma.subCategory.delete({ where: { id } });
 
-    return NextResponse.json({ message: `Sub-kategori "${existing.name}" berhasil dihapus.` });
+    return NextResponse.json({ message: `Sub-kategori "${existing.name}" dipindahkan ke Recycle Bin.` });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

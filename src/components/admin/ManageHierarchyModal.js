@@ -162,9 +162,12 @@ export default function ManageHierarchyModal({ isOpen, onClose, onHierarchyUpdat
       const res = await fetch(`/api/admin/departments/${dept.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal menghapus departemen.');
-      toast.success('Departemen berhasil dihapus.');
+      toast.success('Departemen dipindahkan ke Recycle Bin.');
       await fetchDepartments();
       onHierarchyUpdated?.();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+      }
     } catch (err) {
       toast.error(err.message);
     }
@@ -232,9 +235,12 @@ export default function ManageHierarchyModal({ isOpen, onClose, onHierarchyUpdat
       const res = await fetch(`/api/admin/subcategories/${sub.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal menghapus sub-kategori.');
-      toast.success('Sub-kategori berhasil dihapus.');
+      toast.success('Sub-kategori dipindahkan ke Recycle Bin.');
       await fetchDepartments();
       onHierarchyUpdated?.();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+      }
     } catch (err) {
       toast.error(err.message);
     }

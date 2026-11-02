@@ -5,21 +5,81 @@ import { useState, useRef, useMemo } from 'react';
 import styles from './ProductCard.module.css';
 import { useCart } from '@/context/CartContext';
 import SizePickerModal from './SizePickerModal';
+import { parseYouTubeId } from '@/lib/productImages';
 
-// Normalisasi galeri foto ke array URL yang aman ditampilkan.
-function toGallery(images, fallbackImage) {
-    let arr = [];
+function extractImageUrl(item) {
+    if (!item) return null;
+    if (typeof item === 'string') {
+        const trimmed = item.trim();
+        if (!trimmed) return null;
+        if (parseYouTubeId(trimmed) || /\.(mp4|webm|mov)($|\?)/i.test(trimmed)) {
+            return null;
+        }
+        return trimmed;
+    }
+    if (typeof item === 'object') {
+        if (item.type === 'video') return null;
+        const u = typeof item.url === 'string'
+            ? item.url.trim()
+            : (typeof item.imageUrl === 'string' ? item.imageUrl.trim() : '');
+        if (!u) return null;
+        if (parseYouTubeId(u) || /\.(mp4|webm|mov)($|\?)/i.test(u)) {
+            return null;
+        }
+        return u;
+    }
+    return null;
+}
+
+// Normalisasi galeri foto ke array URL yang aman ditampilkan,
+// mencakup cover image, array/JSON images, dan foto varian.
+function toGallery(images, fallbackImage, variants = []) {
+    const list = [];
+    const seen = new Set();
+
+    const add = (url) => {
+        if (!url || typeof url !== 'string') return;
+        const trimmed = url.trim();
+        if (!trimmed) return;
+        if (seen.has(trimmed)) return;
+        seen.add(trimmed);
+        list.push(trimmed);
+    };
+
+    // 1. Foto cover utama (fallbackImage)
+    const coverUrl = extractImageUrl(fallbackImage);
+    if (coverUrl) {
+        add(coverUrl);
+    }
+
+    // 2. Daftar foto dari field images (array atau JSON string)
+    let rawImages = [];
     if (Array.isArray(images)) {
-        arr = images;
+        rawImages = images;
     } else if (typeof images === 'string') {
         try {
             const parsed = JSON.parse(images);
-            if (Array.isArray(parsed)) arr = parsed;
-        } catch { /* ignore */ }
+            if (Array.isArray(parsed)) rawImages = parsed;
+            else if (typeof parsed === 'string') rawImages = [parsed];
+        } catch {
+            if (images.trim()) rawImages = [images.trim()];
+        }
     }
-    arr = arr.filter((u) => typeof u === 'string' && u);
-    if (arr.length === 0 && fallbackImage) arr = [fallbackImage];
-    return arr;
+
+    for (const item of rawImages) {
+        const u = extractImageUrl(item);
+        if (u) add(u);
+    }
+
+    // 3. Foto dari masing-masing varian (jika memiliki foto tersendiri)
+    if (Array.isArray(variants)) {
+        for (const v of variants) {
+            const u = extractImageUrl(v?.imageUrl || v?.image);
+            if (u) add(u);
+        }
+    }
+
+    return list;
 }
 
 export default function ProductCard({
@@ -48,10 +108,23 @@ export default function ProductCard({
 
     const hasVideo = useMemo(() => {
         if (typeof videoUrl === 'string' && videoUrl.trim().length > 0) return true;
-        if (Array.isArray(images)) {
-            return images.some((m) => typeof m === 'object' && m?.type === 'video');
+        let raw = [];
+        if (Array.isArray(images)) raw = images;
+        else if (typeof images === 'string') {
+            try {
+                const parsed = JSON.parse(images);
+                if (Array.isArray(parsed)) raw = parsed;
+            } catch { /* ignore */ }
         }
-        return false;
+        return raw.some((m) => {
+            if (typeof m === 'string') return Boolean(parseYouTubeId(m) || /\.(mp4|webm|mov)($|\?)/i.test(m));
+            if (typeof m === 'object' && m) {
+                if (m.type === 'video') return true;
+                const u = m.url || '';
+                return Boolean(parseYouTubeId(u) || /\.(mp4|webm|mov)($|\?)/i.test(u));
+            }
+            return false;
+        });
     }, [videoUrl, images]);
 
     const formattedPrice = new Intl.NumberFormat('id-ID', {
@@ -60,11 +133,13 @@ export default function ProductCard({
         minimumFractionDigits: 0
     }).format(price || 0);
 
-    const variantList = Array.isArray(variants) && variants.length > 0
-        ? variants
-        : (Array.isArray(sizes) && sizes.length > 0
-            ? sizes.map(s => ({ size: s.size, stock: s.quantity, price: null, imageUrl: null }))
-            : []);
+    const variantList = useMemo(() => {
+        return Array.isArray(variants) && variants.length > 0
+            ? variants
+            : (Array.isArray(sizes) && sizes.length > 0
+                ? sizes.map((s) => ({ size: s.size, stock: s.quantity, price: null, imageUrl: null }))
+                : []);
+    }, [variants, sizes]);
 
     const totalStock = variantList.length > 0
         ? variantList.reduce((sum, s) => sum + (Number(s.stock ?? s.quantity) || 0), 0)
@@ -74,14 +149,22 @@ export default function ProductCard({
     const isLowStock = !effectiveSold && totalStock > 0 && totalStock <= 5;
     const hasSizes = variantList.length > 0;
 
-    const gallery = toGallery(images, image);
+    const gallery = useMemo(() => {
+        return toGallery(images, image, variantList);
+    }, [images, image, variantList]);
+
     const hasGallery = gallery.length > 1;
     const [imgIdx, setImgIdx] = useState(0);
     const touchStartX = useRef(null);
+    const touchStartY = useRef(null);
+    const isSwiping = useRef(false);
     const safeImgIdx = gallery.length > 0 ? Math.min(imgIdx, gallery.length - 1) : 0;
 
     const handleImgMouseMove = (e) => {
         if (!hasGallery) return;
+        if (e.target.closest?.(`.${styles.navBtn}`) || e.target.closest?.(`.${styles.cardDots}`)) {
+            return;
+        }
         const rect = e.currentTarget.getBoundingClientRect();
         const ratio = (e.clientX - rect.left) / rect.width;
         const next = Math.min(gallery.length - 1, Math.max(0, Math.floor(ratio * gallery.length)));
@@ -94,16 +177,39 @@ export default function ProductCard({
 
     const handleImgTouchStart = (e) => {
         touchStartX.current = e.touches[0]?.clientX ?? null;
+        touchStartY.current = e.touches[0]?.clientY ?? null;
+        isSwiping.current = false;
+    };
+
+    const handleImgTouchMove = (e) => {
+        if (touchStartX.current == null || touchStartY.current == null) return;
+        const dx = e.touches[0].clientX - touchStartX.current;
+        const dy = e.touches[0].clientY - touchStartY.current;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+            isSwiping.current = true;
+        }
     };
 
     const handleImgTouchEnd = (e) => {
         if (!hasGallery || touchStartX.current == null) return;
         const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
-        if (Math.abs(dx) > 40) {
+        if (Math.abs(dx) > 30) {
+            e.preventDefault();
             const n = gallery.length;
             setImgIdx((prev) => (prev + (dx < 0 ? 1 : -1) + n) % n);
         }
         touchStartX.current = null;
+        touchStartY.current = null;
+        setTimeout(() => {
+            isSwiping.current = false;
+        }, 120);
+    };
+
+    const handleCardClick = (e) => {
+        if (isSwiping.current) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
     };
 
     const productPayload = {
@@ -157,13 +263,19 @@ export default function ProductCard({
 
     return (
         <>
-            <Link href={`/produk/${id}`} className={`${styles.card} ${isPremium ? styles.cardPremium : styles.cardStandard}`} aria-label={`Lihat detail produk ${name}`}>
+            <Link
+                href={`/produk/${id}`}
+                className={`${styles.card} ${isPremium ? styles.cardPremium : styles.cardStandard}`}
+                aria-label={`Lihat detail produk ${name}`}
+                onClick={handleCardClick}
+            >
                 {/* Image Container */}
                 <div
                     className={styles.imageContainer}
                     onMouseMove={handleImgMouseMove}
                     onMouseLeave={handleImgMouseLeave}
                     onTouchStart={handleImgTouchStart}
+                    onTouchMove={handleImgTouchMove}
                     onTouchEnd={handleImgTouchEnd}
                 >
                     {gallery.length > 0 ? (
@@ -185,13 +297,60 @@ export default function ProductCard({
                         </div>
                     )}
 
-                    {/* Dot indikator galeri */}
+                    {/* Nav Arrow Buttons (Desktop Hover & Accessible Slide) */}
                     {hasGallery && !effectiveSold && (
-                        <div className={styles.cardDots}>
+                        <>
+                            <button
+                                type="button"
+                                className={`${styles.navBtn} ${styles.navBtnPrev}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setImgIdx((prev) => (prev - 1 + gallery.length) % gallery.length);
+                                }}
+                                aria-label="Foto sebelumnya"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="15 18 9 12 15 6" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                className={`${styles.navBtn} ${styles.navBtnNext}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setImgIdx((prev) => (prev + 1) % gallery.length);
+                                }}
+                                aria-label="Foto selanjutnya"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </button>
+                        </>
+                    )}
+
+                    {/* Dot indikator galeri (Clickable) */}
+                    {hasGallery && !effectiveSold && (
+                        <div
+                            className={styles.cardDots}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                        >
                             {gallery.map((_, i) => (
-                                <span
+                                <button
                                     key={i}
+                                    type="button"
                                     className={`${styles.cardDot} ${i === safeImgIdx ? styles.cardDotActive : ''}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setImgIdx(i);
+                                    }}
+                                    aria-label={`Lihat foto ke-${i + 1}`}
                                 />
                             ))}
                         </div>
