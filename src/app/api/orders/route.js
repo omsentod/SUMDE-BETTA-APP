@@ -8,10 +8,22 @@ import { hasPermission } from '@/lib/permissions';
 
 export async function GET(request) {
   try {
-    // Admins and staff with orders:view see every order; customers see only their own.
     const session = await requireUser(request);
-    const canViewAll = session.role === 'admin' || (await hasPermission(session.role, 'orders:view'));
-    const where = canViewAll ? {} : { userId: session.id };
+    const { searchParams } = new URL(request.url);
+    const mineOnly = searchParams.get('mine') === 'true' || searchParams.get('scope') === 'mine';
+
+    // canViewAll hanya aktif untuk dashboard / admin ERP saat tidak meminta pesanan pribadi (?mine=true).
+    // Jika user (termasuk admin) membuka "Pesanan Saya", selalu scope ke userId / email milik akun sendiri.
+    const canViewAll = !mineOnly && (session.role === 'admin' || (await hasPermission(session.role, 'orders:view')));
+    const where = canViewAll
+      ? {}
+      : {
+          OR: [
+            { userId: session.id },
+            ...(session.email ? [{ email: session.email }] : []),
+          ],
+        };
+
     const orders = await prisma.order.findMany({
       where,
       include: {

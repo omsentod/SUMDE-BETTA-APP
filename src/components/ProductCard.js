@@ -102,6 +102,7 @@ export default function ProductCard({
     brand,
     department,
     subCategory,
+    onClick,
 }) {
     const { addToCart, isCartOpen, toggleCart } = useCart();
     const [modalAction, setModalAction] = useState(null);
@@ -209,6 +210,10 @@ export default function ProductCard({
         if (isSwiping.current) {
             e.preventDefault();
             e.stopPropagation();
+            return;
+        }
+        if (onClick) {
+            onClick(e);
         }
     };
 
@@ -265,6 +270,7 @@ export default function ProductCard({
         <>
             <Link
                 href={`/produk/${id}`}
+                scroll={true}
                 className={`${styles.card} ${isPremium ? styles.cardPremium : styles.cardStandard}`}
                 aria-label={`Lihat detail produk ${name}`}
                 onClick={handleCardClick}

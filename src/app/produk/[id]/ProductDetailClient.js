@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -115,6 +115,13 @@ export default function ProductDetailClient() {
         if (!product || !products || products.length === 0) return [];
         return getSimilarProducts(product, products, 4);
     }, [product, products]);
+
+    // Selalu scroll ke posisi paling atas saat halaman atau ID produk berubah
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        }
+    }, [id]);
 
     // Reset selected size + error whenever we're viewing a different product
     const variants = useMemo(() => {
@@ -620,7 +627,15 @@ export default function ProductDetailClient() {
 
                         <div className="productGrid">
                             {similarProducts.map((simProd) => (
-                                <ProductCard key={simProd.id} {...simProd} />
+                                <ProductCard
+                                    key={simProd.id}
+                                    {...simProd}
+                                    onClick={() => {
+                                        if (typeof window !== 'undefined') {
+                                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                                        }
+                                    }}
+                                />
                             ))}
                         </div>
                     </div>

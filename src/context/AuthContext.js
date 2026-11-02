@@ -162,8 +162,8 @@ export function AuthProvider({ children }) {
     }, [currentUser]);
 
     const fetchMyOrders = useCallback(async () => {
-        // Server scopes orders by session, so no id needs to be passed
-        const res = await fetch('/api/orders');
+        // Selalu scope ke pesanan akun sendiri (?mine=true) agar tidak bocor pesanan customer lain ketika dibuka oleh akun admin
+        const res = await fetch('/api/orders?mine=true');
         if (res.ok) return res.json();
         return [];
     }, []);
