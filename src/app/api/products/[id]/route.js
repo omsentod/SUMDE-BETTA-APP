@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requirePermission } from '@/lib/permissions';
 import { normalizeImages, findCoverImage } from '@/lib/productImages';
+import { validateWholesaleTiersInput } from '@/lib/wholesale';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,7 @@ export async function PUT(request, { params }) {
       isSold, quantity, variants, soldCount, isArchived,
       videoUrl, isDailyDrop, dropNumber,
       departmentId, subCategoryId, brand, weight,
+      isWholesale, wholesaleTiers,
     } = await request.json();
 
     const dataToUpdate = {};
@@ -45,10 +47,37 @@ export async function PUT(request, { params }) {
     if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
     if (isDailyDrop !== undefined) dataToUpdate.isDailyDrop = Boolean(isDailyDrop);
     if (dropNumber !== undefined) dataToUpdate.dropNumber = dropNumber;
-    if (departmentId !== undefined) dataToUpdate.departmentId = departmentId || null;
-    if (subCategoryId !== undefined) dataToUpdate.subCategoryId = subCategoryId || null;
+    if (departmentId !== undefined) {
+      if (departmentId) {
+        dataToUpdate.department = { connect: { id: departmentId } };
+      } else {
+        dataToUpdate.department = { disconnect: true };
+      }
+    }
+    if (subCategoryId !== undefined) {
+      if (subCategoryId) {
+        dataToUpdate.subCategory = { connect: { id: subCategoryId } };
+      } else {
+        dataToUpdate.subCategory = { disconnect: true };
+      }
+    }
     if (brand !== undefined) dataToUpdate.brand = brand ? brand.trim() : null;
     if (weight !== undefined) dataToUpdate.weight = Math.max(50, parseInt(weight) || 1000);
+
+    if (isWholesale !== undefined) {
+      if (Boolean(isWholesale)) {
+        const checkPrice = price !== undefined ? price : (await prisma.product.findUnique({ where: { id }, select: { price: true } }))?.price;
+        const wholesaleValidation = validateWholesaleTiersInput(wholesaleTiers, checkPrice);
+        if (!wholesaleValidation.valid) {
+          return NextResponse.json({ error: wholesaleValidation.error }, { status: 400 });
+        }
+        dataToUpdate.isWholesale = true;
+        dataToUpdate.wholesaleTiers = wholesaleValidation.tiers;
+      } else {
+        dataToUpdate.isWholesale = false;
+        dataToUpdate.wholesaleTiers = null;
+      }
+    }
 
     if (images !== undefined) {
       const gallery = normalizeImages(images, image, videoUrl);

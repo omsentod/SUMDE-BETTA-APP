@@ -60,12 +60,45 @@
     position: relative;
     aspect-ratio: 1;
     width: 100%;
-    border-radius: 12px;
+    max-width: 580px;
+    margin: 0 auto;
+    border-radius: 16px;
     overflow: hidden;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     /* Izinkan scroll vertikal halaman, tapi swipe horizontal jadi ganti foto. */
     touch-action: pan-y;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-in;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.zoomBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: color-mix(in oklab, var(--bg-card) 85%, transparent);
+    color: var(--text-main);
+    cursor: pointer;
+    z-index: 3;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.zoomBtn:hover {
+    background: var(--bg-card);
+    color: var(--primary);
+    transform: scale(1.08);
 }
 
 /* --- Multi-image gallery --- */
@@ -154,7 +187,15 @@
 }
 
 .image {
-    object-fit: cover;
+    object-fit: contain;
+    padding: 0.5rem;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+    .imageFrame:hover .image {
+        transform: scale(1.025);
+    }
 }
 
 /* --- Video Embed & Gallery Video Integration --- */
@@ -285,16 +326,17 @@
     font-weight: 600;
 }
 
-/* --- Prominent price block (pola marketplace: harga besar di bawah title) --- */
+/* --- Prominent price block (pola marketplace: harga asli dicoret + sampingnya harga diskon) --- */
 .priceBlock {
     display: flex;
     align-items: baseline;
-    gap: 0.25rem;
-    padding: 1rem 1.25rem;
-    background: color-mix(in oklab, var(--primary) 8%, transparent);
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.15rem;
+    background: color-mix(in oklab, var(--primary) 6%, transparent);
     border-radius: 12px;
     margin-bottom: 0;
-    border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+    border: 1px solid color-mix(in oklab, var(--primary) 18%, transparent);
 }
 
 .priceBlockPremium {
@@ -302,32 +344,74 @@
     border: 1px solid rgba(245, 158, 11, 0.35) !important;
 }
 
-.priceBlockPremium .priceCurrency,
 .priceBlockPremium .priceAmount {
     color: #f59e0b !important;
 }
 
-:global([data-theme="light"]) .priceBlockPremium .priceCurrency,
 :global([data-theme="light"]) .priceBlockPremium .priceAmount {
     color: #d97706 !important;
 }
 
-.priceCurrency {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--primary);
-    line-height: 1;
+.originalPrice {
+    font-size: 1.25rem;
+    font-weight: 500;
+    text-decoration: line-through !important;
+    text-decoration-color: var(--text-muted) !important;
+    text-decoration-thickness: 2px !important;
+    color: var(--text-muted);
 }
 
 .priceAmount {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
     font-weight: 800;
     color: var(--primary);
     line-height: 1;
     letter-spacing: -0.02em;
 }
 
+.discountBadge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: color-mix(in oklab, #ef4444 14%, transparent);
+    color: #ef4444;
+    border: 1px solid color-mix(in oklab, #ef4444 28%, transparent);
+    letter-spacing: 0.01em;
+}
+
 @media (max-width: 767px) {
+    .section {
+        padding: 5.5rem 0 calc(135px + env(safe-area-inset-bottom, 0));
+    }
+    .grid {
+        gap: 1.25rem;
+    }
+    .imageFrame {
+        max-width: 100%;
+        border-radius: 14px;
+    }
+    .image {
+        padding: 0.35rem;
+    }
+    .zoomBtn {
+        top: 10px;
+        right: 10px;
+        width: 34px;
+        height: 34px;
+    }
+    .thumbStrip {
+        margin-top: 0.65rem;
+        gap: 0.5rem;
+    }
+    .thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+    }
+
     .priceBlock {
         padding: 0.75rem 1rem;
         margin-bottom: 1.25rem;
@@ -350,7 +434,7 @@
      * gambar (karena image ada di kolom atasnya saat stacked). */
     .infoColumn > .priceBlock {
         order: -1;
-        margin-top: 1rem;
+        margin-top: 0.5rem;
     }
 
     /* Hide badge "Edisi #xxx — Category" di mobile; langsung nama produk saja. */
@@ -655,6 +739,273 @@
     border-color: #ef4444;
 }
 
+/* --- Quantity & Wholesale (Partai) Section --- */
+.purchaseConfigSection {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.quantityBlock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.15rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.quantityLabelCol {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.quantityLabel {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.quantityStockText {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.stepperWrapper {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+}
+
+.typeHintBubble {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    z-index: 10;
+    pointer-events: none;
+    animation: typeHintPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.typeHintBubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 57px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--border-color) transparent transparent transparent;
+}
+
+@keyframes typeHintPop {
+    from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.quantityControls {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.qtyBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.qtyBtn:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
+    color: var(--primary);
+}
+
+.qtyBtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.qtyInput {
+    width: 52px;
+    height: 36px;
+    border: none;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    background: transparent;
+    text-align: center;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.qtyInput::-webkit-outer-spin-button,
+.qtyInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* --- Wholesale (Partai) Promotion Card --- */
+.wholesaleCard {
+    padding: 1rem 1.15rem;
+    background: color-mix(in oklab, var(--bg-card) 90%, var(--primary) 10%);
+    border: 1px solid color-mix(in oklab, var(--primary) 28%, var(--border-color));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.wholesaleCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.wholesaleTitle {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.wholesaleIcon {
+    color: var(--primary);
+}
+
+.wholesaleTiersGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+}
+
+.tierBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: inherit;
+    text-align: center;
+}
+
+.tierBtn:hover:not(:disabled) {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.tierBtnActive {
+    border-color: var(--primary) !important;
+    background: color-mix(in oklab, var(--primary) 14%, var(--bg-card)) !important;
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.tierBtnDisabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tierBtnQty {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.tierBtnPrice {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 2px;
+}
+
+.tierBtnDiscount {
+    font-size: 0.6875rem;
+    color: #10b981;
+    font-weight: 600;
+    margin-top: 1px;
+}
+
+.wholesaleLevelCount {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+
+
+.orderSubtotalBar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.orderSubtotalAmount {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+@media (max-width: 640px) {
+    .wholesaleTiersGrid {
+        grid-template-columns: 1fr;
+    }
+    .tierBtn {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 0.6rem 0.85rem;
+    }
+    .quantityBlock {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
+    }
+}
+
 /* --- Action bar (desktop) --- */
 .actionBar {
     display: flex;
@@ -757,15 +1108,13 @@
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 0;
-        z-index: 1000;
+        bottom: calc(56px + env(safe-area-inset-bottom, 0));
+        z-index: 999;
         display: grid;
         grid-template-columns: 1fr 1.4fr;
-        gap: 0;
         background: var(--bg-card);
         border-top: 1px solid var(--border-color);
         padding: 0.5rem 0.75rem;
-        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0));
         gap: 0.5rem;
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
     }
@@ -973,5 +1322,128 @@
     color: var(--text-muted);
     line-height: 1.5;
     margin: 0;
+}
+
+/* --- Lightbox Modal (Full-screen photo view) --- */
+.lightboxOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: lightboxFadeIn 0.2s ease-out;
+}
+
+@keyframes lightboxFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.lightboxClose {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.lightboxClose:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.08);
+}
+
+.lightboxContent {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightboxImage {
+    object-fit: contain;
+}
+
+.lightboxNav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.lightboxNav:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.lightboxPrev { left: 20px; }
+.lightboxNext { right: 20px; }
+
+.lightboxCounter {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.35rem 0.9rem;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    z-index: 10;
+}
+
+@media (max-width: 767px) {
+    .lightboxClose {
+        top: 14px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+    }
+    .lightboxNav {
+        width: 38px;
+        height: 38px;
+    }
+    .lightboxPrev { left: 10px; }
+    .lightboxNext { right: 10px; }
+    .lightboxContent {
+        height: 75vh;
+    }
 }
 

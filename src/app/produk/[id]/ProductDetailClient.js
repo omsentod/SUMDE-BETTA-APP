@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
 import { getSimilarProducts } from '@/lib/recommendation';
 import { parseYouTubeId } from '@/lib/productImages';
+import { normalizeWholesaleTiers, getApplicableWholesaleTier, getEffectiveUnitPrice } from '@/lib/wholesale';
 import styles from './productDetail.module.css';
 
 // Normalisasi galeri media (foto dan video) yang aman dan berurutan sesuai setting admin.
@@ -105,6 +106,7 @@ export default function ProductDetailClient() {
     const [sizeError, setSizeError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevProductId, setPrevProductId] = useState(null);
+    const [isZoomOpen, setIsZoomOpen] = useState(false);
     const touchStartX = useRef(null);
 
     const product = products.find((p) => p.id === id);
@@ -122,6 +124,20 @@ export default function ProductDetailClient() {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         }
     }, [id]);
+
+    // Tutup zoom dan kunci body scroll saat lightbox aktif
+    useEffect(() => {
+        if (!isZoomOpen) return;
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setIsZoomOpen(false);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [isZoomOpen]);
 
     // Reset selected size + error whenever we're viewing a different product
     const variants = useMemo(() => {
@@ -144,13 +160,82 @@ export default function ProductDetailClient() {
         return product?.price || 0;
     }, [activeVariant, product]);
 
+    const [quantity, setQuantity] = useState(1);
+    const [showTypeHint, setShowTypeHint] = useState(false);
+    const typeHintTimerRef = useRef(null);
+
+    const triggerTypeHint = () => {
+        setShowTypeHint(true);
+        if (typeHintTimerRef.current) clearTimeout(typeHintTimerRef.current);
+        typeHintTimerRef.current = setTimeout(() => {
+            setShowTypeHint(false);
+        }, 2200);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (typeHintTimerRef.current) clearTimeout(typeHintTimerRef.current);
+        };
+    }, []);
+
     if (product && product.id !== prevProductId) {
         setPrevProductId(product.id);
         const firstAvailable = variants.find((v) => (v.stock ?? v.quantity ?? 0) > 0)?.size || '';
         setSelectedSize(firstAvailable);
         setSizeError('');
         setActiveIndex(0);
+        setIsZoomOpen(false);
+        setQuantity(1);
     }
+
+    const maxStock = useMemo(() => {
+        if (activeVariant) return Math.max(1, activeVariant.stock ?? activeVariant.quantity ?? 1);
+        if (variants.length > 0) return 1;
+        return Math.max(1, product?.quantity ?? 1);
+    }, [activeVariant, variants, product]);
+
+    const isWholesale = Boolean(product?.isWholesale);
+    const wholesaleTiers = useMemo(() => {
+        return isWholesale ? normalizeWholesaleTiers(product?.wholesaleTiers) : [];
+    }, [isWholesale, product?.wholesaleTiers]);
+
+    const activeTierMatch = useMemo(() => {
+        if (!isWholesale || wholesaleTiers.length === 0) return null;
+        return getApplicableWholesaleTier(product, quantity, activeVariant);
+    }, [isWholesale, wholesaleTiers, product, quantity, activeVariant]);
+
+    const effectiveUnitPrice = useMemo(() => {
+        return getEffectiveUnitPrice(product, activeVariant, quantity);
+    }, [product, activeVariant, quantity]);
+
+    const totalPrice = useMemo(() => {
+        return effectiveUnitPrice * quantity;
+    }, [effectiveUnitPrice, quantity]);
+
+    const totalBasePrice = useMemo(() => {
+        return currentPrice * quantity;
+    }, [currentPrice, quantity]);
+
+    const hasDiscount = totalBasePrice > totalPrice;
+    const discountPercent = hasDiscount
+        ? Math.round(((totalBasePrice - totalPrice) / totalBasePrice) * 100)
+        : (activeTierMatch?.percentDiscount || 0);
+
+    const formattedAccumulatedBase = useMemo(() => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+        }).format(totalBasePrice);
+    }, [totalBasePrice]);
+
+    const formattedAccumulatedTotal = useMemo(() => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+        }).format(totalPrice);
+    }, [totalPrice]);
 
     const gallery = useMemo(() => {
         return buildProductMediaGallery(product, variants);
@@ -177,6 +262,18 @@ export default function ProductDetailClient() {
         style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0,
+    }).format(effectiveUnitPrice);
+
+    const formattedTotalPrice = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(totalPrice);
+
+    const formattedBasePrice = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
     }).format(currentPrice);
 
     const hasSizes = variants.length > 0;
@@ -190,7 +287,17 @@ export default function ProductDetailClient() {
         setSizeError('');
         const fallbackImg = gallery.find((m) => m.type === 'image')?.url || product.image;
         const itemImage = activeVariant?.imageUrl || fallbackImg;
-        buyNow({ ...product, price: currentPrice, image: itemImage, selectedSize, variantId: activeVariant?.id });
+        buyNow({
+            ...product,
+            productPrice: product.price,
+            basePrice: currentPrice,
+            price: effectiveUnitPrice,
+            image: itemImage,
+            selectedSize,
+            variantId: activeVariant?.id,
+            isWholesale,
+            wholesaleTiers: product.wholesaleTiers,
+        }, quantity);
         router.push('/checkout');
     };
 
@@ -202,7 +309,17 @@ export default function ProductDetailClient() {
         setSizeError('');
         const fallbackImg = gallery.find((m) => m.type === 'image')?.url || product.image;
         const itemImage = activeVariant?.imageUrl || fallbackImg;
-        addToCart({ ...product, price: currentPrice, image: itemImage, selectedSize, variantId: activeVariant?.id });
+        addToCart({
+            ...product,
+            productPrice: product.price,
+            basePrice: currentPrice,
+            price: effectiveUnitPrice,
+            image: itemImage,
+            selectedSize,
+            variantId: activeVariant?.id,
+            isWholesale,
+            wholesaleTiers: product.wholesaleTiers,
+        }, quantity);
     };
 
     const canBuy = !product.isSold && product.quantity > 0;
@@ -235,6 +352,11 @@ export default function ProductDetailClient() {
                                 className={styles.imageFrame}
                                 onTouchStart={onTouchStart}
                                 onTouchEnd={onTouchEnd}
+                                onClick={() => {
+                                    if (activeMedia?.type !== 'video') {
+                                        setIsZoomOpen(true);
+                                    }
+                                }}
                             >
                                 {activeMedia?.type === 'video' ? (
                                     <div className={styles.videoEmbedWrapper}>
@@ -267,6 +389,26 @@ export default function ProductDetailClient() {
                                     />
                                 )}
 
+                                {activeMedia?.type !== 'video' && (
+                                    <button
+                                        type="button"
+                                        className={styles.zoomBtn}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsZoomOpen(true);
+                                        }}
+                                        aria-label="Perbesar foto"
+                                        title="Lihat ukuran penuh"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="11" cy="11" r="8"/>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                            <line x1="11" y1="8" x2="11" y2="14"/>
+                                            <line x1="8" y1="11" x2="14" y2="11"/>
+                                        </svg>
+                                    </button>
+                                )}
+
                                 {product.isSold && (
                                     <div className={styles.soldOverlay}>
                                         <span className={styles.soldBadge}>Arsip</span>
@@ -278,7 +420,10 @@ export default function ProductDetailClient() {
                                         <button
                                             type="button"
                                             className={`${styles.galleryNav} ${styles.galleryPrev}`}
-                                            onClick={() => goTo(-1)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                goTo(-1);
+                                            }}
                                             aria-label="Media sebelumnya"
                                         >
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
@@ -286,12 +431,15 @@ export default function ProductDetailClient() {
                                         <button
                                             type="button"
                                             className={`${styles.galleryNav} ${styles.galleryNext}`}
-                                            onClick={() => goTo(1)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                goTo(1);
+                                            }}
                                             aria-label="Media berikutnya"
                                         >
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                                         </button>
-                                        <div className={styles.galleryDots}>
+                                        <div className={styles.galleryDots} onClick={(e) => e.stopPropagation()}>
                                             {gallery.map((_, i) => (
                                                 <span
                                                     key={i}
@@ -356,11 +504,24 @@ export default function ProductDetailClient() {
 
 
                             <div className={styles.priceRow}>
-                                <div className={styles.priceBlock}>
-                                    <span className={styles.priceCurrency}>Rp</span>
-                                    <span className={styles.priceAmount}>
-                                        {new Intl.NumberFormat('id-ID').format(currentPrice)}
-                                    </span>
+                                <div className={`${styles.priceBlock} ${product.isPremium ? styles.priceBlockPremium : ''}`}>
+                                    {hasDiscount ? (
+                                        <>
+                                            <del className={styles.originalPrice}>
+                                                {formattedAccumulatedBase}
+                                            </del>
+                                            <span className={styles.priceAmount}>
+                                                {formattedAccumulatedTotal}
+                                            </span>
+                                            <span className={styles.discountBadge}>
+                                                -{discountPercent}%
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className={styles.priceAmount}>
+                                            {formattedAccumulatedTotal}
+                                        </span>
+                                    )}
                                 </div>
                                 {Number(product.soldCount) > 0 && (
                                     <div className={styles.soldBadgeTag}>
@@ -520,6 +681,142 @@ export default function ProductDetailClient() {
                                 </div>
                             )}
 
+                            {/* Quantity & Wholesale Options */}
+                            {canBuy && (
+                                <div className={styles.purchaseConfigSection}>
+                                    {/* Wholesale Tier Quick Select (if product has wholesale active) */}
+                                    {isWholesale && wholesaleTiers.length > 0 && (
+                                        <div className={styles.wholesaleCard}>
+                                            <div className={styles.wholesaleCardHeader}>
+                                                <div className={styles.wholesaleTitle}>
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.wholesaleIcon}>
+                                                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                                                        <polyline points="2 17 12 22 22 17" />
+                                                        <polyline points="2 12 12 17 22 12" />
+                                                    </svg>
+                                                    <span>Pilihan Pesanan Partai (Grosir)</span>
+                                                </div>
+                                                <span className={styles.wholesaleLevelCount}>
+                                                    {wholesaleTiers.length} Level Tersedia
+                                                </span>
+                                            </div>
+
+                                            <div className={styles.wholesaleTiersGrid}>
+                                                {wholesaleTiers.map((tier, idx) => {
+                                                    const isTierActive = activeTierMatch?.minQty === tier.minQty;
+                                                    const isOutOfStock = maxStock < tier.minQty;
+                                                    const tierMatch = getApplicableWholesaleTier(product, tier.minQty, activeVariant);
+                                                    const tierDisplayPrice = tierMatch ? tierMatch.unitPrice : tier.price;
+                                                    const savings = tierMatch ? tierMatch.discountPerItem : Math.max(0, currentPrice - tier.price);
+
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            disabled={isOutOfStock}
+                                                            onClick={() => {
+                                                                setQuantity(tier.minQty);
+                                                                if (sizeError) setSizeError('');
+                                                            }}
+                                                            className={[
+                                                                styles.tierBtn,
+                                                                isTierActive && styles.tierBtnActive,
+                                                                isOutOfStock && styles.tierBtnDisabled,
+                                                            ].filter(Boolean).join(' ')}
+                                                            title={isOutOfStock ? 'Stok tidak mencukupi untuk tier ini' : `Pilih Partai ${tier.minQty}+ ekor`}
+                                                        >
+                                                            <span className={styles.tierBtnQty}>Partai {tier.minQty}+</span>
+                                                            <span className={styles.tierBtnPrice}>
+                                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(tierDisplayPrice)}
+                                                            </span>
+                                                            {savings > 0 && (
+                                                                <span className={styles.tierBtnDiscount}>
+                                                                    -Rp {savings.toLocaleString('id-ID')}
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Input Nominal / Quantity Selector */}
+                                    <div className={styles.quantityBlock}>
+                                        <div className={styles.quantityLabelCol}>
+                                            <label className={styles.quantityLabel}>Jumlah Pesanan</label>
+                                            <span className={styles.quantityStockText}>
+                                                {activeVariant
+                                                    ? `Stok varian ${activeVariant.size}: ${maxStock} ekor`
+                                                    : `Stok tersedia: ${maxStock} ekor`}
+                                            </span>
+                                        </div>
+                                        <div className={styles.stepperWrapper}>
+                                            {showTypeHint && (
+                                                <div className={styles.typeHintBubble} role="status" aria-live="polite">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                                    </svg>
+                                                    <span>Bisa ketik jumlah langsung</span>
+                                                </div>
+                                            )}
+
+                                            <div className={styles.quantityControls}>
+                                                <button
+                                                    type="button"
+                                                    className={styles.qtyBtn}
+                                                    onClick={() => {
+                                                        setQuantity((q) => Math.max(1, q - 1));
+                                                        triggerTypeHint();
+                                                    }}
+                                                    disabled={quantity <= 1}
+                                                    aria-label="Kurangi jumlah"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max={maxStock}
+                                                    className={styles.qtyInput}
+                                                    value={quantity}
+                                                    onFocus={() => setShowTypeHint(false)}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value, 10);
+                                                        if (Number.isNaN(val) || val < 1) {
+                                                            setQuantity(1);
+                                                        } else {
+                                                            setQuantity(Math.min(maxStock, val));
+                                                        }
+                                                    }}
+                                                    aria-label="Jumlah pesanan"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={styles.qtyBtn}
+                                                    onClick={() => {
+                                                        setQuantity((q) => Math.min(maxStock, q + 1));
+                                                        triggerTypeHint();
+                                                    }}
+                                                    disabled={quantity >= maxStock}
+                                                    aria-label="Tambah jumlah"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Order Subtotal Bar */}
+                                    {quantity > 1 && (
+                                        <div className={styles.orderSubtotalBar}>
+                                            <span>Subtotal ({quantity} ekor):</span>
+                                            <span className={styles.orderSubtotalAmount}>{formattedTotalPrice}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className={styles.actionBar}>
                                 {canBuy ? (
                                     <>
@@ -540,7 +837,9 @@ export default function ProductDetailClient() {
                                             onClick={handleAcquire}
                                             className={styles.buyBtn}
                                         >
-                                            <span className={styles.buyBtnPrice}>{formattedPrice}</span>
+                                            <span className={styles.buyBtnPrice}>
+                                                {formattedAccumulatedTotal}
+                                            </span>
                                             <span className={styles.buyBtnLabel}>Beli Sekarang</span>
                                         </button>
                                     </>
@@ -642,7 +941,7 @@ export default function ProductDetailClient() {
                 </section>
             )}
 
-            {/* Mobile-only sticky bottom action bar — menggantikan MobileBottomNav di halaman ini */}
+            {/* Mobile-only sticky bottom action bar */}
             {canBuy && (
                 <div className={styles.mobileActionBar}>
                     <button
@@ -662,9 +961,76 @@ export default function ProductDetailClient() {
                         onClick={handleAcquire}
                         className={styles.mobileBuyBtn}
                     >
-                        <span className={styles.mobileBuyLabel}>Beli Sekarang</span>
-                        <span className={styles.mobileBuyPrice}>{formattedPrice}</span>
+                        <span className={styles.mobileBuyLabel}>Beli ({quantity})</span>
+                        <span className={styles.mobileBuyPrice}>{quantity > 1 ? formattedTotalPrice : formattedPrice}</span>
                     </button>
+                </div>
+            )}
+
+            {/* Full-screen Lightbox Modal untuk melihat foto secara detail & jernih */}
+            {isZoomOpen && activeMedia?.type !== 'video' && (
+                <div
+                    className={styles.lightboxOverlay}
+                    onClick={() => setIsZoomOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Lihat foto ukuran penuh"
+                >
+                    <button
+                        type="button"
+                        className={styles.lightboxClose}
+                        onClick={() => setIsZoomOpen(false)}
+                        aria-label="Tutup pratinjau"
+                    >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+
+                    {hasMultiple && (
+                        <>
+                            <button
+                                type="button"
+                                className={`${styles.lightboxNav} ${styles.lightboxPrev}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    goTo(-1);
+                                }}
+                                aria-label="Foto sebelumnya"
+                            >
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                            </button>
+                            <button
+                                type="button"
+                                className={`${styles.lightboxNav} ${styles.lightboxNext}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    goTo(1);
+                                }}
+                                aria-label="Foto berikutnya"
+                            >
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                            </button>
+                        </>
+                    )}
+
+                    <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
+                        <Image
+                            src={activeMedia?.url || product.image}
+                            alt={product.name}
+                            fill
+                            sizes="100vw"
+                            className={styles.lightboxImage}
+                            priority
+                        />
+                    </div>
+
+                    {hasMultiple && (
+                        <div className={styles.lightboxCounter}>
+                            {idx + 1} / {gallery.length}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

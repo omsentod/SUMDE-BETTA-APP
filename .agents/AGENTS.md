@@ -149,5 +149,20 @@
   - Level 2 SubCategory pill chips appear beneath the switcher to filter specific product types.
   - The exclusive "✦ Gallery" VIP chamber remains accessible under Live Fish for 1-of-1 pieces.
 
+## 16. Fitur Harga Partai (Wholesale Tier Pricing) & Pentest Hardening
+- **Server-Authoritative Pricing (Anti-Tampering)**: Prices, discounts, and subtotals calculated on the client are strictly cosmetic and advisory. The order creation endpoint (`POST /api/orders`) MUST re-resolve prices directly from DB product records (`product.price`, `variant.price`, and `getEffectiveUnitPrice`). Any price or subtotal sent in the request body MUST be ignored.
+- **Strict Quantity Sanitization (Anti-Integer Overflow / Float Manipulation)**: `raw.quantity` must be parsed with `parseInt(raw.quantity, 10)` and strictly verified with `Number.isInteger(quantity) && quantity > 0 && quantity <= 100000`. Reject zero, negative, `NaN`, floating point values (`1.5`), or exponential strings (`1e5`) with `400 Bad Request`.
+- **Atomic Stock Guard against Bulk Orders**: Validate available stock (`variant.stock < quantity` or `product.quantity < quantity`) BEFORE creating order and defer decrement to the atomic transaction in DOKU webhook.
+- **Progressive Wholesale Tiers Logic**: Tiers must have `minQty` > 1, sorted strictly ascending (e.g. 10 < 30 < 50), and unit price strictly lower than regular price and non-increasing with volume (`tier[i].price <= tier[i-1].price`). When a customer purchases within a tier range (e.g. 15 ekor between 10 and 30), the discount applies at Level 1 (10 ekor). Exceeding Level 2 (e.g. 35 ekor) activates Level 2 discount, and so on.
+- **Cart Sync on Volume Change**: In `CartContext`, whenever an item's quantity changes (via +/- or direct input), `price` must be dynamically recalculated against `wholesaleTiers` so users cannot add 10 items to get wholesale price and drop to 1 in cart to bypass retail pricing.
+- **Mobile Sticky Navigation Stacking**: On `/produk/[id]`, the primary `MobileBottomNav` (`class="MobileBottomNav-module__P0Wj8q__bar"`) sits at the viewport bottom (`bottom: 0; z-index: 1000`), and the product action bar ("Keranjang" + "Beli Sekarang") sits directly above it (`bottom: calc(56px + env(safe-area-inset-bottom, 0)); z-index: 999`), with section padding-bottom expanded (`calc(135px + env(...))`) to prevent content obstruction.
+- **Dynamic Tier Levels (Arbitrary N-Levels)**: Wholesale tiers in admin support dynamic level addition (`+ Tambah Level Partai`) and level removal (`form.wholesaleTiers.length >= 1`). Tiers are dynamically ordered by `minQty`.
+- **Hybrid Wholesale Pricing (Proportional Default + Custom Variant Overrides)**:
+  - *Default (Proportional)*: If `variantPrices` is omitted for a variant, `discountRatio = (basePrice - tierPrice) / basePrice` is automatically and proportionally applied to variant base price (`Math.round(variantBasePrice * (1 - discountRatio))`).
+  - *Custom Variant Override*: Admin can specify a custom price per variant for any tier in `tier.variantPrices[variant.size]`. If set, custom price takes precedence over the proportional formula, granting complete fine-grained pricing control.
+  - *Cross-Variant Quantity Pooling*: `POST /api/orders` and `CartContext.js` pool quantities of all variants under the same `productId`. Mixing variants (e.g. 5 Male + 5 Female) grants wholesale eligibility once combined quantity reaches tier `minQty`.
+
+
+
 
 

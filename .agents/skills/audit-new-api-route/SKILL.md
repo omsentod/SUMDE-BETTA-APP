@@ -23,6 +23,7 @@ Run per HTTP handler in the file. Note N/A inline (comment) if a rule doesn't ap
 ## 2. Client-trusted values (never trust from body/query)
 - [ ] `userId` / `role` from `session.id` / `session.role`, never body
 - [ ] `total` / `price` / `amount` recomputed server-side from DB (past bug #1 — payment fraud: client set `total: 1000` for 1M item)
+- [ ] Wholesale/Partai volume tiers computed server-side via `getEffectiveUnitPrice()` — never trust client-provided unit price or discounts. Validate quantity is positive integer (`Number.isInteger(quantity) && quantity > 0`).
 - [ ] `shippingFee` re-quoted at order creation via `findAndValidateRate()` — never trust the client's fee (see `src/lib/shipping.js`)
 - [ ] `status` (PROCESSING/PAID) only set from webhook, never client — even admin
 - [ ] `id` for mutations from route params, not body

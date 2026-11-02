@@ -17,6 +17,8 @@ import styles from '../dashboard/adminDashboard.module.css';
 const DEFAULT_CATEGORIES = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'];
 const DEFAULT_GRADES = ['COMP', 'COMPETITION', 'A', 'B', 'C'];
 
+import { normalizeWholesaleTiers } from '@/lib/wholesale';
+
 const emptyProductForm = () => ({
   name: '',
   price: '',
@@ -41,6 +43,12 @@ const emptyProductForm = () => ({
   subCategoryId: '',
   brand: '',
   weight: 1000,
+  isWholesale: false,
+  wholesaleTiers: [
+    { minQty: 10, price: '', discount: '', variantDiscounts: {} },
+    { minQty: 30, price: '', discount: '', variantDiscounts: {} },
+    { minQty: 50, price: '', discount: '', variantDiscounts: {} },
+  ],
 });
 
 function getDepartmentIcon(slug, isLiveFish, customIcon) {
@@ -447,6 +455,37 @@ function AdminProductsInner() {
       ? parsedVariants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0)
       : (product.quantity ?? 1);
 
+    let initialTiers = [];
+    if (product.wholesaleTiers) {
+      const prodPrice = parseFloat(product.price) || 0;
+      initialTiers = normalizeWholesaleTiers(product.wholesaleTiers).map((t) => {
+        let discount = t.discount;
+        if (discount === undefined && t.price && prodPrice > t.price) {
+          discount = prodPrice - t.price;
+        }
+
+        const variantDiscounts = { ...(t.variantDiscounts || {}) };
+        if (t.variantPrices) {
+          parsedVariants.forEach((v) => {
+            const vBase = v.price ? parseFloat(v.price) : prodPrice;
+            if (variantDiscounts[v.size] === undefined && t.variantPrices[v.size] && vBase > t.variantPrices[v.size]) {
+              variantDiscounts[v.size] = vBase - t.variantPrices[v.size];
+            }
+          });
+        }
+
+        return {
+          ...t,
+          discount: discount ?? '',
+          variantDiscounts,
+        };
+      });
+    }
+    const defaultMins = [10, 30, 50];
+    if (initialTiers.length === 0) {
+      initialTiers = defaultMins.map((m) => ({ minQty: m, price: '', discount: '', variantDiscounts: {} }));
+    }
+
     setForm({
       name: product.name,
       price: product.price,
@@ -471,6 +510,8 @@ function AdminProductsInner() {
       subCategoryId: product.subCategoryId || '',
       brand: product.brand || '',
       weight: product.weight || 1000,
+      isWholesale: Boolean(product.isWholesale),
+      wholesaleTiers: initialTiers,
     });
     setIsEditOpen(true);
   };
@@ -484,8 +525,59 @@ function AdminProductsInner() {
       const computedQuantity = hasVariants
         ? totalVariantStock
         : Math.max(0, parseInt(form.quantity) || 0);
+
+      const processedTiers = form.isWholesale
+        ? (form.wholesaleTiers || [])
+            .map((t) => {
+              const baseProdPrice = parseFloat(form.price) || 0;
+              const tDisc = parseFloat(t.discount) || 0;
+              let tPrice = parseFloat(t.price);
+
+              if (tDisc > 0 && baseProdPrice > tDisc) {
+                tPrice = baseProdPrice - tDisc;
+              }
+
+              let variantPrices = undefined;
+              let variantDiscounts = undefined;
+
+              if (hasVariants) {
+                variantPrices = {};
+                variantDiscounts = {};
+                form.variants.forEach((v) => {
+                  const vBase = v.price ? parseFloat(v.price) : baseProdPrice;
+                  const vDisc = parseFloat(t.variantDiscounts?.[v.size]);
+                  if (Number.isFinite(vDisc) && vDisc > 0 && vBase > vDisc) {
+                    variantDiscounts[v.size] = vDisc;
+                    variantPrices[v.size] = vBase - vDisc;
+                  }
+                });
+                if (Object.keys(variantPrices).length === 0) {
+                  variantPrices = undefined;
+                  variantDiscounts = undefined;
+                } else {
+                  const vVals = Object.values(variantPrices);
+                  if (vVals.length > 0) tPrice = Math.min(...vVals);
+                }
+              }
+
+              if (!Number.isFinite(tPrice) || tPrice <= 0) {
+                tPrice = baseProdPrice;
+              }
+
+              return {
+                minQty: parseInt(t.minQty, 10),
+                price: tPrice,
+                discount: tDisc > 0 ? tDisc : undefined,
+                ...(variantPrices ? { variantPrices, variantDiscounts } : {}),
+              };
+            })
+            .filter((t) => t.minQty && t.price > 0)
+        : null;
+
       const payload = {
         ...form,
+        isWholesale: Boolean(form.isWholesale),
+        wholesaleTiers: processedTiers,
         quantity: computedQuantity,
         image: firstImage?.url || form.image,
         videoUrl: videoItem?.url || form.videoUrl || null,
@@ -509,8 +601,59 @@ function AdminProductsInner() {
       const computedQuantity = hasVariants
         ? totalVariantStock
         : Math.max(0, parseInt(form.quantity) || 0);
+
+      const processedTiers = form.isWholesale
+        ? (form.wholesaleTiers || [])
+            .map((t) => {
+              const baseProdPrice = parseFloat(form.price) || 0;
+              const tDisc = parseFloat(t.discount) || 0;
+              let tPrice = parseFloat(t.price);
+
+              if (tDisc > 0 && baseProdPrice > tDisc) {
+                tPrice = baseProdPrice - tDisc;
+              }
+
+              let variantPrices = undefined;
+              let variantDiscounts = undefined;
+
+              if (hasVariants) {
+                variantPrices = {};
+                variantDiscounts = {};
+                form.variants.forEach((v) => {
+                  const vBase = v.price ? parseFloat(v.price) : baseProdPrice;
+                  const vDisc = parseFloat(t.variantDiscounts?.[v.size]);
+                  if (Number.isFinite(vDisc) && vDisc > 0 && vBase > vDisc) {
+                    variantDiscounts[v.size] = vDisc;
+                    variantPrices[v.size] = vBase - vDisc;
+                  }
+                });
+                if (Object.keys(variantPrices).length === 0) {
+                  variantPrices = undefined;
+                  variantDiscounts = undefined;
+                } else {
+                  const vVals = Object.values(variantPrices);
+                  if (vVals.length > 0) tPrice = Math.min(...vVals);
+                }
+              }
+
+              if (!Number.isFinite(tPrice) || tPrice <= 0) {
+                tPrice = baseProdPrice;
+              }
+
+              return {
+                minQty: parseInt(t.minQty, 10),
+                price: tPrice,
+                discount: tDisc > 0 ? tDisc : undefined,
+                ...(variantPrices ? { variantPrices, variantDiscounts } : {}),
+              };
+            })
+            .filter((t) => t.minQty && t.price > 0)
+        : null;
+
       const payload = {
         ...form,
+        isWholesale: Boolean(form.isWholesale),
+        wholesaleTiers: processedTiers,
         quantity: computedQuantity,
         image: firstImage?.url || form.image,
         videoUrl: videoItem?.url || form.videoUrl || null,
@@ -990,6 +1133,19 @@ function AdminProductsInner() {
                         ) : (
                           <span className={styles.badge} style={{ fontSize: '0.7rem' }}>
                             Reguler
+                          </span>
+                        )}
+                        {product.isWholesale && (
+                          <span
+                            className={styles.badge}
+                            style={{
+                              fontSize: '0.7rem',
+                              background: 'color-mix(in oklab, #10b981 15%, transparent)',
+                              color: '#10b981',
+                              border: '1px solid color-mix(in oklab, #10b981 30%, transparent)',
+                            }}
+                          >
+                            Partai
                           </span>
                         )}
                       </div>
@@ -1586,6 +1742,350 @@ function AdminProductsInner() {
                     </>
                   )}
                 </div>
+              </div>
+
+              {/* Section: Harga Khusus Partai (Wholesale / Grosir) */}
+              <div className={styles.formCard}>
+                <div className={styles.formCardHeader}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <div>
+                      <h4 className={styles.formCardTitle}>Harga Khusus Partai (Grosir)</h4>
+                      <p className={styles.formCardDesc}>
+                        Atur harga diskon bertingkat untuk pembelian partai (misal: 10, 30, 50 ekor).
+                      </p>
+                    </div>
+                    <label className={styles.switchOption} style={{ margin: 0, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        className={styles.switchInput}
+                        checked={Boolean(form.isWholesale)}
+                        onChange={(e) => setForm({ ...form, isWholesale: e.target.checked })}
+                      />
+                      <span style={{ fontWeight: 600 }}>Aktif</span>
+                    </label>
+                  </div>
+                </div>
+
+                {Boolean(form.isWholesale) && (
+                  <div className={styles.wholesaleContainer}>
+                    {!hasVariants ? (
+                      /* KONDISI 1: PRODUK TUNGGAL (TANPA VARIAN) */
+                      <>
+                        <div className={styles.wholesaleHeaderRow}>
+                          <span>Level</span>
+                          <span>Min. Pesanan (Ekor)</span>
+                          <span>Potongan per Ekor (Rp)</span>
+                          <span>Harga Jual Partai (Hasil)</span>
+                          <span style={{ textAlign: 'center' }}>Aksi</span>
+                        </div>
+
+                        {(form.wholesaleTiers || []).map((tier, idx) => {
+                          const basePrice = parseFloat(form.price) || 0;
+                          const discountVal = parseFloat(tier.discount) || 0;
+                          const finalPrice = Math.max(0, basePrice - discountVal);
+                          const pct = basePrice > 0 && discountVal > 0 ? Math.round((discountVal / basePrice) * 100) : 0;
+
+                          return (
+                            <div key={idx} className={styles.wholesaleTierRow}>
+                              <span className={styles.tierLevelBadge}>Level {idx + 1}</span>
+                              <div className={styles.tierInputWrapper}>
+                                <input
+                                  type="number"
+                                  min="2"
+                                  placeholder={idx === 0 ? '10' : idx === 1 ? '30' : '50'}
+                                  className={styles.fieldInput}
+                                  value={tier.minQty}
+                                  onChange={(e) => {
+                                    const updated = [...(form.wholesaleTiers || [])];
+                                    updated[idx] = { ...updated[idx], minQty: e.target.value === '' ? '' : parseInt(e.target.value, 10) || '' };
+                                    setForm({ ...form, wholesaleTiers: updated });
+                                  }}
+                                  required={Boolean(form.isWholesale)}
+                                />
+                                <span className={styles.inputAffix}>ekor</span>
+                              </div>
+                              <div className={styles.tierInputWrapper}>
+                                <span className={styles.inputPrefix}>Rp</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  placeholder="Contoh: 10.000"
+                                  className={styles.fieldInput}
+                                  value={tier.discount ?? ''}
+                                  onChange={(e) => {
+                                    const updated = [...(form.wholesaleTiers || [])];
+                                    const disc = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                                    updated[idx] = { ...updated[idx], discount: disc };
+                                    setForm({ ...form, wholesaleTiers: updated });
+                                  }}
+                                  required={Boolean(form.isWholesale)}
+                                />
+                              </div>
+                              <div className={styles.tierSavingsDisplay}>
+                                {discountVal > 0 && discountVal < basePrice ? (
+                                  <div>
+                                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                                      Rp {finalPrice.toLocaleString('id-ID')} / ekor
+                                    </div>
+                                    <span className={styles.savingsBadge} style={{ marginTop: '2px', display: 'inline-block' }}>
+                                      Hemat Rp {discountVal.toLocaleString('id-ID')} ({pct}%)
+                                    </span>
+                                  </div>
+                                ) : discountVal >= basePrice && basePrice > 0 ? (
+                                  <span style={{ color: '#ef4444', fontSize: '0.78rem', fontWeight: 600 }}>
+                                    Potongan melebihi harga normal!
+                                  </span>
+                                ) : (
+                                  <span className={styles.savingsNone}>
+                                    Tetap Rp {basePrice.toLocaleString('id-ID')}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <button
+                                  type="button"
+                                  className={styles.variantDeleteBtn}
+                                  disabled={(form.wholesaleTiers || []).length <= 1}
+                                  onClick={() => {
+                                    const updated = (form.wholesaleTiers || []).filter((_, i) => i !== idx);
+                                    setForm({ ...form, wholesaleTiers: updated });
+                                  }}
+                                  title="Hapus level partai ini"
+                                  aria-label="Hapus level"
+                                >
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '0.65rem' }}>
+                          <button
+                            type="button"
+                            className={`${styles.outlineBtn} ${styles.variantAddBtn}`}
+                            onClick={() => {
+                              const current = form.wholesaleTiers || [];
+                              const lastTier = current[current.length - 1];
+                              const nextMin = lastTier && lastTier.minQty ? (parseInt(lastTier.minQty, 10) || 0) + 20 : 10;
+                              setForm({
+                                ...form,
+                                wholesaleTiers: [...current, { minQty: nextMin, price: '', discount: '', variantDiscounts: {} }],
+                              });
+                            }}
+                          >
+                            + Tambah Level Partai
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      /* KONDISI 2: PRODUK BERVARIAN (MATRIKS VARIAN TERPADU) */
+                      <>
+                        {/* 1. Bar Pengaturan Ambang Kuantitas Level */}
+                        <div className={styles.levelConfigBar}>
+                          <div className={styles.levelConfigHeader}>
+                            <label className={styles.levelConfigTitle}>Ambang Level Pembelian Partai</label>
+                            <span className={styles.levelConfigDesc}>
+                              Tentukan batas minimal jumlah pesanan (ekor) untuk setiap level diskon partai:
+                            </span>
+                          </div>
+                          <div className={styles.levelChipsContainer}>
+                            {(form.wholesaleTiers || []).map((tier, idx) => (
+                              <div key={idx} className={styles.levelChip}>
+                                <span className={styles.tierLevelBadge}>Level {idx + 1}</span>
+                                <div className={styles.levelChipInputWrap}>
+                                  <span className={styles.levelChipLabel}>Min</span>
+                                  <input
+                                    type="number"
+                                    min="2"
+                                    placeholder={idx === 0 ? '10' : idx === 1 ? '30' : '50'}
+                                    className={styles.levelChipInput}
+                                    value={tier.minQty}
+                                    onChange={(e) => {
+                                      const updated = [...(form.wholesaleTiers || [])];
+                                      updated[idx] = { ...updated[idx], minQty: e.target.value === '' ? '' : parseInt(e.target.value, 10) || '' };
+                                      setForm({ ...form, wholesaleTiers: updated });
+                                    }}
+                                    required={Boolean(form.isWholesale)}
+                                  />
+                                  <span className={styles.levelChipAffix}>ekor</span>
+                                </div>
+                                {(form.wholesaleTiers || []).length > 1 && (
+                                  <button
+                                    type="button"
+                                    className={styles.levelChipDeleteBtn}
+                                    onClick={() => {
+                                      const updated = (form.wholesaleTiers || []).filter((_, i) => i !== idx);
+                                      setForm({ ...form, wholesaleTiers: updated });
+                                    }}
+                                    title={`Hapus Level ${idx + 1}`}
+                                    aria-label={`Hapus Level ${idx + 1}`}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+
+                            <button
+                              type="button"
+                              className={`${styles.outlineBtn} ${styles.addLevelChipBtn}`}
+                              onClick={() => {
+                                const current = form.wholesaleTiers || [];
+                                const lastTier = current[current.length - 1];
+                                const nextMin = lastTier && lastTier.minQty ? (parseInt(lastTier.minQty, 10) || 0) + 20 : 10;
+                                setForm({
+                                  ...form,
+                                  wholesaleTiers: [...current, { minQty: nextMin, price: '', discount: '', variantDiscounts: {} }],
+                                });
+                              }}
+                            >
+                              + Tambah Level
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 2. Matriks Potongan Harga Partai Langsung Per Varian */}
+                        <div className={styles.variantSimulationBox}>
+                          <div className={styles.variantSimulationHeader}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <div>
+                                <span className={styles.variantSimulationTitle}>
+                                  Tabel Potongan Harga Partai Per Varian
+                                </span>
+                                <span className={styles.variantSimulationSubtitle}>
+                                  Masukkan <strong>nominal potongan (Rp)</strong> untuk masing-masing varian. Harga jual akhir otomatis terhitung di bawahnya:
+                                </span>
+                              </div>
+                              <div className={styles.quickDiscountWrap}>
+                                <span className={styles.quickDiscountLabel}>Bantuan Cepat:</span>
+                                <button
+                                  type="button"
+                                  className={styles.quickDiscountBtn}
+                                  onClick={() => {
+                                    const updatedTiers = (form.wholesaleTiers || []).map((t, idx) => {
+                                      const pct = Math.min(60, 10 + idx * 10);
+                                      const vd = { ...(t.variantDiscounts || {}) };
+                                      form.variants.forEach((v) => {
+                                        const base = v.price ? parseFloat(v.price) : (parseFloat(form.price) || 0);
+                                        if (base > 0) {
+                                          vd[v.size] = Math.round(base * (pct / 100));
+                                        }
+                                      });
+                                      return { ...t, variantDiscounts: vd };
+                                    });
+                                    setForm({ ...form, wholesaleTiers: updatedTiers });
+                                    toast.success('Potongan bertingkat (10%, 20%, 30%...) berhasil diterapkan ke seluruh varian.');
+                                  }}
+                                  title="Terapkan potongan bertingkat otomatis: Level 1 (-10%), Level 2 (-20%), Level 3 (-30%)..."
+                                >
+                                  Potongan Bertingkat (10%, 20%, 30%...)
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className={styles.variantSimulationTableWrapper}>
+                            <table className={styles.variantSimulationTable}>
+                              <thead>
+                                <tr>
+                                  <th>Nama Varian</th>
+                                  <th>Harga Eceran</th>
+                                  {(form.wholesaleTiers || []).map((t, idx) => (
+                                    <th key={idx}>
+                                      Level {idx + 1}
+                                      <div style={{ fontSize: '0.7rem', fontWeight: 'normal', color: 'var(--text-muted)' }}>
+                                        (Min {t.minQty || '—'} ekor)
+                                      </div>
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {form.variants.map((v, vIdx) => {
+                                  const vBasePrice = v.price ? parseFloat(v.price) : (parseFloat(form.price) || 0);
+                                  const vName = v.size || `Varian #${vIdx + 1}`;
+
+                                  return (
+                                    <tr key={vIdx}>
+                                      <td style={{ fontWeight: 600 }}>{vName}</td>
+                                      <td style={{ whiteSpace: 'nowrap' }}>Rp {vBasePrice.toLocaleString('id-ID')}</td>
+                                      {(form.wholesaleTiers || []).map((t, tIdx) => {
+                                        const currentDisc = t.variantDiscounts?.[vName] ?? '';
+                                        const discVal = parseFloat(currentDisc);
+                                        const hasDisc = Number.isFinite(discVal) && discVal > 0;
+                                        const finalPrice = Math.max(0, vBasePrice - (hasDisc ? discVal : 0));
+                                        const pct = hasDisc && vBasePrice > 0 ? Math.round((discVal / vBasePrice) * 100) : 0;
+
+                                        return (
+                                          <td key={tIdx}>
+                                            <div className={styles.matrixInputWrap}>
+                                              <span className={styles.matrixPrefix}>Rp</span>
+                                              <input
+                                                type="number"
+                                                min="0"
+                                                placeholder="Potongan Rp"
+                                                value={currentDisc}
+                                                onChange={(e) => {
+                                                  const val = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                                                  const updated = [...(form.wholesaleTiers || [])];
+                                                  const currentVd = { ...(updated[tIdx].variantDiscounts || {}) };
+                                                  if (val === undefined || Number.isNaN(val)) {
+                                                    delete currentVd[vName];
+                                                  } else {
+                                                    currentVd[vName] = val;
+                                                  }
+                                                  updated[tIdx] = {
+                                                    ...updated[tIdx],
+                                                    variantDiscounts: currentVd,
+                                                  };
+                                                  setForm({ ...form, wholesaleTiers: updated });
+                                                }}
+                                                className={styles.matrixInput}
+                                              />
+                                            </div>
+                                            <div style={{ marginTop: '4px' }}>
+                                              {hasDisc && discVal < vBasePrice ? (
+                                                <div>
+                                                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                                                    Rp {finalPrice.toLocaleString('id-ID')}
+                                                  </div>
+                                                  <span className={styles.savingsBadge} style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem', marginTop: '2px', display: 'inline-block' }}>
+                                                    Hemat Rp {discVal.toLocaleString('id-ID')} ({pct}%)
+                                                  </span>
+                                                </div>
+                                              ) : hasDisc && discVal >= vBasePrice ? (
+                                                <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600, display: 'inline-block' }}>
+                                                  Potongan melebihi harga!
+                                                </span>
+                                              ) : (
+                                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                                  Tetap Rp {vBasePrice.toLocaleString('id-ID')}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <p className={styles.fieldOptional} style={{ marginTop: '0.75rem', fontSize: '0.78rem' }}>
+                      * Customer yang memesan dalam rentang tier (misal 15 ekor) otomatis mendapatkan potongan tier Level 1 (10 ekor). Melebihi Level 2 otomatis mendapatkan potongan Level 2, dan seterusnya.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Section 4: Pengaturan Tambahan & Status Drop */}

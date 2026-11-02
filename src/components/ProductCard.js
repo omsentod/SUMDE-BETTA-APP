@@ -6,6 +6,7 @@ import styles from './ProductCard.module.css';
 import { useCart } from '@/context/CartContext';
 import SizePickerModal from './SizePickerModal';
 import { parseYouTubeId } from '@/lib/productImages';
+import { getEffectiveUnitPrice } from '@/lib/wholesale';
 
 function extractImageUrl(item) {
     if (!item) return null;
@@ -102,6 +103,8 @@ export default function ProductCard({
     brand,
     department,
     subCategory,
+    isWholesale,
+    wholesaleTiers,
     onClick,
 }) {
     const { addToCart, isCartOpen, toggleCart } = useCart();
@@ -230,13 +233,29 @@ export default function ProductCard({
         sizes,
         variants: variantList,
         quantity,
-        soldCount
+        soldCount,
+        isWholesale,
+        wholesaleTiers,
+        department,
+        subCategory,
+        brand,
     };
 
-    const commitAddToCart = (selectedSize, variant) => {
-        const itemPrice = variant?.price !== null && variant?.price !== undefined ? variant.price : price;
+    const commitAddToCart = (selectedSize, variant, chosenQty = 1) => {
+        const basePrice = variant?.price !== null && variant?.price !== undefined ? variant.price : price;
+        const itemPrice = getEffectiveUnitPrice({ price, isWholesale, wholesaleTiers }, variant, chosenQty);
         const itemImage = variant?.imageUrl || image;
-        addToCart({ ...productPayload, price: itemPrice, image: itemImage, selectedSize, variantId: variant?.id });
+        addToCart({
+            ...productPayload,
+            productPrice: price,
+            basePrice,
+            price: itemPrice,
+            image: itemImage,
+            selectedSize,
+            variantId: variant?.id,
+            isWholesale,
+            wholesaleTiers,
+        }, chosenQty);
     };
 
     const openSizePicker = (action) => {
@@ -248,15 +267,15 @@ export default function ProductCard({
         e.preventDefault();
         e.stopPropagation();
         if (effectiveSold) return;
-        if (hasSizes) {
+        if (hasSizes || isWholesale) {
             openSizePicker('cart');
             return;
         }
-        commitAddToCart(null, null);
+        commitAddToCart(null, null, 1);
     };
 
-    const handleModalCommit = (selectedSize, variant) => {
-        commitAddToCart(selectedSize, variant);
+    const handleModalCommit = (selectedSize, variant, chosenQty = 1) => {
+        commitAddToCart(selectedSize, variant, chosenQty);
         setModalAction(null);
     };
 
@@ -429,6 +448,11 @@ export default function ProductCard({
                         <div className={styles.priceCol}>
                             <span className={`${styles.price} ${isPremium ? styles.pricePremium : ''}`}>{formattedPrice}</span>
                             <div className={styles.statusMetaRow}>
+                                {isWholesale && !effectiveSold && (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10b981', background: 'color-mix(in oklab, #10b981 12%, transparent)', padding: '1px 6px', borderRadius: '4px', border: '1px solid color-mix(in oklab, #10b981 25%, transparent)' }}>
+                                        Partai
+                                    </span>
+                                )}
                                 {effectiveSold && (
                                     <span className={styles.soldBadgeMuted}>Habis</span>
                                 )}

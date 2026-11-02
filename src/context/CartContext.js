@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { getEffectiveUnitPrice } from '@/lib/wholesale';
 
 const CartContext = createContext();
 
@@ -15,6 +16,45 @@ const CartContext = createContext();
 // sendiri sudah pasti expired, niat Beli Sekarang di client juga tidak masuk
 // akal bertahan lebih lama dari itu.
 const BUY_NOW_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * Rekalkulasi harga tiap item di keranjang dengan cross-variant pooling.
+ * Jika ada beberapa varian dari produk yang sama (misal 5 Male + 5 Female = 10 ekor),
+ * kuantitasnya diakumulasikan untuk memeriksa kelayakan tier partai (wholesale).
+ */
+export function recalculateCartItems(items) {
+    if (!Array.isArray(items) || items.length === 0) return items;
+
+    // 1. Akumulasi total kuantitas per productId untuk item yang sedang aktif (checked !== false)
+    const checkedPooledQtyById = {};
+    for (const item of items) {
+        if (!item?.id || item.checked === false) continue;
+        checkedPooledQtyById[item.id] = (checkedPooledQtyById[item.id] || 0) + (item.quantity || 1);
+    }
+
+    return items.map((item) => {
+        if (!item || !item.isWholesale) return item;
+
+        const isChecked = item.checked !== false;
+        const pooledQty = isChecked
+            ? (checkedPooledQtyById[item.id] || item.quantity || 1)
+            : (item.quantity || 1);
+
+        const productBasePrice = item.productPrice ?? item.regularPrice ?? item.basePrice ?? item.price;
+        const variantBasePrice = item.basePrice ?? productBasePrice;
+
+        const effectivePrice = getEffectiveUnitPrice(
+            { ...item, price: productBasePrice },
+            { price: variantBasePrice },
+            pooledQty
+        );
+
+        return {
+            ...item,
+            price: effectivePrice,
+        };
+    });
+}
 
 export function CartProvider({ children }) {
     const { currentUser } = useAuth();
@@ -72,7 +112,7 @@ export function CartProvider({ children }) {
             localStorage.removeItem(directKey);
         }
 
-        setCart(initialCart);
+        setCart(recalculateCartItems(initialCart));
         setDirectCheckoutItem(initialDirect);
         setActiveUserId(userId);
     }, [userId]);
@@ -107,33 +147,58 @@ export function CartProvider({ children }) {
 
     const toggleCart = useCallback(() => setIsCartOpen((p) => !p), []);
 
-    const addToCart = useCallback((product) => {
+    const addToCart = useCallback((product, qty = 1) => {
+        const addedQty = typeof qty === 'number' && qty > 0 ? qty : (product?.quantity || 1);
+        const basePrice = product.basePrice ?? product.regularPrice ?? product.price;
+        const productPrice = product.productPrice ?? product.price ?? basePrice;
         setCart((prev) => {
             const exists = prev.find((item) => item.id === product.id && item.selectedSize === product.selectedSize);
+            let nextCart;
             if (exists) {
-                return prev.map((item) =>
-                    (item.id === product.id && item.selectedSize === product.selectedSize)
-                        ? { ...item, quantity: (item.quantity || 1) + 1, checked: true }
-                        : item
-                );
+                nextCart = prev.map((item) => {
+                    if (item.id === product.id && item.selectedSize === product.selectedSize) {
+                        const newQty = (item.quantity || 1) + addedQty;
+                        return { ...item, quantity: newQty, checked: true };
+                    }
+                    return item;
+                });
+            } else {
+                nextCart = [...prev, { ...product, basePrice, productPrice, quantity: addedQty, checked: true }];
             }
-            return [...prev, { ...product, quantity: 1, checked: true }];
+            return recalculateCartItems(nextCart);
         });
         setIsCartOpen(true);
     }, []);
 
-    const buyNow = useCallback((product) => {
-        setDirectCheckoutItem({ ...product, quantity: 1, checked: true, _buyNowAt: Date.now() });
+    const buyNow = useCallback((product, qty = 1) => {
+        const buyQty = typeof qty === 'number' && qty > 0 ? qty : (product?.quantity || 1);
+        const basePrice = product.basePrice ?? product.regularPrice ?? product.price;
+        const productPrice = product.productPrice ?? product.price ?? basePrice;
+        const itemPrice = getEffectiveUnitPrice(
+            { ...product, price: productPrice },
+            { price: basePrice },
+            buyQty
+        );
+        setDirectCheckoutItem({
+            ...product,
+            productPrice,
+            basePrice,
+            price: itemPrice,
+            quantity: buyQty,
+            checked: true,
+            _buyNowAt: Date.now(),
+        });
     }, []);
 
     const toggleItemCheck = useCallback((id, selectedSize) => {
-        setCart((prev) =>
-            prev.map((item) =>
+        setCart((prev) => {
+            const nextCart = prev.map((item) =>
                 (item.id === id && item.selectedSize === selectedSize)
                     ? { ...item, checked: item.checked === false ? true : false }
                     : item
-            )
-        );
+            );
+            return recalculateCartItems(nextCart);
+        });
     }, []);
 
     // Bulk action: flip every item's checked flag based on current all-checked state.
@@ -142,41 +207,80 @@ export function CartProvider({ children }) {
         setCart((prev) => {
             if (prev.length === 0) return prev;
             const allChecked = prev.every((item) => item.checked !== false);
-            return prev.map((item) => ({ ...item, checked: !allChecked }));
+            const nextCart = prev.map((item) => ({ ...item, checked: !allChecked }));
+            return recalculateCartItems(nextCart);
         });
     }, []);
 
     // Bulk action: remove every item whose checkbox is currently on.
     const removeCheckedItems = useCallback(() => {
-        setCart((prev) => prev.filter((item) => item.checked === false));
+        setCart((prev) => {
+            const nextCart = prev.filter((item) => item.checked === false);
+            return recalculateCartItems(nextCart);
+        });
     }, []);
 
     const updateQuantity = useCallback((id, delta, selectedSize) => {
-        // Prefer directCheckoutItem when it matches; otherwise mutate cart.
-        // We read state via the setter's `prev` so the handler stays stable.
         setDirectCheckoutItem((prev) => {
             if (prev && prev.id === id && prev.selectedSize === selectedSize) {
-                const newQty = (prev.quantity || 1) + delta;
-                return { ...prev, quantity: newQty > 0 ? newQty : 1 };
+                const newQty = Math.max(1, (prev.quantity || 1) + delta);
+                const productPrice = prev.productPrice ?? prev.price;
+                const basePrice = prev.basePrice ?? productPrice;
+                const newPrice = getEffectiveUnitPrice(
+                    { ...prev, price: productPrice },
+                    { price: basePrice },
+                    newQty
+                );
+                return { ...prev, quantity: newQty, price: newPrice };
             }
             return prev;
         });
-        setCart((prev) =>
-            prev.map((item) => {
+        setCart((prev) => {
+            const nextCart = prev.map((item) => {
                 if (item.id === id && item.selectedSize === selectedSize) {
-                    const newQty = (item.quantity || 1) + delta;
-                    return { ...item, quantity: newQty > 0 ? newQty : 1 };
+                    const newQty = Math.max(1, (item.quantity || 1) + delta);
+                    return { ...item, quantity: newQty };
                 }
                 return item;
-            })
-        );
+            });
+            return recalculateCartItems(nextCart);
+        });
+    }, []);
+
+    const setQuantity = useCallback((id, newQty, selectedSize) => {
+        const targetQty = Math.max(1, parseInt(newQty, 10) || 1);
+        setDirectCheckoutItem((prev) => {
+            if (prev && prev.id === id && prev.selectedSize === selectedSize) {
+                const productPrice = prev.productPrice ?? prev.price;
+                const basePrice = prev.basePrice ?? productPrice;
+                const newPrice = getEffectiveUnitPrice(
+                    { ...prev, price: productPrice },
+                    { price: basePrice },
+                    targetQty
+                );
+                return { ...prev, quantity: targetQty, price: newPrice };
+            }
+            return prev;
+        });
+        setCart((prev) => {
+            const nextCart = prev.map((item) => {
+                if (item.id === id && item.selectedSize === selectedSize) {
+                    return { ...item, quantity: targetQty };
+                }
+                return item;
+            });
+            return recalculateCartItems(nextCart);
+        });
     }, []);
 
     const removeFromCart = useCallback((id, selectedSize) => {
         setDirectCheckoutItem((prev) =>
             (prev && prev.id === id && prev.selectedSize === selectedSize) ? null : prev
         );
-        setCart((prev) => prev.filter((item) => !(item.id === id && item.selectedSize === selectedSize)));
+        setCart((prev) => {
+            const nextCart = prev.filter((item) => !(item.id === id && item.selectedSize === selectedSize));
+            return recalculateCartItems(nextCart);
+        });
     }, []);
 
     const clearCart = useCallback(() => setCart([]), []);
@@ -245,6 +349,7 @@ export function CartProvider({ children }) {
         toggleAllChecked,
         removeCheckedItems,
         updateQuantity,
+        setQuantity,
         removeFromCart,
         clearCart,
         clearCheckout,
@@ -265,7 +370,7 @@ export function CartProvider({ children }) {
         total, itemCount, cartCheckedTotal, checkedCount, allChecked,
         checkoutItems, checkoutTotal, checkoutCount,
         addToCart, buyNow, toggleItemCheck, toggleAllChecked, removeCheckedItems,
-        updateQuantity, removeFromCart,
+        updateQuantity, setQuantity, removeFromCart,
         clearCart, clearCheckout, toggleCart,
     ]);
 

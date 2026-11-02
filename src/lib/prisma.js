@@ -6,7 +6,12 @@ const globalForPrisma = globalThis;
 // di arsitektur chunked Next.js / Hostinger Node.js), hanya ada 1 instance
 // PrismaClient tunggal (singleton). Ini mencegah kebocoran / ledakan koneksi MySQL ("max_user_connections").
 const existingPrisma = globalForPrisma.prisma;
-const prisma = existingPrisma && existingPrisma.department && existingPrisma.subCategory ? existingPrisma : new PrismaClient({
+const isFreshPrisma = existingPrisma &&
+  existingPrisma.department &&
+  existingPrisma.subCategory &&
+  existingPrisma._runtimeDataModel?.models?.Product?.fields?.some((f) => f.name === 'isWholesale');
+
+const prisma = isFreshPrisma ? existingPrisma : new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
 });
 

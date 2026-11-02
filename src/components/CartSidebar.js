@@ -346,6 +346,12 @@ export default function CartSidebar() {
                                         </div>
                                     )}
 
+                                    {item.isWholesale && item.basePrice && item.price < item.basePrice && (
+                                        <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600, marginTop: '2px' }}>
+                                            Partai aktif: hemat Rp {Math.round(item.basePrice - item.price).toLocaleString('id-ID')}/ekor
+                                        </div>
+                                    )}
+
                                     <div className={styles.itemPriceAndQty}>
                                         <span className={styles.itemPrice}>
                                             {formatCurrency(item.price)}

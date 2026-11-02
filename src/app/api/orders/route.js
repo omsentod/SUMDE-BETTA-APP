@@ -5,6 +5,7 @@ import { findAndValidateRate } from '@/lib/shipping';
 import { notifyAllAdmins } from '@/lib/notification';
 import { calcPaymentFee, isValidPaymentMethod } from '@/lib/paymentFee';
 import { hasPermission } from '@/lib/permissions';
+import { getEffectiveUnitPrice } from '@/lib/wholesale';
 
 export async function GET(request) {
   try {
@@ -62,9 +63,9 @@ export async function POST(request) {
     const normalized = [];
     for (const raw of items) {
       const productId = raw.productId || raw.id;
-      const quantity = parseInt(raw.quantity);
-      if (!productId || !Number.isFinite(quantity) || quantity <= 0) {
-        return NextResponse.json({ error: 'Item pesanan tidak valid.' }, { status: 400 });
+      const quantity = parseInt(raw.quantity, 10);
+      if (!productId || !Number.isInteger(quantity) || quantity <= 0 || quantity > 100000) {
+        return NextResponse.json({ error: 'Item pesanan atau kuantitas tidak valid.' }, { status: 400 });
       }
       normalized.push({ productId, quantity, selectedSize: raw.selectedSize ?? null });
     }
@@ -76,6 +77,15 @@ export async function POST(request) {
       include: { variants: true },
     });
     const productById = new Map(products.map(p => [p.id, p]));
+
+    // Hitung akumulasi kuantitas per produk (Cross-Variant Pooled Quantity)
+    // Memungkinkan pembeli mencampur varian (misal 5 Male + 5 Female = 10 ekor)
+    // untuk tetap berhak mendapatkan harga partai tier 10 pada produk yang sama.
+    const totalQtyByProductId = new Map();
+    for (const i of normalized) {
+      totalQtyByProductId.set(i.productId, (totalQtyByProductId.get(i.productId) || 0) + i.quantity);
+    }
+
     for (const item of normalized) {
       const product = productById.get(item.productId);
       if (!product) {
@@ -84,6 +94,9 @@ export async function POST(request) {
       if (product.isArchived) {
         return NextResponse.json({ error: `Produk "${product.name}" sudah tidak tersedia.` }, { status: 400 });
       }
+
+      const pooledQty = totalQtyByProductId.get(item.productId) || item.quantity;
+
       if (product.variants && product.variants.length > 0) {
         if (!item.selectedSize) {
           return NextResponse.json({ error: `Silakan pilih varian untuk "${product.name}".` }, { status: 400 });
@@ -96,13 +109,15 @@ export async function POST(request) {
           return NextResponse.json({ error: `Stok varian "${variant.size}" tidak mencukupi (tersedia: ${variant.stock}).` }, { status: 400 });
         }
         item.variantId = variant.id;
-        item.resolvedPrice = variant.price !== null && variant.price !== undefined ? variant.price : product.price;
+        // Hitung harga satuan aman dari DB + diskon proporsional jika kuantitas memenuhi tier
+        item.resolvedPrice = getEffectiveUnitPrice(product, variant, pooledQty);
       } else {
         if (product.quantity < item.quantity) {
           return NextResponse.json({ error: `Stok produk "${product.name}" tidak mencukupi.` }, { status: 400 });
         }
         item.variantId = null;
-        item.resolvedPrice = product.price;
+        // Hitung harga satuan aman dari DB + diskon proporsional jika kuantitas memenuhi tier
+        item.resolvedPrice = getEffectiveUnitPrice(product, null, pooledQty);
       }
     }
 

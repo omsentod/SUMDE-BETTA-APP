@@ -1980,5 +1980,367 @@
     }
 }
 
+/* --- Fitur Partai (Wholesale / Grosir) Setting in Admin --- */
+.wholesaleContainer {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.wholesaleHeaderRow {
+    display: grid;
+    grid-template-columns: 80px 1fr 1.3fr 1.2fr 44px;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 0.5rem 0.25rem;
+}
+
+.wholesaleTierRow {
+    display: grid;
+    grid-template-columns: 80px 1fr 1.3fr 1.2fr 44px;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+
+.tierLevelBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.5rem;
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in oklab, var(--primary) 28%, transparent);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.tierInputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputAffix {
+    position: absolute;
+    right: 10px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.inputPrefix {
+    position: absolute;
+    left: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.tierInputWrapper:has(.inputPrefix) input {
+    padding-left: 2rem;
+}
+
+.tierInputWrapper:has(.inputAffix) input {
+    padding-right: 2.4rem;
+}
+
+.tierSavingsDisplay {
+    display: flex;
+    align-items: center;
+}
+
+.savingsBadge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    background: color-mix(in oklab, #10b981 12%, transparent);
+    color: #10b981;
+    border: 1px solid color-mix(in oklab, #10b981 25%, transparent);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.savingsNone {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .wholesaleHeaderRow {
+        display: none;
+    }
+    .wholesaleTierRow {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        background: color-mix(in oklab, var(--bg-card) 60%, transparent);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 0.75rem;
+    }
+}
+
+.variantSimulationBox {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    background: color-mix(in oklab, var(--bg-card) 70%, transparent);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.variantSimulationHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.85rem;
+}
+
+.variantSimulationTitle {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.variantSimulationSubtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.variantSimulationTableWrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.variantSimulationTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    min-width: 500px;
+}
+
+.variantSimulationTable th {
+    padding: 0.6rem 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.variantSimulationTable td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.simInput {
+    width: 100%;
+    min-width: 110px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 0.8rem;
+}
+
+.simInput:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.autoBadge {
+    display: inline-block;
+    margin-top: 3px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.customBadge {
+    display: inline-block;
+    margin-top: 3px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+/* Level Configuration Bar for Variant Mode */
+.levelConfigBar {
+    padding: 0.85rem 1rem;
+    background: color-mix(in oklab, var(--bg-card) 60%, transparent);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.levelConfigHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 0.75rem;
+}
+
+.levelConfigTitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.levelConfigDesc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.levelChipsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.levelChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.levelChipInputWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.levelChipLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.levelChipInput {
+    width: 60px;
+    padding: 0.25rem 0.4rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.levelChipInput:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.levelChipAffix {
+    font-size: 0.75rem;
+}
+
+.levelChipDeleteBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.levelChipDeleteBtn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.addLevelChipBtn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    height: 34px;
+}
+
+/* Quick Discount Helper */
+.quickDiscountWrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quickDiscountLabel {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.quickDiscountBtn {
+    padding: 0.3rem 0.65rem;
+    background: color-mix(in oklab, var(--primary) 12%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in oklab, var(--primary) 28%, transparent);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.quickDiscountBtn:hover {
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
+    border-color: var(--primary);
+}
+
+/* Matrix Inputs */
+.matrixInputWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 125px;
+}
+
+.matrixPrefix {
+    position: absolute;
+    left: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.matrixInput {
+    width: 100%;
+    padding: 0.35rem 0.5rem 0.35rem 1.8rem;
+    border-radius: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.matrixInput:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+
 
 

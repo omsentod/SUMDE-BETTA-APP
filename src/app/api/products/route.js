@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requirePermission } from '@/lib/permissions';
 import { normalizeImages, findCoverImage } from '@/lib/productImages';
+import { validateWholesaleTiersInput } from '@/lib/wholesale';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -69,6 +70,7 @@ export async function POST(request) {
       quantity, variants, soldCount,
       videoUrl, isDailyDrop, dropNumber,
       departmentId, subCategoryId, brand, weight,
+      isWholesale, wholesaleTiers,
     } = await request.json();
 
     const gallery = normalizeImages(images, image, videoUrl);
@@ -81,6 +83,17 @@ export async function POST(request) {
 
     if (!name || price === undefined || !description || gallery.length === 0) {
       return NextResponse.json({ error: 'Data produk tidak lengkap (nama, harga, deskripsi, dan minimal 1 foto wajib diisi).' }, { status: 400 });
+    }
+
+    let finalIsWholesale = false;
+    let finalWholesaleTiers = null;
+    if (Boolean(isWholesale)) {
+      const wholesaleValidation = validateWholesaleTiersInput(wholesaleTiers, price);
+      if (!wholesaleValidation.valid) {
+        return NextResponse.json({ error: wholesaleValidation.error }, { status: 400 });
+      }
+      finalIsWholesale = true;
+      finalWholesaleTiers = wholesaleValidation.tiers;
     }
 
     const normalizedVariants = Array.isArray(variants) ? variants : [];
@@ -120,10 +133,12 @@ export async function POST(request) {
         quantity: totalStock,
         isSold: totalStock === 0,
         soldCount: soldCount !== undefined ? Math.max(0, parseInt(soldCount) || 0) : 0,
-        departmentId: departmentId || null,
-        subCategoryId: subCategoryId || null,
+        ...(departmentId ? { department: { connect: { id: departmentId } } } : {}),
+        ...(subCategoryId ? { subCategory: { connect: { id: subCategoryId } } } : {}),
         brand: brand ? brand.trim() : null,
         weight: weight !== undefined ? Math.max(50, parseInt(weight) || 1000) : 1000,
+        isWholesale: finalIsWholesale,
+        wholesaleTiers: finalWholesaleTiers,
         variants: normalizedVariants.length > 0
           ? {
               create: normalizedVariants.map((v, idx) => ({

@@ -41,10 +41,6 @@ export default function MobileBottomNav() {
 
   const [unread, setUnread] = useState(0);
 
-  // Self-hide di halaman detail produk — page tsb pakai sticky action bar sendiri.
-  // Return null diletakkan setelah semua hook supaya urutan hook stabil.
-  const isProductDetail = pathname.startsWith('/produk/') && pathname !== '/produk';
-
   // Fetch unread count untuk badge — reuse endpoint yang dipakai NotificationBell
   useEffect(() => {
     if (!currentUser) { setUnread(0); return; }
@@ -73,8 +69,6 @@ export default function MobileBottomNav() {
     : '/login';
   const accountLabel = currentUser ? 'Akun' : 'Masuk';
   const AccountIcon = currentUser ? IconUser : IconLogin;
-
-  if (isProductDetail) return null;
 
   return (
     <nav className={styles.bar} aria-label="Navigasi utama mobile">
