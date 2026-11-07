@@ -108,6 +108,7 @@ export default function ProductDetailClient() {
     const [prevProductId, setPrevProductId] = useState(null);
     const [isZoomOpen, setIsZoomOpen] = useState(false);
     const touchStartX = useRef(null);
+    const thumbRefs = useRef([]);
 
     const product = products.find((p) => p.id === id);
 
@@ -241,6 +242,19 @@ export default function ProductDetailClient() {
         return buildProductMediaGallery(product, variants);
     }, [product, variants]);
 
+    const idx = gallery.length > 0 ? Math.min(activeIndex, gallery.length - 1) : 0;
+
+    // Auto-scroll thumbnail aktif ke tengah viewport strip agar selalu terlihat
+    useEffect(() => {
+        if (thumbRefs.current[idx]) {
+            thumbRefs.current[idx].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center',
+            });
+        }
+    }, [idx]);
+
     if (isLoading) {
         return (
             <div className={`pageContainer ${styles.stateWrap}`}>
@@ -323,7 +337,6 @@ export default function ProductDetailClient() {
     };
 
     const canBuy = !product.isSold && product.quantity > 0;
-    const idx = gallery.length > 0 ? Math.min(activeIndex, gallery.length - 1) : 0;
     const activeMedia = gallery[idx] || (gallery[0] || { type: 'image', url: product.image });
     const hasMultiple = gallery.length > 1;
 
@@ -347,7 +360,7 @@ export default function ProductDetailClient() {
                     <div className={styles.grid}>
 
                         {/* Media gallery — geser sesuai urutan yang di-set admin (foto + video) */}
-                        <div>
+                        <div className={styles.galleryColumn}>
                             <div
                                 className={styles.imageFrame}
                                 onTouchStart={onTouchStart}
@@ -456,6 +469,7 @@ export default function ProductDetailClient() {
                                     {gallery.map((media, i) => (
                                         <button
                                             key={`${media.url}-${i}`}
+                                            ref={(el) => { thumbRefs.current[i] = el; }}
                                             type="button"
                                             className={`${styles.thumb} ${i === idx ? styles.thumbActive : ''}`}
                                             onClick={() => setActiveIndex(i)}

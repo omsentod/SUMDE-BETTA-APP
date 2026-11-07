@@ -3,7 +3,6 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductCard from "@/components/ProductCard";
-import InteractiveBettaAquarium from "@/components/InteractiveBettaAquarium";
 import ArtisticBettaEmpty from "@/components/ArtisticBettaEmpty";
 import PokerCurvedShowcase from "@/components/PokerCurvedShowcase";
 import { useProducts } from "@/context/ProductContext";
@@ -126,12 +125,9 @@ export default function CatalogHome() {
 
     return (
         <div className={styles.homeContainer}>
-            {/* Cinematic Hero Carousel with Interactive Living Betta Aquarium */}
+            {/* Cinematic Hero Carousel Banner */}
             <section className={`container ${styles.heroSection}`}>
                 <div className={styles.heroCarousel}>
-                    {/* Living Aquatic Canvas Overlay */}
-                    <InteractiveBettaAquarium fishCount={1} />
-
                     {events.length > 0 ? (
                         <>
                             {events.map((event, idx) => {
