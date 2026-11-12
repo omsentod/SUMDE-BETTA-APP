@@ -4,7 +4,7 @@ import { useCart } from '@/context/CartContext';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import PaymentMethodPicker from '@/components/PaymentMethodPicker';
-import { calcPaymentFee, getMethodLabel, isValidPaymentMethod } from '@/lib/paymentFee';
+import { calcPaymentFee, isValidPaymentMethod } from '@/lib/paymentFee';
 import { useToast } from '@/context/ToastContext';
 import styles from './payment.module.css';
 
@@ -40,6 +40,7 @@ export default function PaymentPage() {
     const [orderError, setOrderError] = useState('');
     const [activePayment, setActivePayment] = useState(null);
     const [status, setStatus] = useState('pending'); // 'pending' | 'checkout_created' | 'success'
+    const [completedOrderId, setCompletedOrderId] = useState(null);
 
     // Auto-check helper — polls the minimal /status endpoint (no PII exposed).
     const autoCheckPayment = useCallback(async (orderId) => {
@@ -49,6 +50,7 @@ export default function PaymentPage() {
             if (res.ok) {
                 const { status: orderStatus } = await res.json();
                 if (orderStatus === 'PAID' || orderStatus === 'PROCESSING') {
+                    setCompletedOrderId(orderId);
                     setStatus('success');
                     clearCart();
                     localStorage.removeItem('temp-shipment');
@@ -304,6 +306,7 @@ export default function PaymentPage() {
 
             const { status: orderStatus } = await res.json();
             if (orderStatus === 'PAID' || orderStatus === 'PROCESSING') {
+                setCompletedOrderId(activePayment.orderId);
                 setStatus('success');
                 clearCart();
                 localStorage.removeItem('temp-shipment');
@@ -377,17 +380,42 @@ export default function PaymentPage() {
                                 <polyline points="20 6 9 17 4 12" />
                             </svg>
                         </div>
-                        <h1 className={styles.successTitle}>Pesanan Dikonfirmasi</h1>
+                        <h1 className={styles.successTitle}>Pembayaran Berhasil</h1>
+                        {completedOrderId && (
+                            <div className={styles.successOrderBadge}>
+                                No. Pesanan: <b>#{completedOrderId.slice(0, 8).toUpperCase()}</b>
+                            </div>
+                        )}
                         <p className={styles.successDesc}>
-                            Pembayaran Anda telah sukses diverifikasi oleh DOKU. Ikan pilihan Anda sedang kami persiapkan untuk proses kurasi dan pengiriman bergaransi.
+                            Pembayaran Anda telah sukses diverifikasi oleh DOKU. Ikan pilihan Anda sedang kami persiapkan untuk proses kurasi, pengemasan oksigen aman, dan pengiriman bergaransi.
                         </p>
-                        <button
-                            type="button"
-                            onClick={() => router.push('/')}
-                            className={`btn btn-primary ${styles.homeBtn}`}
-                        >
-                            Kembali ke Beranda
-                        </button>
+                        <div className={styles.successButtonGroup}>
+                            {completedOrderId && (
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(`/invoice/${completedOrderId}`)}
+                                    className={`btn btn-primary ${styles.invoiceBtn}`}
+                                >
+                                    Lihat &amp; Cetak Faktur (Invoice)
+                                </button>
+                            )}
+                            {completedOrderId && (
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(`/lacak-pesanan?orderId=${completedOrderId}`)}
+                                    className={`btn btn-outline ${styles.trackBtn}`}
+                                >
+                                    Lacak Pengiriman
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => router.push('/')}
+                                className={`btn btn-outline ${styles.homeBtn}`}
+                            >
+                                Kembali ke Beranda
+                            </button>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -430,12 +458,11 @@ export default function PaymentPage() {
                                         <h3 className={styles.cardSectionTitle}>PILIH METODE PEMBAYARAN</h3>
                                     </div>
                                     <p className={styles.cardDescription}>
-                                        Biaya admin otomatis terhitung transparan. Anda akan diarahkan ke portal resmi <b>DOKU</b>.
+                                        Pilih metode pembayaran yang Anda inginkan. Anda akan diarahkan ke portal resmi <b>DOKU</b>.
                                     </p>
                                     <PaymentMethodPicker
                                         value={paymentMethod}
                                         onChange={setPaymentMethod}
-                                        base={breakdown.subtotal + breakdown.shippingFee}
                                     />
                                 </div>
                             </div>
@@ -514,9 +541,7 @@ export default function PaymentPage() {
                                     )}
 
                                     <div className={styles.summaryCalcRow}>
-                                        <span className={styles.calcLabel}>
-                                            Biaya Admin {isValidPaymentMethod(paymentMethod) ? `(${getMethodLabel(paymentMethod)})` : ''}
-                                        </span>
+                                        <span className={styles.calcLabel}>Biaya Layanan</span>
                                         <span className={styles.calcValue}>
                                             {breakdown.paymentFee === 0 && isValidPaymentMethod(paymentMethod) ? (
                                                 <span className={styles.freeFeeBadge}>Gratis</span>

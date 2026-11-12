@@ -1100,6 +1100,46 @@
     background: color-mix(in oklab, var(--primary) 6%, transparent);
 }
 
+.askSellerBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 52px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.askSellerBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 6%, transparent);
+}
+
+.mobileAskBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    flex-shrink: 0;
+}
+
 /* Mobile: sembunyikan desktop action bar — buttons pindah ke sticky bottom bar */
 @media (max-width: 767px) {
     .actionBar {
@@ -1114,6 +1154,7 @@
     }
     /* Hide desktop cart + buy buttons di mobile — sudah pindah ke .mobileActionBar */
     .actionBar .cartIconBtn,
+    .actionBar .askSellerBtn,
     .actionBar .buyBtn {
         display: none;
     }

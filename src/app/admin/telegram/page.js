@@ -84,6 +84,7 @@ function AdminTelegramContent() {
 
   useEffect(() => {
     if (currentUser && canView) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap telegram drop data
       loadData();
     }
   }, [currentUser, canView, loadData]);
@@ -658,7 +659,7 @@ function AdminTelegramContent() {
                             Prefix: {event.prefix || 'R-'}
                           </span>
                           <span className={styles.eventMetaTag}>
-                            {event.isLifetime ? '♾️ Lifetime' : `${event.durationHours || 24} Jam`}
+                            {event.isLifetime ? 'Lifetime' : `${event.durationHours || 24} Jam`}
                           </span>
                           <span className={styles.eventMetaTag}>
                             {new Date(event.date || event.createdAt).toLocaleDateString('id-ID', {
@@ -918,7 +919,7 @@ function AdminTelegramContent() {
                                 <div>{isExpired ? '(Waktu habis)' : 'Aktif'}</div>
                               </>
                             ) : (
-                              '♾️ Lifetime'
+                              'Lifetime'
                             )}
                           </td>
                           <td>
@@ -1041,7 +1042,7 @@ function AdminTelegramContent() {
                       <option value="12">12 Jam</option>
                       <option value="24">24 Jam (Standar)</option>
                       <option value="48">48 Jam (2 Hari)</option>
-                      <option value="LIFETIME">♾️ Lifetime (Tanpa Batas Waktu)</option>
+                      <option value="LIFETIME">Lifetime (Tanpa Batas Waktu)</option>
                     </select>
                   </div>
                 </div>

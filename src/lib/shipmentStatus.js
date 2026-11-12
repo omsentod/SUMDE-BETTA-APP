@@ -55,6 +55,7 @@ export function mapBiteshipStatus(bs) {
 // courier. Mirror image of the DOKU webhook's decrementStockForOrder.
 async function restockOrder(tx, order) {
   for (const item of order.items) {
+    if (!item.productId) continue; // Custom TikTok Live item tidak terhubung ke stok katalog web
     let variant = null;
     if (item.variantId) {
       variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
@@ -103,7 +104,7 @@ async function restockOrder(tx, order) {
 // admin bell). Best-effort — never throw; the status change already committed.
 async function sendShippedNotifications(order, waybill) {
   try {
-    const productImage = order.items?.[0]?.product?.image || null;
+    const productImage = order.items?.[0]?.product?.image || order.items?.[0]?.customImage || null;
     if (order.userId) {
       await createNotification({
         userId: order.userId,
@@ -120,7 +121,7 @@ async function sendShippedNotifications(order, waybill) {
       type: 'order.shipped',
       title: 'Pesanan dikirim',
       body: `Order #${order.id.slice(0, 8)}${waybill ? ` — ${waybill}` : ''}`,
-      link: '/admin/orders?status=SHIPPED',
+      link: `/admin/orders?status=SHIPPED&highlightOrder=${order.id}`,
       imageUrl: productImage,
     });
     if (order.email) {
@@ -237,7 +238,7 @@ export async function applyBiteshipUpdate({ order, biteshipStatus, waybillId, so
 
   if (target === 'COMPLETED' && currentRank < STATUS_RANK['COMPLETED']) {
     try {
-      const productImage = order.items?.[0]?.product?.image || null;
+      const productImage = order.items?.[0]?.product?.image || order.items?.[0]?.customImage || null;
       if (order.userId) {
         await createNotification({
           userId: order.userId,
@@ -252,7 +253,7 @@ export async function applyBiteshipUpdate({ order, biteshipStatus, waybillId, so
         type: 'order.completed',
         title: 'Pesanan Selesai',
         body: `Order #${order.id.slice(0, 8)} telah diterima pembeli.`,
-        link: '/admin/orders?status=COMPLETED',
+        link: `/admin/orders?status=COMPLETED&highlightOrder=${order.id}`,
         imageUrl: productImage,
       });
     } catch (notifErr) {

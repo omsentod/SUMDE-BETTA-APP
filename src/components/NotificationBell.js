@@ -188,7 +188,7 @@ export default function NotificationBell() {
             setFloatingAlert(msg.data);
             setTimeout(() => setFloatingAlert((cur) => (cur?.id === msg.data?.id ? null : cur)), 4500);
           }
-        });
+        }).catch(() => {});
       } catch (err) {
         console.warn('Ably fallback to polling:', err.message);
       }
@@ -257,6 +257,20 @@ export default function NotificationBell() {
     return items.some((n) => n.readAt);
   }, [items]);
 
+  // Resolusi link notifikasi agar otomatis menyertakan highlightOrder saat menuju pesanan admin
+  const resolveTargetLink = (targetItem) => {
+    if (!targetItem?.link) return null;
+    let targetLink = targetItem.link;
+    if (targetLink.startsWith('/admin/orders') && !targetLink.includes('highlightOrder=')) {
+      const match = (targetItem.body || '').match(/#([a-zA-Z0-9_-]{6,36})/i) || (targetItem.title || '').match(/#([a-zA-Z0-9_-]{6,36})/i);
+      if (match && match[1]) {
+        const sep = targetLink.includes('?') ? '&' : '?';
+        targetLink = `${targetLink}${sep}highlightOrder=${match[1]}`;
+      }
+    }
+    return targetLink;
+  };
+
   // Item click -> mark read and navigate
   const handleItemClick = async (item, e) => {
     e.preventDefault();
@@ -268,8 +282,9 @@ export default function NotificationBell() {
       } catch { /* silent */ }
     }
     setOpen(false);
-    if (item.link) {
-      router.push(item.link);
+    const destination = resolveTargetLink(item);
+    if (destination) {
+      router.push(destination);
     }
   };
 
@@ -386,8 +401,9 @@ export default function NotificationBell() {
                 type="button"
                 className={styles.floatingAlertLink}
                 onClick={() => {
+                  const dest = resolveTargetLink(floatingAlert);
                   setFloatingAlert(null);
-                  router.push(floatingAlert.link);
+                  if (dest) router.push(dest);
                 }}
               >
                 Lihat Detail →

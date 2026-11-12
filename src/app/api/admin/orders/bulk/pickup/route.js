@@ -33,12 +33,12 @@ export async function POST(request) {
         results.push({ orderId, ok: false, error: 'Pesanan tidak ditemukan.' });
         continue;
       }
-      if (order.status !== 'PAID') {
-        results.push({ orderId, ok: false, error: `Status ${order.status} — hanya PAID yang bisa di-pickup.` });
+      if (order.status !== 'PAID' && !(order.status === 'PROCESSING' && !order.biteshipShipmentId)) {
+        results.push({ orderId, ok: false, error: `Status ${order.status} — hanya pesanan lunas yang belum memiliki kurir yang bisa di-pickup.` });
         continue;
       }
       if (order.biteshipShipmentId) {
-        results.push({ orderId, ok: false, error: 'Sudah punya shipmentId — skip.' });
+        results.push({ orderId, ok: false, error: 'Sudah memiliki jadwal shipment — skip.' });
         continue;
       }
 

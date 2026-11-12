@@ -25,9 +25,56 @@ function getRest() {
  * Aman gagal — caller (notification dispatcher) sudah handle error.
  */
 export async function publishToUser(userId, event, data) {
-  const rest = getRest();
-  const channel = rest.channels.get(`user:${userId}`);
-  await channel.publish(event, data);
+  try {
+    const rest = getRest();
+    const channel = rest.channels.get(`user:${userId}`);
+    await channel.publish(event, data);
+  } catch (err) {
+    console.warn(`[Ably] Gagal publishToUser(${userId}):`, err.message);
+  }
+}
+
+/**
+ * Publish payload ke percakapan tertentu `chat:<conversationId>`.
+ */
+export async function publishToConversation(conversationId, event, data) {
+  try {
+    const rest = getRest();
+    const channel = rest.channels.get(`chat:${conversationId}`);
+    await channel.publish(event, data);
+  } catch (err) {
+    console.warn(`[Ably] Gagal publishToConversation(${conversationId}):`, err.message);
+  }
+}
+
+/**
+ * Publish payload ke admin chat channel `admin:chat`.
+ */
+export async function publishToAdminChat(event, data) {
+  try {
+    const rest = getRest();
+    const channel = rest.channels.get('admin:chat');
+    await channel.publish(event, data);
+  } catch (err) {
+    console.warn('[Ably] Gagal publishToAdminChat:', err.message);
+  }
+}
+
+/**
+ * Publish status change ke channel `chat:status` dan `admin:chat`.
+ */
+export async function publishChatStatus(data) {
+  try {
+    const rest = getRest();
+    const statusChannel = rest.channels.get('chat:status');
+    const adminChannel = rest.channels.get('admin:chat');
+    await Promise.allSettled([
+      statusChannel.publish('status-update', data),
+      adminChannel.publish('status-update', data),
+    ]);
+  } catch (err) {
+    console.warn('[Ably] Gagal publishChatStatus:', err.message);
+  }
 }
 
 /**
@@ -42,6 +89,21 @@ export async function createTokenRequest(userId) {
     capability: {
       [`user:${userId}`]: ['subscribe'],
     },
+  });
+}
+
+/**
+ * Generate token request untuk Chat client (Customer terdaftar, Guest, atau Admin).
+ */
+export async function createChatTokenRequest({ clientId, channels = [], allowPublish = false }) {
+  const rest = getRest();
+  const capability = {};
+  for (const ch of channels) {
+    capability[ch] = allowPublish ? ['subscribe', 'publish'] : ['subscribe'];
+  }
+  return rest.auth.createTokenRequest({
+    clientId: String(clientId),
+    capability,
   });
 }
 

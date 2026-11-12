@@ -1,0 +1,1257 @@
+/* User Management & Activity Control - Luxury Betta Theme */
+
+/* ==========================================================================
+   Executive KPI Metrics Bar
+   ========================================================================== */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+.kpiCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem 1.15rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpiCard:hover {
+  border-color: rgba(255, 107, 53, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.kpiHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.kpiLabel {
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+.kpiIconWrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 53, 0.08);
+  color: var(--primary);
+}
+
+.kpiIconWrapSuccess {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.kpiIconWrapWarning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+.kpiValue {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.kpiSubtext {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   Filter & Search Toolbar
+   ========================================================================== */
+.toolbarCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 240px;
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 36px;
+  padding: 0 0.75rem 0 2.35rem;
+  background: var(--bg-input, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  height: 36px;
+  padding: 0 2rem 0 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.775rem;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FF6B35' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  transition: border-color 0.2s ease;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ==========================================================================
+   Proportional User Table (Zero Horizontal Scroll!)
+   ========================================================================== */
+.tableContainer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.usersTable {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+  color: var(--text-main);
+}
+
+.usersTable th {
+  padding: 0.65rem 0.75rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-hover, rgba(0, 0, 0, 0.02));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.usersTable td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tableRow {
+  transition: background 0.12s ease;
+}
+
+.tableRow:hover {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.025));
+}
+
+/* Explicit Proportional Column Widths */
+.colUser {
+  width: 32%;
+}
+
+.colWhatsapp {
+  width: 25%;
+}
+
+.colRole {
+  width: 13%;
+}
+
+.colSpend {
+  width: 15%;
+}
+
+.colActions {
+  width: 15%;
+  text-align: right;
+}
+
+/* User Identity Cell */
+.userIdentityCell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.userEmailSub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+  margin-top: 0.1rem;
+}
+
+/* WhatsApp / Contact Cell */
+.whatsappCell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.whatsappInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.phoneNumText {
+  font-family: monospace;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.badgeWaVerified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.badgeWaPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.badgeWaEmpty {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.btnWaChat {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(37, 211, 102, 0.12);
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  color: #25D366;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnWaChat:hover {
+  background: #25D366;
+  color: #ffffff;
+  border-color: #25D366;
+}
+
+/* Spending Cell */
+.spendingCell {
+  display: flex;
+  flex-direction: column;
+}
+
+.spendAmount {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.orderCountTag {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-top: 0.1rem;
+}
+
+/* Action Group */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.btnControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.55rem;
+  background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.725rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.btnControl:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.btnRoleAction {
+  padding: 0.3rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.725rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.btnRoleAction:hover {
+  border-color: var(--text-main);
+  color: var(--text-main);
+}
+
+.btnDeleteAction {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btnDeleteAction:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btnDeleteAction:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   User Detail Drawer / Modal
+   ========================================================================== */
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.drawerPane {
+  width: 100%;
+  max-width: 820px;
+  height: 100%;
+  background: var(--modal-bg, var(--bg-card));
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.drawerHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  gap: 1rem;
+}
+
+.drawerHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.drawerHeaderInfo {
+  min-width: 0;
+}
+
+.drawerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.drawerTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawerSubtitle {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.drawerCloseBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.drawerCloseBtn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+}
+
+/* Drawer Tabs */
+.drawerTabsNav {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+  padding: 0 1rem;
+  gap: 0.2rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.drawerTabBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 0.75rem 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.drawerTabBtn:hover {
+  color: var(--text-main);
+}
+
+.drawerTabBtnActive {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tabBadgeCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  background: rgba(142, 142, 147, 0.12);
+  color: var(--text-muted);
+}
+
+.drawerTabBtnActive .tabBadgeCount {
+  background: rgba(255, 107, 53, 0.15);
+  color: var(--primary);
+}
+
+.drawerContentArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+/* ==========================================================================
+   Tab 1: Overview & Profile Edit
+   ========================================================================== */
+.overviewStatsBanner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.statItemLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.statItemVal {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 0.2rem;
+}
+
+.sectionCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.875rem;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.formGridFull {
+  grid-column: 1 / -1;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.inputLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.formInput {
+  height: 35px;
+  padding: 0 0.65rem;
+  background: var(--bg-input, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.775rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.formTextarea {
+  padding: 0.55rem 0.65rem;
+  background: var(--bg-input, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.775rem;
+  min-height: 65px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+/* Security Control Box */
+.securityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+  gap: 0.875rem;
+}
+
+.securityRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.securityRowLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.securityRowTitle {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.securityRowDesc {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.securityRowRight {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.btnSecondarySmall {
+  height: 30px;
+  padding: 0 0.65rem;
+  background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.725rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s ease;
+}
+
+.btnSecondarySmall:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btnSuccessSmall {
+  height: 30px;
+  padding: 0 0.65rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 6px;
+  color: #10B981;
+  font-size: 0.725rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s ease;
+}
+
+.btnSuccessSmall:hover:not(:disabled) {
+  background: #10B981;
+  color: #ffffff;
+}
+
+.btnDangerSmall {
+  height: 30px;
+  padding: 0 0.65rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 6px;
+  color: #EF4444;
+  font-size: 0.725rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s ease;
+}
+
+.btnDangerSmall:hover:not(:disabled) {
+  background: #EF4444;
+  color: #ffffff;
+}
+
+.btnPrimarySolid {
+  height: 35px;
+  padding: 0 1.15rem;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity 0.15s ease;
+}
+
+.btnPrimarySolid:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btnPrimarySolid:disabled,
+.btnSecondarySmall:disabled,
+.btnSuccessSmall:disabled,
+.btnDangerSmall:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Tab 2: Orders Activity
+   ========================================================================== */
+.orderCardList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.orderCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.875rem;
+  transition: border-color 0.15s ease;
+}
+
+.orderCard:hover {
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.orderCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-color);
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.orderMetaLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.orderIdText {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.775rem;
+  color: var(--text-main);
+}
+
+.orderDateText {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.orderItemsWrapper {
+  padding: 0.65rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.orderItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.orderItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.orderItemThumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--border-color);
+}
+
+.orderItemDetails {
+  min-width: 0;
+}
+
+.orderItemName {
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orderItemMeta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.orderCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.775rem;
+}
+
+.orderTotalVal {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Tab 3: Addresses Activity
+   ========================================================================== */
+.addressCardList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 0.875rem;
+}
+
+.addressCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: border-color 0.15s ease;
+}
+
+.addressCardDefault {
+  border-color: rgba(255, 107, 53, 0.4);
+  background: linear-gradient(to bottom right, var(--bg-card), rgba(255, 107, 53, 0.03));
+}
+
+.addressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.addressLabelBadge {
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.badgeDefaultAddress {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(255, 107, 53, 0.12);
+  color: var(--primary);
+}
+
+.addressRecipient {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.addressPhone {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.addressText {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-top: 0.3rem;
+}
+
+.addressActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Tab 4: Chat Activity
+   ========================================================================== */
+.chatSessionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.chatSessionCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.875rem;
+}
+
+.chatSessionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.chatStatusBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+}
+
+.chatStatusOpen {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.chatStatusClosed {
+  background: rgba(142, 142, 147, 0.12);
+  color: var(--text-muted);
+}
+
+.chatSnippet {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 0.65rem;
+  white-space: pre-wrap;
+}
+
+/* ==========================================================================
+   Tab 5: Notifications & Messages
+   ========================================================================== */
+.notifHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.notifItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.75rem 0.875rem;
+}
+
+.notifItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
+.notifItemTitle {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.notifItemDate {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.notifItemBody {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Tab 6: Activity Timeline
+   ========================================================================== */
+.timeline {
+  position: relative;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  left: 5px;
+  width: 2px;
+  background: var(--border-color);
+}
+
+.timelineItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineDot {
+  position: absolute;
+  left: -1.25rem;
+  top: 0.2rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--primary);
+}
+
+.timelineDotSuccess {
+  border-color: #10B981;
+}
+
+.timelineDotWarning {
+  border-color: #F59E0B;
+}
+
+.timelineDotInfo {
+  border-color: #3B82F6;
+}
+
+.timelineTitle {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.timelineTime {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.timelineDesc {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   Empty States
+   ========================================================================== */
+.tabEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 2.5rem 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.tabEmptyIcon {
+  width: 38px;
+  height: 38px;
+  opacity: 0.35;
+  color: var(--text-muted);
+}
+
+.tabEmptyTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.tabEmptyDesc {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  max-width: 340px;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Mobile Responsive Adjustments
+   ========================================================================== */
+@media (max-width: 768px) {
+  .drawerPane {
+    max-width: 100%;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewStatsBanner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .securityRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .securityRowRight {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 0.4rem;
+  }
+}

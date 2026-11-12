@@ -1,0 +1,31 @@
+.sourceCell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.iconOnly {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.webIcon {
+  color: var(--primary);
+}
+
+.subtext {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  line-height: 1.2;
+}

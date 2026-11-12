@@ -14,8 +14,10 @@ model User {
   name          String
   role          String    @default("customer")
   googleId      String?   @unique
+  avatarUrl     String?   @db.Text
   emailVerified DateTime?
   phone         String?
+  phoneVerified DateTime?
   streetAddress String?
   rtRw          String?
   province      String?
@@ -30,6 +32,7 @@ model User {
   passwordResets     PasswordReset[]
   notifications      Notification[]
   pushSubscriptions  PushSubscription[]
+  conversations      Conversation[]
 }
 
 model Role {
@@ -37,6 +40,7 @@ model Role {
   name        String
   slug        String   @unique
   description String?  @db.Text
+  color       String?  @default("#3B82F6")
   permissions Json
   isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -163,6 +167,7 @@ model Product {
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
   variants    ProductVariant[]
+  liveItems   TikTokLiveItem[]
 
   @@index([isDailyDrop, isSold])
   @@index([bookedUntil])
@@ -215,24 +220,86 @@ model Order {
   village            String
   postalCode         String
   telegramUsername   String?   // Username Telegram jika order dipesan via Telegram Drop
+  orderSource        String    @default("WEB") // WEB | TELEGRAM | TIKTOK_LIVE
+  tiktokUsername     String?   // Username pembeli TikTok Live
+  tiktokAccountName  String?   // Nama/handle akun TikTok tempat live berlangsung
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   items              OrderItem[]
+  tiktokLiveBasket   TikTokLiveBasket?
+
+  @@index([orderSource])
 }
 
 model OrderItem {
   id           String          @id @default(uuid())
   orderId      String
   order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId    String
-  product      Product         @relation(fields: [productId], references: [id])
+  productId    String?
+  product      Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
   variantId    String?
   variant      ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   quantity     Int             @default(1)
   price        Float
   selectedSize String?
+  customName   String?
+  customImage  String?
 
   @@index([variantId])
+}
+
+model TikTokAccount {
+  id         String             @id @default(uuid())
+  name       String
+  handle     String             @unique
+  isActive   Boolean            @default(true)
+  orderIndex Int                @default(0)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  baskets    TikTokLiveBasket[]
+  items      TikTokLiveItem[]
+
+  @@index([orderIndex])
+}
+
+model TikTokLiveBasket {
+  id              String           @id @default(uuid())
+  claimCode       String           @unique
+  claimToken      String?          @unique
+  tiktokUsername  String
+  tiktokAccountId String?
+  tiktokAccount   TikTokAccount?   @relation(fields: [tiktokAccountId], references: [id], onDelete: SetNull)
+  status          String           @default("OPEN") // OPEN | CHECKED_OUT | CANCELLED
+  orderId         String?          @unique
+  order           Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  notes           String?          @db.Text
+  items           TikTokLiveItem[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([tiktokUsername, status])
+  @@index([status])
+}
+
+model TikTokLiveItem {
+  id              String           @id @default(uuid())
+  basketId        String
+  basket          TikTokLiveBasket @relation(fields: [basketId], references: [id], onDelete: Cascade)
+  tiktokAccountId String?
+  tiktokAccount   TikTokAccount?   @relation(fields: [tiktokAccountId], references: [id], onDelete: SetNull)
+  productId       String?
+  product         Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId       String?
+  selectedSize    String?
+  name            String
+  price           Float
+  quantity        Int              @default(1)
+  image           String?
+  note            String?
+  createdAt       DateTime         @default(now())
+
+  @@index([basketId])
+  @@index([productId])
 }
 
 model PromoEvent {
@@ -320,4 +387,70 @@ model RecycleBinItem {
   @@index([entityType])
   @@index([deletedAt])
 }
+
+model ChatTemplate {
+  id           String   @id @default(uuid())
+  chipLabel    String
+  messageText  String   @db.Text
+  answerText   String?  @db.Text
+  isAutoReply  Boolean  @default(true)
+  targetPos    String   @default("GLOBAL") // "PRODUCT" | "VIP_GALLERY" | "CHECKOUT" | "GLOBAL" | "ALL"
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([targetPos, isActive])
+  @@index([sortOrder])
+}
+
+model Conversation {
+  id                  String        @id @default(uuid())
+  userId              String?
+  user                User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestSessionId      String?       @unique
+  guestName           String?
+  guestEmail          String?
+  status              String        @default("OPEN") // "OPEN" | "CLOSED"
+  unreadAdminCount    Int           @default(0)
+  unreadCustomerCount Int           @default(0)
+  lastMessageAt       DateTime      @default(now())
+  messages            ChatMessage[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([guestSessionId])
+  @@index([lastMessageAt])
+  @@index([status])
+}
+
+model ChatMessage {
+  id              String        @id @default(uuid())
+  conversationId  String
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderRole      String        // "CUSTOMER", "ADMIN", "SYSTEM"
+  senderId        String?       // userId jika terautentikasi, null jika guest
+  message         String        @db.Text
+  attachedType    String?       // "PRODUCT", "ORDER", null
+  attachedId      String?       // ID Produk atau ID Order
+  attachedMeta    String?       @db.Text // JSON string info snapshot (nama, gambar, harga/status)
+  isRead          Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model ChatSetting {
+  id                  String    @id @default("default")
+  adminStatus         String    @default("AUTO") // "AUTO" | "ONLINE" | "AWAY" | "OFFLINE"
+  operatingHoursStart String    @default("08:00")
+  operatingHoursEnd   String    @default("21:00")
+  offlineMessage      String    @db.Text
+  emergencyWaNumber   String?
+  adminLastActiveAt   DateTime?
+  updatedAt           DateTime  @updatedAt
+}
+
 

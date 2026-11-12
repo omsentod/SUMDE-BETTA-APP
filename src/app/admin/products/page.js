@@ -110,6 +110,7 @@ function AdminProductsInner() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap hierarchy departments
     loadDepartments();
   }, []);
 
@@ -747,8 +748,9 @@ function AdminProductsInner() {
 
   if (authLoading || !currentUser || !canView) {
     return (
-      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
-        <h2>Memverifikasi Otoritas Produk...</h2>
+      <div className={styles.dashboardLoading}>
+        <div className={styles.loadingSpinner} />
+        <span className={styles.loadingText}>Memuat katalog produk...</span>
       </div>
     );
   }

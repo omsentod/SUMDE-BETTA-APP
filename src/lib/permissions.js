@@ -242,6 +242,31 @@ export const SYSTEM_PERMISSIONS = [
       },
     ],
   },
+  {
+    module: 'chat',
+    moduleLabel: 'Pusat Pesan & Live Chat',
+    description: 'Hak akses untuk membalas pesan customer dan mengelola template pertanyaan cepat.',
+    permissions: [
+      {
+        key: 'chat:view',
+        action: 'view',
+        label: 'Lihat Percakapan Chat',
+        description: 'Melihat riwayat percakapan dan inbox customer.',
+      },
+      {
+        key: 'chat:reply',
+        action: 'update',
+        label: 'Balas Pesan Customer',
+        description: 'Mengirimkan pesan balasan langsung ke customer.',
+      },
+      {
+        key: 'chat:templates',
+        action: 'manage',
+        label: 'Kelola Template Pertanyaan',
+        description: 'Menambah, mengubah, dan menghapus template pertanyaan cepat.',
+      },
+    ],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS = SYSTEM_PERMISSIONS.flatMap((m) =>
@@ -275,18 +300,23 @@ export async function ensureSystemRoles() {
           name: 'Administrator',
           slug: 'admin',
           description: 'Akses penuh tanpa batas ke seluruh modul dan aksi sistem (Superadmin).',
+          color: '#FF6B35',
           permissions: ALL_PERMISSION_KEYS,
           isSystem: true,
         },
       });
     } else {
-      // Pastikan admin selalu memiliki ALL_PERMISSION_KEYS terbaru
+      // Pastikan admin selalu memiliki ALL_PERMISSION_KEYS terbaru dan warna brand
       const existing = Array.isArray(adminRole.permissions) ? adminRole.permissions : [];
       const hasAll = ALL_PERMISSION_KEYS.every((k) => existing.includes(k));
-      if (!hasAll) {
+      const needsColorUpdate = !adminRole.color || adminRole.color === '#3B82F6';
+      if (!hasAll || needsColorUpdate) {
         await prisma.role.update({
           where: { slug: 'admin' },
-          data: { permissions: ALL_PERMISSION_KEYS },
+          data: {
+            permissions: ALL_PERMISSION_KEYS,
+            ...(needsColorUpdate ? { color: '#FF6B35' } : {}),
+          },
         });
         invalidateRoleCache('admin');
       }
@@ -299,10 +329,17 @@ export async function ensureSystemRoles() {
           name: 'Customer',
           slug: 'customer',
           description: 'Pelanggan standar toko SUMDE BETTA (tanpa akses panel admin).',
+          color: '#64748B',
           permissions: [],
           isSystem: true,
         },
       });
+    } else if (!customerRole.color || customerRole.color === '#3B82F6') {
+      await prisma.role.update({
+        where: { slug: 'customer' },
+        data: { color: '#64748B' },
+      });
+      invalidateRoleCache('customer');
     }
   } catch (err) {
     console.error('Error saat ensureSystemRoles:', err.message);

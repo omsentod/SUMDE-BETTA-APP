@@ -183,8 +183,9 @@ export default function AdminEventsPage() {
 
   if (authLoading || !currentUser || !canView) {
     return (
-      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
-        <h2>Memverifikasi Otoritas Event...</h2>
+      <div className={styles.dashboardLoading}>
+        <div className={styles.loadingSpinner} />
+        <span className={styles.loadingText}>Memuat agenda event...</span>
       </div>
     );
   }

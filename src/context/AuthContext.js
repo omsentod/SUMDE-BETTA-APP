@@ -3,6 +3,23 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 
 const AuthContext = createContext();
 
+const AUTH_CACHE_KEY = 'sumde_auth_user';
+
+function getStoredUser() {
+    if (typeof window === 'undefined') return null;
+    try {
+        const item = localStorage.getItem(AUTH_CACHE_KEY);
+        if (!item) return null;
+        const parsed = JSON.parse(item);
+        if (parsed && typeof parsed === 'object' && parsed.id) {
+            return parsed;
+        }
+    } catch {
+        // ignore
+    }
+    return null;
+}
+
 // Helper to notify other open browser tabs of session state mutations
 function broadcastAuthChange() {
     if (typeof window === 'undefined') return;
@@ -36,10 +53,19 @@ export function AuthProvider({ children }) {
             if (res.ok) {
                 const data = await res.json();
                 const nextUser = data.user || null;
-                // Cegah cascading re-render & re-fetch jika identitas user & role tidak berubah
+                // Cegah cascading re-render & re-fetch jika identitas & profil inti user tidak berubah
                 setCurrentUser((prev) => {
                     if (!prev && !nextUser) return null;
-                    if (prev && nextUser && prev.id === nextUser.id && prev.role === nextUser.role) {
+                    if (
+                        prev &&
+                        nextUser &&
+                        prev.id === nextUser.id &&
+                        prev.role === nextUser.role &&
+                        prev.name === nextUser.name &&
+                        prev.phone === nextUser.phone &&
+                        prev.avatarUrl === nextUser.avatarUrl &&
+                        prev.emailVerified === nextUser.emailVerified
+                    ) {
                         return prev;
                     }
                     return nextUser;
@@ -56,6 +82,14 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         let mounted = true;
+        // 1. Instant hydration dari snapshot sesi lokal (mencegah FOUC / flash halaman guest saat refresh)
+        const cached = getStoredUser();
+        if (cached && mounted) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate cached session before network
+            setCurrentUser(cached);
+        }
+
+        // 2. Verifikasi otoritatif dengan server via cookie httpOnly
         // eslint-disable-next-line react-hooks/set-state-in-effect -- initial server session bootstrap
         refreshSession().finally(() => {
             if (mounted) setIsLoading(false);
@@ -64,6 +98,20 @@ export function AuthProvider({ children }) {
             mounted = false;
         };
     }, [refreshSession]);
+
+    // Sinkronisasi otomatis cache sesi lokal saat data user berubah
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            if (currentUser) {
+                localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(currentUser));
+            } else if (!isLoading) {
+                localStorage.removeItem(AUTH_CACHE_KEY);
+            }
+        } catch {
+            // ignore
+        }
+    }, [currentUser, isLoading]);
 
     // Cross-tab synchronization: gunakan BroadcastChannel jika didukung,
     // fallback ke storage event hanya jika BroadcastChannel tidak ada (mencegah double-fetch di Chrome).
@@ -137,6 +185,9 @@ export function AuthProvider({ children }) {
 
     const logout = useCallback(async () => {
         try {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem(AUTH_CACHE_KEY);
+            }
             await fetch('/api/auth/logout', { method: 'POST' });
         } catch {
             // ignore network errors on logout
@@ -158,7 +209,32 @@ export function AuthProvider({ children }) {
         if (!response.ok) throw new Error(data.error || 'Gagal memperbarui profil.');
         const updated = { ...currentUser, ...data };
         setCurrentUser(updated);
+        broadcastAuthChange();
         return updated;
+    }, [currentUser]);
+
+    const uploadAvatar = useCallback(async (file) => {
+        if (!currentUser) return null;
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/auth/avatar', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Gagal mengunggah foto profil.');
+        setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: data.avatarUrl } : prev));
+        broadcastAuthChange();
+        return data.avatarUrl;
+    }, [currentUser]);
+
+    const removeAvatar = useCallback(async () => {
+        if (!currentUser) return;
+        const response = await fetch('/api/auth/avatar', { method: 'DELETE' });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Gagal menghapus foto profil.');
+        setCurrentUser((prev) => (prev ? { ...prev, avatarUrl: null } : prev));
+        broadcastAuthChange();
     }, [currentUser]);
 
     const fetchMyOrders = useCallback(async () => {
@@ -208,13 +284,13 @@ export function AuthProvider({ children }) {
                         // Update state langsung supaya /customer/dashboard tidak
                         // race dengan /api/auth/me.
         login, register, logout,
-        updateUserProfile,
+        updateUserProfile, uploadAvatar, removeAvatar,
         fetchMyOrders, fetchMyAddresses,
         createAddress, updateAddress, deleteAddress,
     }), [
         currentUser, isLoading,
         login, register, logout,
-        updateUserProfile,
+        updateUserProfile, uploadAvatar, removeAvatar,
         fetchMyOrders, fetchMyAddresses,
         createAddress, updateAddress, deleteAddress,
     ]);

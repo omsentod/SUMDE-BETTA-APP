@@ -1,12 +1,25 @@
 'use client';
 
-import CourierLogo from '@/components/CourierLogo';
 import styles from './label.module.css';
 
+function normalizeCourierCode(raw) {
+  const c = String(raw || '').toLowerCase().trim();
+  if (c.includes('j&t') || c.includes('jnt')) return 'jnt';
+  if (c.includes('pos')) return 'pos';
+  if (c.includes('jne')) return 'jne';
+  if (c.includes('sicepat')) return 'sicepat';
+  if (c.includes('anteraja')) return 'anteraja';
+  if (c.includes('tiki')) return 'tiki';
+  return 'other';
+}
 
 export default function LabelContent({ order }) {
   const waybill = order.trackingNumber || null;
   const totalQty = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+  const courierKey = normalizeCourierCode(order.shippingCourier);
+  const courierLabel = (order.shippingCourier || 'J&T Express').toUpperCase();
+  const hasImageLogo = courierKey === 'jnt' || courierKey === 'pos';
 
   const weightKg = Math.max(1, Math.ceil(totalQty / 10));
   const shippingCostFormatted = order.shippingFee
@@ -19,27 +32,32 @@ export default function LabelContent({ order }) {
       {/* 1. Header: Courier Logo (Left) | Brand Center | Spacer (Right) */}
       <div className={styles.headerRow}>
 
-        {/* Kiri: logo kurir mepet pojok kiri atas */}
+        {/* Kiri: logo kurir diperbesar proporsional */}
         <div className={styles.headerLeft}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={`/courier/${(order.shippingCourier || 'default').toLowerCase()}.png`}
-            alt={order.shippingCourier || 'Courier'}
-            className={styles.courierImageLogo}
-            onError={(e) => {
-              if (!e.target.dataset.triedImg) {
-                e.target.dataset.triedImg = 'true';
-                e.target.src = `/img/courier/${(order.shippingCourier || 'default').toLowerCase()}.png`;
-                return;
-              }
-              e.target.style.display = 'none';
-              if (e.target.nextSibling) {
-                e.target.nextSibling.style.display = 'inline-block';
-              }
-            }}
-          />
-          <div style={{ display: 'none' }}>
-            <CourierLogo code={order.shippingCourier || ''} size="lg" />
+          {hasImageLogo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img 
+              src={`/courier/${courierKey}.png`}
+              alt={courierLabel}
+              className={styles.courierImageLogo}
+              onError={(e) => {
+                if (!e.target.dataset.triedImg) {
+                  e.target.dataset.triedImg = 'true';
+                  e.target.src = `/img/courier/${courierKey}.png`;
+                  return;
+                }
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) {
+                  e.target.nextSibling.style.display = 'block';
+                }
+              }}
+            />
+          ) : null}
+          <div
+            className={styles.courierTextClean}
+            style={{ display: hasImageLogo ? 'none' : 'block' }}
+          >
+            {courierLabel}
           </div>
         </div>
 
@@ -143,7 +161,7 @@ export default function LabelContent({ order }) {
           <div className={styles.itemsList}>
             {order.items?.map((item, idx) => (
               <div key={item.id || idx}>
-                [{item.product?.sku || 'BETTA'}] {item.quantity}x {item.product?.name || 'Ikan Betta Hias'} {item.selectedSize ? `- Size ${item.selectedSize}` : ''}
+                [{item.product?.sku || (order.orderSource === 'TIKTOK_LIVE' ? 'LIVE' : 'BETTA')}] {item.quantity}x {item.customName || item.product?.name || 'Ikan Betta Hias'} {item.selectedSize ? `- Size ${item.selectedSize}` : ''}
               </div>
             ))}
           </div>

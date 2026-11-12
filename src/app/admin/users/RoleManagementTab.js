@@ -125,7 +125,13 @@ export default function RoleManagementTab({
                 <div>
                   <div className={styles.roleCardTop}>
                     <div>
-                      <h3 className={styles.roleName}>{role.name}</h3>
+                      <div className={styles.roleCardTitleRow}>
+                        <span
+                          className={styles.roleColorDot}
+                          style={{ '--role-color': role.color || '#3B82F6' }}
+                        />
+                        <h3 className={styles.roleName}>{role.name}</h3>
+                      </div>
                       <span className={styles.roleSlug}>{role.slug}</span>
                     </div>
                     {role.isSystem ? (
@@ -139,7 +145,7 @@ export default function RoleManagementTab({
 
                   <div className={styles.permSummary}>
                     {isFullAccess ? (
-                      <span className={styles.permPill} style={{ color: 'var(--primary)', borderColor: 'rgba(255, 107, 53, 0.3)' }}>
+                      <span className={`${styles.permPill} ${styles.permPillPrimary}`}>
                         Semua Hak Akses (Wildcard *)
                       </span>
                     ) : perms.length === 0 ? (
@@ -200,7 +206,7 @@ export default function RoleManagementTab({
                       </>
                     )}
                     {role.isSystem && (
-                      <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      <span className={styles.roleLockedTag}>
                         Terkunci
                       </span>
                     )}
@@ -214,6 +220,7 @@ export default function RoleManagementTab({
 
       {modalOpen && (
         <RoleModal
+          key={editingRole?.id || 'new'}
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           onSaved={handleSaved}

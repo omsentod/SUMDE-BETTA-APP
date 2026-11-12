@@ -11,6 +11,7 @@ import {
 
 const SLUG_REGEX = /^[a-z0-9_-]{2,30}$/;
 const RESERVED_SLUGS = ['admin', 'customer', 'superadmin', 'root', 'system'];
+const HEX_COLOR_REGEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 /**
  * GET /api/admin/roles
@@ -68,6 +69,17 @@ export async function POST(request) {
     const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
     const description = typeof body.description === 'string' ? body.description.trim() : '';
     const permissions = Array.isArray(body.permissions) ? body.permissions : [];
+
+    let color = typeof body.color === 'string' ? body.color.trim() : '';
+    if (!color || !HEX_COLOR_REGEX.test(color)) {
+      color = '#3B82F6';
+    } else {
+      if (color.length === 4) {
+        color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`.toUpperCase();
+      } else {
+        color = color.toUpperCase();
+      }
+    }
 
     // 1. Validasi Input Dasar
     if (!name || name.length < 2 || name.length > 50) {
@@ -136,6 +148,7 @@ export async function POST(request) {
         name,
         slug,
         description: description || null,
+        color,
         permissions,
         isSystem: false,
       },

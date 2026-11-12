@@ -1,7 +1,8 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { canUser } from '@/lib/permission-utils';
@@ -23,6 +24,27 @@ const iconProducts = <Icon path={<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0
 const iconUsers = <Icon path={<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>} />;
 const iconEvents = <Icon path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>} />;
 const iconReports = <Icon path={<><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>} />;
+const iconChat = (
+  <Icon
+    path={
+      <>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </>
+    }
+  />
+);
+const iconCetakResi = (
+  <Icon
+    path={
+      <>
+        <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+        <line x1="8" y1="7" x2="16" y2="7" />
+        <line x1="8" y1="11" x2="16" y2="11" />
+        <line x1="8" y1="15" x2="13" y2="15" />
+      </>
+    }
+  />
+);
 const iconTrash = (
   <Icon
     path={
@@ -35,8 +57,6 @@ const iconTrash = (
     }
   />
 );
-const iconMenu = <Icon path={<><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>} />;
-const iconClose = <Icon path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />;
 const iconChevron = (
   <svg className={styles.chevron} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polyline points="6 9 12 15 18 9" />
@@ -53,27 +73,45 @@ function Badge({ count, muted }) {
   );
 }
 
-function AdminSidebarInner() {
+function AdminSidebarInner({ open: controlledOpen, onClose }) {
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const activeStatus = searchParams.get('status');
   const { currentUser } = useAuth();
 
-  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0 });
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = typeof controlledOpen === 'boolean';
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const setOpen = useCallback((val) => {
+    if (!val && onClose) onClose();
+    if (!isControlled) setInternalOpen(val);
+  }, [onClose, isControlled]);
+
+  // Tutup drawer secara aman saat terjadi navigasi URL (uncontrolled fallback)
+  const [prevNav, setPrevNav] = useState({ pathname, searchStr: searchParams?.toString() });
+  const currentSearchStr = searchParams?.toString();
+  if (prevNav.pathname !== pathname || prevNav.searchStr !== currentSearchStr) {
+    setPrevNav({ pathname, searchStr: currentSearchStr });
+    if (open && !isControlled) {
+      setInternalOpen(false);
+    }
+  }
+
+  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0, unreadChat: 0 });
   const isOnOrdersRoute = pathname.startsWith('/admin/orders');
   const [userOrdersOpen, setUserOrdersOpen] = useState(null);
   const isOrdersOpen = userOrdersOpen !== null ? userOrdersOpen : isOnOrdersRoute;
 
-  const isOnEventsRoute = pathname.startsWith('/admin/events') || pathname.startsWith('/admin/telegram');
+  const isOnEventsRoute = pathname.startsWith('/admin/events') || pathname.startsWith('/admin/telegram') || pathname.startsWith('/admin/tiktok-live');
   const [userEventsOpen, setUserEventsOpen] = useState(null);
   const isEventsOpen = userEventsOpen !== null ? userEventsOpen : isOnEventsRoute;
 
-  const can = (perm) => canUser(currentUser, perm);
+  const can = useCallback((perm) => canUser(currentUser, perm), [currentUser]);
 
   useEffect(() => {
     if (!currentUser) return;
-    if (!can('orders:view') && !can('products:view')) return;
+    if (!can('orders:view') && !can('products:view') && !can('shipping:view') && !can('shipping:label') && !can('shipping:pickup') && !can('chat:view')) return;
     let cancelled = false;
     let inFlight = false;
     let lastLoaded = Date.now();
@@ -136,13 +174,25 @@ function AdminSidebarInner() {
         window.removeEventListener('admin:refresh-counts', onRefreshCounts);
       }
     };
-  }, [currentUser]);
+  }, [currentUser, can]);
 
-  // Tutup drawer setiap navigate di mobile.
+  // Kunci scroll body saat drawer terbuka di mobile & tutup drawer saat tekan ESC
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- close drawer on nav
-    setOpen(false);
-  }, [pathname, searchParams]);
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, setOpen]);
+
 
   const isActive = (href) => pathname === href || pathname.startsWith(href + '/');
   const isOrdersStatus = (status) => pathname.startsWith('/admin/orders') && activeStatus === status;
@@ -167,156 +217,209 @@ function AdminSidebarInner() {
     ...((can('events:view') || can('products:view'))
       ? [{ label: 'Broadcast Telegram', href: '/admin/telegram', active: pathname.startsWith('/admin/telegram') }]
       : []),
+    ...((can('events:view') || can('orders:view') || can('products:view'))
+      ? [{ label: 'TikTok Live', href: '/admin/tiktok-live', active: pathname.startsWith('/admin/tiktok-live') }]
+      : []),
   ];
 
   const showMasterData = can('products:view') || can('users:view') || can('roles:view') || can('events:view');
 
   return (
     <>
-      <button className={styles.mobileToggle} onClick={() => setOpen(true)} aria-label="Buka menu">
-        {iconMenu}
-      </button>
-
       {open && <div className={styles.backdrop} onClick={() => setOpen(false)} />}
 
       <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ''}`.trim()}>
-        <button
-          className={`${styles.link} ${styles.mobileToggle}`}
-          onClick={() => setOpen(false)}
-          aria-label="Tutup menu"
-          style={{ justifyContent: 'flex-end' }}
-        >
-          {iconClose}
-        </button>
-
-        {(can('dashboard:view') || can('reports:view')) && (
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Ringkasan</div>
-            {can('dashboard:view') && (
-              <Link href="/admin/dashboard" className={`${styles.link} ${isActive('/admin/dashboard') ? styles.linkActive : ''}`.trim()}>
-                <span className={styles.linkContent}>{iconDashboard}<span className={styles.linkLabel}>Dashboard</span></span>
-              </Link>
-            )}
-            {can('reports:view') && (
-              <Link href="/admin/reports" className={`${styles.link} ${isActive('/admin/reports') ? styles.linkActive : ''}`.trim()}>
-                <span className={styles.linkContent}>{iconReports}<span className={styles.linkLabel}>Laporan Penjualan</span></span>
-              </Link>
-            )}
+        {/* Drawer Header untuk mobile dengan logo & tombol close modern */}
+        <div className={styles.drawerHeader}>
+          <div className={styles.drawerBrand}>
+            <Image
+              src="/img/logo.png"
+              alt="SUMDE BETTA"
+              width={30}
+              height={30}
+              className={styles.drawerBrandLogo}
+            />
+            <div className={styles.drawerBrandText}>
+              <span className={styles.drawerBrandName}>SUMDE BETTA</span>
+              <span className={styles.drawerBrandTagline}>ADMIN CONTROL CENTER</span>
+            </div>
           </div>
-        )}
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={() => setOpen(false)}
+            aria-label="Tutup menu navigasi"
+            title="Tutup Menu"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
 
-        {can('orders:view') && (
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Operasional</div>
-            <button
-              type="button"
-              className={`${styles.link} ${styles.groupToggle} ${isOnOrdersRoute ? styles.linkActive : ''}`.trim()}
-              onClick={() => setUserOrdersOpen(!isOrdersOpen)}
-              aria-expanded={isOrdersOpen}
-              aria-controls="admin-orders-submenu"
-            >
-              <span className={styles.linkContent}>{iconOrders}<span className={styles.linkLabel}>Pesanan</span></span>
-              <span className={styles.groupToggleRight}>
-                {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
-                <span className={`${styles.chevronWrap} ${isOrdersOpen ? styles.chevronOpen : ''}`.trim()}>
-                  {iconChevron}
-                </span>
-              </span>
-            </button>
-            {isOrdersOpen && (
-              <div id="admin-orders-submenu" className={styles.submenu}>
-                {orderStatusItems.map((it) => (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
+        <div className={styles.sidebarNavBody}>
+          {(can('dashboard:view') || can('reports:view')) && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Ringkasan</div>
+              {can('dashboard:view') && (
+                <Link href="/admin/dashboard" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/dashboard') ? styles.linkActive : ''}`.trim()}>
+                  <span className={styles.linkContent}>{iconDashboard}<span className={styles.linkLabel}>Dashboard</span></span>
+                </Link>
+              )}
+              {can('reports:view') && (
+                <Link href="/admin/reports" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/reports') ? styles.linkActive : ''}`.trim()}>
+                  <span className={styles.linkContent}>{iconReports}<span className={styles.linkLabel}>Laporan Penjualan</span></span>
+                </Link>
+              )}
+            </div>
+          )}
+
+          {(can('orders:view') || can('shipping:view') || can('shipping:manage') || can('shipping:label') || can('shipping:pickup')) && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Operasional</div>
+              {can('orders:view') && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.link} ${styles.groupToggle} ${isOnOrdersRoute ? styles.linkActive : ''}`.trim()}
+                    onClick={() => setUserOrdersOpen(!isOrdersOpen)}
+                    aria-expanded={isOrdersOpen}
+                    aria-controls="admin-orders-submenu"
                   >
-                    <span className={styles.linkContent}>
-                      <span className={styles.linkLabel}>{it.label}</span>
+                    <span className={styles.linkContent}>{iconOrders}<span className={styles.linkLabel}>Pesanan</span></span>
+                    <span className={styles.groupToggleRight}>
+                      {counts.awaitingWaybill > 0 && <Badge count={counts.awaitingWaybill} muted />}
+                      <span className={`${styles.chevronWrap} ${isOrdersOpen ? styles.chevronOpen : ''}`.trim()}>
+                        {iconChevron}
+                      </span>
                     </span>
-                    <Badge count={it.badge} />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  </button>
+                  {isOrdersOpen && (
+                    <div id="admin-orders-submenu" className={styles.submenu}>
+                      {orderStatusItems.map((it) => (
+                        <Link
+                          key={it.href}
+                          href={it.href}
+                          onClick={() => setOpen(false)}
+                          className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
+                        >
+                          <span className={styles.linkContent}>
+                            <span className={styles.linkLabel}>{it.label}</span>
+                          </span>
+                          <Badge count={it.badge} />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
 
-        {showMasterData && (
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>Master Data</div>
-            {can('products:view') && (
-              <Link href="/admin/products" className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
-                <span className={styles.linkContent}>{iconProducts}<span className={styles.linkLabel}>Produk</span></span>
+              <Link
+                href="/admin/generate-resi"
+                onClick={() => setOpen(false)}
+                className={`${styles.link} ${isActive('/admin/generate-resi') ? styles.linkActive : ''}`.trim()}
+              >
+                <span className={styles.linkContent}>
+                  {iconCetakResi}
+                  <span className={styles.linkLabel}>Cetak Resi</span>
+                </span>
               </Link>
-            )}
-            {(can('users:view') || can('roles:view')) && (
-              <Link href="/admin/users" className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
-                <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User & Role</span></span>
-              </Link>
-            )}
-            {(can('events:view') || can('products:view')) && (
-              <>
-                <button
-                  type="button"
-                  className={`${styles.link} ${styles.groupToggle} ${isOnEventsRoute ? styles.linkActive : ''}`.trim()}
-                  onClick={() => setUserEventsOpen(!isEventsOpen)}
-                  aria-expanded={isEventsOpen}
-                  aria-controls="admin-events-submenu"
+
+              {can('chat:view') && (
+                <Link
+                  href="/admin/chat"
+                  onClick={() => setOpen(false)}
+                  className={`${styles.link} ${isActive('/admin/chat') ? styles.linkActive : ''}`.trim()}
                 >
                   <span className={styles.linkContent}>
-                    {iconEvents}
-                    <span className={styles.linkLabel}>Event</span>
+                    {iconChat}
+                    <span className={styles.linkLabel}>Live Chat</span>
                   </span>
-                  <span className={styles.groupToggleRight}>
-                    <span className={`${styles.chevronWrap} ${isEventsOpen ? styles.chevronOpen : ''}`.trim()}>
-                      {iconChevron}
-                    </span>
-                  </span>
-                </button>
-                {isEventsOpen && (
-                  <div id="admin-events-submenu" className={styles.submenu}>
-                    {eventSubmenuItems.map((it) => (
-                      <Link
-                        key={it.href}
-                        href={it.href}
-                        className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
-                      >
-                        <span className={styles.linkContent}>
-                          <span className={styles.linkLabel}>{it.label}</span>
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+                  <Badge count={counts.unreadChat} />
+                </Link>
+              )}
+            </div>
+          )}
 
-        {(can('products:view') || can('dashboard:view')) && (
-          <div className={styles.bottomSection}>
-            <Link
-              href="/admin/recycle-bin"
-              className={`${styles.link} ${isActive('/admin/recycle-bin') ? styles.linkActive : ''}`.trim()}
-            >
-              <span className={styles.linkContent}>
-                {iconTrash}
-                <span className={styles.linkLabel}>Recycle Bin</span>
-              </span>
-              {counts.archivedProducts > 0 && <Badge count={counts.archivedProducts} muted />}
-            </Link>
-          </div>
-        )}
+          {showMasterData && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Master Data</div>
+              {can('products:view') && (
+                <Link href="/admin/products" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
+                  <span className={styles.linkContent}>{iconProducts}<span className={styles.linkLabel}>Produk</span></span>
+                </Link>
+              )}
+              {(can('users:view') || can('roles:view')) && (
+                <Link href="/admin/users" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
+                  <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User & Role</span></span>
+                </Link>
+              )}
+              {(can('events:view') || can('products:view')) && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.link} ${styles.groupToggle} ${isOnEventsRoute ? styles.linkActive : ''}`.trim()}
+                    onClick={() => setUserEventsOpen(!isEventsOpen)}
+                    aria-expanded={isEventsOpen}
+                    aria-controls="admin-events-submenu"
+                  >
+                    <span className={styles.linkContent}>
+                      {iconEvents}
+                      <span className={styles.linkLabel}>Event</span>
+                    </span>
+                    <span className={styles.groupToggleRight}>
+                      <span className={`${styles.chevronWrap} ${isEventsOpen ? styles.chevronOpen : ''}`.trim()}>
+                        {iconChevron}
+                      </span>
+                    </span>
+                  </button>
+                  {isEventsOpen && (
+                    <div id="admin-events-submenu" className={styles.submenu}>
+                      {eventSubmenuItems.map((it) => (
+                        <Link
+                          key={it.href}
+                          href={it.href}
+                          onClick={() => setOpen(false)}
+                          className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
+                        >
+                          <span className={styles.linkContent}>
+                            <span className={styles.linkLabel}>{it.label}</span>
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {(can('products:view') || can('dashboard:view')) && (
+            <div className={styles.bottomSection}>
+              <Link
+                href="/admin/recycle-bin"
+                onClick={() => setOpen(false)}
+                className={`${styles.link} ${isActive('/admin/recycle-bin') ? styles.linkActive : ''}`.trim()}
+              >
+                <span className={styles.linkContent}>
+                  {iconTrash}
+                  <span className={styles.linkLabel}>Recycle Bin</span>
+                </span>
+                {counts.archivedProducts > 0 && <Badge count={counts.archivedProducts} muted />}
+              </Link>
+            </div>
+          )}
+        </div>
       </aside>
     </>
   );
 }
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ open, onClose }) {
   return (
     <Suspense fallback={null}>
-      <AdminSidebarInner />
+      <AdminSidebarInner open={open} onClose={onClose} />
     </Suspense>
   );
 }

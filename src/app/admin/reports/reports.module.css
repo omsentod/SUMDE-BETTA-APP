@@ -49,7 +49,7 @@
 
 .presetActive {
   background: var(--primary);
-  color: #1a1a1a;
+  color: #ffffff;
   border-color: var(--primary);
   font-weight: 700;
 }
@@ -79,7 +79,7 @@
 .exportBtn {
   margin-left: auto;
   background: var(--primary);
-  color: #1a1a1a;
+  color: #ffffff;
   border: none;
   padding: 0.55rem 1rem;
   border-radius: 6px;

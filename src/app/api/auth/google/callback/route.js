@@ -56,6 +56,10 @@ export async function GET(request) {
 
     const normalizedEmail = String(info.email).toLowerCase();
     const googleId = String(info.sub);
+    const googlePicture =
+      typeof info.picture === 'string' && /^https:\/\//i.test(info.picture.trim())
+        ? info.picture.trim()
+        : null;
 
     // 1. Cari user yang sudah punya googleId ini (returning Google user).
     let user = await prisma.user.findUnique({ where: { googleId } });
@@ -71,6 +75,7 @@ export async function GET(request) {
           data: {
             googleId,
             emailVerified: existing.emailVerified || new Date(),
+            ...(!existing.avatarUrl && googlePicture ? { avatarUrl: googlePicture } : {}),
           },
         });
       }
@@ -86,6 +91,7 @@ export async function GET(request) {
           password: null,
           role: 'customer',
           googleId,
+          avatarUrl: googlePicture,
           emailVerified: new Date(),
         },
       });

@@ -7,32 +7,67 @@ import { getMethodLabel } from '@/lib/paymentFee';
 import { useToast } from '@/context/ToastContext';
 import { canUser } from '@/lib/permission-utils';
 import ShipmentTracker, { getCourierTrackingUrl } from '@/app/customer/orders/ShipmentTracker';
+import OrderSourceBadge from '@/components/admin/OrderSourceBadge';
+import OrderSelect from './OrderSelect';
 import styles from './orders.module.css';
 
 const formatIDR = (v) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
 
+const SOURCE_OPTIONS = [
+  { value: 'All', label: 'Semua Sumber' },
+  { value: 'WEB', label: 'Website Reguler', dotTone: 'web' },
+  { value: 'TIKTOK_LIVE', label: 'TikTok Live', dotTone: 'tiktok' },
+  { value: 'TELEGRAM', label: 'Telegram Drop', dotTone: 'telegram' },
+];
+
 const STATUS_OPTIONS = [
   { value: 'All', label: 'Semua Status' },
   // "NEW" adalah pseudo-status yang menggabungkan PENDING + PAID — dipakai
   // untuk halaman "Pesanan Baru" di sidebar.
-  { value: 'NEW', label: 'Pesanan Baru (Pending + Lunas)' },
-  { value: 'PENDING', label: 'Menunggu Bayar' },
-  { value: 'PAID', label: 'Lunas (Belum Diproses)' },
-  { value: 'PROCESSING', label: 'Diproses (Resi Dipanggil)' },
-  { value: 'SHIPPED', label: 'Dikirim' },
-  { value: 'COMPLETED', label: 'Selesai' },
-  { value: 'CANCELLED', label: 'Dibatalkan' },
-  { value: 'RETURNED', label: 'Retur' },
+  { value: 'NEW', label: 'Pesanan Baru' },
+  { value: 'PENDING', label: 'Belum Bayar', dotTone: 'pending' },
+  { value: 'PAID', label: 'Lunas', dotTone: 'paid' },
+  { value: 'PROCESSING', label: 'Diproses', dotTone: 'processing' },
+  { value: 'SHIPPED', label: 'Dikirim', dotTone: 'shipped' },
+  { value: 'COMPLETED', label: 'Selesai', dotTone: 'completed' },
+  { value: 'CANCELLED', label: 'Dibatalkan', dotTone: 'cancelled' },
+  { value: 'RETURNED', label: 'Retur', dotTone: 'returned' },
 ];
 
 // Subset dropdown untuk halaman "Pesanan Baru" — hanya izinkan zoom antara
 // NEW (gabungan) atau salah satu sub-status-nya.
 const NEW_PAGE_OPTIONS = [
   { value: 'NEW', label: 'Semua Pesanan Baru' },
-  { value: 'PENDING', label: 'Menunggu Bayar' },
-  { value: 'PAID', label: 'Lunas' },
+  { value: 'PENDING', label: 'Belum Bayar', dotTone: 'pending' },
+  { value: 'PAID', label: 'Lunas', dotTone: 'paid' },
 ];
+
+// Pilihan status untuk modal Ubah Status Bulk — hanya real DB statuses
+// dengan label singkat sesuai kolom Status.
+const BULK_STATUS_OPTIONS = [
+  { value: 'PENDING', label: 'Belum Bayar', dotTone: 'pending' },
+  { value: 'PAID', label: 'Lunas', dotTone: 'paid' },
+  { value: 'PROCESSING', label: 'Diproses', dotTone: 'processing' },
+  { value: 'SHIPPED', label: 'Dikirim', dotTone: 'shipped' },
+  { value: 'COMPLETED', label: 'Selesai', dotTone: 'completed' },
+  { value: 'CANCELLED', label: 'Dibatalkan', dotTone: 'cancelled' },
+  { value: 'RETURNED', label: 'Retur', dotTone: 'returned' },
+];
+
+const iconChannel = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+);
+
+const iconStatusFilter = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+  </svg>
+);
 
 // Kalau URL sudah membawa status spesifik (dari klik sidebar), dropdown
 // tidak perlu tampil — konteks sudah jelas dari halaman.
@@ -86,8 +121,9 @@ function AdminOrdersPageInner() {
   const { currentUser, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast, confirmDialog } = useToast();
+  const { toast } = useToast();
   const urlStatus = searchParams.get('status');
+  const highlightParam = searchParams.get('highlightOrder');
   const initialStatus = urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All';
 
   const canView = canUser(currentUser, 'orders:view');
@@ -98,7 +134,11 @@ function AdminOrdersPageInner() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [sourceFilter, setSourceFilter] = useState('All');
   const [expandedId, setExpandedId] = useState(null);
+  const [highlightedId, setHighlightedId] = useState(highlightParam);
+  // Mode pemilihan (Selection Mode): checkbox tersembunyi sampai tombol 'Pilih' diklik
+  const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [statusModal, setStatusModal] = useState({ open: false, target: '' });
@@ -169,6 +209,46 @@ function AdminOrdersPageInner() {
       router.push('/admin/dashboard');
     }
   }, [currentUser, authLoading, canView, router]);
+
+  // Auto-scroll dan highlight baris pesanan saat admin diarahkan dari link chat (?highlightOrder=...)
+  useEffect(() => {
+    if (!highlightParam || loading || orders.length === 0) return;
+
+    const targetOrder = orders.find(
+      (o) => o.id === highlightParam || o.id.startsWith(highlightParam)
+    );
+
+    if (targetOrder) {
+      // Pastikan filter status tidak menyembunyikan order ini
+      if (statusFilter !== 'All' && statusFilter !== targetOrder.status) {
+        const isMatchNew = statusFilter === 'NEW' && NEW_ORDER_STATUSES.has(targetOrder.status);
+        if (!isMatchNew) {
+          setStatusFilter('All');
+        }
+      }
+
+      setHighlightedId(targetOrder.id);
+      setExpandedId(targetOrder.id);
+
+      // Scroll otomatis ke posisi baris tabel
+      const scrollTimer = setTimeout(() => {
+        const el = document.getElementById(`order-row-${targetOrder.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 250);
+
+      // Hilangkan pulse highlight setelah 4.5 detik
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 4500);
+
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [highlightParam, orders, loading, statusFilter]);
 
   const inFlightRef = useRef(false);
   const lastLoadedRef = useRef(Date.now());
@@ -258,7 +338,7 @@ function AdminOrdersPageInner() {
         channel = client.channels.get(`user:${currentUser.id}`);
         channel.subscribe('notification', () => {
           loadOrders(true);
-        });
+        }).catch(() => {});
       } catch (err) {
         console.warn('Admin orders Ably setup failed:', err.message);
       }
@@ -277,7 +357,6 @@ function AdminOrdersPageInner() {
   }, [currentUser?.id, canView]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync from URL param
     setStatusFilter(urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All');
   }, [urlStatus]);
 
@@ -287,14 +366,22 @@ function AdminOrdersPageInner() {
       const matchSearch =
         o.id.toLowerCase().includes(q) ||
         (o.name && o.name.toLowerCase().includes(q)) ||
-        (o.email && o.email.toLowerCase().includes(q));
+        (o.email && o.email.toLowerCase().includes(q)) ||
+        (o.tiktokUsername && o.tiktokUsername.toLowerCase().includes(q)) ||
+        (o.tiktokAccountName && o.tiktokAccountName.toLowerCase().includes(q));
       let matchStatus;
       if (statusFilter === 'All') matchStatus = true;
       else if (statusFilter === 'NEW') matchStatus = NEW_ORDER_STATUSES.has(o.status);
       else matchStatus = o.status === statusFilter;
-      return matchSearch && matchStatus;
+      const src = o.orderSource === 'TIKTOK_LIVE'
+        ? 'TIKTOK_LIVE'
+        : (o.orderSource === 'TELEGRAM' || o.telegramUsername)
+          ? 'TELEGRAM'
+          : 'WEB';
+      const matchSource = sourceFilter === 'All' || src === sourceFilter;
+      return matchSearch && matchStatus && matchSource;
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, sourceFilter]);
 
   const allFilteredSelected = filteredOrders.length > 0 && filteredOrders.every((o) => selectedIds.has(o.id));
 
@@ -346,9 +433,16 @@ function AdminOrdersPageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal update status');
       const ok = data.results.filter((r) => r.ok).length;
-      toast.success(`Selesai: ${ok} order status di-update ke ${statusModal.target}.`);
+      const failed = data.results.length - ok;
+      const targetLabel = STATUS_LABEL[statusModal.target] || statusModal.target;
+      if (failed > 0) {
+        toast.warning(`${ok} pesanan diubah ke ${targetLabel}, ${failed} gagal.`);
+      } else {
+        toast.success(`${ok} pesanan berhasil diubah ke status ${targetLabel}.`);
+      }
       setStatusModal({ open: false, target: '' });
       setSelectedIds(new Set());
+      setIsSelectMode(false);
       loadOrders();
     } catch (err) {
       toast.error(err.message);
@@ -359,8 +453,8 @@ function AdminOrdersPageInner() {
 
   if (authLoading || !currentUser || !canView) {
     return (
-      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
-        <h2>Memverifikasi Otoritas Pesanan...</h2>
+      <div className={styles.loading}>
+        Memuat pesanan...
       </div>
     );
   }
@@ -369,16 +463,24 @@ function AdminOrdersPageInner() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Manajemen Pesanan</h1>
-        <p className={styles.subtitle}>Klik baris untuk lihat detail. Pilih multiple untuk bulk action.</p>
+        <p className={styles.subtitle}>Klik baris untuk lihat detail. Klik Pilih untuk bulk action.</p>
       </div>
 
       <div className={styles.controlBar}>
         <input
           type="text"
-          placeholder="Cari ID Pesanan, Nama, atau Email Pembeli..."
+          placeholder="Cari ID Pesanan, Nama, Email, atau Username TikTok..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className={styles.searchInput}
+        />
+        <OrderSelect
+          value={sourceFilter}
+          onChange={setSourceFilter}
+          options={SOURCE_OPTIONS}
+          ariaLabel="Filter sumber pesanan"
+          leadingIcon={iconChannel}
+          isFiltered={sourceFilter !== 'All'}
         />
         {/* Dropdown status: konteks halaman menentukan opsi yang muncul.
          *  - `?status=NEW`     → hanya PENDING/PAID (dan reset ke NEW)
@@ -386,15 +488,49 @@ function AdminOrdersPageInner() {
          *  - "Semua"/default  → full options
          */}
         {SINGLE_STATUS_PAGES.has(urlStatus) ? null : (
-          <select
+          <OrderSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={styles.selectInput}
+            onChange={setStatusFilter}
+            options={urlStatus === 'NEW' ? NEW_PAGE_OPTIONS : STATUS_OPTIONS}
+            ariaLabel="Filter status pesanan"
+            leadingIcon={iconStatusFilter}
+            isFiltered={statusFilter !== initialStatus}
+            menuAlign="right"
+          />
+        )}
+        {(canLabel || canUpdateStatus) && (
+          <button
+            type="button"
+            onClick={() => {
+              if (isSelectMode) {
+                setIsSelectMode(false);
+                setSelectedIds(new Set());
+              } else {
+                setIsSelectMode(true);
+              }
+            }}
+            className={`${styles.refreshBtn} ${isSelectMode ? styles.selectActiveBtn : ''}`.trim()}
+            title={isSelectMode ? 'Selesai memilih' : 'Pilih pesanan untuk bulk action'}
+            aria-pressed={isSelectMode}
           >
-            {(urlStatus === 'NEW' ? NEW_PAGE_OPTIONS : STATUS_OPTIONS).map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            {isSelectMode ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                Selesai
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="9 11 12 14 22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                Pilih
+              </>
+            )}
+          </button>
         )}
         <button
           type="button"
@@ -411,7 +547,7 @@ function AdminOrdersPageInner() {
         </button>
       </div>
 
-      {selectedIds.size > 0 && (
+      {isSelectMode && selectedIds.size > 0 && (
         <div className={styles.bulkBar}>
           <span className={styles.bulkBarCount}>{selectedIds.size} terpilih</span>
           {canLabel && (
@@ -434,7 +570,10 @@ function AdminOrdersPageInner() {
           )}
           <button
             className={`${styles.bulkBtn} ${styles.bulkBtnGhost}`}
-            onClick={() => setSelectedIds(new Set())}
+            onClick={() => {
+              setSelectedIds(new Set());
+              setIsSelectMode(false);
+            }}
           >
             Batal
           </button>
@@ -445,7 +584,26 @@ function AdminOrdersPageInner() {
         <div className={styles.loading}>Memuat pesanan...</div>
       ) : filteredOrders.length === 0 ? (
         <div className={styles.empty}>
-          {statusFilter === 'All' ? 'Belum ada pesanan.' : `Tidak ada pesanan berstatus ${statusFilter}.`}
+          <span>
+            {search.trim() || sourceFilter !== 'All' || statusFilter !== initialStatus
+              ? 'Tidak ada pesanan yang cocok dengan filter aktif.'
+              : statusFilter === 'All'
+                ? 'Belum ada pesanan.'
+                : `Tidak ada pesanan berstatus ${statusFilter === 'NEW' ? 'Pesanan Baru' : (STATUS_LABEL[statusFilter] || statusFilter)}.`}
+          </span>
+          {(search.trim() || sourceFilter !== 'All' || statusFilter !== initialStatus) && (
+            <button
+              type="button"
+              className={styles.emptyResetBtn}
+              onClick={() => {
+                setSearch('');
+                setSourceFilter('All');
+                setStatusFilter(initialStatus);
+              }}
+            >
+              Reset Filter
+            </button>
+          )}
         </div>
       ) : (
         <div className={styles.tableWrap}>
@@ -453,15 +611,18 @@ function AdminOrdersPageInner() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th className={styles.tdCheck}>
-                    <input
-                      type="checkbox"
-                      checked={allFilteredSelected}
-                      onChange={toggleAllSelect}
-                      aria-label="Pilih semua"
-                    />
-                  </th>
+                  {isSelectMode && (
+                    <th className={styles.tdCheck}>
+                      <input
+                        type="checkbox"
+                        checked={allFilteredSelected}
+                        onChange={toggleAllSelect}
+                        aria-label="Pilih semua"
+                      />
+                    </th>
+                  )}
                   <th>ID</th>
+                  <th>Sumber</th>
                   <th className={styles.hideOnMobile}>Tanggal</th>
                   <th>Customer</th>
                   <th style={{ textAlign: 'right' }}>Total</th>
@@ -472,26 +633,38 @@ function AdminOrdersPageInner() {
               <tbody>
                 {filteredOrders.map((order) => {
                   const isExpanded = expandedId === order.id;
-                  const isSelected = selectedIds.has(order.id);
+                  const isSelected = isSelectMode && selectedIds.has(order.id);
                   return (
                     <Fragment key={order.id}>
                       <tr
-                        className={`${isSelected ? styles.rowSelected : ''} ${isExpanded ? styles.rowExpanded : ''}`.trim()}
+                        id={`order-row-${order.id}`}
+                        className={`${isSelected ? styles.rowSelected : ''} ${isExpanded ? styles.rowExpanded : ''} ${highlightedId === order.id ? styles.rowHighlight : ''}`.trim()}
                         onClick={() => setExpandedId(isExpanded ? null : order.id)}
                       >
-                        <td className={styles.tdCheck} onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleRowSelect(order.id)}
-                            aria-label={`Pilih order ${order.id.slice(0, 8)}`}
-                          />
-                        </td>
+                        {isSelectMode && (
+                          <td className={styles.tdCheck} onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleRowSelect(order.id)}
+                              aria-label={`Pilih order ${order.id.slice(0, 8)}`}
+                            />
+                          </td>
+                        )}
                         <td className={styles.tdId}>#{order.id.slice(0, 8)}</td>
+                        <td>
+                          <OrderSourceBadge order={order} showAccountSubtext />
+                        </td>
                         <td className={styles.tdDate}>{new Date(order.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                         <td className={styles.tdCustomer}>
                           <div className={styles.tdCustomerName}>{order.name}</div>
-                          <div className={styles.tdCustomerEmail}>{order.email}</div>
+                          <div className={styles.tdCustomerEmail}>
+                            {order.orderSource === 'TIKTOK_LIVE' && order.tiktokUsername
+                              ? `@${order.tiktokUsername}`
+                              : order.telegramUsername
+                                ? `@${order.telegramUsername}`
+                                : order.email}
+                          </div>
                         </td>
                         <td className={styles.tdTotal}>{formatIDR(order.total)}</td>
                         <td>
@@ -527,13 +700,13 @@ function AdminOrdersPageInner() {
                       </tr>
                       {isExpanded && (
                         <tr className={styles.expandRow}>
-                          <td colSpan={7}>
+                          <td colSpan={isSelectMode ? 8 : 7}>
                             <div className={styles.expandGrid}>
                               <div className={styles.expandSection}>
                                 <h5>Produk</h5>
                                 {order.items.map((it) => (
                                   <div key={it.id} className={styles.itemRow}>
-                                    <span>{it.product?.name || 'Produk dihapus'} {it.selectedSize ? `(${it.selectedSize})` : ''} × {it.quantity}</span>
+                                    <span>{it.customName || it.product?.name || 'Produk dihapus'} {it.selectedSize ? `(${it.selectedSize})` : ''} × {it.quantity}</span>
                                     <span>{formatIDR(it.price * it.quantity)}</span>
                                   </div>
                                 ))}
@@ -606,20 +779,23 @@ function AdminOrdersPageInner() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalTitle}>Ubah Status Bulk</div>
             <div className={styles.modalDesc}>
-              {selectedIds.size} order akan diubah statusnya. Aksi ini <b>admin override</b> —
-              tidak trigger restock atau notifikasi. Untuk cancel dengan restock, gunakan flow webhook.
+              {selectedIds.size} pesanan terpilih akan diubah statusnya. Aksi ini <b>admin override</b> —
+              tidak memicu restock atau notifikasi.
             </div>
-            <select
-              value={statusModal.target}
-              onChange={(e) => setStatusModal({ ...statusModal, target: e.target.value })}
-              className={styles.selectInput}
-              style={{ width: '100%' }}
-            >
-              <option value="">— pilih status —</option>
-              {STATUS_OPTIONS.filter((o) => o.value !== 'All').map((o) => (
-                <option key={o.value} value={o.value}>{o.label} ({o.value})</option>
-              ))}
-            </select>
+            <div className={styles.modalField}>
+              <label htmlFor="bulk-status-select" className={styles.modalFieldLabel}>
+                Status Tujuan
+              </label>
+              <OrderSelect
+                id="bulk-status-select"
+                value={statusModal.target}
+                onChange={(nextTarget) => setStatusModal({ ...statusModal, target: nextTarget })}
+                options={BULK_STATUS_OPTIONS}
+                placeholder="Pilih status tujuan"
+                ariaLabel="Pilih status tujuan"
+                fullWidth
+              />
+            </div>
             <div className={styles.modalActions}>
               <button className={`${styles.bulkBtn} ${styles.bulkBtnGhost}`} onClick={() => setStatusModal({ open: false, target: '' })}>
                 Batal

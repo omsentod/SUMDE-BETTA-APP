@@ -300,17 +300,33 @@ function TrackOrderContent() {
             {orderData && (
                 <div className={styles.resultsContainer}>
                     <div className={styles.topBarActions}>
-                        <button
-                            type="button"
-                            onClick={handleResetSearch}
-                            className={styles.backSearchBtn}
-                        >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <line x1="19" y1="12" x2="5" y2="12" />
-                                <polyline points="12 19 5 12 12 5" />
-                            </svg>
-                            <span>Lacak Pesanan Lain</span>
-                        </button>
+                        <div className={styles.actionsGroup}>
+                            <button
+                                type="button"
+                                onClick={handleResetSearch}
+                                className={styles.backSearchBtn}
+                            >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <line x1="19" y1="12" x2="5" y2="12" />
+                                    <polyline points="12 19 5 12 12 5" />
+                                </svg>
+                                <span>Lacak Pesanan Lain</span>
+                            </button>
+
+                            <Link
+                                href={`/invoice/${orderData.id}?email=${encodeURIComponent(identifierInput || '')}`}
+                                className={styles.backSearchBtn}
+                                title="Lihat dan cetak faktur resmi pesanan ini"
+                            >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                </svg>
+                                <span>Cetak Invoice</span>
+                            </Link>
+                        </div>
 
                         <div className={styles.orderDate}>
                             Dipesan pada: {formatDate(orderData.createdAt)}
@@ -464,7 +480,7 @@ function TrackOrderContent() {
                                 </div>
                                 {orderData.paymentFee > 0 && (
                                     <div className={styles.calcRow}>
-                                        <span>Biaya Admin ({orderData.paymentMethod || 'Pembayaran'})</span>
+                                        <span>Biaya Layanan</span>
                                         <span>{formatIDR(orderData.paymentFee)}</span>
                                     </div>
                                 )}

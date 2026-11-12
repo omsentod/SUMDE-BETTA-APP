@@ -78,8 +78,8 @@ export async function GET(request) {
     const productAgg = {};
     for (const o of revenueOrders) {
       for (const item of o.items) {
-        const pid = item.productId;
-        const pname = item.product?.name || 'Produk dihapus';
+        const pid = item.productId || `custom:${item.customName || item.id}`;
+        const pname = item.customName || item.product?.name || 'Produk dihapus';
         if (!productAgg[pid]) {
           productAgg[pid] = { productId: pid, name: pname, quantity: 0, revenue: 0 };
         }

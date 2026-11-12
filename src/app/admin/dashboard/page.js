@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import { canUser } from '@/lib/permission-utils';
+import OrderSourceBadge from '@/components/admin/OrderSourceBadge';
 import styles from './adminDashboard.module.css';
 
 const formatCurrency = (v) =>
@@ -43,7 +44,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
 
-  const can = (perm) => canUser(currentUser, perm);
+  const can = useCallback((perm) => canUser(currentUser, perm), [currentUser]);
 
   const canViewDashboard = can('dashboard:view');
   const canKpiRevenue = can('dashboard:kpi_revenue');
@@ -52,6 +53,8 @@ export default function AdminDashboard() {
   const canKpiUsers = can('dashboard:kpi_users');
   const canViewOrders = can('orders:view');
   const canViewProducts = can('products:view');
+  const needUsers = canKpiUsers || can('users:view');
+  const needOrders = canKpiOrders || canKpiRevenue || canViewOrders;
 
   // Proteksi hak akses menu dashboard
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function AdminDashboard() {
     } else if (!authLoading && !currentUser) {
       router.push('/login');
     }
-  }, [currentUser, authLoading, canViewDashboard, router]);
+  }, [currentUser, authLoading, canViewDashboard, can, router]);
 
   useEffect(() => {
     if (!currentUser || !canViewDashboard) return;
@@ -77,8 +80,6 @@ export default function AdminDashboard() {
     (async () => {
       try {
         const promises = [];
-        const needUsers = canKpiUsers || can('users:view');
-        const needOrders = canKpiOrders || canKpiRevenue || canViewOrders;
 
         if (needUsers) promises.push(fetch('/api/users').then((r) => (r.ok ? r.json() : [])));
         else promises.push(Promise.resolve([]));
@@ -98,7 +99,7 @@ export default function AdminDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [currentUser, canViewDashboard, canKpiUsers, canKpiOrders, canKpiRevenue, canViewOrders]);
+  }, [currentUser, canViewDashboard, needUsers, needOrders]);
 
   const kpi = useMemo(() => {
     const totalRevenue = orders
@@ -127,8 +128,9 @@ export default function AdminDashboard() {
 
   if (authLoading || !currentUser || !canViewDashboard) {
     return (
-      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
-        <h2>Memverifikasi Otoritas Dashboard...</h2>
+      <div className={styles.dashboardLoading}>
+        <div className={styles.loadingSpinner} />
+        <span className={styles.loadingText}>Memuat dashboard...</span>
       </div>
     );
   }
@@ -138,12 +140,37 @@ export default function AdminDashboard() {
       <div className="container">
         <div className={styles.dashboardHeader}>
           <div>
-            <span className={styles.headerBadge}>Ringkasan Eksekutif</span>
-            <h1 className={styles.headerTitle}>Admin Dashboard</h1>
+            <h1 className={styles.headerTitle}>Dashboard</h1>
+            <p className={styles.headerSubtitle}>
+              Ringkasan performa penjualan, status pesanan, dan ketersediaan stok
+            </p>
+          </div>
+          <div className={styles.headerQuickActions}>
+            <Link href="/admin/orders?status=PENDING" className={styles.quickActionBtn}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span>Pesanan Masuk</span>
+            </Link>
+            <Link href="/admin/chat" className={styles.quickActionBtn}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Live Chat</span>
+            </Link>
+            <Link href="/admin/products" className={styles.quickActionPrimaryBtn}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Kelola Produk</span>
+            </Link>
           </div>
         </div>
 
-        {/* KPI Metrics Cards Grid (Tergantung Izin Widget) */}
+        {/* KPI Metrics Cards Grid */}
         {hasAnyKpi && (
           <div className={styles.kpiGrid}>
             {canKpiRevenue && (
@@ -151,9 +178,9 @@ export default function AdminDashboard() {
                 <div className={styles.kpiHeader}>
                   <span className={styles.kpiTitle}>Total Omset</span>
                   <div className={styles.kpiIconWrapper}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="12" y1="1" x2="12" y2="23"></line>
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="12" y1="1" x2="12" y2="23" />
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                     </svg>
                   </div>
                 </div>
@@ -167,21 +194,21 @@ export default function AdminDashboard() {
                 <div className={styles.kpiHeader}>
                   <span className={styles.kpiTitle}>Total Pesanan</span>
                   <div className={styles.kpiIconWrapper}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                      <line x1="3" y1="6" x2="21" y2="6"></line>
-                      <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
                     </svg>
                   </div>
                 </div>
                 <div className={styles.kpiValue}>{kpi.totalOrders}</div>
                 <div className={styles.kpiSubtext}>
                   {kpi.pendingOrdersCount > 0 ? (
-                    <span style={{ color: 'var(--status-warning)', fontWeight: '600' }}>
+                    <span className={styles.subtextWarning}>
                       {kpi.pendingOrdersCount} Pesanan Baru
                     </span>
                   ) : (
-                    <span>Semua transaksi diproses</span>
+                    <span className={styles.subtextMuted}>Semua transaksi diproses</span>
                   )}
                 </div>
               </div>
@@ -192,19 +219,19 @@ export default function AdminDashboard() {
                 <div className={styles.kpiHeader}>
                   <span className={styles.kpiTitle}>Katalog Produk</span>
                   <div className={styles.kpiIconWrapper}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                     </svg>
                   </div>
                 </div>
                 <div className={styles.kpiValue}>{kpi.totalProducts}</div>
                 <div className={styles.kpiSubtext}>
                   {kpi.lowStockCount > 0 ? (
-                    <span style={{ color: 'var(--status-error)', fontWeight: '600' }}>
+                    <span className={styles.subtextDanger}>
                       {kpi.lowStockCount} Produk Stok Menipis/Habis
                     </span>
                   ) : (
-                    <span>Stok aman tersedia</span>
+                    <span className={styles.subtextMuted}>Stok aman tersedia</span>
                   )}
                 </div>
               </div>
@@ -215,11 +242,11 @@ export default function AdminDashboard() {
                 <div className={styles.kpiHeader}>
                   <span className={styles.kpiTitle}>Total Pengguna</span>
                   <div className={styles.kpiIconWrapper}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
                   </div>
                 </div>
@@ -230,21 +257,29 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Recent Orders (Tergantung Izin orders:view) */}
+        {/* Recent Orders */}
         {canViewOrders && (
-          <div style={{ marginBottom: '2.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+          <div className={styles.dashboardSection}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
                 Pesanan Terbaru
               </h2>
-              <Link href="/admin/orders" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
+              <Link href="/admin/orders" className={styles.sectionLink}>
                 Lihat Semua &rarr;
               </Link>
             </div>
 
             {recentOrders.length === 0 ? (
-              <div className={styles.tableCard} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                Belum ada pesanan.
+              <div className={styles.tableCard}>
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyIcon} width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                  <div className={styles.emptyTitle}>Belum Ada Pesanan</div>
+                  <div className={styles.emptyDesc}>Pesanan baru dari website dan live checkout akan tercatat otomatis di sini.</div>
+                </div>
               </div>
             ) : (
               <div className={styles.tableCard}>
@@ -252,11 +287,12 @@ export default function AdminDashboard() {
                   <thead>
                     <tr>
                       <th>ID</th>
+                      <th>Sumber</th>
                       <th>Pelanggan</th>
                       <th className={styles.hideOnMobile}>Item</th>
                       <th>Total</th>
                       <th>Status</th>
-                      <th className={styles.hideOnMobile} style={{ textAlign: 'right' }}>Waktu</th>
+                      <th className={`${styles.hideOnMobile} ${styles.thTime}`}>Waktu</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -265,21 +301,28 @@ export default function AdminDashboard() {
                       const itemCount = (o.items || []).reduce((n, it) => n + (it.quantity || 1), 0);
                       return (
                         <tr key={o.id} className={styles.tableRow}>
-                          <td style={{ fontWeight: 600 }}>
-                            <Link href={`/admin/orders?highlight=${o.id}`} style={{ color: 'var(--text-main)', textDecoration: 'none' }}>
+                          <td>
+                            <Link href={`/admin/orders?highlightOrder=${o.id}`} className={styles.orderIdLink}>
                               {formatOrderId(o.id)}
                             </Link>
                           </td>
                           <td>
-                            <div style={{ fontWeight: 600 }}>{o.user?.name || 'Guest'}</div>
-                            <div className={styles.hideOnMobile} style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{o.user?.email || '-'}</div>
+                            <OrderSourceBadge order={o} />
                           </td>
-                          <td className={styles.hideOnMobile} style={{ color: 'var(--text-muted)' }}>{itemCount} item</td>
-                          <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{formatCurrency(o.total)}</td>
+                          <td>
+                            <div className={styles.customerName}>{o.name || o.user?.name || 'Guest'}</div>
+                            <div className={`${styles.hideOnMobile} ${styles.customerMeta}`}>
+                              {o.orderSource === 'TIKTOK_LIVE' && o.tiktokUsername
+                                ? `@${o.tiktokUsername}`
+                                : (o.email || o.user?.email || '-')}
+                            </div>
+                          </td>
+                          <td className={`${styles.hideOnMobile} ${styles.itemCountCol}`}>{itemCount} item</td>
+                          <td className={styles.orderTotalCol}>{formatCurrency(o.total)}</td>
                           <td>
                             <span className={`${styles.badge} ${badge.cls}`}>{badge.label}</span>
                           </td>
-                          <td className={styles.hideOnMobile} style={{ textAlign: 'right', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          <td className={`${styles.hideOnMobile} ${styles.orderTimeCol}`}>
                             {o.createdAt ? new Date(o.createdAt).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
                           </td>
                         </tr>
@@ -292,23 +335,35 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Low Stock Alert (Tergantung Izin products:view) */}
+        {/* Low Stock Alert */}
         {canViewProducts && (
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+          <div className={styles.dashboardSection}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
                 Stok Menipis / Habis
               </h2>
-              <Link href="/admin/products" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
+              <Link href="/admin/products" className={styles.sectionLink}>
                 Kelola Produk &rarr;
               </Link>
             </div>
 
             {productsLoading ? (
-              <p style={{ color: 'var(--text-muted)' }}>Memuat produk...</p>
+              <div className={styles.tableCard}>
+                <div className={styles.emptyState}>
+                  <div className={styles.loadingSpinner} />
+                  <span className={styles.loadingText}>Memuat produk...</span>
+                </div>
+              </div>
             ) : lowStockProducts.length === 0 ? (
-              <div className={styles.tableCard} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                Semua stok aman
+              <div className={styles.tableCard}>
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyIcon} width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <div className={styles.emptyTitle}>Stok Tersedia Aman</div>
+                  <div className={styles.emptyDesc}>Semua produk memiliki stok di atas batas minimum.</div>
+                </div>
               </div>
             ) : (
               <div className={styles.tableCard}>
@@ -319,7 +374,7 @@ export default function AdminDashboard() {
                       <th>Nama Produk</th>
                       <th className={styles.hideOnMobile}>Kategori</th>
                       <th>Stok</th>
-                      <th style={{ textAlign: 'right' }}>Aksi</th>
+                      <th className={styles.thAction}>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -328,20 +383,20 @@ export default function AdminDashboard() {
                         <td className={styles.hideOnMobile}>
                           <div className={styles.productThumb}>
                             {p.image ? (
-                              <Image src={p.image} alt={p.name} fill style={{ objectFit: 'cover' }} />
+                              <Image src={p.image} alt={p.name} fill className={styles.productThumbImg} />
                             ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'var(--border-color)', color: 'var(--text-muted)' }}>
+                              <div className={styles.productThumbFallback}>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                                  <circle cx="9" cy="9" r="2"/>
-                                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                  <circle cx="9" cy="9" r="2" />
+                                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                                 </svg>
                               </div>
                             )}
                           </div>
                         </td>
-                        <td style={{ fontWeight: 600 }}>{p.name}</td>
-                        <td className={styles.hideOnMobile} style={{ color: 'var(--text-muted)' }}>{p.form || p.category}</td>
+                        <td className={styles.productNameCol}>{p.name}</td>
+                        <td className={`${styles.hideOnMobile} ${styles.productCategoryCol}`}>{p.form || p.category}</td>
                         <td>
                           {p.quantity > 0 ? (
                             <span className={`${styles.badge} ${styles.badgeWarning}`}>Stok: {p.quantity}</span>
@@ -349,7 +404,7 @@ export default function AdminDashboard() {
                             <span className={`${styles.badge} ${styles.badgeDanger}`}>Habis</span>
                           )}
                         </td>
-                        <td style={{ textAlign: 'right' }}>
+                        <td className={styles.tdAction}>
                           <Link
                             href="/admin/products"
                             className={styles.tableActionBtn}

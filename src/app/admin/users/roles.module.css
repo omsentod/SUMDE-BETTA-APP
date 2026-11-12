@@ -172,6 +172,17 @@
   border-radius: 6px;
 }
 
+.permPillPrimary {
+  color: var(--primary);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.roleLockedTag {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .roleActions {
   display: flex;
   align-items: center;
@@ -316,6 +327,45 @@
   padding: 0.4rem 0.75rem;
   flex: 1;
   min-width: 220px;
+}
+
+.searchIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.searchClearBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.searchClearBtn:hover {
+  color: var(--text-main);
+}
+
+.toolbarToggleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emptyMatrixBox {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--glass);
+  border-radius: 10px;
+}
+
+.moduleActiveCount {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .permSearchInput {
@@ -702,3 +752,285 @@
   color: var(--text-muted);
   border-color: var(--border-color);
 }
+
+/* Modal Form Structure & Subtitle */
+.modalSubtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+/* Custom Role Color Picker & Identity Styling (Linear / Apple / Stripe Caliber) */
+.colorFieldSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.colorControlBar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  flex-wrap: wrap;
+}
+
+.colorSwatchBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 0;
+}
+
+.colorInputHidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  padding: 0;
+  border: none;
+}
+
+.colorSwatchDisc {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background-color: var(--swatch-color);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  transition: transform 0.12s ease;
+  pointer-events: none;
+}
+
+.colorSwatchBtn:hover .colorSwatchDisc {
+  transform: scale(1.08);
+}
+
+.hexInputControl {
+  display: inline-flex;
+  align-items: center;
+  background: var(--glass);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0 0.5rem;
+  height: 28px;
+  width: 92px;
+  transition: border-color 0.15s ease;
+}
+
+.hexInputControl:focus-within {
+  border-color: var(--primary);
+}
+
+.hexPrefix {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  user-select: none;
+  margin-right: 0.2rem;
+  line-height: 1;
+}
+
+.hexInputText {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  width: 100%;
+  padding: 0;
+  line-height: 1;
+}
+
+.colorBarDivider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-color);
+  flex-shrink: 0;
+  margin: 0 0.15rem;
+}
+
+.presetPaletteGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.presetSwatchItem {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--preset-color);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.presetSwatchItem:hover {
+  transform: scale(1.25);
+}
+
+.presetSwatchItemActive {
+  outline: 2px solid var(--text-main);
+  outline-offset: 2px;
+}
+
+.previewBadgeContainer {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.rolePreviewBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.725rem;
+  font-weight: 500;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--role-color, #3B82F6) 10%, transparent);
+  color: var(--role-color, #3B82F6);
+  border: 1px solid color-mix(in srgb, var(--role-color, #3B82F6) 24%, transparent);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.rolePreviewDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--role-color, #3B82F6);
+  flex-shrink: 0;
+}
+
+/* User Table Role Badge */
+.userRoleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.725rem;
+  font-weight: 500;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--role-color, #3B82F6) 10%, transparent);
+  color: var(--role-color, #3B82F6);
+  border: 1px solid color-mix(in srgb, var(--role-color, #3B82F6) 22%, transparent);
+  white-space: nowrap;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.userRoleBadgeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--role-color, #3B82F6);
+  flex-shrink: 0;
+}
+
+/* Role Management Grid Card */
+.roleCardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.roleColorDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--role-color, #3B82F6);
+  flex-shrink: 0;
+}
+
+.roleColorDotSmall {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--role-color, #3B82F6);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.badgeSystemTiny,
+.badgeCustomTiny {
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.badgeSystemTiny {
+  background: var(--status-info-bg);
+  color: var(--status-info);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badgeCustomTiny {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.userTargetHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.25rem;
+}
+
+.userTargetName {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.userTargetEmail {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.fieldWarning {
+  font-size: 0.75rem;
+  color: var(--status-warning);
+}
+

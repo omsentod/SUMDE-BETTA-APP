@@ -1,9 +1,27 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/context/ToastContext';
 import ToggleSwitch from '@/components/admin/ToggleSwitch';
 import styles from './roles.module.css';
+
+const ROLE_COLOR_PRESETS = [
+  { name: 'Flame', hex: '#FF6B35' },
+  { name: 'Rose', hex: '#E11D48' },
+  { name: 'Amber', hex: '#D97706' },
+  { name: 'Emerald', hex: '#059669' },
+  { name: 'Teal', hex: '#0D9488' },
+  { name: 'Sky', hex: '#0284C7' },
+  { name: 'Blue', hex: '#2563EB' },
+  { name: 'Indigo', hex: '#4F46E5' },
+  { name: 'Violet', hex: '#7C3AED' },
+  { name: 'Fuchsia', hex: '#C026D3' },
+  { name: 'Slate', hex: '#475569' },
+];
+
+function isValidHex(hex) {
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex);
+}
 
 function slugify(text) {
   return text
@@ -36,28 +54,15 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
   const { toast } = useToast();
   const isEditing = !!role;
 
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedPerms, setSelectedPerms] = useState(new Set());
+  const [name, setName] = useState(role?.name || '');
+  const [slug, setSlug] = useState(role?.slug || '');
+  const [description, setDescription] = useState(role?.description || '');
+  const [color, setColor] = useState(role?.color || '#3B82F6');
+  const [selectedPerms, setSelectedPerms] = useState(
+    () => new Set(Array.isArray(role?.permissions) ? role.permissions : [])
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (role) {
-      setName(role.name || '');
-      setSlug(role.slug || '');
-      setDescription(role.description || '');
-      const permsArray = Array.isArray(role.permissions) ? role.permissions : [];
-      setSelectedPerms(new Set(permsArray));
-    } else {
-      setName('');
-      setSlug('');
-      setDescription('');
-      setSelectedPerms(new Set());
-    }
-    setSearchQuery('');
-  }, [role, isOpen]);
 
   const allAvailableKeys = useMemo(() => {
     return systemPermissions.flatMap((m) => m.permissions.map((p) => p.key));
@@ -137,6 +142,15 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
     }
   };
 
+  const handleColorChange = (newHex) => {
+    setColor(newHex.toUpperCase());
+  };
+
+  const handleHexInputChange = (val) => {
+    const sanitized = val.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+    setColor(`#${sanitized}`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -152,9 +166,11 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
     try {
       const url = isEditing ? `/api/admin/roles/${role.id}` : '/api/admin/roles';
       const method = isEditing ? 'PUT' : 'POST';
+      const finalColor = isValidHex(color) ? color.toUpperCase() : '#3B82F6';
       const payload = {
         name: name.trim(),
         description: description.trim(),
+        color: finalColor,
         permissions: Array.from(selectedPerms),
       };
       if (!isEditing) {
@@ -190,8 +206,8 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
         <div className={styles.modalHeader}>
           <div>
             <h2 className={styles.modalTitle}>{isEditing ? `Edit Role: ${role.name}` : 'Tambah Role Baru'}</h2>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-              Konfigurasi hak akses modul dan aksi CRUD granular ala Filament Admin
+            <div className={styles.modalSubtitle}>
+              Atur identitas dan hak akses operasional untuk posisi ini.
             </div>
           </div>
           <button type="button" className={styles.modalCloseBtn} onClick={onClose} aria-label="Tutup">
@@ -202,10 +218,10 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <form onSubmit={handleSubmit} className={styles.modalForm}>
           <div className={styles.modalBody}>
             {/* Field Informasi Role */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+            <div className={styles.fieldRow}>
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>Nama Role *</label>
                 <input
@@ -249,10 +265,77 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
               />
             </div>
 
-            {/* Filament Permission Toolbar */}
+            {/* Warna Label Role (Linear-Grade Color Control) */}
+            <div className={styles.colorFieldSection}>
+              <label className={styles.fieldLabel}>Warna Label</label>
+              <div className={styles.colorControlBar}>
+                {/* Swatch Button with hidden native color input */}
+                <label className={styles.colorSwatchBtn} title="Pilih warna kustom">
+                  <input
+                    type="color"
+                    className={styles.colorInputHidden}
+                    value={isValidHex(color) ? color : '#3B82F6'}
+                    onChange={(e) => handleColorChange(e.target.value)}
+                    aria-label="Pilih spektrum warna role"
+                  />
+                  <span
+                    className={styles.colorSwatchDisc}
+                    style={{ '--swatch-color': isValidHex(color) ? color : '#3B82F6' }}
+                  />
+                </label>
+
+                {/* Hex Input */}
+                <div className={styles.hexInputControl}>
+                  <span className={styles.hexPrefix}>#</span>
+                  <input
+                    type="text"
+                    className={styles.hexInputText}
+                    placeholder="3B82F6"
+                    value={color.startsWith('#') ? color.slice(1) : color}
+                    onChange={(e) => handleHexInputChange(e.target.value)}
+                    maxLength={6}
+                    spellCheck={false}
+                    aria-label="Kode Hex warna role"
+                  />
+                </div>
+
+                <div className={styles.colorBarDivider} />
+
+                {/* Preset Swatches Palette */}
+                <div className={styles.presetPaletteGroup} role="group" aria-label="Palet warna kurasi">
+                  {ROLE_COLOR_PRESETS.map((preset) => {
+                    const isSelected = color.toUpperCase() === preset.hex.toUpperCase();
+                    return (
+                      <button
+                        key={preset.hex}
+                        type="button"
+                        className={`${styles.presetSwatchItem} ${isSelected ? styles.presetSwatchItemActive : ''}`}
+                        style={{ '--preset-color': preset.hex }}
+                        onClick={() => handleColorChange(preset.hex)}
+                        title={preset.name}
+                        aria-label={preset.name}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Live Preview Badge */}
+                <div className={styles.previewBadgeContainer}>
+                  <span
+                    className={styles.rolePreviewBadge}
+                    style={{ '--role-color': isValidHex(color) ? color : '#3B82F6' }}
+                  >
+                    <span className={styles.rolePreviewDot} />
+                    {name.trim() || 'Label Role'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Permission Toolbar */}
             <div className={styles.permToolbar}>
               <div className={styles.permSearchBox}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)' }}>
+                <svg className={styles.searchIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
@@ -267,7 +350,7 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}
+                    className={styles.searchClearBtn}
                   >
                     Batal
                   </button>
@@ -278,7 +361,7 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
                 <span className={styles.permCounterBadge}>
                   {selectedPerms.size} / {allAvailableKeys.length} Izin Aktif
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className={styles.toolbarToggleWrap}>
                   <ToggleSwitch
                     checked={isAllGlobalSelected}
                     onChange={handleToggleGlobalAll}
@@ -290,10 +373,10 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
               </div>
             </div>
 
-            {/* Filament Module Matrix */}
+            {/* Module Matrix */}
             <div className={styles.matrixWrapper}>
               {filteredModules.length === 0 ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--glass)', borderRadius: '10px' }}>
+                <div className={styles.emptyMatrixBox}>
                   Tidak ada izin atau modul yang cocok dengan pencarian &quot;{searchQuery}&quot;.
                 </div>
               ) : (
@@ -308,7 +391,7 @@ export default function RoleModal({ isOpen, onClose, onSaved, role, systemPermis
                         <div className={styles.moduleTitleWrap}>
                           <div className={styles.moduleLabel}>
                             <span>{mod.moduleLabel}</span>
-                            <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                            <span className={styles.moduleActiveCount}>
                               ({activeModCount}/{modKeys.length} Aktif)
                             </span>
                           </div>

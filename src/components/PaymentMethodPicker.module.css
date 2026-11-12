@@ -1,7 +1,7 @@
 .pickerContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
   width: 100%;
 }
 
@@ -18,160 +18,8 @@
 }
 
 /* =========================================================
-   FEATURED / RECOMMENDED COVER CARD (Top Choice)
+   PAYMENT METHODS ACCORDION & CARDS
    ========================================================= */
-.recommendedWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sectionLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.recommendedCoverCard {
-  position: relative;
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-color);
-  border-radius: 14px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-.recommendedCoverCard:hover {
-  border-color: rgba(255, 107, 53, 0.45);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-}
-
-.recommendedCoverCardSelected {
-  border-color: var(--primary) !important;
-  background: color-mix(in oklab, var(--primary) 4%, var(--bg-card));
-  box-shadow: 0 0 0 1px var(--primary), 0 4px 16px var(--primary-glow) !important;
-}
-
-/* Top Cover Banner */
-.coverRibbon {
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  padding: 0.35rem 1rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.coverRibbonLeft {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.coverRibbonNote {
-  font-size: 0.7rem;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.coverBody {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.1rem 1.25rem;
-  gap: 1rem;
-}
-
-.coverLeft {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.coverTitleBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
-}
-
-.coverTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.coverSubtitle {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
-  line-height: 1.3;
-}
-
-/* Header kartu rekomendasi saat kategorinya multi opsi: <button> yang
-   meng-expand daftar channel, jadi butuh reset default tombol. */
-.coverHeaderButton {
-  width: 100%;
-  background: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  user-select: none;
-}
-
-.coverRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.15rem;
-  flex-shrink: 0;
-}
-
-/* Sisi kanan versi multi opsi: preview logo + biaya + chevron sejajar. */
-.coverRightRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-}
-
-.coverFee {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.coverFeeSub {
-  font-size: 0.72rem;
-  color: #10b981;
-  font-weight: 600;
-}
-
-/* =========================================================
-   OTHER PAYMENT METHODS ACCORDION & CARDS
-   ========================================================= */
-.otherMethodsGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
 .categoryCard {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -363,13 +211,8 @@
   line-height: 1.2;
 }
 
-.optionFee {
-  font-size: 0.74rem;
-  color: var(--text-muted);
-}
-
 /* =========================================================
-   SINGLE DIRECT CARD (For E-Wallet, Paylater)
+   SINGLE DIRECT CARD (For QRIS, E-Wallet, Paylater)
    ========================================================= */
 .singleCard {
   cursor: pointer;
@@ -421,27 +264,6 @@
    RESPONSIVENESS
    ========================================================= */
 @media (max-width: 768px) {
-  .coverBody {
-    padding: 0.95rem 1rem;
-    gap: 0.75rem;
-  }
-
-  .coverLeft {
-    gap: 0.75rem;
-  }
-
-  .coverTitle {
-    font-size: 0.92rem;
-  }
-
-  .coverSubtitle {
-    font-size: 0.74rem;
-  }
-
-  .coverRight {
-    display: none; /* Keep super clean on mobile header */
-  }
-
   .categoryHeader {
     padding: 0.85rem 1rem;
   }

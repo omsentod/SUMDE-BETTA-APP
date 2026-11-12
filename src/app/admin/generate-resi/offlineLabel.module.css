@@ -1,0 +1,338 @@
+/* Thermal shipping label (100mm x 150mm)
+ * High contrast black & white layout optimized for thermal printers & PDF output
+ */
+
+.label {
+  width: 100%;
+  max-width: 100mm;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 2px solid #000000;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.25;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+/* 1. Header Row */
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 2px solid #000000;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandLogoImg {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brandTextWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandTitle {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #000000;
+  line-height: 1;
+}
+
+.brandAccent {
+  color: var(--primary, #FF6B35);
+}
+
+.brandSubtitle {
+  font-size: 8px;
+  font-weight: 700;
+  color: #333333;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.labelTagline {
+  font-size: 7.5px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  border-top: 1px solid #000000;
+  padding-top: 2px;
+  width: fit-content;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* Courier Logo Polos: Tanpa Border, Tanpa Shadow, Tanpa Background Color */
+.courierBox {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+  margin: 0;
+}
+
+.courierBareImg {
+  max-height: 36px;
+  max-width: 72px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.courierBareText {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #000000;
+  text-transform: uppercase;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* 2. Barcode Utama: Reference ID */
+.barcodeRow {
+  padding: 8px 6px 6px;
+  text-align: center;
+  border-bottom: 1.5px solid #000000;
+  background: #ffffff;
+}
+
+.barcodeWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.barcodeImg {
+  height: 52px;
+  width: 250px;
+  max-width: 92%;
+  display: block;
+}
+
+.referenceIdText {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 3. Info Bar */
+.infoBar {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 6px;
+  font-size: 8px;
+  font-weight: 700;
+  border-bottom: 1.5px solid #000000;
+  background: #fafafa;
+}
+
+/* 4. Address Grid */
+.addressGrid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  border-bottom: 2px solid #000000;
+  min-height: 125px;
+}
+
+.addressLeft {
+  padding: 8px 10px;
+  border-right: 1.5px solid #000000;
+  display: flex;
+  flex-direction: column;
+}
+
+.addressRight {
+  padding: 8px 10px;
+  background: #fdfdfd;
+  display: flex;
+  flex-direction: column;
+}
+
+.addressBadge,
+.senderBadge {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+  display: inline-block;
+  padding: 1px 4px;
+  border: 1px solid #000000;
+  width: fit-content;
+}
+
+.recipientName {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #000000;
+  line-height: 1.25;
+  margin-bottom: 2px;
+}
+
+.recipientPhone {
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 5px;
+}
+
+.recipientAddress {
+  font-size: 10px;
+  line-height: 1.38;
+  color: #000000;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.senderName {
+  font-size: 11px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.senderPhone {
+  font-size: 9.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.senderAddress {
+  font-size: 9px;
+  line-height: 1.32;
+  color: #222222;
+}
+
+/* 5. Catatan Penanganan Khusus & Ketentuan Garansi D.O.A */
+.handlingSection {
+  border-bottom: 1.5px solid #000000;
+  padding: 5px 8px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.handleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  line-height: 1.25;
+}
+
+.handleBadge {
+  font-size: 7.5px;
+  font-weight: 900;
+  background: #000000;
+  color: #ffffff;
+  padding: 1.5px 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+
+.handleText {
+  font-size: 8px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.doaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  line-height: 1.25;
+  padding-top: 3px;
+  border-top: 1px dashed #bbbbbb;
+}
+
+.doaBadge {
+  font-size: 7.5px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.3px;
+}
+
+.doaText {
+  font-size: 7.5px;
+  font-weight: 600;
+  color: #333333;
+}
+
+/* 6. Footer Thermal */
+.footerBox {
+  padding: 5px 8px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.footerMain {
+  font-size: 8px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.3px;
+}
+
+.footerSub {
+  font-size: 7px;
+  color: #444444;
+  margin-top: 1.5px;
+}
+
+/* Print Rules */
+@media print {
+  .label {
+    width: 96mm !important;
+    max-width: 96mm !important;
+    max-height: 146mm !important;
+    border: 2px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 auto !important;
+    page-break-after: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-sizing: border-box !important;
+  }
+}

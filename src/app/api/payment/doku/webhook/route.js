@@ -31,6 +31,7 @@ function signaturesMatch(received, expected) {
 // order creation, so abandoned PENDING orders no longer consume stock.
 async function decrementStockForOrder(tx, order) {
   for (const item of order.items) {
+    if (!item.productId) continue; // Custom TikTok Live item tidak memotong stok katalog web
     if (item.variantId) {
       await tx.productVariant.update({
         where: { id: item.variantId },
@@ -191,7 +192,7 @@ export async function POST(request) {
       // Notif: customer (bell + email) + admin (bell). Best-effort — jangan
       // gagalkan webhook kalau notif error, order sudah paid di DB.
       try {
-        const firstItemImage = order.items?.[0]?.product?.image || order.items?.[0]?.variant?.imageUrl || null;
+        const firstItemImage = order.items?.[0]?.product?.image || order.items?.[0]?.variant?.imageUrl || order.items?.[0]?.customImage || null;
         if (order.userId) {
           await createNotification({
             userId: order.userId,
@@ -206,7 +207,7 @@ export async function POST(request) {
           type: 'order.paid',
           title: 'Order dibayar',
           body: `Order #${order.id.slice(0, 8)} lunas — perlu dikirim.`,
-          link: '/admin/orders?status=PAID',
+          link: `/admin/orders?status=PAID&highlightOrder=${order.id}`,
           imageUrl: firstItemImage,
         });
         if (order.email) {
@@ -214,11 +215,30 @@ export async function POST(request) {
           const trackingLink = `${appUrl}/lacak-pesanan?orderId=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email)}`;
           await sendMail({
             to: order.email,
-            subject: `Pembayaran Diterima — Order #${order.id.slice(0, 8)}`,
+            subject: `Faktur Pembayaran — Order #${order.id.slice(0, 8).toUpperCase()}`,
             html: orderPaidEmailTemplate({
               name: order.name,
               orderId: order.id,
+              createdAt: order.createdAt,
+              paymentMethod: order.paymentMethod,
+              items: order.items,
+              subtotal: order.subtotal,
+              shippingFee: order.shippingFee,
+              paymentFee: order.paymentFee,
               total: order.total,
+              shippingCourier: order.shippingCourier,
+              shippingService: order.shippingService,
+              recipient: {
+                name: order.name,
+                phone: order.phone,
+                streetAddress: order.streetAddress,
+                rtRw: order.rtRw,
+                village: order.village,
+                district: order.district,
+                city: order.city,
+                province: order.province,
+                postalCode: order.postalCode,
+              },
               orderUrl: trackingLink,
             }),
           });

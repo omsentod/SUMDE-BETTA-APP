@@ -6,14 +6,15 @@ import SearchableSelect from '@/components/SearchableSelect';
 import { useToast } from '@/context/ToastContext';
 import styles from './addresses.module.css';
 
-const LABELS = ['Rumah', 'Kantor', 'Kos', 'Lainnya'];
+const PRESET_LABELS = ['Rumah', 'Kantor', 'Kos', 'Lainnya'];
 
-const LABEL_COLORS = {
-    Rumah:   { color: 'var(--status-success)', bg: 'var(--status-success-bg)' },
-    Kantor:  { color: 'var(--status-info)',    bg: 'var(--status-info-bg)' },
-    Kos:     { color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)' },
-    Lainnya: { color: 'var(--text-muted)',     bg: 'var(--glass)' },
-};
+function getBadgeVariantClass(label) {
+    if (label === 'Rumah') return styles.labelBadgeSuccess;
+    if (label === 'Kantor') return styles.labelBadgeInfo;
+    if (label === 'Kos') return styles.labelBadgeNeutral;
+    if (label === 'Lainnya') return '';
+    return styles.labelBadgeCustom;
+}
 
 const emptyForm = { label: 'Rumah', recipientName: '', phone: '', streetAddress: '', rtRw: '', province: '', city: '', district: '', village: '', postalCode: '', isDefault: false };
 
@@ -41,6 +42,9 @@ export default function AddressesPage() {
     const [districtId, setDistrictId] = useState('');
     const [autofillTarget, setAutofillTarget] = useState(null);
     const [selectAlert, setSelectAlert] = useState({ field: '', message: '' });
+    const [customLabels, setCustomLabels] = useState([]);
+    const [showCustomLabelInput, setShowCustomLabelInput] = useState(false);
+    const [customLabelDraft, setCustomLabelDraft] = useState('');
 
     useEffect(() => {
         if (!authLoading && !currentUser) router.push('/login');
@@ -108,6 +112,8 @@ export default function AddressesPage() {
         setProvId(''); setCityId(''); setDistrictId('');
         setCities([]); setDistricts([]); setVillages([]);
         setAutofillTarget(null);
+        setShowCustomLabelInput(false);
+        setCustomLabelDraft('');
         setEditingId(null); setError(''); setShowForm(true);
     };
 
@@ -116,7 +122,27 @@ export default function AddressesPage() {
         setProvId(''); setCityId(''); setDistrictId('');
         setCities([]); setDistricts([]); setVillages([]);
         setAutofillTarget({ province: addr.province, city: addr.city, district: addr.district });
+        setShowCustomLabelInput(false);
+        setCustomLabelDraft('');
         setEditingId(addr.id); setError(''); setShowForm(true);
+    };
+
+    const availableLabels = Array.from(
+        new Set([
+            ...PRESET_LABELS,
+            ...addresses.map((a) => (a.label || '').trim()).filter(Boolean),
+            ...customLabels,
+            ...(form.label ? [form.label.trim()] : []),
+        ])
+    );
+
+    const handleApplyCustomLabel = () => {
+        const cleaned = customLabelDraft.trim().slice(0, 30);
+        if (!cleaned) return;
+        setCustomLabels((prev) => (prev.includes(cleaned) ? prev : [...prev, cleaned]));
+        setForm((p) => ({ ...p, label: cleaned }));
+        setCustomLabelDraft('');
+        setShowCustomLabelInput(false);
     };
 
     const handleProvince = (id, name) => {
@@ -146,18 +172,23 @@ export default function AddressesPage() {
             setError('Kode pos harus terdiri dari 5 digit angka.');
             return;
         }
+        const resolvedLabel = (showCustomLabelInput && customLabelDraft.trim() ? customLabelDraft.trim() : form.label).trim().slice(0, 30) || 'Rumah';
+        const payload = { ...form, label: resolvedLabel };
+
         setSaving(true); setError('');
         try {
             if (editingId) {
-                const updated = await updateAddress(editingId, form);
-                setAddresses(prev => prev.map(a => a.id === editingId ? updated : (form.isDefault ? { ...a, isDefault: false } : a)));
+                const updated = await updateAddress(editingId, payload);
+                setAddresses(prev => prev.map(a => a.id === editingId ? updated : (payload.isDefault ? { ...a, isDefault: false } : a)));
             } else {
-                const created = await createAddress(form);
+                const created = await createAddress(payload);
                 setAddresses(prev => {
-                    const list = form.isDefault ? prev.map(a => ({ ...a, isDefault: false })) : prev;
+                    const list = payload.isDefault ? prev.map(a => ({ ...a, isDefault: false })) : prev;
                     return [...list, created];
                 });
             }
+            setShowCustomLabelInput(false);
+            setCustomLabelDraft('');
             setShowForm(false);
         } catch (err) {
             setError(err.message);
@@ -203,20 +234,20 @@ export default function AddressesPage() {
     };
 
     if (authLoading || !currentUser) {
-        return <div className="pageContainer pt-[120px] text-center"><h2 className="text-[var(--text-muted)]">Memverifikasi akun...</h2></div>;
+        return <div className={`skeleton-box ${styles.skeletonPanel}`} aria-busy="true" aria-label="Memuat alamat" />;
     }
 
     return (
-        <div className={`pageContainer ${styles.pagePadding}`}>
-            <div className={`container ${styles.containerWrapper}`}>
+        <div className={styles.pagePadding}>
+            <div className={styles.containerWrapper}>
 
                 {/* Header */}
                 <div className={styles.headerRow}>
                     <div>
-                        <span className="text-[var(--primary)] tracking-[0.2rem] text-[0.75rem] font-bold uppercase">Customer Area</span>
-                        <h1 className="text-[2.25rem] font-extrabold tracking-tight mt-[0.4rem] text-[var(--text-main)]">Alamat Saya</h1>
+                        <h1 className={styles.pageTitle}>Alamat Saya</h1>
+                        <p className={styles.pageSubtitle}>Kelola alamat pengiriman untuk checkout lebih cepat.</p>
                     </div>
-                    {!showForm && (
+                    {!loading && !showForm && addresses.length > 0 && (
                         <button onClick={openAddForm} className={`btn btn-primary ${styles.addBtn}`}>
                             + Tambah Alamat
                         </button>
@@ -237,24 +268,78 @@ export default function AddressesPage() {
                             <div className={styles.labelSection}>
                                 <label className={styles.label}>Label Alamat</label>
                                 <div className={styles.labelGroup}>
-                                    {LABELS.map(l => {
-                                        const cfg = LABEL_COLORS[l];
+                                    {availableLabels.map((l) => {
                                         const active = form.label === l;
                                         return (
                                             <button
                                                 key={l}
                                                 type="button"
-                                                onClick={() => setForm(p => ({ ...p, label: l }))}
-                                                className={styles.labelBtn}
-                                                style={{
-                                                    borderColor: active ? cfg.color : undefined,
-                                                    background: active ? cfg.bg : undefined,
-                                                    color: active ? cfg.color : undefined,
+                                                onClick={() => {
+                                                    setForm((p) => ({ ...p, label: l }));
+                                                    setShowCustomLabelInput(false);
                                                 }}
-                                            >{l}</button>
+                                                className={`${styles.labelBtn} ${active ? styles.labelBtnActive : ''}`.trim()}
+                                            >
+                                                {l}
+                                            </button>
                                         );
                                     })}
+                                    {!showCustomLabelInput && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCustomLabelInput(true)}
+                                            className={`${styles.labelBtn} ${styles.labelBtnAdd}`}
+                                        >
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <line x1="12" y1="5" x2="12" y2="19" />
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                            </svg>
+                                            Label Baru
+                                        </button>
+                                    )}
                                 </div>
+
+                                {showCustomLabelInput && (
+                                    <div className={styles.customLabelRow}>
+                                        <input
+                                            type="text"
+                                            maxLength={30}
+                                            className={styles.customLabelInput}
+                                            value={customLabelDraft}
+                                            onChange={(e) => setCustomLabelDraft(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleApplyCustomLabel();
+                                                } else if (e.key === 'Escape') {
+                                                    setShowCustomLabelInput(false);
+                                                    setCustomLabelDraft('');
+                                                }
+                                            }}
+                                            placeholder="Mis. Gudang, Toko, Rumah Orang Tua"
+                                            aria-label="Nama label alamat baru"
+                                            autoFocus
+                                        />
+                                        <button
+                                            type="button"
+                                            className={styles.customLabelApplyBtn}
+                                            onClick={handleApplyCustomLabel}
+                                            disabled={!customLabelDraft.trim()}
+                                        >
+                                            Pakai
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={styles.customLabelCancelBtn}
+                                            onClick={() => {
+                                                setShowCustomLabelInput(false);
+                                                setCustomLabelDraft('');
+                                            }}
+                                        >
+                                            Batal
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid-form-2col">
@@ -361,29 +446,42 @@ export default function AddressesPage() {
 
                 {/* Address List */}
                 {loading ? (
-                    <p className="text-[var(--text-muted)]">Memuat alamat...</p>
+                    <div className={styles.skeletonList} aria-busy="true" aria-label="Memuat daftar alamat">
+                        <div className={`skeleton-box ${styles.skeletonAddressCard}`} />
+                        <div className={`skeleton-box ${styles.skeletonAddressCard}`} />
+                    </div>
                 ) : addresses.length === 0 && !showForm ? (
                     <div className={styles.emptyStateCard}>
-                        <span className={styles.emptyIcon}>📍</span>
+                        <span className={styles.emptyIcon} aria-hidden="true">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                        </span>
                         <h4 className={styles.emptyTitle}>Belum ada alamat tersimpan</h4>
-                        <p className={styles.emptySubtitle}>Tambahkan alamat pengiriman untuk memudahkan transaksi.</p>
-                        <button onClick={openAddForm} className={`btn btn-primary ${styles.addBtn}`}>+ Tambah Alamat</button>
+                        <p className={styles.emptySubtitle}>Tambahkan alamat pengiriman agar proses checkout lebih cepat.</p>
+                        <button onClick={openAddForm} className={`btn btn-primary ${styles.addBtn} ${styles.emptyAction}`}>
+                            + Tambah Alamat
+                        </button>
                     </div>
                 ) : (
                     <div className={styles.addressListGrid}>
                         {addresses.map(addr => {
-                            const cfg = LABEL_COLORS[addr.label] || LABEL_COLORS.Lainnya;
+                            const badgeVariant = getBadgeVariantClass(addr.label);
                             return (
                                 <div key={addr.id} className={`${styles.addressCard} ${addr.isDefault ? styles.addressCardDefault : ''}`}>
                                     {/* Badges */}
                                     <div className={styles.addressCardHeader}>
                                         <div className={styles.addressBadges}>
-                                            <span className={styles.labelBadge} style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}` }}>
+                                            <span className={`${styles.labelBadge} ${badgeVariant}`.trim()}>
                                                 {addr.label}
                                             </span>
                                             {addr.isDefault && (
                                                 <span className={styles.defaultBadge}>
-                                                    ★ Utama
+                                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                    </svg>
+                                                    Utama
                                                 </span>
                                             )}
                                         </div>
@@ -409,7 +507,7 @@ export default function AddressesPage() {
                                     </div>
 
                                     {/* Info */}
-                                    <p className="font-bold color-[var(--text-main)] mb-1 text-base">{addr.recipientName}</p>
+                                    <p className="font-bold text-[var(--text-main)] mb-1 text-base">{addr.recipientName}</p>
                                     <p className="text-[var(--text-muted)] text-sm mb-1">{addr.phone}</p>
                                     <p className="text-[var(--text-muted)] text-sm leading-relaxed">
                                         {addr.streetAddress}, {addr.rtRw}, Kel. {addr.village}, Kec. {addr.district},<br />

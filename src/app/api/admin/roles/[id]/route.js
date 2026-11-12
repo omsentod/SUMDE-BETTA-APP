@@ -9,6 +9,8 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+const HEX_COLOR_REGEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
 /**
  * PUT /api/admin/roles/[id]
  * Memperbarui nama, deskripsi, dan permissions dari role custom.
@@ -54,6 +56,23 @@ export async function PUT(request, { params }) {
         );
       }
       dataToUpdate.description = description || null;
+    }
+
+    if (body.color !== undefined) {
+      const colorStr = typeof body.color === 'string' ? body.color.trim() : '';
+      if (!HEX_COLOR_REGEX.test(colorStr)) {
+        return NextResponse.json(
+          { error: 'Format warna tidak valid. Gunakan format kode HEX (contoh: #FF6B35 atau #3B82F6).' },
+          { status: 400 }
+        );
+      }
+      let normalizedColor = colorStr;
+      if (normalizedColor.length === 4) {
+        normalizedColor = `#${normalizedColor[1]}${normalizedColor[1]}${normalizedColor[2]}${normalizedColor[2]}${normalizedColor[3]}${normalizedColor[3]}`.toUpperCase();
+      } else {
+        normalizedColor = normalizedColor.toUpperCase();
+      }
+      dataToUpdate.color = normalizedColor;
     }
 
     if (body.permissions !== undefined) {

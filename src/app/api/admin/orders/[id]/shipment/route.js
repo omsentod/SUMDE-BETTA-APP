@@ -18,9 +18,9 @@ export async function POST(request, { params }) {
     }
 
     // Only bookable once payment succeeded and stock has been reserved.
-    // PAID = uang masuk, belum panggil kurir. Prevents burning Biteship quota
-    // on PENDING (unpaid) or CANCELLED orders.
-    if (order.status !== 'PAID') {
+    // PAID / PROCESSING (tanpa shipmentId) = uang masuk, belum panggil kurir.
+    // Prevents burning Biteship quota on PENDING (unpaid) or CANCELLED orders.
+    if (order.status !== 'PAID' && !(order.status === 'PROCESSING' && !order.biteshipShipmentId)) {
       return NextResponse.json(
         { error: `Pesanan tidak bisa dibuat pickup (status saat ini: ${order.status}).` },
         { status: 409 }

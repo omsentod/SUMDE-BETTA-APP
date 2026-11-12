@@ -1,17 +1,34 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
-import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 import AdminHeader from '@/components/AdminHeader';
 import AdminSidebar from '@/components/AdminSidebar';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import { ChatProvider } from '@/context/ChatContext';
+import CustomerChatWidget from '@/components/chat/CustomerChatWidget';
 import styles from './LayoutWrapper.module.css';
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname() || '';
+  const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    if (adminSidebarOpen) setAdminSidebarOpen(false);
+  }
+
+  const toggleAdminSidebar = useCallback(() => {
+    setAdminSidebarOpen((prev) => !prev);
+  }, []);
+
+  const closeAdminSidebar = useCallback(() => {
+    setAdminSidebarOpen(false);
+  }, []);
 
   const isAdminRoute = pathname.startsWith('/admin');
   const isLabelRoute =
@@ -29,24 +46,26 @@ export default function LayoutWrapper({ children }) {
 
   if (isAdminRoute) {
     return (
-      <div className={styles.adminShell}>
-        <AdminHeader />
-        <div className={styles.adminBody}>
-          <AdminSidebar />
-          <main className={styles.adminMain}>{children}</main>
+      <ChatProvider>
+        <div className={styles.adminShell}>
+          <AdminHeader onToggleSidebar={toggleAdminSidebar} isSidebarOpen={adminSidebarOpen} />
+          <div className={styles.adminBody}>
+            <AdminSidebar open={adminSidebarOpen} onClose={closeAdminSidebar} />
+            <main className={styles.adminMain}>{children}</main>
+          </div>
         </div>
-      </div>
+      </ChatProvider>
     );
   }
 
   return (
-    <>
+    <ChatProvider>
       <Header />
       <CartSidebar />
       <main className="has-mobile-bottom-nav">{children}</main>
       <Footer />
-      <WhatsAppFloatingButton />
+      <CustomerChatWidget />
       <MobileBottomNav />
-    </>
+    </ChatProvider>
   );
 }

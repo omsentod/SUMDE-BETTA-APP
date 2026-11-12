@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 // import { useTheme } from '@/context/ThemeContext'; // theme toggle dinonaktifkan sementara
 import NotificationBell from '@/components/NotificationBell';
+import UserAvatar from '@/components/UserAvatar';
 import { useAuth } from '@/context/AuthContext';
 
 // ── ThemeIcon dinonaktifkan sementara bersama toggle theme (mode terang dikunci) ──
@@ -53,10 +54,6 @@ export default function Header() {
         document.addEventListener('mousedown', handleOutside);
         return () => document.removeEventListener('mousedown', handleOutside);
     }, []);
-
-    const initials = currentUser
-        ? currentUser.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-        : '';
 
     const isAdmin = currentUser?.role === 'admin' || currentUser?.canAccessAdmin || (Array.isArray(currentUser?.permissions) && currentUser.permissions.length > 0);
 
@@ -119,7 +116,7 @@ export default function Header() {
                                     aria-label="Menu profil"
                                     title={currentUser.name}
                                 >
-                                    {initials}
+                                    <UserAvatar user={currentUser} size="fill" />
                                 </button>
 
                                 <div className={`profile-dropdown${profileOpen ? ' open' : ''}`}>

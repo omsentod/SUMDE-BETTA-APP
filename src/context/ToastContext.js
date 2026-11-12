@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ToastContainer from '@/components/ToastContainer';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -29,16 +29,15 @@ export function ToastProvider({ children }) {
         return id;
     }, [removeToast]);
 
-    const toast = {
+    const toast = useMemo(() => ({
         success: (message, title = null) => addToast({ message, type: 'success', title }),
         error: (message, title = null) => addToast({ message, type: 'error', title }),
         warning: (message, title = null) => addToast({ message, type: 'warning', title }),
         info: (message, title = null) => addToast({ message, type: 'info', title }),
         dismiss: removeToast,
-    };
+    }), [addToast, removeToast]);
 
     const toastRef = useRef(toast);
-    toastRef.current = toast;
 
     const confirmDialog = useCallback(({
         title = 'Konfirmasi',
@@ -60,7 +59,11 @@ export function ToastProvider({ children }) {
     }, []);
 
     const confirmDialogRef = useRef(confirmDialog);
-    confirmDialogRef.current = confirmDialog;
+
+    useEffect(() => {
+        toastRef.current = toast;
+        confirmDialogRef.current = confirmDialog;
+    }, [toast, confirmDialog]);
 
     const handleConfirmClose = (result) => {
         if (confirmState?.resolve) {
@@ -97,7 +100,7 @@ export function ToastProvider({ children }) {
     }, []);
 
     return (
-        <ToastContext.Provider value={{ toast, confirmDialog }}>
+        <ToastContext.Provider value={{ toast, confirmDialog, addToast }}>
             {children}
             <ToastContainer toasts={toasts} onRemove={removeToast} />
             {confirmState && (

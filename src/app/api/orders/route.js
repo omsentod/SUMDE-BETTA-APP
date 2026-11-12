@@ -169,6 +169,7 @@ export async function POST(request) {
           name, email, phone, streetAddress, rtRw,
           province, city, district, village, postalCode: cleanedPostal,
           telegramUsername: telegramUsername ? String(telegramUsername).trim() : null,
+          orderSource: telegramUsername ? 'TELEGRAM' : 'WEB',
           ...(userId ? { user: { connect: { id: userId } } } : {}),
         },
       });
@@ -194,8 +195,8 @@ export async function POST(request) {
       await notifyAllAdmins({
         type: 'order.new',
         title: 'Pesanan baru masuk',
-        body: `${name} — ${normalized.length} item — menunggu pembayaran`,
-        link: '/admin/orders?status=PENDING',
+        body: `Pesanan #${order.id.slice(0, 8)} (${name}) — ${normalized.length} item — menunggu pembayaran`,
+        link: `/admin/orders?status=PENDING&highlightOrder=${order.id}`,
         imageUrl: firstProductImage,
       });
       if (userId) {

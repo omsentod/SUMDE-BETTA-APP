@@ -24,6 +24,29 @@
   text-align: center;
   padding: 3rem 1rem;
   font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.emptyResetBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.16s ease, color 0.16s ease, background-color 0.16s ease;
+}
+
+.emptyResetBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-active);
 }
 
 /* Sticky bulk action bar */
@@ -51,7 +74,7 @@
 
 .bulkBtn {
   background: var(--primary);
-  color: #1a1a1a;
+  color: #ffffff;
   border: none;
   padding: 0.45rem 0.9rem;
   border-radius: 6px;
@@ -132,6 +155,27 @@
 
 .table tbody tr.rowExpanded {
   background: color-mix(in oklab, var(--primary) 5%, transparent);
+}
+
+.table tbody tr.rowHighlight {
+  background: color-mix(in oklab, var(--primary) 22%, var(--bg-card)) !important;
+  box-shadow: inset 3px 0 0 var(--primary), inset 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent);
+  animation: rowHighlightPulse 4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes rowHighlightPulse {
+  0% {
+    background: color-mix(in oklab, var(--primary) 35%, var(--bg-card));
+    box-shadow: inset 4px 0 0 var(--primary), inset 0 0 0 2px var(--primary);
+  }
+  60% {
+    background: color-mix(in oklab, var(--primary) 18%, var(--bg-card));
+    box-shadow: inset 3px 0 0 var(--primary), inset 0 0 0 1px var(--primary);
+  }
+  100% {
+    background: color-mix(in oklab, var(--primary) 5%, transparent);
+    box-shadow: none;
+  }
 }
 
 .table tbody td {
@@ -221,7 +265,7 @@
 
 .actionBtnPrimary {
   background: var(--primary);
-  color: #1a1a1a;
+  color: #ffffff;
   border-color: var(--primary);
   font-weight: 700;
 }
@@ -296,57 +340,260 @@
 /* Filter controls */
 .controlBar {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
 
 .searchInput {
-  flex: 1;
+  flex: 1 1 240px;
   min-width: 200px;
-  padding: 0.55rem 0.85rem;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-main);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.searchInput:hover {
+  border-color: color-mix(in oklab, var(--text-muted) 45%, var(--border-color));
 }
 
 .searchInput:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-.selectInput {
-  padding: 0.55rem 0.85rem;
-  border-radius: 8px;
+/* Custom OrderSelect dropdown */
+.selectRoot {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 175px;
+}
+
+.selectRootFull {
+  width: 100%;
+  min-width: 0;
+}
+
+.selectTrigger {
+  width: 100%;
+  height: 40px;
+  padding: 0 0.8rem 0 0.9rem;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-main);
-  font-size: 0.9rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
   cursor: pointer;
+  text-align: left;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
 }
+
+.selectTrigger:hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--text-muted) 45%, var(--border-color));
+  background: var(--bg-surface-elevated);
+}
+
+.selectTriggerOpen {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.selectTriggerActive:not(.selectTriggerOpen) {
+  border-color: color-mix(in oklab, var(--primary) 50%, var(--border-color));
+}
+
+.selectTrigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.selectTriggerPlaceholder .selectTriggerText {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.selectTriggerContent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.selectLeadingIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.selectTriggerText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectChevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.selectChevronOpen {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.selectMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 2rem));
+  background: var(--dropdown-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  z-index: 420;
+  padding: 5px;
+  animation: selectReveal 0.14s ease-out;
+}
+
+.selectMenuFull {
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+:global([data-theme="dark"]) .selectMenu {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes selectReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selectList {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selectOption {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.selectOptionHighlighted,
+.selectOption:hover {
+  background: var(--bg-hover);
+}
+
+.selectOptionSelected {
+  background: var(--bg-active);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.selectOptionSelected:hover,
+.selectOptionSelected.selectOptionHighlighted {
+  background: var(--bg-active);
+}
+
+.selectOptionLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.selectOptionLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectCheck {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.selectDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.dotPending    { background: var(--status-warning); }
+.dotPaid       { background: var(--secondary); }
+.dotProcessing { background: var(--status-info); }
+.dotShipped    { background: var(--status-neutral); }
+.dotCompleted  { background: var(--status-success); }
+.dotCancelled  { background: var(--text-muted); }
+.dotReturned   { background: var(--status-error); }
+.dotTiktok     { background: #ec4899; }
+.dotTelegram   { background: #0ea5e9; }
+.dotWeb        { background: var(--primary); }
 
 .refreshBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.55rem 0.85rem;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-main);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.16s ease, color 0.16s ease, background-color 0.16s ease;
 }
 
 .refreshBtn:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 107, 53, 0.06);
+  background: var(--bg-active);
 }
 
 .refreshBtnDisabled {
@@ -354,11 +601,22 @@
   cursor: not-allowed;
 }
 
+.selectActiveBtn {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 10%, var(--bg-card));
+}
+
+.selectActiveBtn:hover {
+  background: color-mix(in oklab, var(--primary) 16%, var(--bg-card));
+}
+
 /* Modal for bulk status */
 .modalBackdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   z-index: 300;
   display: flex;
   align-items: center;
@@ -367,25 +625,44 @@
 }
 
 .modal {
-  background: var(--bg-card);
+  background: var(--modal-bg, var(--bg-card));
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
-  max-width: 420px;
+  max-width: 400px;
   width: 100%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+:global([data-theme="dark"]) .modal {
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
 }
 
 .modalTitle {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
   color: var(--text-main);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .modalDesc {
   color: var(--text-muted);
   font-size: 0.85rem;
+  line-height: 1.5;
   margin-bottom: 1rem;
+}
+
+.modalField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.modalFieldLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 .hideOnMobile {}
@@ -404,13 +681,51 @@
   }
 
   .controlBar {
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
 
-  .searchInput,
-  .selectInput {
+  .searchInput {
+    flex: 1 1 100%;
+    height: 38px;
     font-size: 0.85rem;
-    padding: 0.5rem 0.75rem;
+  }
+
+  .selectRoot {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 135px;
+  }
+
+  .selectRootFull {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .selectTrigger {
+    height: 38px;
+    font-size: 0.82rem;
+    padding: 0 0.7rem 0 0.75rem;
+  }
+
+  .selectMenu {
+    width: max-content;
+    min-width: 100%;
+    max-width: calc(100vw - 1.5rem);
+  }
+
+  .selectMenuFull {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .selectMenuAlignRight {
+    left: auto;
+    right: 0;
+  }
+
+  .refreshBtn {
+    height: 38px;
+    font-size: 0.82rem;
+    padding: 0 0.8rem;
   }
 
   .table {
@@ -665,7 +980,7 @@
 
 .trackingRetryBtn {
   background: var(--primary);
-  color: #1a1a1a;
+  color: #ffffff;
   border: none;
   padding: 0.4rem 0.9rem;
   border-radius: 6px;
@@ -731,3 +1046,27 @@
     transform: rotate(360deg);
   }
 }
+
+.sourceBadgeTiktok,
+.sourceBadgeTelegram {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sourceBadgeTiktok {
+  background: color-mix(in oklab, #ec4899 14%, transparent);
+  color: #db2777;
+  border: 1px solid color-mix(in oklab, #ec4899 30%, transparent);
+}
+
+.sourceBadgeTelegram {
+  background: color-mix(in oklab, #0ea5e9 14%, transparent);
+  color: #0284c7;
+  border: 1px solid color-mix(in oklab, #0ea5e9 30%, transparent);
+}
+

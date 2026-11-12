@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-// Edge-runtime guard for /admin/*. Runs BEFORE the page mounts, so a non-admin
-// never sees a flash of the dashboard shell (which the client-side check in
-// admin/dashboard/page.js does allow). All admin APIs are already covered by
-// requireAdmin — this is defense in depth for the UI surface.
+// Edge-runtime guard for /admin/* and /customer/*. Runs BEFORE the page mounts, so an
+// unauthenticated user never sees a flash of protected page shells or skeletons.
+// All APIs are already covered by requireAdmin / requireUser — this is defense in depth
+// for the UI surface.
 
 const SESSION_COOKIE = 'sumde-session';
 
@@ -27,23 +27,45 @@ async function readSession(request) {
 
 export async function middleware(request) {
   const session = await readSession(request);
-  if (!session) {
-    const base = process.env.APP_URL || request.url;
-    const loginUrl = new URL('/login', base);
-    // Preserve where they tried to go so the login page can bounce them back.
-    loginUrl.searchParams.set('next', request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+  const base = process.env.APP_URL || request.url;
+  const { pathname } = request.nextUrl;
+
+  // 1. Guard /admin/*: Wajib login & role admin
+  if (pathname.startsWith('/admin')) {
+    if (!session) {
+      const loginUrl = new URL('/login', base);
+      loginUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Pelanggan reguler (customer) dilarang mengakses panel /admin/*
+    if (session.role === 'customer') {
+      return NextResponse.redirect(new URL('/customer/dashboard', base));
+    }
   }
 
-  // Pelanggan reguler (customer) dilarang mengakses panel /admin/*
-  if (session.role === 'customer') {
-    const base = process.env.APP_URL || request.url;
-    return NextResponse.redirect(new URL('/customer/dashboard', base));
+  // 2. Guard /customer/*: Wajib login
+  if (pathname.startsWith('/customer')) {
+    if (!session) {
+      const loginUrl = new URL('/login', base);
+      loginUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // 3. Reverse Guard /login & /register: Jika sudah login, langsung lempar ke dashboard
+  if (pathname === '/login' || pathname === '/register') {
+    if (session) {
+      const nextParam = request.nextUrl.searchParams.get('next');
+      const safeNext = nextParam && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextParam) ? nextParam : null;
+      const defaultDest = session.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard';
+      return NextResponse.redirect(new URL(safeNext || defaultDest, base));
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/customer/:path*', '/login', '/register'],
 };

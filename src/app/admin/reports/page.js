@@ -147,8 +147,8 @@ export default function AdminReportsPage() {
 
   if (authLoading || !currentUser || !canView) {
     return (
-      <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
-        <h2>Memverifikasi Otoritas Laporan...</h2>
+      <div className={styles.loading}>
+        Memuat laporan penjualan...
       </div>
     );
   }

@@ -13,3 +13,29 @@
   flex: 1;
   min-width: 0; /* mencegah overflow content lebar */
 }
+
+@media print {
+  .adminShell {
+    background: #ffffff !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .adminBody {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .adminMain {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

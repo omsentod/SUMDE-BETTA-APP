@@ -1,0 +1,829 @@
+/* Cetak Resi Offline — Screen Styles & Print Rules (100mm x 150mm) */
+
+.page {
+  padding: 1.75rem 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.3rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.primaryPrintBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 40px;
+  padding: 0 1.15rem;
+  border-radius: 9px;
+  border: none;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+
+.primaryPrintBtn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.primaryPrintBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 42px;
+  padding: 0 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-active);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dangerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 42px;
+  padding: 0 0.9rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in oklab, var(--status-error) 30%, var(--border-color));
+  background: var(--bg-card);
+  color: var(--status-error);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dangerBtn:hover:not(:disabled) {
+  background: var(--status-error-bg);
+  border-color: var(--status-error);
+}
+
+/* 2-Column Desktop Grid */
+.mainLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* Left Column: Form & Table */
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* Form Card */
+.formCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.4rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
+
+.cardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.formFieldFull {
+  grid-column: span 2;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.requiredStar {
+  color: var(--status-error);
+}
+
+.fieldInput,
+.fieldTextarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.fieldInput:focus,
+.fieldTextarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.fieldTextarea {
+  min-height: 84px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.fieldHint {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+.inputWithBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.autoGenBtn {
+  height: 38px;
+  padding: 0 0.85rem;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.autoGenBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-active);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.addQueueBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 38px;
+  padding: 0 1.15rem;
+  border-radius: 9px;
+  border: none;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.15s ease;
+}
+
+.addQueueBtn:hover {
+  opacity: 0.92;
+}
+
+.cancelEditBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cancelEditBtn:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
+  background: color-mix(in oklab, var(--text-muted) 6%, transparent);
+}
+
+.editingBadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: var(--bg-active);
+  color: var(--primary);
+  border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+/* Excel Bulk Section */
+.excelCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: border-color 0.15s ease;
+}
+
+.excelCard:hover {
+  border-color: color-mix(in oklab, var(--text-muted) 35%, var(--border-color));
+}
+
+.excelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.excelTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.excelIconWrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: color-mix(in oklab, var(--text-muted) 10%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+
+.excelTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.excelDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+  line-height: 1.4;
+}
+
+.excelActions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.uploadFileBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.uploadFileBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-active);
+}
+
+.templateDownloadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 38px;
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.templateDownloadLink:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
+  background: color-mix(in oklab, var(--text-muted) 6%, transparent);
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+/* Queue Table */
+.tableCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tableCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tableTitle {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.tableCounter {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 640px;
+}
+
+.table thead th {
+  background: color-mix(in oklab, var(--text-muted) 6%, transparent);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.thIndex {
+  width: 36px;
+  text-align: center;
+}
+
+.thAction {
+  text-align: right;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.12s ease;
+  cursor: pointer;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: color-mix(in oklab, var(--primary) 4%, transparent);
+}
+
+.table tbody tr.rowSelected {
+  background: color-mix(in oklab, var(--primary) 7%, transparent);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.table tbody td {
+  padding: 0.75rem 0.85rem;
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.tdIndex {
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 32px;
+  text-align: center;
+}
+
+.tdCustomerName {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.tdCustomerPhone {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.tdAddressText {
+  max-width: 280px;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  line-height: 1.35;
+  white-space: pre-line;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.tdCourierBadge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: color-mix(in oklab, var(--text-muted) 12%, transparent);
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.tdAwbText {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--primary);
+}
+
+.tdRefText {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  background: color-mix(in oklab, var(--text-muted) 10%, transparent);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.pendingAwbTag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-style: italic;
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+}
+
+.tdActions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actionIconBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  margin-left: 0.35rem;
+}
+
+.actionIconBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-active);
+}
+
+.editIconBtn:hover {
+  border-color: var(--secondary, #00B4D8);
+  color: var(--secondary, #00B4D8);
+  background: color-mix(in oklab, var(--secondary, #00B4D8) 12%, transparent);
+}
+
+.editRowActive {
+  background: color-mix(in oklab, var(--primary) 12%, transparent) !important;
+  box-shadow: inset 4px 0 0 var(--primary) !important;
+}
+
+.deleteIconBtn:hover {
+  border-color: var(--status-error);
+  color: var(--status-error);
+  background: var(--status-error-bg);
+}
+
+.emptyQueue {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
+.emptyQueueTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.emptyQueueDesc {
+  font-size: 0.82rem;
+  max-width: 380px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Right Column: Live Sticky Preview Panel */
+.previewColumn {
+  position: sticky;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.previewPanelCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.previewWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.previewHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.65rem;
+}
+
+.previewTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.previewDimensions {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+.printSingleBtn {
+  width: 100%;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+}
+
+.printSingleBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-active);
+}
+
+.previewHint {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* Hidden Print Stream for @media print */
+.printStream {
+  display: none;
+}
+
+/* Print Rules: Exact 100mm x 150mm Thermal Standard */
+@page {
+  size: 100mm 150mm;
+  margin: 0;
+}
+
+@media print {
+  .page {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .screenOnly,
+  .header,
+  .mainLayout,
+  .leftColumn,
+  .rightColumn,
+  .formCard,
+  .excelCard,
+  .tableCard,
+  .previewCard {
+    display: none !important;
+  }
+
+  .printStream {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .printItemWrap {
+    display: block !important;
+    width: 100mm !important;
+    margin: 0 auto !important;
+    padding: 2mm 0 !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+  }
+
+  .printItemWrap:last-child {
+    page-break-after: auto !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .mainLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .previewColumn {
+    position: static;
+    max-width: 100mm;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 1rem 0.75rem;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formFieldFull {
+    grid-column: span 1;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .primaryPrintBtn,
+  .secondaryBtn,
+  .dangerBtn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}

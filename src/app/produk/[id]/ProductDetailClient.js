@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
+import { useChat } from '@/context/ChatContext';
 import ProductCard from '@/components/ProductCard';
 import { getSimilarProducts } from '@/lib/recommendation';
 import { parseYouTubeId } from '@/lib/productImages';
@@ -101,6 +102,7 @@ export default function ProductDetailClient() {
     const { id } = useParams();
     const router = useRouter();
     const { addToCart, buyNow } = useCart();
+    const { openChat } = useChat();
     const { products, isLoading } = useProducts();
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
@@ -334,6 +336,21 @@ export default function ProductDetailClient() {
             isWholesale,
             wholesaleTiers: product.wholesaleTiers,
         }, quantity);
+    };
+
+    const handleAskSeller = () => {
+        if (!product) return;
+        openChat({
+            attachedType: 'PRODUCT',
+            attachedId: product.id,
+            pos: 'PRODUCT',
+            attachedMeta: {
+                name: product.name,
+                price: currentPrice,
+                image: product.image,
+                selectedSize: selectedSize || null,
+            },
+        });
     };
 
     const canBuy = !product.isSold && product.quantity > 0;
@@ -848,6 +865,18 @@ export default function ProductDetailClient() {
                                         </button>
                                         <button
                                             type="button"
+                                            onClick={handleAskSeller}
+                                            className={styles.askSellerBtn}
+                                            aria-label="Tanya Penjual"
+                                            title="Tanya Penjual seputar produk ini"
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                            </svg>
+                                            <span>Tanya Penjual</span>
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={handleAcquire}
                                             className={styles.buyBtn}
                                         >
@@ -958,6 +987,18 @@ export default function ProductDetailClient() {
             {/* Mobile-only sticky bottom action bar */}
             {canBuy && (
                 <div className={styles.mobileActionBar}>
+                    <button
+                        type="button"
+                        onClick={handleAskSeller}
+                        className={styles.mobileAskBtn}
+                        aria-label="Tanya Penjual"
+                        title="Tanya Penjual"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span>Chat</span>
+                    </button>
                     <button
                         type="button"
                         onClick={handleAddToCart}

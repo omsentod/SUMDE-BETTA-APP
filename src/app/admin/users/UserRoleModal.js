@@ -1,19 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/context/ToastContext';
 import styles from './roles.module.css';
 
 export default function UserRoleModal({ isOpen, onClose, user, roles, onSaved, currentUserId }) {
   const { toast } = useToast();
-  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState(user?.role || 'customer');
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setSelectedRole(user.role || 'customer');
-    }
-  }, [user, isOpen]);
 
   if (!isOpen || !user) return null;
 
@@ -72,9 +66,9 @@ export default function UserRoleModal({ isOpen, onClose, user, roles, onSaved, c
 
         <form onSubmit={handleSubmit}>
           <div className={styles.modalBody}>
-            <div>
-              <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.95rem' }}>{user.name}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{user.email}</div>
+            <div className={styles.userTargetHeader}>
+              <div className={styles.userTargetName}>{user.name}</div>
+              <div className={styles.userTargetEmail}>{user.email}</div>
             </div>
 
             <div className={styles.fieldGroup}>
@@ -91,13 +85,17 @@ export default function UserRoleModal({ isOpen, onClose, user, roles, onSaved, c
                     >
                       <div className={styles.roleOptionText}>
                         <div className={styles.roleOptionName}>
+                          <span
+                            className={styles.roleColorDotSmall}
+                            style={{ '--role-color': r.color || '#3B82F6' }}
+                          />
                           <span>{r.name}</span>
                           {r.isSystem ? (
-                            <span className={styles.badgeSystem} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+                            <span className={styles.badgeSystemTiny}>
                               Sistem
                             </span>
                           ) : (
-                            <span className={styles.badgeCustom} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+                            <span className={styles.badgeCustomTiny}>
                               Kustom
                             </span>
                           )}
@@ -118,7 +116,7 @@ export default function UserRoleModal({ isOpen, onClose, user, roles, onSaved, c
                 })}
               </div>
               {isSelf && (
-                <span className={styles.fieldHelp} style={{ color: 'var(--status-warning)' }}>
+                <span className={styles.fieldWarning}>
                   Perhatian: Anda tidak dapat mengubah role akun Anda sendiri untuk mencegah penguncian sistem.
                 </span>
               )}

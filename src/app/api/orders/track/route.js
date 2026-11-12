@@ -103,11 +103,11 @@ async function lookupOrder(orderId, identifier) {
 
   // 3. Format payload aman (sanitized PII)
   const items = (order.items || []).map((item) => {
-    const fallbackImage = item.variant?.imageUrl || item.product?.image || '/img/betta-1.png';
+    const fallbackImage = item.variant?.imageUrl || item.product?.image || item.customImage || '/img/betta-1.png';
     return {
       id: item.id,
       productId: item.productId,
-      name: item.product?.name || 'Produk Akuatik',
+      name: item.customName || item.product?.name || 'Produk Akuatik',
       image: fallbackImage,
       quantity: item.quantity,
       selectedSize: item.selectedSize || item.variant?.size || null,

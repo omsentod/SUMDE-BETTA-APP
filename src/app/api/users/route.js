@@ -9,9 +9,71 @@ import {
 
 export async function GET(request) {
   try {
-    await requirePermission(request, 'users:manage');
-    const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
-    const sanitizedUsers = users.map(({ password, ...u }) => u);
+    await requirePermission(request, ['users:view', 'users:manage']);
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        googleId: true,
+        avatarUrl: true,
+        emailVerified: true,
+        phone: true,
+        phoneVerified: true,
+        streetAddress: true,
+        rtRw: true,
+        province: true,
+        city: true,
+        district: true,
+        village: true,
+        postalCode: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            orders: true,
+            addresses: true,
+            conversations: true,
+          },
+        },
+        orders: {
+          select: {
+            id: true,
+            total: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    const sanitizedUsers = users.map((u) => {
+      const paidOrders = u.orders.filter((o) =>
+        ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'].includes(o.status)
+      );
+      const totalSpent = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const lastOrderAt =
+        u.orders.length > 0
+          ? u.orders.reduce(
+              (latest, o) => (!latest || new Date(o.createdAt) > new Date(latest) ? o.createdAt : latest),
+              null
+            )
+          : null;
+
+      const { orders, _count, ...rest } = u;
+      return {
+        ...rest,
+        ordersCount: _count.orders,
+        addressesCount: _count.addresses,
+        conversationsCount: _count.conversations,
+        totalSpent,
+        lastOrderAt,
+        isGoogleLinked: !!u.googleId,
+      };
+    });
+
     return NextResponse.json(sanitizedUsers);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });

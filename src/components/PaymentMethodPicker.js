@@ -3,31 +3,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import PaymentLogo from './PaymentLogo';
 import {
-  PAYMENT_METHODS,
   CATEGORY_ORDER,
   CATEGORY_LABEL,
-  calcPaymentFee,
   getSelectableMethods,
 } from '@/lib/paymentFee';
 import styles from './PaymentMethodPicker.module.css';
-
-const formatIDR = (v) =>
-  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
-
-function formatFeeHint(method, methodKey, base) {
-  if (method.fee.flat != null) {
-    return method.fee.flat === 0 ? 'Gratis Biaya Admin' : `Biaya ${formatIDR(method.fee.flat)}`;
-  }
-  if (method.fee.percent != null) {
-    const percent = (method.fee.percent * 100).toFixed(method.fee.percent < 0.01 ? 2 : 1);
-    if (base > 0) {
-      const calcFee = calcPaymentFee(methodKey, base);
-      return `Biaya ${percent}% (${formatIDR(calcFee)})`;
-    }
-    return `Biaya ${percent}%`;
-  }
-  return 'Gratis Biaya Admin';
-}
 
 const CATEGORY_SUBTITLES = {
   QRIS: 'GoPay, OVO, DANA, BCA, Mandiri, & Seluruh M-Banking',
@@ -37,7 +17,7 @@ const CATEGORY_SUBTITLES = {
   Retail: 'Bayar Tunai di Kasir Alfamart / Indomaret',
 };
 
-export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
+export default function PaymentMethodPicker({ value, onChange }) {
   // Accordion state: default null (all dropdowns closed by default)
   const [openCategory, setOpenCategory] = useState(null);
 
@@ -88,46 +68,9 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
     return out;
   }, [selectable]);
 
-  // Compute fees for all selectable methods to find the dynamically cheapest
-  const { cheapestMethodKey, minFee } = useMemo(() => {
-    let min = Infinity;
-    let cheapestKey = selectable[0]?.key ?? null;
-
-    for (const { key } of selectable) {
-      try {
-        const fee = calcPaymentFee(key, base);
-        if (fee < min) {
-          min = fee;
-          cheapestKey = key;
-        }
-      } catch {
-        // fallback
-      }
-    }
-
-    return { cheapestMethodKey: cheapestKey, minFee: min };
-  }, [base, selectable]);
-
   const toggleCategory = (cat) => {
     setOpenCategory((prev) => (prev === cat ? null : cat));
   };
-
-  const recommendedMethod = PAYMENT_METHODS[cheapestMethodKey] || selectable[0];
-
-  // Rekomendasi ditandai di level KATEGORI, bukan method. Channel dalam satu
-  // kategori sering ber-fee identik (12 bank VA sama-sama flat Rp4.000), jadi
-  // `cheapestMethodKey` cuma memenangkan yang pertama di-iterasi — menyorot
-  // "BCA" seolah-olah bank lain lebih mahal. Untuk kategori multi opsi kartu
-  // rekomendasi menampilkan kategorinya dan meng-expand daftar channel di
-  // tempat; kategorinya lalu dilewati di "Metode Lainnya" supaya tidak dobel.
-  const recommendedCategory = recommendedMethod?.category ?? null;
-  const recommendedItems = grouped[recommendedCategory] || [];
-  const isRecommendedMulti = recommendedItems.length > 1;
-  const isRecommendedOpen = openCategory === recommendedCategory;
-  const recommendedSelected = recommendedItems.find((m) => m.key === value) || null;
-  const isRecommendedSelected = isRecommendedMulti
-    ? Boolean(recommendedSelected)
-    : value === cheapestMethodKey;
 
   // Render category icon SVG
   const renderCategoryIcon = (cat) => {
@@ -167,7 +110,7 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
 
   // Semua channel mati di merchant account — jangan render picker kosong yang
   // menyesatkan; beri tahu user supaya menghubungi admin.
-  if (!recommendedMethod) {
+  if (selectable.length === 0) {
     return (
       <div className={styles.pickerContainer}>
         <p className={styles.emptyChannels}>
@@ -179,315 +122,146 @@ export default function PaymentMethodPicker({ value, onChange, base = 0 }) {
 
   return (
     <div className={styles.pickerContainer}>
+      {CATEGORY_ORDER.map((cat) => {
+        const allItems = grouped[cat] || [];
+        if (allItems.length === 0) return null;
 
-      {/* ================= 1. FEATURED RECOMMENDATION COVER CARD ================= */}
-      <div className={styles.recommendedWrapper}>
-        <h4 className={styles.sectionLabel}>Metode Direkomendasikan</h4>
+        const isMulti = allItems.length > 1;
+        const isOpen = openCategory === cat;
+        const selectedMethod = allItems.find((m) => m.key === value);
 
-        <div
-          className={`${styles.recommendedCoverCard} ${isRecommendedSelected ? styles.recommendedCoverCardSelected : ''}`}
-          {...(isRecommendedMulti
-            ? {}
-            : {
-                onClick: () => onChange(cheapestMethodKey),
-                role: 'button',
-                tabIndex: 0,
-                onKeyDown: (e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onChange(cheapestMethodKey);
-                  }
-                },
-              })}
-        >
-          {/* Top Banner Ribbon */}
-          <div className={styles.coverRibbon}>
-            <div className={styles.coverRibbonLeft}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span>Rekomendasi • Biaya Paling Hemat</span>
-            </div>
-            <span className={styles.coverRibbonNote}>Proses Otomatis</span>
-          </div>
+        // Single Option Category (e.g. QRIS, E-Wallet, Paylater)
+        if (!isMulti) {
+          const singleItem = allItems[0];
+          const isSelected = value === singleItem.key;
 
-          {/* Card Body — kategori multi opsi jadi accordion di tempat supaya
-              yang ditandai kategorinya, bukan satu channel di dalamnya. */}
-          {isRecommendedMulti ? (
-            <>
-              <button
-                type="button"
-                className={`${styles.coverBody} ${styles.coverHeaderButton}`}
-                onClick={() => toggleCategory(recommendedCategory)}
-                aria-expanded={isRecommendedOpen}
-              >
-                <div className={styles.coverLeft}>
-                  <div className={styles.categoryIconWrap}>
-                    {renderCategoryIcon(recommendedCategory)}
+          return (
+            <div
+              key={cat}
+              className={`${styles.categoryCard} ${styles.singleCard} ${isSelected ? styles.singleCardSelected : ''}`}
+              onClick={() => onChange(singleItem.key)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onChange(singleItem.key);
+                }
+              }}
+            >
+              <div className={styles.categoryHeader}>
+                <div className={styles.categoryLeft}>
+                  <div className={`${styles.radioCircle} ${isSelected ? styles.radioCircleActive : ''}`}>
+                    <div className={styles.radioDot} />
                   </div>
 
-                  <div className={styles.coverTitleBlock}>
-                    <h4 className={styles.coverTitle}>
-                      {CATEGORY_LABEL[recommendedCategory] || recommendedCategory}
-                    </h4>
-                    <p className={styles.coverSubtitle}>
-                      {recommendedSelected ? (
-                        <span className={styles.selectedBadgeText}>
-                          Terpilih: {recommendedSelected.label}
-                        </span>
-                      ) : (
-                        CATEGORY_SUBTITLES[recommendedCategory] ||
-                        `${recommendedItems.length} Opsi Tersedia`
-                      )}
-                    </p>
+                  <PaymentLogo methodKey={singleItem.key} size="md" />
+
+                  <div className={styles.categoryTitleBlock}>
+                    <h4 className={styles.categoryTitle}>{singleItem.label}</h4>
+                    <p className={styles.categorySubtitle}>{CATEGORY_SUBTITLES[cat] || singleItem.label}</p>
                   </div>
-                </div>
-
-                {/* Sengaja tanpa preview logo seperti accordion di bawah: kolom
-                    kartu ini sempit, dan subtitle sudah menyebut nama banknya. */}
-                <div className={styles.coverRightRow}>
-                  <div className={styles.coverRight}>
-                    <span className={styles.coverFee}>
-                      {minFee === 0 ? 'Gratis Biaya Admin' : formatIDR(minFee)}
-                    </span>
-                    <span className={styles.coverFeeSub}>Mulai dari</span>
-                  </div>
-
-                  <svg
-                    className={`${styles.chevronIcon} ${isRecommendedOpen ? styles.chevronOpen : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </button>
-
-              <div className={`${styles.accordionBody} ${isRecommendedOpen ? styles.accordionBodyOpen : ''}`}>
-                <div className={styles.optionsGrid}>
-                  {recommendedItems.map((m) => {
-                    const isSelected = value === m.key;
-
-                    return (
-                      <div
-                        key={m.key}
-                        className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        onClick={() => onChange(m.key)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            onChange(m.key);
-                          }
-                        }}
-                      >
-                        <div className={`${styles.radioCircle} ${isSelected ? styles.radioCircleActive : ''}`}>
-                          <div className={styles.radioDot} />
-                        </div>
-
-                        <PaymentLogo methodKey={m.key} size="md" />
-
-                        <div className={styles.optionDetails}>
-                          <span className={styles.optionName}>{m.label}</span>
-                          <span className={styles.optionFee}>{formatFeeHint(m, m.key, base)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
-            </>
-          ) : (
-            <div className={styles.coverBody}>
-              <div className={styles.coverLeft}>
-                <div className={`${styles.radioCircle} ${isRecommendedSelected ? styles.radioCircleActive : ''}`}>
-                  <div className={styles.radioDot} />
+            </div>
+          );
+        }
+
+        // Multi-Option Accordion (Virtual Account, Retail)
+        return (
+          <div
+            key={cat}
+            className={`${styles.categoryCard} ${selectedMethod ? styles.categoryCardActive : ''}`}
+          >
+            {/* Clickable Accordion Header */}
+            <button
+              type="button"
+              className={styles.categoryHeader}
+              onClick={() => toggleCategory(cat)}
+              aria-expanded={isOpen}
+            >
+              <div className={styles.categoryLeft}>
+                <div className={styles.categoryIconWrap}>
+                  {renderCategoryIcon(cat)}
                 </div>
 
-                <PaymentLogo methodKey={cheapestMethodKey} size="md" />
-
-                <div className={styles.coverTitleBlock}>
-                  <h4 className={styles.coverTitle}>{recommendedMethod.label}</h4>
-                  <p className={styles.coverSubtitle}>
-                    {CATEGORY_SUBTITLES[recommendedMethod.category] || 'Pilihan utama pembeli'}
+                <div className={styles.categoryTitleBlock}>
+                  <h4 className={styles.categoryTitle}>{CATEGORY_LABEL[cat] || cat}</h4>
+                  <p className={styles.categorySubtitle}>
+                    {selectedMethod ? (
+                      <span className={styles.selectedBadgeText}>Terpilih: {selectedMethod.label}</span>
+                    ) : (
+                      CATEGORY_SUBTITLES[cat] || `${allItems.length} Opsi Tersedia`
+                    )}
                   </p>
                 </div>
               </div>
 
-              <div className={styles.coverRight}>
-                <span className={styles.coverFee}>
-                  {minFee === 0 ? 'Gratis Biaya Admin' : formatIDR(minFee)}
-                </span>
-                <span className={styles.coverFeeSub}>Biaya Terendah</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+              <div className={styles.categoryRight}>
+                {/* Mini preview logos when closed */}
+                {!isOpen && (
+                  <div className={styles.previewLogos}>
+                    {allItems.slice(0, 4).map((m) => (
+                      <PaymentLogo key={m.key} methodKey={m.key} size="sm" />
+                    ))}
+                    {allItems.length > 4 && (
+                      <span className={styles.previewMore}>+{allItems.length - 4}</span>
+                    )}
+                  </div>
+                )}
 
-      {/* ================= 2. OTHER PAYMENT METHODS ================= */}
-      {CATEGORY_ORDER.some((cat) => cat !== recommendedCategory && (grouped[cat] || []).length > 0) && (
-        <div className={styles.otherMethodsGroup}>
-          <h4 className={styles.sectionLabel}>Metode Pembayaran Lainnya</h4>
-
-          {CATEGORY_ORDER.map((cat) => {
-            const allItems = grouped[cat] || [];
-            if (allItems.length === 0) return null;
-
-            // Kategori rekomendasi sudah dirender penuh di kartu atas — baik yang
-            // single (QRIS) maupun multi opsi (VA) — jadi jangan duplikat di sini.
-            if (cat === recommendedCategory) return null;
-
-            const isMulti = allItems.length > 1;
-            const isOpen = openCategory === cat;
-            const selectedMethod = allItems.find((m) => m.key === value);
-
-            // Single Option Category (e.g. E-Wallet, Paylater)
-            if (!isMulti) {
-              const singleItem = allItems[0];
-              const isSelected = value === singleItem.key;
-
-              return (
-                <div
-                  key={cat}
-                  className={`${styles.categoryCard} ${styles.singleCard} ${isSelected ? styles.singleCardSelected : ''}`}
-                  onClick={() => onChange(singleItem.key)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onChange(singleItem.key);
-                    }
-                  }}
+                {/* Chevron icon */}
+                <svg
+                  className={`${styles.chevronIcon} ${isOpen ? styles.chevronOpen : ''}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <div className={styles.categoryHeader}>
-                    <div className={styles.categoryLeft}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Collapsible Accordion Body */}
+            <div className={`${styles.accordionBody} ${isOpen ? styles.accordionBodyOpen : ''}`}>
+              <div className={styles.optionsGrid}>
+                {allItems.map((m) => {
+                  const isSelected = value === m.key;
+
+                  return (
+                    <div
+                      key={m.key}
+                      className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
+                      onClick={() => onChange(m.key)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onChange(m.key);
+                        }
+                      }}
+                    >
                       <div className={`${styles.radioCircle} ${isSelected ? styles.radioCircleActive : ''}`}>
                         <div className={styles.radioDot} />
                       </div>
 
-                      <PaymentLogo methodKey={singleItem.key} size="md" />
+                      <PaymentLogo methodKey={m.key} size="md" />
 
-                      <div className={styles.categoryTitleBlock}>
-                        <h4 className={styles.categoryTitle}>{singleItem.label}</h4>
-                        <p className={styles.categorySubtitle}>{CATEGORY_SUBTITLES[cat] || singleItem.label}</p>
+                      <div className={styles.optionDetails}>
+                        <span className={styles.optionName}>{m.label}</span>
                       </div>
                     </div>
-
-                    <div className={styles.categoryRight}>
-                      <span className={styles.optionFee}>
-                        {formatFeeHint(singleItem, singleItem.key, base)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            // Multi-Option Accordion (Virtual Account 13 Banks, Retail 2 Gerai)
-            return (
-              <div
-                key={cat}
-                className={`${styles.categoryCard} ${selectedMethod ? styles.categoryCardActive : ''}`}
-              >
-                {/* Clickable Accordion Header */}
-                <button
-                  type="button"
-                  className={styles.categoryHeader}
-                  onClick={() => toggleCategory(cat)}
-                  aria-expanded={isOpen}
-                >
-                  <div className={styles.categoryLeft}>
-                    <div className={styles.categoryIconWrap}>
-                      {renderCategoryIcon(cat)}
-                    </div>
-
-                    <div className={styles.categoryTitleBlock}>
-                      <h4 className={styles.categoryTitle}>{CATEGORY_LABEL[cat] || cat}</h4>
-                      <p className={styles.categorySubtitle}>
-                        {selectedMethod ? (
-                          <span className={styles.selectedBadgeText}>Terpilih: {selectedMethod.label}</span>
-                        ) : (
-                          CATEGORY_SUBTITLES[cat] || `${allItems.length} Opsi Tersedia`
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className={styles.categoryRight}>
-                    {/* Mini preview logos when closed */}
-                    {!isOpen && (
-                      <div className={styles.previewLogos}>
-                        {allItems.slice(0, 4).map((m) => (
-                          <PaymentLogo key={m.key} methodKey={m.key} size="sm" />
-                        ))}
-                        {allItems.length > 4 && (
-                          <span className={styles.previewMore}>+{allItems.length - 4}</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Chevron icon */}
-                    <svg
-                      className={`${styles.chevronIcon} ${isOpen ? styles.chevronOpen : ''}`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </button>
-
-                {/* Collapsible Accordion Body */}
-                <div className={`${styles.accordionBody} ${isOpen ? styles.accordionBodyOpen : ''}`}>
-                  <div className={styles.optionsGrid}>
-                    {allItems.map((m) => {
-                      const isSelected = value === m.key;
-
-                      return (
-                        <div
-                          key={m.key}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                          onClick={() => onChange(m.key)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              onChange(m.key);
-                            }
-                          }}
-                        >
-                          <div className={`${styles.radioCircle} ${isSelected ? styles.radioCircleActive : ''}`}>
-                            <div className={styles.radioDot} />
-                          </div>
-
-                          <PaymentLogo methodKey={m.key} size="md" />
-
-                          <div className={styles.optionDetails}>
-                            <span className={styles.optionName}>{m.label}</span>
-                            <span className={styles.optionFee}>{formatFeeHint(m, m.key, base)}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

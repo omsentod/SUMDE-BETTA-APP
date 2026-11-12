@@ -9,7 +9,14 @@ const existingPrisma = globalForPrisma.prisma;
 const isFreshPrisma = existingPrisma &&
   existingPrisma.department &&
   existingPrisma.subCategory &&
-  existingPrisma._runtimeDataModel?.models?.Product?.fields?.some((f) => f.name === 'isWholesale');
+  existingPrisma.conversation &&
+  existingPrisma.chatTemplate &&
+  existingPrisma.chatMessage &&
+  existingPrisma.chatSetting &&
+  existingPrisma._runtimeDataModel?.models?.ChatSetting?.fields?.some((f) => f.name === 'adminLastActiveAt') &&
+  existingPrisma._runtimeDataModel?.models?.ChatTemplate?.fields?.some((f) => f.name === 'answerText') &&
+  existingPrisma._runtimeDataModel?.models?.Product?.fields?.some((f) => f.name === 'isWholesale') &&
+  existingPrisma._runtimeDataModel?.models?.TikTokLiveBasket?.fields?.some((f) => f.name === 'claimToken');
 
 const prisma = isFreshPrisma ? existingPrisma : new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
