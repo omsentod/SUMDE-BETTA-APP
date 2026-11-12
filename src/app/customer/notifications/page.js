@@ -51,6 +51,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (!currentUser) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load user notifications
     load();
   }, [currentUser?.id]);
 
@@ -128,7 +129,7 @@ export default function NotificationsPage() {
     }
   };
 
-  if (authLoading || !currentUser) {
+  if (authLoading && !currentUser) {
     return (
       <div className={styles.wrapper}>
         <div className={styles.emptyCard}>
@@ -137,6 +138,7 @@ export default function NotificationsPage() {
       </div>
     );
   }
+  if (!currentUser) return null;
 
   return (
     <div className={styles.wrapper}>

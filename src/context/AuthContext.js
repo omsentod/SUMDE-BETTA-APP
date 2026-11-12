@@ -90,7 +90,6 @@ export function AuthProvider({ children }) {
         }
 
         // 2. Verifikasi otoritatif dengan server via cookie httpOnly
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial server session bootstrap
         refreshSession().finally(() => {
             if (mounted) setIsLoading(false);
         });

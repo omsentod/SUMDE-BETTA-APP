@@ -265,7 +265,7 @@ export default function AdminUsersPage() {
     loadUsers();
   };
 
-  if (authLoading || !currentUser || (!canViewUsers && !canViewRoles)) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || (!canViewUsers && !canViewRoles)))) {
     return (
       <div className="container" style={{ padding: '10rem 0', textAlign: 'center', color: 'var(--text-main)' }}>
         <h2>Memverifikasi Otoritas Pengguna...</h2>

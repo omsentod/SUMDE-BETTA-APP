@@ -126,7 +126,7 @@ export default function AdminDashboard() {
 
   const hasAnyKpi = canKpiRevenue || canKpiOrders || canKpiProducts || canKpiUsers;
 
-  if (authLoading || !currentUser || !canViewDashboard) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canViewDashboard))) {
     return (
       <div className={styles.dashboardLoading}>
         <div className={styles.loadingSpinner} />

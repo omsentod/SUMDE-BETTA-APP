@@ -746,7 +746,7 @@ function AdminProductsInner() {
     });
   };
 
-  if (authLoading || !currentUser || !canView) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canView))) {
     return (
       <div className={styles.dashboardLoading}>
         <div className={styles.loadingSpinner} />

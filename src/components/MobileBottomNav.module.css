@@ -92,4 +92,22 @@
     justify-content: center;
     line-height: 1;
   }
+
+  .loadingItem {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .skeletonIcon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+
+  .skeletonLabel {
+    width: 26px;
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 2px;
+  }
 }

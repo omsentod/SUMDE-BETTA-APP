@@ -78,7 +78,7 @@ function getOrderTemplates(status) {
 
 export default function CustomerChatWidget() {
   const pathname = usePathname();
-  const { currentUser, isLoading: authLoading } = useAuth();
+  const { currentUser } = useAuth();
   const {
     isOpen,
     toggleChat,
@@ -521,7 +521,7 @@ export default function CustomerChatWidget() {
   }, [isOpen, chatContextData, handleSendMessage]);
 
   // Hanya tampil untuk user yang sudah login dan bukan di rute admin
-  if (isAdminRoute || authLoading || !currentUser) return null;
+  if (isAdminRoute || !currentUser) return null;
 
   // Cek apakah posisi ini adalah Pos 4 (Order Detail) atau template dinamis
   const isPos4Order =

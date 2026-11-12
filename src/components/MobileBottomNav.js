@@ -37,13 +37,13 @@ function Badge({ count }) {
 export default function MobileBottomNav() {
   const pathname = usePathname() || '';
   const { itemCount, toggleCart } = useCart();
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading } = useAuth();
 
   const [unread, setUnread] = useState(0);
 
   // Fetch unread count untuk badge — reuse endpoint yang dipakai NotificationBell
   useEffect(() => {
-    if (!currentUser) { setUnread(0); return; }
+    if (!currentUser?.id) return;
     let cancelled = false;
     const load = async () => {
       try {
@@ -115,13 +115,20 @@ export default function MobileBottomNav() {
         </Link>
       )}
 
-      <Link
-        href={accountHref}
-        className={`${styles.item} ${isActive(accountHref) ? styles.active : ''}`.trim()}
-      >
-        <AccountIcon />
-        <span className={styles.label}>{accountLabel}</span>
-      </Link>
+      {isLoading && !currentUser ? (
+        <div className={`${styles.item} ${styles.loadingItem}`} aria-busy="true">
+          <span className={`skeleton-box ${styles.skeletonIcon}`} />
+          <span className={`skeleton-box ${styles.skeletonLabel}`} />
+        </div>
+      ) : (
+        <Link
+          href={accountHref}
+          className={`${styles.item} ${isActive(accountHref) ? styles.active : ''}`.trim()}
+        >
+          <AccountIcon />
+          <span className={styles.label}>{accountLabel}</span>
+        </Link>
+      )}
     </nav>
   );
 }

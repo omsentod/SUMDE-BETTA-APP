@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -176,6 +176,7 @@ function AdminRecycleBinInner() {
 
   useEffect(() => {
     if (!authLoading && currentUser && canView) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- load recycle bin data
       loadRecycleBin();
     }
   }, [authLoading, currentUser, canView, loadRecycleBin]);
@@ -310,7 +311,7 @@ function AdminRecycleBinInner() {
     });
   };
 
-  if (authLoading || !currentUser || !canView) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canView))) {
     return (
       <div className={styles.dashboardLoading}>
         <div className={styles.loadingSpinner} />

@@ -451,7 +451,7 @@ function AdminOrdersPageInner() {
     }
   };
 
-  if (authLoading || !currentUser || !canView) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canView))) {
     return (
       <div className={styles.loading}>
         Memuat pesanan...

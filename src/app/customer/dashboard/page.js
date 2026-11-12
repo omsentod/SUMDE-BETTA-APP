@@ -99,13 +99,11 @@ export default function CustomerDashboard() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!currentUser) {
-        router.push('/login');
-      } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate form with user profile when loaded
-        setForm({ name: currentUser.name || '', phone: currentUser.phone || '' });
-      }
+    if (currentUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate form with user profile when loaded
+      setForm({ name: currentUser.name || '', phone: currentUser.phone || '' });
+    } else if (!authLoading) {
+      router.push('/login');
     }
   }, [currentUser, authLoading, router]);
 
@@ -243,9 +241,10 @@ export default function CustomerDashboard() {
     }
   };
 
-  if (authLoading || !currentUser) {
+  if (authLoading && !currentUser) {
     return <DashboardSkeleton />;
   }
+  if (!currentUser) return null;
 
   const isVerified = Boolean(currentUser.emailVerified);
   const authMethod =

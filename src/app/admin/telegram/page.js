@@ -408,7 +408,7 @@ function AdminTelegramContent() {
     });
   }, [data.drops, search, activeTab]);
 
-  if (authLoading || !currentUser || !canView) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canView))) {
     return (
       <div className={`${styles.emptyState} ${styles.emptyStateCentered}`}>
         <p className={styles.emptyStateTitle}>Memverifikasi Hak Akses Telegram...</p>

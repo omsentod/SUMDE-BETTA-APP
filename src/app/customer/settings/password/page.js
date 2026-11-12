@@ -77,13 +77,14 @@ export default function ChangePasswordPage() {
     }
   };
 
-  if (authLoading || !currentUser) {
+  if (authLoading && !currentUser) {
     return (
       <div className={styles.page}>
         <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Memverifikasi akun...</p>
       </div>
     );
   }
+  if (!currentUser) return null;
 
   // User yang daftar via Google tidak punya password di sistem kita.
   // Suruh mereka manage password lewat Google Account, bukan di sini.

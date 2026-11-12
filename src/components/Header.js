@@ -36,7 +36,7 @@ function CartIcon() {
 export default function Header() {
     const { itemCount, toggleCart } = useCart();
     // const { theme, toggleTheme } = useTheme(); // theme toggle dinonaktifkan sementara
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, isLoading } = useAuth();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
@@ -159,6 +159,8 @@ export default function Header() {
                                     </button>
                                 </div>
                             </div>
+                        ) : isLoading ? (
+                            <div className="skeleton-box header-avatar-skeleton hide-on-mobile" aria-busy="true" />
                         ) : (
                             <Link href="/login" className="btn btn-primary header-login-btn hide-on-mobile">
                                 Masuk

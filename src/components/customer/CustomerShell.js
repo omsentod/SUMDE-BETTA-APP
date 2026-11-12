@@ -134,7 +134,7 @@ export default function CustomerShell({ children }) {
     <div className={styles.shell}>
       <div className={styles.container}>
         <div className={styles.grid}>
-          {authLoading || !currentUser ? (
+          {authLoading && !currentUser ? (
             <SidebarSkeleton />
           ) : (
             <>
@@ -143,8 +143,8 @@ export default function CustomerShell({ children }) {
                 <div className={styles.userCard}>
                   <UserAvatar user={currentUser} size="lg" />
                   <div className={styles.userMeta}>
-                    <div className={styles.userName}>{currentUser.name}</div>
-                    <div className={styles.userEmail}>{currentUser.email}</div>
+                    <div className={styles.userName}>{currentUser?.name || ''}</div>
+                    <div className={styles.userEmail}>{currentUser?.email || ''}</div>
                   </div>
                 </div>
 
@@ -197,8 +197,8 @@ export default function CustomerShell({ children }) {
                   <div className={styles.mobileUserLeft}>
                     <UserAvatar user={currentUser} size="lg" />
                     <div className={styles.userMeta}>
-                      <div className={styles.userName}>{currentUser.name}</div>
-                      <div className={styles.userEmail}>{currentUser.email}</div>
+                      <div className={styles.userName}>{currentUser?.name || ''}</div>
+                      <div className={styles.userEmail}>{currentUser?.email || ''}</div>
                     </div>
                   </div>
                   {isAdmin && (

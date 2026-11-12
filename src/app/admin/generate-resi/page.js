@@ -274,7 +274,7 @@ function GenerateResiPageInner() {
     }, 100);
   };
 
-  if (authLoading || !currentUser || !canAccess) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canAccess))) {
     return (
       <div className={styles.page}>
         <p className={styles.emptyQueueTitle}>Memverifikasi Otoritas Akses...</p>

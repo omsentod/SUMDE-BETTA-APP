@@ -14,7 +14,7 @@ import UserAvatar from '@/components/UserAvatar';
 import styles from './AdminHeader.module.css';
 
 export default function AdminHeader({ onToggleSidebar, isSidebarOpen = false }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, isLoading } = useAuth();
   const { toast } = useToast();
   // const { theme, toggleTheme } = useTheme(); // theme toggle dinonaktifkan sementara
   const router = useRouter();
@@ -244,16 +244,20 @@ export default function AdminHeader({ onToggleSidebar, isSidebarOpen = false }) 
         */}
 
         <div className={styles.profileMenuWrapper} ref={profileRef}>
-          <button
-            type="button"
-            className={styles.profileAvatarBtn}
-            onClick={() => setProfileOpen((prev) => !prev)}
-            aria-label="Menu profil"
-            aria-expanded={profileOpen}
-            title={currentUser?.name || 'Profil Admin'}
-          >
-            <UserAvatar user={currentUser} size="fill" fallback="AD" />
-          </button>
+          {isLoading && !currentUser ? (
+            <div className={`skeleton-box ${styles.avatarSkeleton}`} aria-busy="true" />
+          ) : (
+            <button
+              type="button"
+              className={styles.profileAvatarBtn}
+              onClick={() => setProfileOpen((prev) => !prev)}
+              aria-label="Menu profil"
+              aria-expanded={profileOpen}
+              title={currentUser?.name || 'Profil Admin'}
+            >
+              <UserAvatar user={currentUser} size="fill" fallback="AD" />
+            </button>
+          )}
 
           <div className={`${styles.profileDropdown} ${profileOpen ? styles.profileDropdownOpen : ''}`.trim()}>
             <div className={styles.profileDropdownHeader}>

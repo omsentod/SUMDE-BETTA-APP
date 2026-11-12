@@ -145,7 +145,7 @@ export default function AdminReportsPage() {
     return Math.max(1, ...Object.values(report.statusBreakdown || {}));
   }, [report]);
 
-  if (authLoading || !currentUser || !canView) {
+  if ((authLoading && !currentUser) || (!authLoading && (!currentUser || !canView))) {
     return (
       <div className={styles.loading}>
         Memuat laporan penjualan...

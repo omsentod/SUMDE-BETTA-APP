@@ -4,12 +4,12 @@
 
 .pageContainer {
     min-height: 80vh;
-    padding: 2.5rem 0 4rem;
+    padding: calc(90px + 2.5rem) 0 4rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     .pageContainer {
-        padding: 1.5rem 0 3rem;
+        padding: calc(75px + 1.5rem) 0 3rem;
     }
 }
 

@@ -3,7 +3,14 @@
   min-height: 100vh;
   background-color: var(--bg-main, #0f1015);
   color: var(--text-main, #f3f4f6);
-  padding: 2.5rem 1rem 4rem;
+  padding: calc(90px + 2rem) 1rem 4rem;
+}
+
+@media (max-width: 768px) {
+  .invoicePage {
+    padding-top: calc(75px + 1.25rem);
+    padding-bottom: 3rem;
+  }
 }
 
 .invoiceWrapper {

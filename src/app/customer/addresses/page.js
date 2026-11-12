@@ -233,9 +233,10 @@ export default function AddressesPage() {
         }
     };
 
-    if (authLoading || !currentUser) {
+    if (authLoading && !currentUser) {
         return <div className={`skeleton-box ${styles.skeletonPanel}`} aria-busy="true" aria-label="Memuat alamat" />;
     }
+    if (!currentUser) return null;
 
     return (
         <div className={styles.pagePadding}>

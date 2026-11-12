@@ -205,9 +205,10 @@ export default function OrdersPage() {
 
     const filtered = activeTab === 'ALL' ? orders : orders.filter(o => o.status === activeTab);
 
-    if (authLoading || !currentUser) {
+    if (authLoading && !currentUser) {
         return <div className={`skeleton-box ${styles.skeletonPanel}`} aria-busy="true" aria-label="Memuat pesanan" />;
     }
+    if (!currentUser) return null;
 
     return (
         <div>

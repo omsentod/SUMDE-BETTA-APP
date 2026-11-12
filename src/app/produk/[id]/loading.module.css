@@ -3,7 +3,13 @@
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 3rem 1.5rem 6rem;
+    padding: calc(90px + 3rem) 1.5rem 6rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding-top: calc(75px + 1.5rem);
+    }
 }
 
 @keyframes pulse {
