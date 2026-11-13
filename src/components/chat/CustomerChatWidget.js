@@ -8,7 +8,7 @@ import * as Ably from 'ably';
 import { useChat } from '@/context/ChatContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { playChatNotificationSound } from '@/lib/notificationSound';
+import { playNotificationChime } from '@/lib/notificationSound';
 import { startTabTitleFlash } from '@/lib/tabFlashing';
 import UserAvatar from '@/components/UserAvatar';
 import styles from './CustomerChatWidget.module.css';
@@ -83,6 +83,7 @@ export default function CustomerChatWidget() {
   const { toast, confirmDialog } = useToast();
   const {
     isOpen,
+    openChat,
     toggleChat,
     closeChat,
     chatContextData,
@@ -90,6 +91,20 @@ export default function CustomerChatWidget() {
     unreadCount,
     setUnreadCount,
   } = useChat();
+
+  // Auto-buka chat jika halaman dibuka dari notifikasi (?openChat=1 atau ?chat=open)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openChat') === '1' || params.get('chat') === 'open') {
+      openChat();
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openChat');
+      url.searchParams.delete('chat');
+      const cleanUrl = url.pathname + (url.search ? url.search : '') + url.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, [openChat, pathname]);
 
   const [showTemplates, setShowTemplates] = useState(false);
   const [isAdminViewing, setIsAdminViewing] = useState(false);
@@ -358,7 +373,7 @@ export default function CustomerChatWidget() {
             if (incoming) {
               if (incoming.senderRole === 'ADMIN') {
                 setIsAdminTyping(false);
-                playChatNotificationSound();
+                playNotificationChime();
                 if (typeof document !== 'undefined' && document.hidden) {
                   startTabTitleFlash('(1) Balasan Admin — SUMDE BETTA');
                 }
@@ -876,7 +891,16 @@ export default function CustomerChatWidget() {
           {/* Header */}
           <div className={styles.chatHeader}>
             <div className={styles.headerLeft}>
-              <div className={styles.farmAvatar}>SB</div>
+              <div className={styles.farmAvatar}>
+                <Image
+                  src="/img/logo.png"
+                  alt="SUMDE BETTA"
+                  width={38}
+                  height={38}
+                  className={styles.farmAvatarImg}
+                  priority
+                />
+              </div>
               <div>
                 <h3 className={styles.headerTitle}>SUMDE BETTA</h3>
                 <div className={styles.headerStatus}>
@@ -1061,7 +1085,13 @@ export default function CustomerChatWidget() {
 
                     {!isCustomer && (
                       <span className={styles.adminBubbleAvatar} title="SUMDE BETTA Official">
-                        SB
+                        <Image
+                          src="/img/logo.png"
+                          alt="SUMDE BETTA"
+                          width={24}
+                          height={24}
+                          className={styles.adminAvatarImg}
+                        />
                       </span>
                     )}
 
@@ -1265,7 +1295,13 @@ export default function CustomerChatWidget() {
             {isAdminTyping && (
               <div className={`${styles.bubbleRow} ${styles.bubbleRowAdmin}`}>
                 <span className={styles.adminBubbleAvatar} title="SUMDE BETTA Official">
-                  SB
+                  <Image
+                    src="/img/logo.png"
+                    alt="SUMDE BETTA"
+                    width={24}
+                    height={24}
+                    className={styles.adminAvatarImg}
+                  />
                 </span>
                 <div className={`${styles.bubble} ${styles.bubbleAdmin} ${styles.typingBubble}`}>
                   <div className={styles.typingDots}>

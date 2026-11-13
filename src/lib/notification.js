@@ -19,11 +19,12 @@ import prisma from '@/lib/prisma';
  * @param {string} args.body - isi 1-2 kalimat
  * @param {string} [args.link] - deep link relatif (misal /admin/orders?status=PENDING)
  * @param {string} [args.imageUrl] - url gambar thumbnail (produk/promo/avatar)
+ * @param {boolean} [args.overwriteType] - jika true, perbarui/timpa notifikasi lama bertipe sama agar tidak menumpuk
  * @param {object} [args.channels] - override channel dispatch. Default: {db:true, ably:true, push:true, email:false}
  * @returns {Promise<{notification, deliveries: {db, ably, push, email}}>}
  */
-export async function createNotification({ userId, type, title, body, link, imageUrl, channels = {} }) {
-  const opts = { db: true, ably: true, push: true, email: false, ...channels };
+export async function createNotification({ userId, type, title, body, link, imageUrl, overwriteType = false, channels = {} }) {
+  const opts = { db: true, ably: true, push: true, email: false, overwriteType, ...channels };
   const deliveries = { db: null, ably: null, push: null, email: null };
 
   // 1. DB — inbox source of truth. Kalau ini gagal, batalkan (tanpa DB tidak
@@ -31,9 +32,43 @@ export async function createNotification({ userId, type, title, body, link, imag
   let notification = null;
   if (opts.db) {
     try {
-      notification = await prisma.notification.create({
-        data: { userId, type, title, body, link: link || null, imageUrl: imageUrl || null },
-      });
+      if (opts.overwriteType) {
+        const existing = await prisma.notification.findFirst({
+          where: { userId, type },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (existing) {
+          notification = await prisma.notification.update({
+            where: { id: existing.id },
+            data: {
+              title,
+              body,
+              link: link || null,
+              imageUrl: imageUrl || null,
+              readAt: null,
+              createdAt: new Date(),
+            },
+          });
+
+          // Hapus sisa duplikat lain jika ada
+          await prisma.notification.deleteMany({
+            where: {
+              userId,
+              type,
+              id: { not: existing.id },
+            },
+          }).catch(() => {});
+        } else {
+          notification = await prisma.notification.create({
+            data: { userId, type, title, body, link: link || null, imageUrl: imageUrl || null },
+          });
+        }
+      } else {
+        notification = await prisma.notification.create({
+          data: { userId, type, title, body, link: link || null, imageUrl: imageUrl || null },
+        });
+      }
       deliveries.db = { ok: true, id: notification.id };
     } catch (err) {
       console.error('Notification DB write failed:', err.message);

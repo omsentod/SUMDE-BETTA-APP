@@ -1,11 +1,11 @@
 /**
  * Notification Sound Manager for SUMDE BETTA
- * Plays dedicated audio files:
- * - Admin Notifications (orders, payments, shipping, system alerts): /sound/notif_admin.wav
- * - Live Chat Notifications (inbound chat, admin & customer replies): /sound/chat.wav
  *
- * Includes graceful Web Audio API synthesis fallback when browser autoplay
- * restrictions or audio asset decode issues occur.
+ * Audio Separation:
+ * 1. Customer Chat: Uses the lightweight synthetic chime (playNotificationChime)
+ *    via Web Audio API (zero external assets, zero lag).
+ * 2. Admin General Alerts (Orders, Payments, Shipping): /sound/notif_admin.wav
+ * 3. Admin Live Chat (Inbound messages from customers): /sound/chat.wav
  */
 
 export function isChimeMuted() {
@@ -30,35 +30,13 @@ export function setChimeMuted(muted) {
   }
 }
 
-// Module-level audio cache to preload and minimize latency
-const audioCache = {
-  admin: null,
-  chat: null,
-};
-
-function getAudioInstance(type) {
-  if (typeof window === 'undefined') return null;
-  const key = type === 'chat' ? 'chat' : 'admin';
-  const path = type === 'chat' ? '/sound/chat.wav' : '/sound/notif_admin.wav';
-
-  if (!audioCache[key]) {
-    try {
-      const audio = new Audio(path);
-      audio.preload = 'auto';
-      audio.volume = 0.85;
-      audioCache[key] = audio;
-    } catch {
-      return null;
-    }
-  }
-  return audioCache[key];
-}
-
-/**
- * Fallback Web Audio API synthesizer if WAV file playback fails or is blocked
- */
-function playSyntheticChime(type = 'admin') {
+// ============================================================================
+// 1. CUSTOMER NOTIFICATION SOUND: SYNTHETIC CHIME (Web Audio API)
+// ============================================================================
+export function playNotificationChime() {
   if (typeof window === 'undefined') return;
+  if (isChimeMuted()) return;
+
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
@@ -69,96 +47,178 @@ function playSyntheticChime(type = 'admin') {
 
     const now = ctx.currentTime;
 
-    if (type === 'chat') {
-      // Warm, quick dual-tone for chat (587.33Hz -> 880Hz)
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.28);
-    } else {
-      // Harmonic chime for admin alerts (880Hz + 1318.5Hz)
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(880, now);
-      gain1.gain.setValueAtTime(0.1, now);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.3);
+    // Harmonic Tone 1 (880Hz - A5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(880, now);
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.3);
 
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1318.5, now + 0.08);
-      gain2.gain.setValueAtTime(0.12, now + 0.08);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(now + 0.08);
-      osc2.stop(now + 0.5);
-    }
+    // Harmonic Tone 2 (1318.5Hz - E6)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1318.5, now + 0.08);
+    gain2.gain.setValueAtTime(0.14, now + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.5);
   } catch {
-    // Ignore audio permission or context creation errors silently
+    // Silently ignore audio context errors
   }
 }
 
-/**
- * Main sound trigger function
- * @param {'admin' | 'chat'} [type='admin']
- */
-export function playNotificationSound(type = 'admin') {
-  if (typeof window === 'undefined') return;
-  if (isChimeMuted()) return;
+// ============================================================================
+// 2. ADMIN SOUND ENGINE: /sound/notif_admin.wav & /sound/chat.wav
+// ============================================================================
 
-  const audio = getAudioInstance(type);
-  if (!audio) {
-    playSyntheticChime(type);
-    return;
+let sharedAudioCtx = null;
+const decodedBufferCache = new Map();
+
+function getSharedAudioCtx() {
+  if (typeof window === 'undefined') return null;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new AudioCtx();
+  }
+  if (sharedAudioCtx.state === 'suspended') {
+    sharedAudioCtx.resume().catch(() => {});
+  }
+  return sharedAudioCtx;
+}
+
+// Pre-load audio buffer via Web Audio API so it's always ready in memory
+async function getOrLoadBuffer(src) {
+  const ctx = getSharedAudioCtx();
+  if (!ctx) return null;
+
+  if (decodedBufferCache.has(src)) {
+    return decodedBufferCache.get(src);
   }
 
   try {
-    if (audio.readyState >= 1) {
-      audio.currentTime = 0;
-    }
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-      playPromise.catch(() => {
-        // Autoplay policy or playback failure: fallback to Web Audio API
-        playSyntheticChime(type);
-      });
-    }
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const decoded = await ctx.decodeAudioData(arrayBuffer);
+    decodedBufferCache.set(src, decoded);
+    return decoded;
   } catch {
-    playSyntheticChime(type);
+    return null;
+  }
+}
+
+// Play decoded audio buffer directly through Web Audio API
+function playBuffer(buffer) {
+  const ctx = getSharedAudioCtx();
+  if (!ctx || !buffer) return false;
+
+  try {
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(1.0, ctx.currentTime);
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(0);
+    return true;
+  } catch {
+    return false;
   }
 }
 
 /**
- * Convenience helper for regular admin notifications (orders, payments, shipping, system alerts)
+ * Robust player for WAV files in Admin.
+ * Tries standard HTML5 Audio first; if blocked by browser policy,
+ * falls back to decoded Web Audio API BufferSourceNode.
+ */
+async function playWavSound(src) {
+  if (typeof window === 'undefined') return;
+  if (isChimeMuted()) return;
+
+  let playedViaAudioElement = false;
+
+  try {
+    const audio = new Audio(src);
+    audio.volume = 1.0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          playedViaAudioElement = true;
+        })
+        .catch(async () => {
+          // If browser autoplay policy blocked HTML5 Audio, use Web Audio API buffer
+          if (!playedViaAudioElement) {
+            const buf = await getOrLoadBuffer(src);
+            if (buf) {
+              playBuffer(buf);
+            }
+          }
+        });
+    }
+  } catch {
+    // Immediate catch fallback to Web Audio API
+    const buf = await getOrLoadBuffer(src);
+    if (buf) {
+      playBuffer(buf);
+    }
+  }
+}
+
+// Pre-warm audio files in browser on first user gesture (click/keydown)
+if (typeof window !== 'undefined') {
+  const prewarm = () => {
+    const ctx = getSharedAudioCtx();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    getOrLoadBuffer('/sound/notif_admin.wav');
+    getOrLoadBuffer('/sound/chat.wav');
+    window.removeEventListener('click', prewarm);
+    window.removeEventListener('keydown', prewarm);
+    window.removeEventListener('touchstart', prewarm);
+  };
+  window.addEventListener('click', prewarm, { once: true, passive: true });
+  window.addEventListener('keydown', prewarm, { once: true, passive: true });
+  window.addEventListener('touchstart', prewarm, { once: true, passive: true });
+}
+
+/**
+ * Regular Admin Notifications (Orders, Payments, Shipping, Bell Test)
+ * Plays: /sound/notif_admin.wav
  */
 export function playAdminNotificationSound() {
-  playNotificationSound('admin');
+  playWavSound('/sound/notif_admin.wav');
 }
 
 /**
- * Convenience helper for live chat notifications (inbound chat, customer/admin replies)
+ * Admin Live Chat Notifications (Inbound messages from customers)
+ * Plays: /sound/chat.wav
  */
 export function playChatNotificationSound() {
-  playNotificationSound('chat');
+  playWavSound('/sound/chat.wav');
 }
 
 /**
- * Backward-compatible function for existing callers
+ * Alias for general notification sound trigger
  * @param {'admin' | 'chat'} [type='admin']
  */
-export function playNotificationChime(type = 'admin') {
-  playNotificationSound(type);
+export function playNotificationSound(type = 'admin') {
+  if (type === 'chat') {
+    playChatNotificationSound();
+  } else {
+    playAdminNotificationSound();
+  }
 }

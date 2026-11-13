@@ -20,6 +20,9 @@ export function getNotificationImage(item = {}) {
     return item.imageUrl;
   }
   const t = (item?.type || '').toLowerCase();
+  if (t.includes('chat') || t.includes('message')) {
+    return '/img/logo.png';
+  }
   if (t.includes('order') || t.includes('paid') || t.includes('ship') || t.includes('courier') || t.includes('deliver')) {
     return '/img/betta-1.png';
   }
@@ -31,6 +34,20 @@ export function getNotificationImage(item = {}) {
 
 export function getNotificationMeta(type = '') {
   const t = (type || '').toLowerCase();
+
+  // 0. Chat / Pesan
+  if (t.includes('chat') || t.includes('message')) {
+    return {
+      label: 'Pesan',
+      variant: 'chat',
+      badgeColor: '#3B82F6',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+    };
+  }
 
   // 1. Pembayaran
   if (t.includes('paid') || t.includes('payment')) {

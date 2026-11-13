@@ -221,6 +221,74 @@
   padding: 0;
   margin: 0;
   max-height: 330px;
+  transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.listLimit10 {
+  max-height: min(530px, calc(100vh - 180px));
+}
+
+.listLimit15 {
+  max-height: min(720px, calc(100vh - 180px));
+}
+
+/* Limit Trigger Bar */
+.limitBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.875rem;
+  background: color-mix(in oklab, var(--text-muted) 4%, var(--bg-card));
+  border-top: 1px solid var(--border-color);
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.limitLabel {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.limitGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.limitGroupLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-right: 0.1rem;
+}
+
+.limitBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+}
+
+.limitBtn:hover {
+  color: var(--text-main);
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
+}
+
+.limitBtnActive {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.limitBtnActive:hover {
+  background: var(--primary-hover, var(--primary));
+  color: #fff;
 }
 
 .emptyState {

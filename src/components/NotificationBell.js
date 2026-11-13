@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getNotificationMeta, formatRelativeTime, getNotificationImage } from '@/lib/notificationHelpers';
-import { playAdminNotificationSound, isChimeMuted, setChimeMuted } from '@/lib/notificationSound';
+import { playAdminNotificationSound, playChatNotificationSound, playNotificationChime, isChimeMuted, setChimeMuted } from '@/lib/notificationSound';
 import styles from './NotificationBell.module.css';
 
 const POLL_MS = 30_000;
@@ -38,14 +38,15 @@ export default function NotificationBell() {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'unread'
+  const [displayLimit, setDisplayLimit] = useState(5); // default 5 items
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
   const [isRinging, setIsRinging] = useState(false);
   const [soundMuted, setSoundMuted] = useState(false);
-  const [floatingAlert, setFloatingAlert] = useState(null);
   const [pushStatus, setPushStatus] = useState('unknown'); // 'enabled' | 'blocked' | 'unsupported' | 'unknown'
 
   const prevUnreadRef = useRef(0);
@@ -59,13 +60,34 @@ export default function NotificationBell() {
     setSoundMuted(isChimeMuted());
   }, []);
 
+  const playAppropriateSound = (item = null) => {
+    if (currentUser?.role === 'admin') {
+      if (item?.type?.includes('chat')) {
+        playChatNotificationSound();
+      } else {
+        playAdminNotificationSound();
+      }
+    } else {
+      // Untuk customer: jika bertipe chat.reply, CustomerChatWidget sudah membunyikan
+      // chime di channel percakapan. Hindari suara ganda di lonceng.
+      if (item?.type === 'chat.reply' || item?.type?.includes('chat')) {
+        return;
+      }
+      playNotificationChime();
+    }
+  };
+
   const toggleSound = (e) => {
     e.stopPropagation();
     const next = !soundMuted;
     setSoundMuted(next);
     setChimeMuted(next);
     if (!next) {
-      playAdminNotificationSound();
+      if (currentUser?.role === 'admin') {
+        playAdminNotificationSound();
+      } else {
+        playNotificationChime();
+      }
       toast.info('Suara notifikasi diaktifkan.');
     } else {
       toast.info('Suara notifikasi dibisukan.');
@@ -101,16 +123,7 @@ export default function NotificationBell() {
         // Trigger bell wiggle & chime
         setIsRinging(true);
         setTimeout(() => setIsRinging(false), 1400);
-        playAdminNotificationSound();
-
-        // Tampilkan in-app floating banner untuk notifikasi paling baru
-        const latest = newItems[0];
-        if (latest && !latest.readAt) {
-          setFloatingAlert(latest);
-          setTimeout(() => {
-            setFloatingAlert((cur) => (cur?.id === latest.id ? null : cur));
-          }, 4500);
-        }
+        playAppropriateSound(newItems[0]);
       }
 
       setItems(newItems);
@@ -184,9 +197,7 @@ export default function NotificationBell() {
           if (msg.data) {
             setIsRinging(true);
             setTimeout(() => setIsRinging(false), 1400);
-            playAdminNotificationSound();
-            setFloatingAlert(msg.data);
-            setTimeout(() => setFloatingAlert((cur) => (cur?.id === msg.data?.id ? null : cur)), 4500);
+            playAppropriateSound(msg.data);
           }
         }).catch(() => {});
       } catch (err) {
@@ -245,13 +256,39 @@ export default function NotificationBell() {
     };
   }, [open]);
 
+  // Reset limit tampilan ke 5 saat dropdown ditutup
+  useEffect(() => {
+    if (!open) {
+      setDisplayLimit(5);
+    }
+  }, [open]);
+
+  // Collapse / deduplikasi notifikasi chat agar hanya 1 baris chat terbaru yang tampil
+  const processedItems = useMemo(() => {
+    const seenChat = new Set();
+    const result = [];
+    for (const item of items) {
+      if (item.type === 'chat.reply') {
+        if (seenChat.has('chat.reply')) continue;
+        seenChat.add('chat.reply');
+      }
+      result.push(item);
+    }
+    return result;
+  }, [items]);
+
   // Filtered items based on active tab
   const displayedItems = useMemo(() => {
     if (activeTab === 'unread') {
-      return items.filter((n) => !n.readAt);
+      return processedItems.filter((n) => !n.readAt);
     }
-    return items;
-  }, [items, activeTab]);
+    return processedItems;
+  }, [processedItems, activeTab]);
+
+  // Potong berdasarkan limit tampilan (5 / 10 / 15)
+  const visibleItems = useMemo(() => {
+    return displayedItems.slice(0, displayLimit);
+  }, [displayedItems, displayLimit]);
 
   const hasReadItems = useMemo(() => {
     return items.some((n) => n.readAt);
@@ -282,6 +319,17 @@ export default function NotificationBell() {
       } catch { /* silent */ }
     }
     setOpen(false);
+
+    const isChat = item.type === 'chat.reply' || item.link?.includes('openChat=1');
+    if (isChat) {
+      if (pathname?.startsWith('/admin')) {
+        router.push(item.link || '/customer/dashboard?openChat=1');
+      } else {
+        window.dispatchEvent(new CustomEvent('sumde:open-chat'));
+      }
+      return;
+    }
+
     const destination = resolveTargetLink(item);
     if (destination) {
       router.push(destination);
@@ -370,60 +418,6 @@ export default function NotificationBell() {
         {unread > 0 && <span className={styles.badge}>{unread > 99 ? '99+' : unread}</span>}
       </button>
 
-      {/* Floating Alert Banner (realtime popup) */}
-      {floatingAlert && (
-        <div className={styles.floatingAlert} role="status">
-          <div className={styles.floatingThumbWrapper}>
-            <img
-              src={getNotificationImage(floatingAlert)}
-              alt=""
-              className={styles.floatingThumbImage}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = '/img/betta-1.png';
-              }}
-            />
-            <span
-              className={styles.cornerBadge}
-              style={{ backgroundColor: getNotificationMeta(floatingAlert.type).badgeColor }}
-            >
-              {getNotificationMeta(floatingAlert.type).icon}
-            </span>
-          </div>
-          <div className={styles.floatingAlertContent}>
-            <div className={styles.floatingAlertCategory}>
-              {getNotificationMeta(floatingAlert.type).label} • Baru saja
-            </div>
-            <div className={styles.floatingAlertTitle}>{floatingAlert.title || 'Notifikasi Baru'}</div>
-            {floatingAlert.body && <div className={styles.floatingAlertBody}>{floatingAlert.body}</div>}
-            {floatingAlert.link && (
-              <button
-                type="button"
-                className={styles.floatingAlertLink}
-                onClick={() => {
-                  const dest = resolveTargetLink(floatingAlert);
-                  setFloatingAlert(null);
-                  if (dest) router.push(dest);
-                }}
-              >
-                Lihat Detail →
-              </button>
-            )}
-          </div>
-          <button
-            type="button"
-            className={styles.floatingAlertClose}
-            onClick={() => setFloatingAlert(null)}
-            aria-label="Tutup alert"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {/* Dropdown Card */}
       {open && (
         <>
@@ -502,7 +496,7 @@ export default function NotificationBell() {
             </div>
 
             {/* List Body */}
-            <div className={styles.list}>
+            <div className={`${styles.list} ${displayLimit === 10 ? styles.listLimit10 : displayLimit === 15 ? styles.listLimit15 : ''}`}>
               {displayedItems.length === 0 ? (
                 <div className={styles.emptyState}>
                   <div className={styles.emptyIcon}>
@@ -528,7 +522,7 @@ export default function NotificationBell() {
                   </p>
                 </div>
               ) : (
-                displayedItems.map((item) => {
+                visibleItems.map((item) => {
                   const meta = getNotificationMeta(item.type);
                   const imageSrc = getNotificationImage(item);
                   return (
@@ -572,6 +566,44 @@ export default function NotificationBell() {
                 })
               )}
             </div>
+
+            {/* Trigger Pengatur Panjang Daftar (5 / 10 / 15) */}
+            {displayedItems.length > 5 && (
+              <div className={styles.limitBar}>
+                <span className={styles.limitLabel}>
+                  {visibleItems.length} dari {displayedItems.length} notifikasi
+                </span>
+                <div className={styles.limitGroup}>
+                  <span className={styles.limitGroupLabel}>Lihat:</span>
+                  <button
+                    type="button"
+                    className={`${styles.limitBtn} ${displayLimit === 5 ? styles.limitBtnActive : ''}`}
+                    onClick={() => setDisplayLimit(5)}
+                    title="Tampilkan 5 notifikasi"
+                  >
+                    5
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.limitBtn} ${displayLimit === 10 ? styles.limitBtnActive : ''}`}
+                    onClick={() => setDisplayLimit(10)}
+                    title="Tampilkan 10 notifikasi"
+                  >
+                    10
+                  </button>
+                  {displayedItems.length > 10 && (
+                    <button
+                      type="button"
+                      className={`${styles.limitBtn} ${displayLimit === 15 ? styles.limitBtnActive : ''}`}
+                      onClick={() => setDisplayLimit(15)}
+                      title="Tampilkan 15 notifikasi"
+                    >
+                      15
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Web Push Banner (User-initiated opt-in) */}
             {pushStatus !== 'unsupported' && pushStatus !== 'enabled' && pushStatus !== 'blocked' && (

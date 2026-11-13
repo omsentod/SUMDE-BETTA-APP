@@ -172,13 +172,16 @@ export async function POST(request, context) {
     await publishToConversation(id, 'new-message', newMessage);
 
     // Jika user terdaftar, kirimkan notifikasi ke akun mereka (Lonceng DB + Web Push)
+    // Gunakan overwriteType: true agar pesan chat baru menimpa chat sebelumnya (hanya 1 baris chat terbaru di notifikasi)
     if (conversation.userId) {
       createNotification({
         userId: conversation.userId,
         type: 'chat.reply',
         title: 'Pesan Baru dari Admin SUMDE BETTA',
         body: rawMessage.slice(0, 100),
-        link: '/customer/dashboard',
+        link: '/customer/dashboard?openChat=1',
+        imageUrl: '/img/logo.png',
+        overwriteType: true,
       }).catch((err) => console.warn('[Notification] Dispatch failed:', err.message));
     }
 
