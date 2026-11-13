@@ -111,10 +111,10 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('Error saat GET conversation:', err.message);
-    return NextResponse.json(
-      { error: 'Gagal memuat percakapan chat.' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      conversation: null,
+      messages: [],
+    });
   }
 }
 

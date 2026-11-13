@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 const AuthContext = createContext();
 
@@ -38,7 +38,7 @@ function broadcastAuthChange() {
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const refreshInFlightRef = React.useRef(false);
+    const refreshInFlightRef = useRef(false);
 
     const refreshSession = useCallback(async () => {
         if (refreshInFlightRef.current) return;

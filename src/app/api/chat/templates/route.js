@@ -40,9 +40,6 @@ export async function GET(request) {
     return NextResponse.json({ templates: sorted });
   } catch (err) {
     console.error('Error saat GET chat templates:', err.message);
-    return NextResponse.json(
-      { error: 'Gagal memuat template pertanyaan chat.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ templates: [] });
   }
 }

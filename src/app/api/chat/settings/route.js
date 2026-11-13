@@ -36,10 +36,14 @@ export async function GET() {
     return NextResponse.json(statusData);
   } catch (err) {
     console.error('Error saat GET chat settings:', err.message);
-    return NextResponse.json(
-      { error: 'Gagal mengambil pengaturan chat.' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      status: 'ONLINE',
+      operatingHoursStart: '08:00',
+      operatingHoursEnd: '21:00',
+      isWithinHours: true,
+      offlineMessage: '',
+      emergencyWaNumber: '',
+    });
   }
 }
 
