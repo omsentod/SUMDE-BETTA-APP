@@ -1,0 +1,4 @@
+# Custom Error Documents for Hostinger (Nginx / Apache / OpenLiteSpeed)
+ErrorDocument 502 /502.html
+ErrorDocument 503 /502.html
+ErrorDocument 504 /504.html

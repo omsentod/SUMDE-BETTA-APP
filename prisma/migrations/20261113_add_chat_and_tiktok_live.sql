@@ -160,3 +160,10 @@ ALTER TABLE `TikTokLiveItem` ADD CONSTRAINT `TikTokLiveItem_tiktokAccountId_fkey
 ALTER TABLE `TikTokLiveItem` ADD CONSTRAINT `TikTokLiveItem_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE `Conversation` ADD CONSTRAINT `Conversation_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE `ChatMessage` ADD CONSTRAINT `ChatMessage_conversationId_fkey` FOREIGN KEY (`conversationId`) REFERENCES `Conversation`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- 13. Tambah kolom WhatsApp-like features pada ChatMessage (Edit & Soft Delete)
+ALTER TABLE `ChatMessage`
+  ADD COLUMN `isEdited` BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN `isDeleted` BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN `editedAt` DATETIME(3) NULL,
+  ADD COLUMN `deletedAt` DATETIME(3) NULL;

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import * as Ably from 'ably';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { playNotificationChime } from '@/lib/notificationSound';
+import { playChatNotificationSound } from '@/lib/notificationSound';
 import { startTabTitleFlash } from '@/lib/tabFlashing';
 import UserAvatar from '@/components/UserAvatar';
 import styles from './chat.module.css';
@@ -102,6 +102,13 @@ function AdminChatInner() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const replyInputRef = useRef(null);
+
+  // WhatsApp-Style Feature States (Edit, Delete, Multi-Select)
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [editingMessage, setEditingMessage] = useState(null); // { id, message }
+  const [activeMenuMessageId, setActiveMenuMessageId] = useState(null);
 
   const convoChannelRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -225,6 +232,11 @@ function AdminChatInner() {
 
   const handleSelectConversation = (id) => {
     setSelectedId(id);
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
+    setEditingMessage(null);
+    setActiveMenuMessageId(null);
+    setReplyText('');
     fetchActiveConversation(id);
   };
 
@@ -330,7 +342,7 @@ function AdminChatInner() {
         adminChannel.subscribe('new-inbound-chat', () => {
           if (!cancelled) {
             fetchConversationsRef.current?.();
-            playNotificationChime();
+            playChatNotificationSound();
             if (typeof document !== 'undefined' && document.hidden) {
               startTabTitleFlash();
             }
@@ -382,14 +394,81 @@ function AdminChatInner() {
                 return [...prev, incoming];
               });
 
-              // Jika pesan dari customer, bunyikan audio chime & tandai dibaca
+              // Jika pesan dari customer, bunyikan audio notifikasi chat & tandai dibaca
               if (incoming.senderRole === 'CUSTOMER') {
-                playNotificationChime();
+                playChatNotificationSound();
                 if (typeof document !== 'undefined' && document.hidden) {
                   startTabTitleFlash();
                 }
                 fetch(`/api/admin/chat/conversations/${selectedId}/read`, { method: 'POST' }).catch(() => {});
               }
+            }
+          }).catch(() => {});
+
+          // D. Pembaruan pesan (WhatsApp Edit)
+          convoChannel.subscribe('message-updated', (msgEvent) => {
+            if (cancelled) return;
+            const updated = msgEvent?.data;
+            if (updated?.id) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === updated.id
+                    ? {
+                        ...m,
+                        message: updated.message,
+                        isEdited: true,
+                        editedAt: updated.editedAt || new Date().toISOString(),
+                      }
+                    : m
+                )
+              );
+            }
+          }).catch(() => {});
+
+          // E. Penghapusan pesan tunggal (WhatsApp Soft Delete)
+          convoChannel.subscribe('message-deleted', (msgEvent) => {
+            if (cancelled) return;
+            const deleted = msgEvent?.data;
+            if (deleted?.id) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === deleted.id
+                    ? {
+                        ...m,
+                        isDeleted: true,
+                        message: 'Pesan ini telah dihapus',
+                        attachedType: null,
+                        attachedId: null,
+                        attachedMeta: null,
+                        deletedAt: deleted.deletedAt || new Date().toISOString(),
+                      }
+                    : m
+                )
+              );
+            }
+          }).catch(() => {});
+
+          // F. Penghapusan banyak pesan (WhatsApp Batch Delete)
+          convoChannel.subscribe('messages-deleted', (msgEvent) => {
+            if (cancelled) return;
+            const ids = msgEvent?.data?.ids;
+            if (Array.isArray(ids)) {
+              const idSet = new Set(ids);
+              setMessages((prev) =>
+                prev.map((m) =>
+                  idSet.has(m.id)
+                    ? {
+                        ...m,
+                        isDeleted: true,
+                        message: 'Pesan ini telah dihapus',
+                        attachedType: null,
+                        attachedId: null,
+                        attachedMeta: null,
+                        deletedAt: new Date().toISOString(),
+                      }
+                    : m
+                )
+              );
             }
           }).catch(() => {});
         }
@@ -427,6 +506,185 @@ function AdminChatInner() {
     };
   }, [selectedId]);
 
+  // Tutup menu popover pesan jika klik di luar
+  useEffect(() => {
+    if (!activeMenuMessageId) return;
+    const handleOutside = () => setActiveMenuMessageId(null);
+    window.addEventListener('click', handleOutside);
+    return () => window.removeEventListener('click', handleOutside);
+  }, [activeMenuMessageId]);
+
+  // Tombol Escape untuk membatalkan seleksi atau mode edit
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (activeMenuMessageId) {
+          setActiveMenuMessageId(null);
+        } else if (isSelectionMode) {
+          setIsSelectionMode(false);
+          setSelectedIds(new Set());
+        } else if (editingMessage) {
+          setEditingMessage(null);
+          setReplyText('');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeMenuMessageId, isSelectionMode, editingMessage]);
+
+  // ==========================================
+  // WHATSAPP FEATURE HANDLERS (EDIT, SELECT, DELETE)
+  // ==========================================
+  const handleStartEdit = (msg) => {
+    setEditingMessage({ id: msg.id, message: msg.message });
+    setReplyText(msg.message);
+    setActiveMenuMessageId(null);
+    setTimeout(() => {
+      replyInputRef.current?.focus();
+    }, 50);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage(null);
+    setReplyText('');
+  };
+
+  const handleCopyMessage = (text) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      toast.success('Teks pesan berhasil disalin.');
+    }
+    setActiveMenuMessageId(null);
+  };
+
+  const handleEnterSelectMode = (initialId) => {
+    setIsSelectionMode(true);
+    setSelectedIds(new Set([initialId]));
+    setActiveMenuMessageId(null);
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleExitSelectMode = () => {
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleCopySelected = () => {
+    const selectedMsgs = messages.filter((m) => selectedIds.has(m.id) && !m.isDeleted);
+    if (selectedMsgs.length === 0) {
+      toast.info('Tidak ada teks pesan untuk disalin.');
+      return;
+    }
+    const combined = selectedMsgs.map((m) => m.message).join('\n\n');
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(combined);
+      toast.success(`${selectedMsgs.length} pesan berhasil disalin.`);
+    }
+    handleExitSelectMode();
+  };
+
+  const handleTriggerSingleDelete = async (msgId) => {
+    setActiveMenuMessageId(null);
+    const ok = await confirmDialog({
+      title: 'Hapus Pesan?',
+      message: 'Pesan ini akan dihapus untuk semua orang dalam obrolan.',
+      confirmText: 'Hapus untuk Semua',
+      cancelText: 'Batal',
+      isDanger: true,
+    });
+    if (!ok) return;
+
+    // Optimistic UI update
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId
+          ? {
+              ...m,
+              isDeleted: true,
+              message: 'Pesan ini telah dihapus',
+              attachedType: null,
+              attachedId: null,
+              attachedMeta: null,
+              deletedAt: new Date().toISOString(),
+            }
+          : m
+      )
+    );
+
+    try {
+      const res = await fetch(`/api/chat/messages/${msgId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Gagal menghapus pesan.');
+      } else {
+        toast.success('Pesan berhasil dihapus.');
+      }
+    } catch {
+      toast.error('Gagal menghubungi server saat menghapus pesan.');
+    }
+  };
+
+  const handleTriggerBatchDelete = async () => {
+    const idsArray = Array.from(selectedIds);
+    if (idsArray.length === 0) return;
+
+    const ok = await confirmDialog({
+      title: `Hapus ${idsArray.length} Pesan?`,
+      message: `${idsArray.length} pesan terpilih akan dihapus untuk semua orang.`,
+      confirmText: 'Hapus Semua',
+      cancelText: 'Batal',
+      isDanger: true,
+    });
+    if (!ok) return;
+
+    const idSet = new Set(idsArray);
+    // Optimistic UI update
+    setMessages((prev) =>
+      prev.map((m) =>
+        idSet.has(m.id)
+          ? {
+              ...m,
+              isDeleted: true,
+              message: 'Pesan ini telah dihapus',
+              attachedType: null,
+              attachedId: null,
+              attachedMeta: null,
+              deletedAt: new Date().toISOString(),
+            }
+          : m
+      )
+    );
+    handleExitSelectMode();
+
+    try {
+      const res = await fetch('/api/chat/messages/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageIds: idsArray }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Gagal menghapus pesan terpilih.');
+      } else {
+        toast.success(`${idsArray.length} pesan berhasil dihapus.`);
+      }
+    } catch {
+      toast.error('Gagal menghubungi server saat memproses hapus banyak pesan.');
+    }
+  };
+
   // Handler saat admin mengetik balasan (Kirim sinyal typing indicator ke customer)
   const handleReplyTextChange = (e) => {
     const val = e.target.value;
@@ -454,6 +712,48 @@ function AdminChatInner() {
       convoChannelRef.current.publish('admin-typing', { isTyping: false }).catch(() => {});
     }
 
+    // A. JIKA SEDANG MODE EDIT PESAN
+    if (editingMessage) {
+      const editId = editingMessage.id;
+      setSending(true);
+      setEditingMessage(null);
+      setReplyText('');
+
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editId
+            ? {
+                ...m,
+                message: text,
+                isEdited: true,
+                editedAt: new Date().toISOString(),
+              }
+            : m
+        )
+      );
+
+      try {
+        const res = await fetch(`/api/chat/messages/${editId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+        if (res.ok) {
+          toast.success('Pesan berhasil diperbarui.');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          toast.error(err.error || 'Gagal mengedit pesan.');
+        }
+      } catch {
+        toast.error('Terjadi kendala saat mengedit pesan.');
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
+    // B. JIKA MENGIRIM PESAN BARU
     setSending(true);
     setReplyText('');
 
@@ -747,11 +1047,11 @@ function AdminChatInner() {
 
             <ul className={styles.convoList}>
               {loadingConvos ? (
-                <li style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <li className={styles.emptyConversationState}>
                   Memuat obrolan...
                 </li>
               ) : conversations.length === 0 ? (
-                <li style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <li className={styles.emptyConversationState}>
                   Belum ada pesan pelanggan.
                 </li>
               ) : (
@@ -786,7 +1086,7 @@ function AdminChatInner() {
                           {c.isGuest ? (
                             <span className={styles.guestBadge}>Tamu</span>
                           ) : (
-                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                            <span className={styles.convoEmail}>
                               {c.customerEmail}
                             </span>
                           )}
@@ -840,6 +1140,56 @@ function AdminChatInner() {
                   </div>
                 </div>
 
+                {/* Bilah Seleksi Pesan Ala WhatsApp */}
+                {isSelectionMode && (
+                  <div className={styles.selectionBar}>
+                    <div className={styles.selectionBarLeft}>
+                      <button
+                        type="button"
+                        className={styles.selectionCloseBtn}
+                        onClick={handleExitSelectMode}
+                        title="Batal memilih (Esc)"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                      <span className={styles.selectionCount}>
+                        {selectedIds.size} pesan dipilih
+                      </span>
+                    </div>
+                    <div className={styles.selectionBarRight}>
+                      <button
+                        type="button"
+                        className={styles.selectionActionBtn}
+                        onClick={handleCopySelected}
+                        disabled={selectedIds.size === 0}
+                        title="Salin pesan terpilih"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        <span>Salin</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.selectionActionBtn} ${styles.selectionDeleteBtn}`}
+                        onClick={handleTriggerBatchDelete}
+                        disabled={selectedIds.size === 0}
+                        title="Hapus pesan terpilih"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Pesan Berjalan */}
                 <div className={styles.messagesScroll}>
                   {loadingMessages ? (
@@ -849,8 +1199,15 @@ function AdminChatInner() {
                   ) : (
                     messages.map((m, idx) => {
                       const isAdmin = m.senderRole === 'ADMIN';
+                      const isSelected = selectedIds.has(m.id);
+                      const isMenuOpen = activeMenuMessageId === m.id;
+                      const isDeleted = !!m.isDeleted;
+                      const isEdited = !!m.isEdited;
+                      const canEdit = !isDeleted && isAdmin;
+                      const canDelete = !isDeleted;
+
                       let metaObj = null;
-                      if (m.attachedMeta) {
+                      if (!isDeleted && m.attachedMeta) {
                         if (typeof m.attachedMeta === 'object') {
                           metaObj = m.attachedMeta;
                         } else {
@@ -867,8 +1224,30 @@ function AdminChatInner() {
                           key={`${m.id || 'msg'}-${idx}`}
                           className={`${styles.bubbleRow} ${
                             isAdmin ? styles.bubbleRowAdmin : styles.bubbleRowCustomer
+                          } ${isSelectionMode ? styles.bubbleRowSelectMode : ''} ${
+                            isSelected ? styles.bubbleRowSelected : ''
                           }`}
+                          onClick={() => {
+                            if (isSelectionMode && m.id) {
+                              handleToggleSelect(m.id);
+                            }
+                          }}
                         >
+                          {/* Lingkaran seleksi pesan WhatsApp */}
+                          {isSelectionMode && (
+                            <div
+                              className={`${styles.selectCheckbox} ${
+                                isSelected ? styles.selectCheckboxActive : ''
+                              }`}
+                            >
+                              {isSelected && (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </div>
+                          )}
+
                           {!isAdmin && (
                             <UserAvatar
                               user={{
@@ -886,10 +1265,102 @@ function AdminChatInner() {
                               isAdmin ? styles.bubbleAdmin : styles.bubbleCustomer
                             }`}
                           >
-                            <div>{m.message}</div>
+                            {/* Tombol Trigger Opsi Pesan WhatsApp */}
+                            {!isSelectionMode && m.id && (
+                              <button
+                                type="button"
+                                className={`${styles.bubbleTriggerBtn} ${
+                                  isMenuOpen ? styles.bubbleTriggerBtnActive : ''
+                                }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuMessageId(isMenuOpen ? null : m.id);
+                                }}
+                                title="Opsi pesan"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                              </button>
+                            )}
+
+                            {/* Dropdown Menu Popover WhatsApp */}
+                            {isMenuOpen && (
+                              <div
+                                className={styles.bubbleMenuDropdown}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {canEdit && (
+                                  <button
+                                    type="button"
+                                    className={styles.bubbleMenuItem}
+                                    onClick={() => handleStartEdit(m)}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg>
+                                    <span>Edit Pesan</span>
+                                  </button>
+                                )}
+
+                                {!isDeleted && (
+                                  <button
+                                    type="button"
+                                    className={styles.bubbleMenuItem}
+                                    onClick={() => handleCopyMessage(m.message)}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                    </svg>
+                                    <span>Salin Teks</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  className={styles.bubbleMenuItem}
+                                  onClick={() => handleEnterSelectMode(m.id)}
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M9 11l3 3L22 4" />
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                                  </svg>
+                                  <span>Pilih Pesan</span>
+                                </button>
+
+                                {canDelete && (
+                                  <button
+                                    type="button"
+                                    className={`${styles.bubbleMenuItem} ${styles.bubbleMenuItemDanger}`}
+                                    onClick={() => handleTriggerSingleDelete(m.id)}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                    <span>Hapus Pesan</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Teks Pesan / Status Hapus */}
+                            {isDeleted ? (
+                              <div className={styles.deletedMessage}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                </svg>
+                                <span>Pesan ini telah dihapus</span>
+                              </div>
+                            ) : (
+                              <div>{m.message}</div>
+                            )}
 
                             {/* Lampiran Kartu Produk */}
-                            {m.attachedType === 'PRODUCT' && metaObj && (
+                            {!isDeleted && m.attachedType === 'PRODUCT' && metaObj && (
                               <div className={styles.attachedCard}>
                                 {metaObj.image && (
                                   <Image
@@ -911,7 +1382,7 @@ function AdminChatInner() {
                             )}
 
                             {/* Lampiran Info Pesanan Shopee-Style */}
-                            {m.attachedType === 'ORDER' && metaObj && (
+                            {!isDeleted && m.attachedType === 'ORDER' && metaObj && (
                               <div className={styles.orderBannerCard}>
                                 {metaObj.image ? (
                                   <Image
@@ -956,7 +1427,12 @@ function AdminChatInner() {
                               </div>
                             )}
 
-                            <span className={styles.bubbleTime}>{formatTime(m.createdAt)}</span>
+                            <div className={styles.bubbleFooter}>
+                              <span className={styles.bubbleTime}>{formatTime(m.createdAt)}</span>
+                              {isEdited && !isDeleted && (
+                                <span className={styles.bubbleEdited}>• diedit</span>
+                              )}
+                            </div>
                           </div>
 
                           {isAdmin && (
@@ -976,8 +1452,37 @@ function AdminChatInner() {
 
                 {/* Komposer Pesan Balasan */}
                 <div className={styles.composerArea}>
+                  {/* Banner Mode Edit Pesan ala WhatsApp */}
+                  {editingMessage && (
+                    <div className={styles.editingBanner}>
+                      <div className={styles.editingBannerLeft}>
+                        <div className={styles.editingBannerIcon}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </div>
+                        <div className={styles.editingBannerContent}>
+                          <span className={styles.editingBannerTitle}>Mengedit pesan</span>
+                          <span className={styles.editingBannerPreview}>{editingMessage.message}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.editingCancelBtn}
+                        onClick={handleCancelEdit}
+                        title="Batal edit (Esc)"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Bilah Balasan Cepat Admin (Canned Answers) */}
-                  {quickReplies.length > 0 && (
+                  {!editingMessage && quickReplies.length > 0 && (
                     <div className={styles.quickTemplatesBar}>
                       <span className={styles.quickTemplatesBarTitle}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1001,9 +1506,14 @@ function AdminChatInner() {
 
                   <form className={styles.composerForm} onSubmit={handleSendReply}>
                     <textarea
+                      ref={replyInputRef}
                       rows={1}
                       className={styles.composerTextarea}
-                      placeholder="Ketik balasan admin... (Enter untuk kirim, Shift+Enter baris baru)"
+                      placeholder={
+                        editingMessage
+                          ? 'Perbarui pesan... (Enter untuk simpan, Esc untuk batal)'
+                          : 'Ketik balasan admin... (Enter untuk kirim, Shift+Enter baris baru)'
+                      }
                       value={replyText}
                       onChange={handleReplyTextChange}
                       onKeyDown={(e) => {
@@ -1018,7 +1528,7 @@ function AdminChatInner() {
                       disabled={!replyText.trim() || sending}
                       className={styles.sendBtn}
                     >
-                      {sending ? 'Mengirim...' : 'Kirim'}
+                      {sending ? 'Memproses...' : editingMessage ? 'Simpan' : 'Kirim'}
                     </button>
                   </form>
                 </div>
@@ -1028,8 +1538,8 @@ function AdminChatInner() {
                 <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Pilih Obrolan untuk Memulai</div>
-                <div style={{ fontSize: '0.8rem', maxWidth: '300px' }}>
+                <div className={styles.emptyStateTitle}>Pilih Obrolan untuk Memulai</div>
+                <div className={styles.emptyStateSubtitle}>
                   Pilih salah satu pesan pelanggan di sebelah kiri untuk melihat riwayat dan membalas secara langsung.
                 </div>
               </div>

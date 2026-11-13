@@ -436,6 +436,10 @@ model ChatMessage {
   attachedId      String?       // ID Produk atau ID Order
   attachedMeta    String?       @db.Text // JSON string info snapshot (nama, gambar, harga/status)
   isRead          Boolean       @default(false)
+  isEdited        Boolean       @default(false)
+  isDeleted       Boolean       @default(false)
+  editedAt        DateTime?
+  deletedAt       DateTime?
   createdAt       DateTime      @default(now())
 
   @@index([conversationId])

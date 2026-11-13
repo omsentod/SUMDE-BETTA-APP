@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getNotificationMeta, formatRelativeTime, getNotificationImage } from '@/lib/notificationHelpers';
-import { playNotificationChime, isChimeMuted, setChimeMuted } from '@/lib/notificationSound';
+import { playAdminNotificationSound, isChimeMuted, setChimeMuted } from '@/lib/notificationSound';
 import styles from './NotificationBell.module.css';
 
 const POLL_MS = 30_000;
@@ -65,7 +65,7 @@ export default function NotificationBell() {
     setSoundMuted(next);
     setChimeMuted(next);
     if (!next) {
-      playNotificationChime();
+      playAdminNotificationSound();
       toast.info('Suara notifikasi diaktifkan.');
     } else {
       toast.info('Suara notifikasi dibisukan.');
@@ -101,7 +101,7 @@ export default function NotificationBell() {
         // Trigger bell wiggle & chime
         setIsRinging(true);
         setTimeout(() => setIsRinging(false), 1400);
-        playNotificationChime();
+        playAdminNotificationSound();
 
         // Tampilkan in-app floating banner untuk notifikasi paling baru
         const latest = newItems[0];
@@ -184,7 +184,7 @@ export default function NotificationBell() {
           if (msg.data) {
             setIsRinging(true);
             setTimeout(() => setIsRinging(false), 1400);
-            playNotificationChime();
+            playAdminNotificationSound();
             setFloatingAlert(msg.data);
             setTimeout(() => setFloatingAlert((cur) => (cur?.id === msg.data?.id ? null : cur)), 4500);
           }

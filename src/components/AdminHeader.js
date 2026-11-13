@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { playNotificationChime } from '@/lib/notificationSound';
+import { playChatNotificationSound } from '@/lib/notificationSound';
 import { startTabTitleFlash } from '@/lib/tabFlashing';
 // import { useTheme } from '@/context/ThemeContext'; // theme toggle dinonaktifkan sementara
 import NotificationBell from '@/components/NotificationBell';
@@ -129,18 +129,18 @@ export default function AdminHeader({ onToggleSidebar, isSidebarOpen = false }) 
           const currentPath = pathnameRef.current;
           const isNotOnChatPage = currentPath !== '/admin/chat';
 
-          // Bunyikan chime notifikasi audio jika admin di halaman lain atau tab sedang tertutup/hidden
+          // Bunyikan notifikasi audio chat jika admin di halaman lain atau tab sedang tertutup/hidden
           if (isNotOnChatPage || isHidden) {
-            playNotificationChime();
+            playChatNotificationSound();
           }
 
           // Jika tab sedang di-minimize / buka tab lain, jalankan tab title flash & desktop notification
           if (isHidden) {
-            startTabTitleFlash(`💬 (1) Pesan dari ${data.senderName || 'Pelanggan'}!`);
+            startTabTitleFlash(`(1) Pesan dari ${data.senderName || 'Pelanggan'}!`);
 
             if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
               try {
-                const notif = new Notification(`💬 Pesan dari ${data.senderName || 'Pelanggan'}`, {
+                const notif = new Notification(`Pesan dari ${data.senderName || 'Pelanggan'}`, {
                   body: data.preview || 'Pelanggan mengirimkan pesan baru.',
                   icon: '/img/betta-1.png',
                   tag: `chat-${data.conversationId}`,
