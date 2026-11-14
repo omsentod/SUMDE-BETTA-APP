@@ -47,6 +47,86 @@ export async function POST(request) {
       }
     }
 
+    // Dukungan aksi bulk pack box (banyak paket sekaligus selesai dikemas)
+    if (action === 'pack' && Array.isArray(body.orderIds) && body.orderIds.length > 0) {
+      const validOrderIds = body.orderIds
+        .map((id) => String(id || '').trim())
+        .filter((id) => id.length >= 3 && id.length <= 100);
+
+      if (validOrderIds.length > 0) {
+        await prisma.order.updateMany({
+          where: {
+            id: { in: validOrderIds },
+            packingStatus: 'BAGGED',
+          },
+          data: {
+            packingStatus: 'READY_FOR_PICKUP',
+            status: 'PROCESSING',
+            packedAt: new Date(),
+            packedBy: staffName,
+          },
+        });
+
+        notifyAllAdmins({
+          type: 'order.ready_for_pickup',
+          title: 'Paket Siap Dijemput Kurir',
+          body: `${validOrderIds.length} paket telah selesai di-pack box dan siap dijemput kurir ekspedisi.`,
+          link: '/admin/orders?status=READY_FOR_PICKUP',
+        }).catch((err) => console.warn('Gagal broadcast notifikasi ready for pickup bulk:', err.message));
+
+        return NextResponse.json({
+          success: true,
+          action: 'pack',
+          bulk: true,
+          count: validOrderIds.length,
+          message: `✓ ${validOrderIds.length} paket selesai dikemas box & siap dijemput kurir!`,
+        });
+      }
+    }
+
+    // Dukungan aksi bulk undo
+    if (action === 'undo' && Array.isArray(body.orderIds) && body.orderIds.length > 0) {
+      const validOrderIds = body.orderIds
+        .map((id) => String(id || '').trim())
+        .filter((id) => id.length >= 3 && id.length <= 100);
+
+      if (validOrderIds.length > 0) {
+        // Kembalikan READY_FOR_PICKUP ke BAGGED
+        await prisma.order.updateMany({
+          where: {
+            id: { in: validOrderIds },
+            packingStatus: 'READY_FOR_PICKUP',
+          },
+          data: {
+            packingStatus: 'BAGGED',
+            packedAt: null,
+            packedBy: null,
+          },
+        });
+
+        // Kembalikan BAGGED ke PENDING
+        await prisma.order.updateMany({
+          where: {
+            id: { in: validOrderIds },
+            packingStatus: 'BAGGED',
+          },
+          data: {
+            packingStatus: 'PENDING',
+            baggedAt: null,
+            baggedBy: null,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          action: 'undo',
+          bulk: true,
+          count: validOrderIds.length,
+          message: `Status ${validOrderIds.length} pesanan berhasil dikembalikan ke tahap sebelumnya.`,
+        });
+      }
+    }
+
     const rawCode = String(body.code || '').trim();
 
     if (!rawCode || rawCode.length < 3) {

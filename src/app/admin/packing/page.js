@@ -12,7 +12,7 @@ import styles from './packing.module.css';
 
 // Ikon SVG monokrom bersih tanpa dependensi luar
 const iconCamera = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
     <circle cx="12" cy="13" r="4" />
   </svg>
@@ -28,7 +28,7 @@ const iconFish = (
 );
 
 const iconTag = (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
     <path d="M7 7h.01" />
   </svg>
@@ -39,6 +39,15 @@ const iconBox = (
     <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
     <path d="m3.3 7 8.7 5 8.7-5" />
     <path d="M12 22V12" />
+  </svg>
+);
+
+const iconTruck = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="1" y="3" width="15" height="13" />
+    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
   </svg>
 );
 
@@ -61,6 +70,55 @@ const iconSearch = (
   </svg>
 );
 
+const iconCalendar = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const iconRefresh = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const iconSelect = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="9 11 12 14 22 4" />
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+  </svg>
+);
+
+const iconClose = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const iconCopy = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+
+// Format YYYY-MM-DD untuk input HTML date
+const toDateInputValue = (d) => {
+  if (!d) return '';
+  const dateObj = typeof d === 'string' ? new Date(d) : d;
+  if (isNaN(dateObj.getTime())) return '';
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 function resolveTikTokHost(order) {
   if (order?.tiktokLiveBasket?.tiktokAccount?.handle) {
     const h = order.tiktokLiveBasket.tiktokAccount.handle.trim();
@@ -76,6 +134,30 @@ function resolveTikTokHost(order) {
   return null;
 }
 
+// Format varian bersih tanpa redundansi kata "Size"
+function formatVariantLabel(variantStr) {
+  if (!variantStr) return null;
+  const raw = String(variantStr).trim();
+  if (!raw) return null;
+  const cleaned = raw.replace(/^size\s+/i, '').trim();
+  return cleaned || raw;
+}
+
+// Format waktu ramah Indonesia (WIB)
+function formatTimeIndo(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const isToday =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+
+  const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+  if (isToday) return `Hari ini, ${time}`;
+  return `${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}, ${time}`;
+}
+
 function PackingPageInner() {
   const { currentUser, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -83,14 +165,35 @@ function PackingPageInner() {
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'bagging');
+  // Default filter tanggal: khusus tab shipped default 'today' (real-time monitor pickup kurir hari ini)
+  const [dateFilter, setDateFilter] = useState(() => {
+    const initialTab = searchParams.get('tab') || 'bagging';
+    return searchParams.get('dateFilter') || (initialTab === 'shipped' ? 'today' : 'all');
+  });
+
+  // State kalender custom (rentang tanggal pilihan)
+  const [customStartDate, setCustomStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return toDateInputValue(d);
+  });
+  const [customEndDate, setCustomEndDate] = useState(() => {
+    return toDateInputValue(new Date());
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState([]);
-  const [counts, setCounts] = useState({ bagging: 0, boxing: 0, ready: 0, shipped: 0, pendingTotal: 0 });
+  const [counts, setCounts] = useState({ bagging: 0, boxing: 0, ready: 0, shipped: 0, shippedTotal: 0, pendingTotal: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [checkedChecklist, setCheckedChecklist] = useState({});
+
+  // Mode Seleksi Baris & Bulk Action
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [isBulkBusy, setIsBulkBusy] = useState(false);
 
   const canAccess = canUser(currentUser, [
     'shipping:packing',
@@ -109,6 +212,13 @@ function PackingPageInner() {
     try {
       const params = new URLSearchParams();
       params.set('tab', activeTab);
+      params.set('dateFilter', dateFilter);
+
+      if (dateFilter === 'custom') {
+        if (customStartDate) params.set('startDate', customStartDate);
+        if (customEndDate) params.set('endDate', customEndDate);
+      }
+
       if (searchQuery.trim()) {
         params.set('search', searchQuery.trim());
       }
@@ -127,11 +237,28 @@ function PackingPageInner() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, searchQuery, currentUser, canAccess, toast]);
+  }, [activeTab, dateFilter, customStartDate, customEndDate, searchQuery, currentUser, canAccess, toast]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  // Handler pergantian tab yang bersih dan bebas flicker
+  const handleTabChange = (newTab) => {
+    if (newTab === activeTab) return;
+    setActiveTab(newTab);
+    setOrders([]); // Bersihkan data tab lama seketika untuk cegah flicker
+    setIsLoading(true);
+    setSelectedIds(new Set());
+    setExpandedId(null);
+
+    // Otomatis arahkan default filter tanggal saat beralih ke/dari tab pickup
+    if (newTab === 'shipped') {
+      setDateFilter('today');
+    } else if (dateFilter === 'today' && activeTab === 'shipped') {
+      setDateFilter('all');
+    }
+  };
 
   const handleScanSuccess = useCallback((result) => {
     if (result?.order) {
@@ -252,12 +379,32 @@ function PackingPageInner() {
     }));
   };
 
+  // Salin Nomor Resi 1-klik ke Clipboard
+  const handleCopyWaybill = (waybill) => {
+    if (!waybill) return;
+    navigator.clipboard.writeText(waybill);
+    toast.success(`Nomor resi ${waybill} disalin!`);
+  };
+
+  // Salin Format Rekap Pengiriman WhatsApp (Contextual Template sesuai aturan .agents)
+  const handleCopyWhatsappTemplate = (order) => {
+    const courier = (order.shippingCourier || 'Ekspedisi').toUpperCase();
+    const waybill = order.trackingNumber || 'Sedang diproses';
+    const recipient = order.name || 'Pelanggan';
+
+    const text = `Halo Kak ${recipient},\n\nPesanan ikan cupang pilihan Anda di SUMDE BETTA (ID: #${order.id.slice(0, 8).toUpperCase()}) telah diserahkan ke kurir ${courier} dengan nomor resi:\n\n*${waybill}*\n\nPaket dikemas aman berstandar karantina dengan garansi 100% DOA (Death on Arrival). Anda dapat melacak posisi pengiriman berkala.\n\nTerima kasih atas kepercayaannya pada SUMDE BETTA. Salam satu hobi!`;
+
+    navigator.clipboard.writeText(text);
+    toast.success(`Format rekap WhatsApp untuk ${recipient} berhasil disalin!`);
+  };
+
   // SATU TABEL TUNGGAL UNTUK TAHAP 1 (Bungkus Plastik Ikan)
-  // Menyatukan:
-  // 1. Ikan Sampel Web: Di-agregasi per jenis ikan & ukuran (total ekor dari seluruh resi yang masuk)
-  // 2. Ikan Tangki Khusus: Dikelompokkan per soliter @username
-  // Tanpa menampilkan ID pesanan (ID pesanan murni di Tahap 2 saat masuk kardus)
+  // Guard `if (activeTab !== 'bagging')` mencegah bug flash/flicker saat berpindah dari tab lain!
   const { baggingRows, totalBaggingFish } = useMemo(() => {
+    if (activeTab !== 'bagging') {
+      return { baggingRows: [], totalBaggingFish: 0 };
+    }
+
     const sampleMap = new Map();
     const rows = [];
     let totalFish = 0;
@@ -290,9 +437,16 @@ function PackingPageInner() {
           firstItem?.product?.image ||
           '/img/betta-1.png';
 
+        // Nama ikan bersih tanpa ukuran
         const fishNames = (order.items || [])
-          .map((it) => `${it.quantity || 1}x ${it.customName || it.product?.name || 'Ikan Betta'}${it.selectedSize ? ` (${it.selectedSize})` : ''}`)
+          .map((it) => `${it.quantity || 1}x ${it.customName || it.product?.name || 'Ikan Betta'}`)
           .join(', ');
+
+        // Kumpulkan varian untuk kolom khusus varian (bersih tanpa redundansi teks 'Size')
+        const variantList = (order.items || [])
+          .map((it) => formatVariantLabel(it.selectedSize))
+          .filter(Boolean);
+        const variantText = variantList.length > 0 ? Array.from(new Set(variantList)).join(', ') : null;
 
         rows.push({
           id: `claim_${order.id}`,
@@ -300,6 +454,7 @@ function PackingPageInner() {
           orderId: order.id,
           orderIds: [order.id],
           name: fishNames,
+          variantText,
           subtitle: hostAccount
             ? `Pos: ${hostAccount}`
             : order.orderSource === 'TIKTOK_LIVE'
@@ -352,6 +507,7 @@ function PackingPageInner() {
         type: 'sample',
         name: grp.name,
         selectedSize: grp.selectedSize,
+        variantText: formatVariantLabel(grp.selectedSize) || null,
         subtitle: `Pos Kolam / Rak • ${ids.length} paket`,
         originBadgeText: 'Kolam Sampel',
         originType: 'WEB',
@@ -372,38 +528,199 @@ function PackingPageInner() {
       baggingRows: rows,
       totalBaggingFish: totalFish,
     };
-  }, [orders]);
+  }, [orders, activeTab]);
+
+  // Logika Pemilihan Checkbox (Select All / Unselect All)
+  const currentSelectableIds = useMemo(() => {
+    if (activeTab === 'bagging') {
+      return baggingRows.map((r) => r.id);
+    }
+    return orders.map((o) => o.id);
+  }, [activeTab, baggingRows, orders]);
+
+  const allSelected =
+    currentSelectableIds.length > 0 &&
+    currentSelectableIds.every((id) => selectedIds.has(id));
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(currentSelectableIds));
+    }
+  };
+
+  // Handler Aksi Massal (Bulk Action) sesuai Tab Aktif
+  const handleBulkExecute = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBulkBusy(true);
+
+    try {
+      if (activeTab === 'bagging') {
+        const targetOrderIds = new Set();
+        baggingRows.forEach((r) => {
+          if (selectedIds.has(r.id)) {
+            r.orderIds?.forEach((id) => targetOrderIds.add(id));
+          }
+        });
+
+        const idsArray = Array.from(targetOrderIds);
+        if (idsArray.length === 0) return;
+
+        const res = await fetch('/api/admin/packing/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'bag', orderIds: idsArray }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal memproses bulk bungkus plastik.');
+
+        toast.success(data.message || `${idsArray.length} pesanan selesai dibungkus!`);
+        setSelectedIds(new Set());
+        loadOrders();
+      } else if (activeTab === 'boxing') {
+        const orderIds = Array.from(selectedIds);
+        const res = await fetch('/api/admin/packing/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'pack', orderIds }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal memproses bulk pack box.');
+
+        toast.success(data.message || `${orderIds.length} paket siap dijemput kurir!`);
+        setSelectedIds(new Set());
+        loadOrders();
+      } else if (activeTab === 'ready') {
+        const resiList = orders
+          .filter((o) => selectedIds.has(o.id) && o.trackingNumber)
+          .map((o) => `${o.trackingNumber} (${(o.shippingCourier || 'Kurir').toUpperCase()})`);
+
+        if (resiList.length > 0) {
+          navigator.clipboard.writeText(resiList.join('\n'));
+          toast.success(`${resiList.length} nomor resi kurir berhasil disalin!`);
+        } else {
+          toast.warning('Tidak ada nomor resi yang tersedia pada paket terpilih.');
+        }
+      } else if (activeTab === 'shipped') {
+        const resiList = orders
+          .filter((o) => selectedIds.has(o.id) && o.trackingNumber)
+          .map((o) => `${o.trackingNumber} - ${o.name} (${(o.shippingCourier || 'Kurir').toUpperCase()})`);
+
+        if (resiList.length > 0) {
+          navigator.clipboard.writeText(resiList.join('\n'));
+          toast.success(`${resiList.length} rekap resi pickup berhasil disalin!`);
+        } else {
+          toast.warning('Tidak ada nomor resi pada paket terpilih.');
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+      }
+    } catch (err) {
+      toast.error(err.message || 'Terjadi kesalahan.');
+    } finally {
+      setIsBulkBusy(false);
+    }
+  };
+
+  // Helper render badge status yang akurat dan memprioritaskan status pengiriman riil
+  const renderStatusBadge = (order) => {
+    if (order.status === 'COMPLETED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.statusCompleted}`}>
+          {iconCheck}
+          <span>Selesai / Diterima</span>
+        </span>
+      );
+    }
+    if (order.status === 'SHIPPED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.statusShipped}`}>
+          {iconTruck}
+          <span>Sudah Pickup</span>
+        </span>
+      );
+    }
+    if (order.packingStatus === 'READY_FOR_PICKUP') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.statusReady}`}>
+          {iconCheck}
+          <span>Siap Pickup</span>
+        </span>
+      );
+    }
+    if (order.packingStatus === 'BAGGED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.statusBoxing}`}>
+          Siap Pack Box
+        </span>
+      );
+    }
+    if (order.packingStatus === 'PENDING') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.statusBagging}`}>
+          Perlu Dibungkus
+        </span>
+      );
+    }
+    if (order.status === 'PAID') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.statusPaid}`}>
+          Lunas
+        </span>
+      );
+    }
+    return (
+      <span className={`${styles.statusBadge} ${styles.statusDefault}`}>
+        {order.status}
+      </span>
+    );
+  };
 
   return (
-    <div className={styles.pageContainer}>
-      {/* 1. Header & Tombol Scanner (Hanya tampil di Tahap 2: Pack Box & Resi) */}
-      <div className={styles.topHeader}>
-        <div className={styles.headerTextGroup}>
-          <h1 className={styles.pageTitle}>Packing Gudang &amp; Verifikasi Resi</h1>
-          <p className={styles.pageDescription}>
+    <div className={styles.page}>
+      {/* 1. Header Halaman Standar Admin SUMDE-BETTA */}
+      <div className={styles.header}>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>Packing Gudang &amp; Verifikasi Resi</h1>
+          <p className={styles.subtitle}>
             Manajemen alur serok ikan, bungkus plastik, kemas box, dan scan resi fisik ekspedisi.
           </p>
         </div>
 
-        {activeTab === 'boxing' && (
-          <button
-            type="button"
-            onClick={() => setIsScannerOpen(true)}
-            className={styles.openScannerBtn}
-            aria-label="Buka scanner kamera smartphone"
-          >
-            {iconCamera}
-            <span>Scan Resi Fisik</span>
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          {activeTab === 'boxing' && (
+            <button
+              type="button"
+              onClick={() => setIsScannerOpen(true)}
+              className={styles.scannerBtn}
+              aria-label="Buka scanner kamera smartphone"
+            >
+              {iconCamera}
+              <span>Scan Resi Fisik</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 2. Kartu Tab Tahap Alur Kerja (Warna Solid per Box, Saat Active SAMA SEMUA) */}
+      {/* 2. Kartu Tab Tahap Alur Kerja (Warna Solid Hex per Box, Saat Active SAMA SEMUA) */}
       <div className={styles.kpiStagesGrid}>
         {/* Tahap 1: Bungkus Plastik Ikan (Box Solid Amber) */}
         <div
           className={`${styles.kpiCard} ${styles.kpiCardBagging} ${activeTab === 'bagging' ? styles.kpiCardActive : ''}`.trim()}
-          onClick={() => setActiveTab('bagging')}
+          onClick={() => handleTabChange('bagging')}
           role="button"
           tabIndex={0}
         >
@@ -429,7 +746,7 @@ function PackingPageInner() {
         {/* Tahap 2: Pack Box & Resi (Box Solid Coral) */}
         <div
           className={`${styles.kpiCard} ${styles.kpiCardBoxing} ${activeTab === 'boxing' ? styles.kpiCardActive : ''}`.trim()}
-          onClick={() => setActiveTab('boxing')}
+          onClick={() => handleTabChange('boxing')}
           role="button"
           tabIndex={0}
         >
@@ -453,7 +770,7 @@ function PackingPageInner() {
         {/* Tahap 3: Menunggu Kurir (Box Solid Emerald) */}
         <div
           className={`${styles.kpiCard} ${styles.kpiCardReady} ${activeTab === 'ready' ? styles.kpiCardActive : ''}`.trim()}
-          onClick={() => setActiveTab('ready')}
+          onClick={() => handleTabChange('ready')}
           role="button"
           tabIndex={0}
         >
@@ -474,77 +791,257 @@ function PackingPageInner() {
           </div>
         </div>
 
-        {/* Tahap 4: Sudah Dikirim (Box Solid Blue) */}
+        {/* Tahap 4: Pickup Kurir (Box Solid Blue) */}
         <div
           className={`${styles.kpiCard} ${styles.kpiCardShipped} ${activeTab === 'shipped' ? styles.kpiCardActive : ''}`.trim()}
-          onClick={() => setActiveTab('shipped')}
+          onClick={() => handleTabChange('shipped')}
           role="button"
           tabIndex={0}
         >
           <div className={styles.kpiCardHeader}>
             <span className={styles.kpiStepBadge}>
-              Riwayat Ekspedisi
+              Tahap 4 &bull; Ekspedisi
             </span>
             {activeTab === 'shipped' && (
               <span className={styles.activeIndicatorPill}>Dipilih</span>
             )}
           </div>
-          <span className={styles.kpiTitle}>Sudah Dikirim</span>
+          <span className={styles.kpiTitle}>Pickup Kurir</span>
           <div className={styles.kpiValueRow}>
             <span className={styles.kpiNumber}>
               {counts.shipped}
             </span>
-            <span className={styles.kpiUnit}>Paket</span>
+            <span className={styles.kpiUnit}>
+              {dateFilter === 'today' ? 'Pickup Hari Ini' : 'Paket'}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 3. Bar Keterangan & Pencarian */}
-      <div className={styles.actionBar}>
-        <div className={styles.tabStatusSubtitle}>
-          <span
-            className={`${styles.stageDot} ${
-              activeTab === 'bagging'
-                ? styles.stageDotBagging
-                : activeTab === 'boxing'
-                ? styles.stageDotBoxing
-                : activeTab === 'ready'
-                ? styles.stageDotReady
-                : styles.stageDotShipped
-            }`.trim()}
-          />
-          <span>
-            {activeTab === 'bagging'
-              ? 'Fokus ikan: serok sampel per jenis & soliter live. ID pesanan diproses di Tahap 2.'
+      {/* 3. Strip Panduan Tahap Aktif (Clean Standalone Banner) */}
+      <div className={styles.stageInfoBar}>
+        <span
+          className={`${styles.stageDot} ${
+            activeTab === 'bagging'
+              ? styles.stageDotBagging
               : activeTab === 'boxing'
-              ? 'Masukkan ikan yang sudah dibungkus ke dalam box, cocokkan item dengan kertas resi fisik.'
+              ? styles.stageDotBoxing
               : activeTab === 'ready'
-              ? 'Paket sudah dikemas rapi & resi di-scan, siap dijemput kurir ekspedisi.'
-              : 'Daftar paket yang telah diserahkan dan dibawa oleh kurir ekspedisi.'}
-          </span>
+              ? styles.stageDotReady
+              : styles.stageDotShipped
+          }`.trim()}
+        />
+        <span className={styles.stageInfoText}>
+          {activeTab === 'bagging'
+            ? 'Tahap 1: Fokus serok sampel per jenis & soliter live. ID pesanan diproses di Tahap 2 saat masuk kardus.'
+            : activeTab === 'boxing'
+            ? 'Tahap 2: Masukkan ikan yang sudah dibungkus ke dalam box, cocokkan item fisik dengan nomor resi.'
+            : activeTab === 'ready'
+            ? 'Tahap 3: Paket sudah dikemas rapi & resi di-scan, siap dijemput kurir ekspedisi.'
+            : 'Tahap 4: Monitoring real-time paket yang telah di-pickup kurir ekspedisi.'}
+        </span>
+      </div>
+
+      {/* 4. Baris Kontrol Bersih (Search, Presets Tanggal, Kalender Custom, & Actions) */}
+      <div className={styles.controlBar}>
+        <div className={styles.controlBarLeft}>
+          <div className={styles.searchBox}>
+            {iconSearch}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari penerima, resi, @username..."
+              className={styles.searchInput}
+            />
+          </div>
         </div>
 
-        <div className={styles.searchBox}>
-          {iconSearch}
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari penerima, resi, @username..."
-            className={styles.searchInput}
-          />
+        <div className={styles.controlBarRight}>
+          {/* Preset Rentang Tanggal */}
+          <div className={styles.dateFilterGroup} role="group" aria-label="Preset rentang tanggal">
+            <button
+              type="button"
+              onClick={() => setDateFilter('today')}
+              className={`${styles.dateFilterBtn} ${dateFilter === 'today' ? styles.dateFilterBtnActive : ''}`.trim()}
+            >
+              Hari Ini
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('yesterday')}
+              className={`${styles.dateFilterBtn} ${dateFilter === 'yesterday' ? styles.dateFilterBtnActive : ''}`.trim()}
+            >
+              Kemarin
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('7days')}
+              className={`${styles.dateFilterBtn} ${dateFilter === '7days' ? styles.dateFilterBtnActive : ''}`.trim()}
+            >
+              7 Hari
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('custom')}
+              className={`${styles.dateFilterBtn} ${dateFilter === 'custom' ? styles.dateFilterBtnActive : ''}`.trim()}
+              title="Pilih tanggal tertentu lewat kalender"
+            >
+              Custom
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('all')}
+              className={`${styles.dateFilterBtn} ${dateFilter === 'all' ? styles.dateFilterBtnActive : ''}`.trim()}
+            >
+              Semua
+            </button>
+          </div>
+
+          {/* Kalender Date-Picker Custom (Muncul saat opsi 'custom' aktif) */}
+          {dateFilter === 'custom' && (
+            <div className={styles.customDateRange} title="Pilih rentang tanggal dari kalender">
+              {iconCalendar}
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className={styles.dateInput}
+                aria-label="Tanggal mulai"
+              />
+              <span className={styles.dateSeparator}>–</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className={styles.dateInput}
+                aria-label="Tanggal akhir"
+              />
+            </div>
+          )}
+
+          {/* Tombol Mode Pemilihan (Bulk Action) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (isSelectMode) {
+                setIsSelectMode(false);
+                setSelectedIds(new Set());
+              } else {
+                setIsSelectMode(true);
+              }
+            }}
+            className={`${styles.controlBtn} ${isSelectMode ? styles.controlBtnActive : ''}`.trim()}
+            title={isSelectMode ? 'Batalkan mode pemilihan' : 'Pilih beberapa baris untuk aksi massal'}
+            aria-pressed={isSelectMode}
+          >
+            {isSelectMode ? iconClose : iconSelect}
+            <span>{isSelectMode ? 'Selesai' : 'Pilih'}</span>
+          </button>
+
+          {/* Tombol Segarkan Data */}
+          <button
+            type="button"
+            onClick={() => loadOrders()}
+            className={styles.controlBtn}
+            title="Muat ulang data antrean"
+          >
+            {iconRefresh}
+            <span>Segarkan</span>
+          </button>
         </div>
       </div>
 
-      {/* 4. TAMPILAN TAHAP 1: SATU TABEL TUNGGAL (FOKUS IKAN, TANPA ID PESANAN) */}
+      {/* 5. Sticky Bulk Action Bar */}
+      {isSelectMode && selectedIds.size > 0 && (
+        <div className={styles.bulkBar}>
+          <div className={styles.bulkBarLeft}>
+            <span className={styles.bulkBarCount}>
+              {selectedIds.size} baris terpilih
+            </span>
+          </div>
+
+          <div className={styles.bulkBarActions}>
+            {activeTab === 'bagging' && (
+              <button
+                type="button"
+                onClick={handleBulkExecute}
+                disabled={isBulkBusy}
+                className={styles.bulkBtnPrimary}
+              >
+                {iconCheck}
+                <span>{isBulkBusy ? 'Memproses...' : `Tandai Selesai Dibungkus (${selectedIds.size})`}</span>
+              </button>
+            )}
+
+            {activeTab === 'boxing' && (
+              <button
+                type="button"
+                onClick={handleBulkExecute}
+                disabled={isBulkBusy}
+                className={styles.bulkBtnPrimary}
+              >
+                {iconBox}
+                <span>{isBulkBusy ? 'Memproses...' : `Selesai Pack Box (${selectedIds.size})`}</span>
+              </button>
+            )}
+
+            {activeTab === 'ready' && (
+              <button
+                type="button"
+                onClick={handleBulkExecute}
+                disabled={isBulkBusy}
+                className={styles.bulkBtnOutline}
+              >
+                {iconCopy}
+                <span>Salin No. Resi Terpilih ({selectedIds.size})</span>
+              </button>
+            )}
+
+            {activeTab === 'shipped' && (
+              <button
+                type="button"
+                onClick={handleBulkExecute}
+                disabled={isBulkBusy}
+                className={styles.bulkBtnOutline}
+              >
+                {iconCopy}
+                <span>Salin Rekap Resi Terpilih ({selectedIds.size})</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className={styles.bulkBtnGhost}
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 6. TAMPILAN TAHAP 1: SATU TABEL TUNGGAL (FOKUS IKAN + KOLOM VARIAN KHUSUS) */}
       {activeTab === 'bagging' && (
         <div className={styles.tableWrap}>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
                 <tr>
+                  {isSelectMode && (
+                    <th className={styles.thCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleSelectAll}
+                        className={styles.checkboxInput}
+                        aria-label="Pilih semua baris ikan"
+                      />
+                    </th>
+                  )}
                   <th className={styles.thThumb}>Foto</th>
-                  <th>Ikan &amp; Spesifikasi</th>
+                  <th>Nama Ikan</th>
+                  <th className={styles.thVariant}>Varian</th>
                   <th>Asal / Soliter</th>
                   <th className={styles.thQty}>Total Ekor</th>
                   <th className={styles.thAction}>Aksi</th>
@@ -553,13 +1050,13 @@ function PackingPageInner() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className={styles.tdLoadingText}>
+                    <td colSpan={isSelectMode ? 7 : 6} className={styles.tdLoadingText}>
                       Memuat daftar ikan yang perlu dibungkus...
                     </td>
                   </tr>
                 ) : baggingRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className={styles.tdZeroPadding}>
+                    <td colSpan={isSelectMode ? 7 : 6} className={styles.tdZeroPadding}>
                       <div className={styles.emptyState}>
                         <div className={styles.emptyIcon}>{iconCheck}</div>
                         <h2 className={styles.emptyTitle}>Tidak Ada Ikan Menunggu Dibungkus</h2>
@@ -571,12 +1068,27 @@ function PackingPageInner() {
                   </tr>
                 ) : (
                   baggingRows.map((row) => {
+                    const isSelected = selectedIds.has(row.id);
                     const isActionLoading =
                       actionLoadingId === row.orderIds.join('-') ||
                       actionLoadingId === row.orderId;
 
                     return (
-                      <tr key={row.id}>
+                      <tr
+                        key={row.id}
+                        className={isSelected ? styles.rowSelected : ''}
+                      >
+                        {isSelectMode && (
+                          <td className={styles.tdCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => toggleSelectRow(row.id, e)}
+                              className={styles.checkboxInput}
+                            />
+                          </td>
+                        )}
+
                         {/* 1. Foto Ikan Thumbnail */}
                         <td className={styles.tdFishThumb}>
                           {row.image ? (
@@ -593,20 +1105,26 @@ function PackingPageInner() {
                           )}
                         </td>
 
-                        {/* 2. Nama Jenis Ikan & Ukuran / Rincian Soliter */}
+                        {/* 2. Nama Jenis Ikan Bersih */}
                         <td>
                           <div className={styles.fishInfoCol}>
-                            <div className={styles.fishNameRow}>
-                              <span className={styles.fishName}>{row.name}</span>
-                              {row.selectedSize && (
-                                <span className={styles.fishSizeBadge}>Size {row.selectedSize}</span>
-                              )}
-                            </div>
+                            <span className={styles.fishName}>{row.name}</span>
                             <span className={styles.fishMetaText}>{row.subtitle}</span>
                           </div>
                         </td>
 
-                        {/* 3. Lokasi Asal / Soliter */}
+                        {/* 3. Kolom Khusus Varian (Murni nilai varian tanpa redundansi teks "Size") */}
+                        <td className={styles.tdVariant}>
+                          {formatVariantLabel(row.selectedSize || row.variantText) ? (
+                            <span className={styles.variantBadge}>
+                              {formatVariantLabel(row.selectedSize || row.variantText)}
+                            </span>
+                          ) : (
+                            <span className={styles.variantPlain}>-</span>
+                          )}
+                        </td>
+
+                        {/* 4. Lokasi Asal / Soliter */}
                         <td>
                           {row.type === 'sample' ? (
                             <span className={`${styles.tankLocationTag} ${styles.tankLocationWeb}`}>
@@ -638,14 +1156,14 @@ function PackingPageInner() {
                           )}
                         </td>
 
-                        {/* 4. Total Ekor */}
+                        {/* 5. Total Ekor */}
                         <td className={styles.fishQtyCell}>
                           <span className={styles.qtyBadgeAmber}>
                             {row.totalQty} Ekor
                           </span>
                         </td>
 
-                        {/* 5. Tombol Selesai Bungkus */}
+                        {/* 6. Tombol Selesai Bungkus */}
                         <td className={styles.fishActionCell}>
                           <button
                             type="button"
@@ -676,13 +1194,24 @@ function PackingPageInner() {
         </div>
       )}
 
-      {/* 5. TAMPILAN TAHAP 2, 3, 4: SATU TABEL PESANAN & KARDUS DENGAN ROW-EXPAND (ID PESANAN & RESI FISIK) */}
-      {activeTab !== 'bagging' && (
+      {/* 7. TAMPILAN TAHAP 2 & 3: MEJA PACK BOX & RAK KURIR DENGAN ROW-EXPAND */}
+      {(activeTab === 'boxing' || activeTab === 'ready') && (
         <div className={styles.tableWrap}>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
                 <tr>
+                  {isSelectMode && (
+                    <th className={styles.thCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleSelectAll}
+                        className={styles.checkboxInput}
+                        aria-label="Pilih semua pesanan"
+                      />
+                    </th>
+                  )}
                   <th className={styles.thSourceId}>Sumber &amp; ID</th>
                   <th>Penerima &amp; Tujuan</th>
                   <th>Kurir &amp; Box</th>
@@ -694,13 +1223,13 @@ function PackingPageInner() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className={styles.tdLoadingText}>
+                    <td colSpan={isSelectMode ? 7 : 6} className={styles.tdLoadingText}>
                       Memuat antrean packing...
                     </td>
                   </tr>
                 ) : orders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className={styles.tdZeroPadding}>
+                    <td colSpan={isSelectMode ? 7 : 6} className={styles.tdZeroPadding}>
                       <div className={styles.emptyState}>
                         <div className={styles.emptyIcon}>
                           {activeTab === 'ready' ? iconCheck : iconBox}
@@ -708,22 +1237,19 @@ function PackingPageInner() {
                         <h2 className={styles.emptyTitle}>
                           {activeTab === 'boxing'
                             ? 'Tidak Ada Antrean Pack Box'
-                            : activeTab === 'ready'
-                            ? 'Tidak Ada Paket Menunggu Kurir'
-                            : 'Belum Ada Riwayat Kirim'}
+                            : 'Tidak Ada Paket Menunggu Kurir'}
                         </h2>
                         <p className={styles.emptyDesc}>
                           {activeTab === 'boxing'
                             ? 'Menunggu ikan selesai dibungkus dari Tahap 1.'
-                            : activeTab === 'ready'
-                            ? 'Belum ada paket yang siap dijemput kurir ekspedisi.'
-                            : 'Paket yang telah diserahkan ke kurir akan muncul di sini.'}
+                            : 'Belum ada paket yang siap dijemput kurir ekspedisi.'}
                         </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   orders.map((order) => {
+                    const isSelected = selectedIds.has(order.id);
                     const isExpanded = expandedId === order.id;
                     const totalQty = order.items?.reduce((sum, it) => sum + (it.quantity || 1), 0) || 0;
                     const hasLiveFish = order.items?.some((it) => {
@@ -738,8 +1264,19 @@ function PackingPageInner() {
                         {/* Baris Utama Tabel Compact */}
                         <tr
                           onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                          className={`${styles.clickableRow} ${isExpanded ? styles.rowExpanded : ''}`.trim()}
+                          className={`${styles.clickableRow} ${isExpanded ? styles.rowExpanded : ''} ${isSelected ? styles.rowSelected : ''}`.trim()}
                         >
+                          {isSelectMode && (
+                            <td className={styles.tdCheckbox} onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => toggleSelectRow(order.id, e)}
+                                className={styles.checkboxInput}
+                              />
+                            </td>
+                          )}
+
                           <td>
                             <div className={styles.sourceIdCol}>
                               <div className={styles.sourceIdRow}>
@@ -786,27 +1323,7 @@ function PackingPageInner() {
                           </td>
 
                           <td>
-                            {order.packingStatus === 'PENDING' && (
-                              <span className={`${styles.statusBadge} ${styles.statusBagging}`}>
-                                Perlu Dibungkus
-                              </span>
-                            )}
-                            {order.packingStatus === 'BAGGED' && (
-                              <span className={`${styles.statusBadge} ${styles.statusBoxing}`}>
-                                Siap Pack Box
-                              </span>
-                            )}
-                            {order.packingStatus === 'READY_FOR_PICKUP' && (
-                              <span className={`${styles.statusBadge} ${styles.statusReady}`}>
-                                {iconCheck}
-                                <span>Siap Pickup</span>
-                              </span>
-                            )}
-                            {order.status === 'SHIPPED' && (
-                              <span className={`${styles.statusBadge} ${styles.statusShipped}`}>
-                                Dikirim
-                              </span>
-                            )}
+                            {renderStatusBadge(order)}
                           </td>
 
                           <td className={styles.expandTriggerCell}>
@@ -819,9 +1336,8 @@ function PackingPageInner() {
                         {/* Baris Accordion Terbuka (Checklist Fisik & Resi Kurir) */}
                         {isExpanded && (
                           <tr className={styles.expandRow}>
-                            <td colSpan={6} className={styles.tdZeroPadding}>
+                            <td colSpan={isSelectMode ? 7 : 6} className={styles.tdZeroPadding}>
                               <div className={styles.expandContent}>
-                                {/* Konteks Pos Akun TikTok Live & Stiker Pembeli jika ada */}
                                 {order.orderSource === 'TIKTOK_LIVE' && (
                                   <div className={styles.orderSourceContextRow}>
                                     <span>Pos Akun Live: <strong>{resolveTikTokHost(order) || '-'}</strong></span>
@@ -831,7 +1347,7 @@ function PackingPageInner() {
                                   </div>
                                 )}
 
-                                {/* 1. Checklist Item Barang Pesanan */}
+                                {/* Checklist Item Barang Pesanan */}
                                 <div className={styles.itemsSection}>
                                   <h5 className={styles.itemsSectionTitle}>Checklist Barang Pesanan ({totalQty} item)</h5>
                                   <div className={styles.itemsList}>
@@ -872,7 +1388,7 @@ function PackingPageInner() {
                                             </span>
                                           </div>
                                           {it.selectedSize && (
-                                            <span className={styles.itemSize}>Size {it.selectedSize}</span>
+                                            <span className={styles.itemSize}>{formatVariantLabel(it.selectedSize)}</span>
                                           )}
                                         </div>
                                       );
@@ -880,17 +1396,17 @@ function PackingPageInner() {
                                   </div>
                                 </div>
 
-                                {/* 2. Footer Aksi & Informasi Resi Fisik */}
+                                {/* Footer Aksi & Informasi Resi */}
                                 <div className={styles.expandFooter} onClick={(e) => e.stopPropagation()}>
                                   <div className={styles.historyInfoGroup}>
                                     {order.baggedAt && (
                                       <span>
-                                        Dibungkus: {new Date(order.baggedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} ({order.baggedBy || 'Tim Kolam'})
+                                        Dibungkus: {formatTimeIndo(order.baggedAt)} ({order.baggedBy || 'Tim Kolam'})
                                       </span>
                                     )}
                                     {order.packedAt && (
                                       <span>
-                                        Selesai Box: {new Date(order.packedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} ({order.packedBy || 'Tim Box'})
+                                        Selesai Box: {formatTimeIndo(order.packedAt)} ({order.packedBy || 'Tim Box'})
                                       </span>
                                     )}
                                     {order.trackingNumber && (
@@ -943,6 +1459,202 @@ function PackingPageInner() {
                           </tr>
                         )}
                       </Fragment>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 8. TAMPILAN TAHAP 4: TABEL KHUSUS PICKUP KURIR / RIWAYAT EKSPEDISI */}
+      {activeTab === 'shipped' && (
+        <div className={styles.tableWrap}>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  {isSelectMode && (
+                    <th className={styles.thCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleSelectAll}
+                        className={styles.checkboxInput}
+                        aria-label="Pilih semua pesanan pickup"
+                      />
+                    </th>
+                  )}
+                  <th className={styles.thWaybill}>No. Resi &amp; Ekspedisi</th>
+                  <th>Sumber &amp; ID</th>
+                  <th>Penerima &amp; Tujuan</th>
+                  <th>Waktu Pickup</th>
+                  <th>Rincian Paket</th>
+                  <th>Status Ekspedisi</th>
+                  <th className={styles.thAction}>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={isSelectMode ? 8 : 7} className={styles.tdLoadingText}>
+                      Memuat riwayat pickup kurir...
+                    </td>
+                  </tr>
+                ) : orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={isSelectMode ? 8 : 7} className={styles.tdZeroPadding}>
+                      <div className={styles.emptyState}>
+                        <div className={styles.emptyIcon}>{iconTruck}</div>
+                        <h2 className={styles.emptyTitle}>
+                          {dateFilter === 'today'
+                            ? 'Belum Ada Paket Pickup Hari Ini'
+                            : 'Tidak Ada Riwayat Pickup'}
+                        </h2>
+                        <p className={styles.emptyDesc}>
+                          {dateFilter === 'today'
+                            ? 'Paket yang diserahkan dan di-scan oleh kurir ekspedisi hari ini akan otomatis muncul di sini.'
+                            : 'Coba ubah rentang filter tanggal atau gunakan kalender untuk melihat arsip sebelumnya.'}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map((order) => {
+                    const isSelected = selectedIds.has(order.id);
+                    const totalQty = order.items?.reduce((sum, it) => sum + (it.quantity || 1), 0) || 0;
+                    const hasLiveFish = order.items?.some((it) => {
+                      if (it.product) {
+                        return it.product.department?.isLiveFish !== false && !it.product.brand;
+                      }
+                      return true;
+                    });
+
+                    return (
+                      <tr
+                        key={order.id}
+                        className={isSelected ? styles.rowSelected : ''}
+                      >
+                        {isSelectMode && (
+                          <td className={styles.tdCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => toggleSelectRow(order.id, e)}
+                              className={styles.checkboxInput}
+                            />
+                          </td>
+                        )}
+
+                        {/* 1. Nomor Resi & Kurir dengan One-Click Copy */}
+                        <td>
+                          <div className={styles.tdWaybillCol}>
+                            <div className={styles.waybillRow}>
+                              <span className={styles.waybillCode}>
+                                {order.trackingNumber || 'Belum Ada AWB'}
+                              </span>
+                              {order.trackingNumber && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyWaybill(order.trackingNumber)}
+                                  className={styles.copyIconBtn}
+                                  title="Salin nomor resi"
+                                  aria-label="Salin nomor resi"
+                                >
+                                  {iconCopy}
+                                </button>
+                              )}
+                            </div>
+                            <div className={styles.courierServiceRow}>
+                              <span className={styles.courierNameBadge}>
+                                {order.shippingCourier || 'Ekspedisi'}
+                              </span>
+                              {order.shippingService && (
+                                <span className={styles.courierServiceText}>
+                                  {order.shippingService}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 2. Sumber & ID Pesanan */}
+                        <td>
+                          <div className={styles.sourceIdCol}>
+                            <div className={styles.sourceIdRow}>
+                              <OrderSourceBadge order={order} />
+                              <span className={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</span>
+                            </div>
+                            {order.orderSource === 'TIKTOK_LIVE' && resolveTikTokHost(order) && (
+                              <span className={styles.hostAccountSubtext}>
+                                Pos: {resolveTikTokHost(order)}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* 3. Penerima & Tujuan */}
+                        <td>
+                          <div className={styles.customerCol}>
+                            <span className={styles.customerName}>{order.name}</span>
+                            <span className={styles.customerSub}>
+                              {order.city ? `${order.city}, ${order.province}` : order.phone}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* 4. Waktu Pickup Kurir */}
+                        <td>
+                          <div className={styles.pickupTimeCol}>
+                            <span className={styles.pickupTimePrimary}>
+                              {formatTimeIndo(order.updatedAt || order.packedAt)}
+                            </span>
+                            {order.packedBy && (
+                              <span className={styles.pickupTimeSub}>
+                                Oleh: {order.packedBy}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* 5. Rincian Paket */}
+                        <td>
+                          <div className={styles.packageSummaryCol}>
+                            <div className={styles.packageSummaryTop}>
+                              <span className={`${styles.boxTypeBadge} ${hasLiveFish ? styles.boxTypeStyro : styles.boxTypeCardboard}`}>
+                                {hasLiveFish ? 'Styrofoam' : 'Kardus'}
+                              </span>
+                              <span className={styles.fishSummaryQty}>
+                                {totalQty} Item
+                              </span>
+                            </div>
+                            <span className={styles.packageItemsPreview}>
+                              {order.items?.map((it) => it.customName || it.product?.name).filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* 6. Status Pengiriman Ekspedisi */}
+                        <td>
+                          {renderStatusBadge(order)}
+                        </td>
+
+                        {/* 7. Aksi Cepat (Salin Rekap WA) */}
+                        <td>
+                          <div className={styles.pickupActionCol}>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyWhatsappTemplate(order)}
+                              className={styles.btnActionSm}
+                              title="Salin rekap pesan konfirmasi untuk dikirimkan ke pelanggan via WhatsApp"
+                            >
+                              {iconCopy}
+                              <span>Salin Rekap</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })
                 )}
