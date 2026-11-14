@@ -60,23 +60,25 @@ export async function GET(request) {
     const todayRange = getDateRange('today');
 
     // 1. Ambil agregat jumlah per tahap alur packing
+    // Khusus Pos 1-3 hanya berlaku untuk pesanan berstatus PROCESSING (resi sudah dicetak / pesanan diproses).
+    // Status PAID belum masuk ke Pos 1 (menunggu cetak resi).
     // Khusus shipped: hitung pickup hari ini agar KPI real-time relevan dengan shift hari ini
     const [baggingCount, boxingCount, readyCount, shippedTodayCount, shippedTotalCount] = await Promise.all([
       prisma.order.count({
         where: {
-          status: { in: ['PAID', 'PROCESSING'] },
+          status: 'PROCESSING',
           packingStatus: 'PENDING',
         },
       }),
       prisma.order.count({
         where: {
-          status: { in: ['PAID', 'PROCESSING'] },
+          status: 'PROCESSING',
           packingStatus: 'BAGGED',
         },
       }),
       prisma.order.count({
         where: {
-          status: { in: ['PAID', 'PROCESSING'] },
+          status: 'PROCESSING',
           packingStatus: 'READY_FOR_PICKUP',
         },
       }),
@@ -97,19 +99,19 @@ export async function GET(request) {
     const whereClause = {};
 
     if (tab === 'bagging') {
-      whereClause.status = { in: ['PAID', 'PROCESSING'] };
+      whereClause.status = 'PROCESSING';
       whereClause.packingStatus = 'PENDING';
       if (dateRange) {
         whereClause.createdAt = dateRange;
       }
     } else if (tab === 'boxing') {
-      whereClause.status = { in: ['PAID', 'PROCESSING'] };
+      whereClause.status = 'PROCESSING';
       whereClause.packingStatus = 'BAGGED';
       if (dateRange) {
         whereClause.createdAt = dateRange;
       }
     } else if (tab === 'ready') {
-      whereClause.status = { in: ['PAID', 'PROCESSING'] };
+      whereClause.status = 'PROCESSING';
       whereClause.packingStatus = 'READY_FOR_PICKUP';
       if (dateRange) {
         whereClause.createdAt = dateRange;
@@ -122,7 +124,7 @@ export async function GET(request) {
       }
     } else {
       // 'all'
-      whereClause.status = { in: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'] };
+      whereClause.status = { in: ['PROCESSING', 'SHIPPED', 'COMPLETED'] };
       if (dateRange) {
         whereClause.updatedAt = dateRange;
       }

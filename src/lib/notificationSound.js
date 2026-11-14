@@ -30,12 +30,24 @@ export function setChimeMuted(muted) {
   }
 }
 
+// Cooldown guard to prevent overlapping audio spam during order flurries
+const AUDIO_COOLDOWN_MS = 6000;
+let lastAdminSoundTime = 0;
+let lastChatSoundTime = 0;
+let lastChimeSoundTime = 0;
+
 // ============================================================================
 // 1. CUSTOMER NOTIFICATION SOUND: SYNTHETIC CHIME (Web Audio API)
 // ============================================================================
-export function playNotificationChime() {
+export function playNotificationChime(force = false) {
   if (typeof window === 'undefined') return;
   if (isChimeMuted()) return;
+
+  const nowTime = Date.now();
+  if (!force && nowTime - lastChimeSoundTime < AUDIO_COOLDOWN_MS) {
+    return; // Throttled to prevent audio fatigue
+  }
+  lastChimeSoundTime = nowTime;
 
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -198,27 +210,40 @@ if (typeof window !== 'undefined') {
 /**
  * Regular Admin Notifications (Orders, Payments, Shipping, Bell Test)
  * Plays: /sound/notif_admin.wav
+ * @param {boolean} [force=false] - set true to bypass debounce (e.g. manual user sound toggle)
  */
-export function playAdminNotificationSound() {
+export function playAdminNotificationSound(force = false) {
+  const now = Date.now();
+  if (!force && now - lastAdminSoundTime < AUDIO_COOLDOWN_MS) {
+    return; // Throttled to prevent audio fatigue
+  }
+  lastAdminSoundTime = now;
   playWavSound('/sound/notif_admin.wav');
 }
 
 /**
  * Admin Live Chat Notifications (Inbound messages from customers)
  * Plays: /sound/chat.wav
+ * @param {boolean} [force=false] - set true to bypass debounce
  */
-export function playChatNotificationSound() {
+export function playChatNotificationSound(force = false) {
+  const now = Date.now();
+  if (!force && now - lastChatSoundTime < AUDIO_COOLDOWN_MS) {
+    return; // Throttled to prevent audio fatigue
+  }
+  lastChatSoundTime = now;
   playWavSound('/sound/chat.wav');
 }
 
 /**
  * Alias for general notification sound trigger
  * @param {'admin' | 'chat'} [type='admin']
+ * @param {boolean} [force=false]
  */
-export function playNotificationSound(type = 'admin') {
+export function playNotificationSound(type = 'admin', force = false) {
   if (type === 'chat') {
-    playChatNotificationSound();
+    playChatNotificationSound(force);
   } else {
-    playAdminNotificationSound();
+    playAdminNotificationSound(force);
   }
 }

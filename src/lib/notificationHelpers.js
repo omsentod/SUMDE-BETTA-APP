@@ -155,3 +155,162 @@ export function getNotificationMeta(type = '') {
     ),
   };
 }
+
+/**
+ * Determine logical aggregation category for incoming event types.
+ */
+export function getGroupCategory(type = '') {
+  const t = (type || '').toLowerCase();
+  if (t.includes('chat') || t.includes('message')) return 'chat_message';
+  if (t.includes('paid') || t.includes('payment')) return 'order_paid';
+  if (t.includes('ship') || t.includes('picked') || t.includes('courier')) return 'order_shipped';
+  if (t.includes('complete') || t.includes('deliver')) return 'order_completed';
+  if (t.includes('process') || t.includes('packing')) return 'order_processing';
+  if (t.includes('order')) return 'order_new';
+  return null;
+}
+
+/**
+ * Extract clean snippet details from order notification bodies.
+ */
+export function extractOrderSnippet(item = {}) {
+  const text = `${item.title || ''} ${item.body || ''}`;
+  const match = text.match(/#([a-zA-Z0-9_-]{4,36})/i);
+  const code = match ? `#${match[1]}` : null;
+
+  const nameMatch = (item.body || '').match(/\(([^)]+)\)/) || (item.body || '').match(/dari\s+([a-zA-Z0-9\s._'-]{2,25})/i);
+  let name = nameMatch ? nameMatch[1].replace(/menunggu.*/i, '').replace(/lunas.*/i, '').trim() : null;
+  if (name && name.length > 25) name = name.slice(0, 25) + '...';
+
+  return { code, name };
+}
+
+/**
+ * Smart Aggregation / Grouping for notifications.
+ * Combines clustered notifications of the same event category occurring within
+ * a given time window (e.g. 3 hours) into a single high-signal card.
+ *
+ * If count === 1: returns normal individual item.
+ * If count >= 2: returns a grouped notification item with an `items` array.
+ *
+ * @param {Array} items - raw notification list
+ * @param {object} [options]
+ * @param {'admin' | 'customer'} [options.role='admin']
+ * @param {number} [options.maxClusterGapMs=10800000] - 3 hours
+ * @returns {Array} grouped and sorted notifications
+ */
+export function groupNotifications(items = [], options = {}) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const { role = 'admin', maxClusterGapMs = 3 * 60 * 60 * 1000 } = options;
+
+  const categoryBuckets = new Map();
+  const nonGroupableItems = [];
+
+  for (const item of items) {
+    const category = getGroupCategory(item.type);
+    if (!category) {
+      nonGroupableItems.push(item);
+      continue;
+    }
+
+    if (!categoryBuckets.has(category)) {
+      categoryBuckets.set(category, []);
+    }
+    categoryBuckets.get(category).push(item);
+  }
+
+  const resultCards = [...nonGroupableItems];
+
+  for (const [category, bucketItems] of categoryBuckets.entries()) {
+    if (bucketItems.length === 1) {
+      resultCards.push(bucketItems[0]);
+      continue;
+    }
+
+    // Cluster items by time gap (bucketItems are sorted desc by createdAt)
+    const clusters = [];
+    let currentCluster = [];
+
+    for (const item of bucketItems) {
+      if (currentCluster.length === 0) {
+        currentCluster.push(item);
+      } else {
+        const prevItem = currentCluster[currentCluster.length - 1];
+        const prevTime = new Date(prevItem.createdAt || 0).getTime();
+        const currTime = new Date(item.createdAt || 0).getTime();
+        if (Math.abs(prevTime - currTime) <= maxClusterGapMs) {
+          currentCluster.push(item);
+        } else {
+          clusters.push(currentCluster);
+          currentCluster = [item];
+        }
+      }
+    }
+    if (currentCluster.length > 0) {
+      clusters.push(currentCluster);
+    }
+
+    for (const cluster of clusters) {
+      if (cluster.length === 1) {
+        resultCards.push(cluster[0]);
+        continue;
+      }
+
+      const latestItem = cluster[0];
+      const count = cluster.length;
+      const unreadCount = cluster.filter((i) => !i.readAt).length;
+      const allRead = unreadCount === 0;
+
+      let title = `${count} Notifikasi Baru`;
+      let body = `${count} aktivitas tercatat dalam waktu berdekatan.`;
+      let link = role === 'admin' ? '/admin/orders' : '/customer/orders';
+
+      if (category === 'order_new') {
+        title = `${count} Pesanan Baru Masuk`;
+        body = `${count} pesanan baru menunggu pembayaran dan konfirmasi.`;
+        link = role === 'admin' ? '/admin/orders?status=NEW' : '/customer/orders?status=PENDING';
+      } else if (category === 'order_paid') {
+        title = `${count} Pesanan Telah Dibayar`;
+        body = `${count} pesanan telah lunas dan siap dikemas untuk pengiriman.`;
+        link = role === 'admin' ? '/admin/orders?status=PAID' : '/customer/orders?status=PAID';
+      } else if (category === 'order_processing') {
+        title = `${count} Pesanan Sedang Diproses`;
+        body = `${count} pesanan dalam tahap pengemasan & penyiapan resi.`;
+        link = role === 'admin' ? '/admin/orders?status=PROCESSING' : '/customer/orders';
+      } else if (category === 'order_shipped') {
+        title = `${count} Pesanan Sedang Dikirim`;
+        body = `${count} pesanan telah diserahkan ke kurir pengiriman.`;
+        link = role === 'admin' ? '/admin/orders?status=SHIPPED' : '/customer/orders';
+      } else if (category === 'order_completed') {
+        title = `${count} Pesanan Selesai`;
+        body = `${count} pesanan telah berhasil diterima pelanggan.`;
+        link = role === 'admin' ? '/admin/orders?status=COMPLETED' : '/customer/orders';
+      } else if (category === 'chat_message') {
+        title = `${count} Pesan Chat Baru`;
+        body = `Pesan terbaru: "${(latestItem.body || latestItem.title || '').slice(0, 50)}"`;
+        link = role === 'admin' ? '/admin/chat' : '/customer/dashboard?openChat=1';
+      }
+
+      resultCards.push({
+        id: `group_${category}_${latestItem.id}`,
+        isGroup: true,
+        type: latestItem.type,
+        groupCategory: category,
+        count,
+        unreadCount,
+        readAt: allRead ? latestItem.readAt : null,
+        createdAt: latestItem.createdAt,
+        imageUrl: latestItem.imageUrl || null,
+        title,
+        body,
+        link,
+        items: cluster,
+      });
+    }
+  }
+
+  // Sort chronologically descending
+  resultCards.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+  return resultCards;
+}

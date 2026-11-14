@@ -43,7 +43,7 @@ export async function GET(request) {
       }).catch(() => 0),
       prisma.order.count({
         where: {
-          status: { in: ['PAID', 'PROCESSING'] },
+          status: 'PROCESSING',
           packingStatus: 'PENDING',
         },
       }).catch(() => 0),

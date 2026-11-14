@@ -44,12 +44,12 @@ const NEW_PAGE_OPTIONS = [
   { value: 'PAID', label: 'Lunas', dotTone: 'paid' },
 ];
 
-// Pilihan status untuk modal Ubah Status Bulk — hanya real DB statuses
-// dengan label singkat sesuai kolom Status.
+// Pilihan status untuk modal Ubah Status Bulk — selaras dengan label kolom Status di tabel
 const BULK_STATUS_OPTIONS = [
   { value: 'PENDING', label: 'Belum Bayar', dotTone: 'pending' },
   { value: 'PAID', label: 'Lunas', dotTone: 'paid' },
   { value: 'PROCESSING', label: 'Diproses', dotTone: 'processing' },
+  { value: 'READY_FOR_PICKUP', label: 'Menunggu Kurir', dotTone: 'processing' },
   { value: 'SHIPPED', label: 'Dikirim', dotTone: 'shipped' },
   { value: 'COMPLETED', label: 'Selesai', dotTone: 'completed' },
   { value: 'CANCELLED', label: 'Dibatalkan', dotTone: 'cancelled' },
@@ -519,6 +519,9 @@ function AdminOrdersPageInner() {
       setSelectedIds(new Set());
       setIsSelectMode(false);
       loadOrders();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+      }
     } catch (err) {
       toast.error(err.message);
     } finally {

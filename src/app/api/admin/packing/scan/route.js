@@ -84,45 +84,119 @@ export async function POST(request) {
       }
     }
 
-    // Dukungan aksi bulk undo
+    // Dukungan aksi bulk undo / memindahkan ke pos sebelumnya
     if (action === 'undo' && Array.isArray(body.orderIds) && body.orderIds.length > 0) {
       const validOrderIds = body.orderIds
         .map((id) => String(id || '').trim())
         .filter((id) => id.length >= 3 && id.length <= 100);
 
       if (validOrderIds.length > 0) {
-        // Kembalikan READY_FOR_PICKUP ke BAGGED
-        await prisma.order.updateMany({
-          where: {
-            id: { in: validOrderIds },
-            packingStatus: 'READY_FOR_PICKUP',
-          },
-          data: {
-            packingStatus: 'BAGGED',
-            packedAt: null,
-            packedBy: null,
-          },
+        const fromStage = body.fromStage || body.stage; // 'boxing' | 'ready' | 'shipped'
+
+        if (fromStage === 'boxing') {
+          // Pos 2 -> Pos 1: Kembalikan BAGGED ke PENDING
+          await prisma.order.updateMany({
+            where: {
+              id: { in: validOrderIds },
+              packingStatus: 'BAGGED',
+            },
+            data: {
+              packingStatus: 'PENDING',
+              baggedAt: null,
+              baggedBy: null,
+            },
+          });
+
+          return NextResponse.json({
+            success: true,
+            action: 'undo',
+            bulk: true,
+            count: validOrderIds.length,
+            message: `${validOrderIds.length} pesanan berhasil dikembalikan ke Pos 1 (Bungkus Ikan).`,
+          });
+        }
+
+        if (fromStage === 'ready') {
+          // Pos 3 -> Pos 2: Kembalikan READY_FOR_PICKUP ke BAGGED
+          await prisma.order.updateMany({
+            where: {
+              id: { in: validOrderIds },
+              packingStatus: 'READY_FOR_PICKUP',
+            },
+            data: {
+              packingStatus: 'BAGGED',
+              packedAt: null,
+              packedBy: null,
+            },
+          });
+
+          return NextResponse.json({
+            success: true,
+            action: 'undo',
+            bulk: true,
+            count: validOrderIds.length,
+            message: `${validOrderIds.length} paket berhasil dikembalikan ke Pos 2 (Antrean Pack Box).`,
+          });
+        }
+
+        if (fromStage === 'shipped') {
+          // Pos 4 -> Pos 3: Kembalikan SHIPPED ke READY_FOR_PICKUP (status dikembalikan ke PROCESSING)
+          await prisma.order.updateMany({
+            where: {
+              id: { in: validOrderIds },
+              status: 'SHIPPED',
+            },
+            data: {
+              status: 'PROCESSING',
+              packingStatus: 'READY_FOR_PICKUP',
+            },
+          });
+
+          return NextResponse.json({
+            success: true,
+            action: 'undo',
+            bulk: true,
+            count: validOrderIds.length,
+            message: `${validOrderIds.length} paket berhasil dikembalikan ke Pos 3 (Siap Pickup Kurir).`,
+          });
+        }
+
+        // Fallback jika fromStage tidak dikirim:
+        // Cek status terkini masing-masing pesanan agar tidak terjadi loncat 2 tahap
+        const ordersToRevert = await prisma.order.findMany({
+          where: { id: { in: validOrderIds } },
+          select: { id: true, packingStatus: true, status: true },
         });
 
-        // Kembalikan BAGGED ke PENDING
-        await prisma.order.updateMany({
-          where: {
-            id: { in: validOrderIds },
-            packingStatus: 'BAGGED',
-          },
-          data: {
-            packingStatus: 'PENDING',
-            baggedAt: null,
-            baggedBy: null,
-          },
-        });
+        const readyIds = ordersToRevert.filter((o) => o.packingStatus === 'READY_FOR_PICKUP').map((o) => o.id);
+        const baggedIds = ordersToRevert.filter((o) => o.packingStatus === 'BAGGED').map((o) => o.id);
+        const shippedIds = ordersToRevert.filter((o) => o.status === 'SHIPPED').map((o) => o.id);
+
+        if (readyIds.length > 0) {
+          await prisma.order.updateMany({
+            where: { id: { in: readyIds } },
+            data: { packingStatus: 'BAGGED', packedAt: null, packedBy: null },
+          });
+        }
+        if (baggedIds.length > 0) {
+          await prisma.order.updateMany({
+            where: { id: { in: baggedIds } },
+            data: { packingStatus: 'PENDING', baggedAt: null, baggedBy: null },
+          });
+        }
+        if (shippedIds.length > 0) {
+          await prisma.order.updateMany({
+            where: { id: { in: shippedIds } },
+            data: { status: 'PROCESSING', packingStatus: 'READY_FOR_PICKUP' },
+          });
+        }
 
         return NextResponse.json({
           success: true,
           action: 'undo',
           bulk: true,
           count: validOrderIds.length,
-          message: `Status ${validOrderIds.length} pesanan berhasil dikembalikan ke tahap sebelumnya.`,
+          message: `${validOrderIds.length} pesanan berhasil dipindahkan ke pos sebelumnya.`,
         });
       }
     }
@@ -204,8 +278,14 @@ export async function POST(request) {
         packedBy: null,
       };
 
-      // Jika sebelumnya READY_FOR_PICKUP tapi pernah di-bag, kembalikan ke BAGGED
-      if (order.packingStatus === 'READY_FOR_PICKUP' && order.baggedAt) {
+      if (order.status === 'SHIPPED') {
+        targetStatus = 'READY_FOR_PICKUP';
+        updateData = {
+          status: 'PROCESSING',
+          packingStatus: 'READY_FOR_PICKUP',
+        };
+      } else if (order.packingStatus === 'READY_FOR_PICKUP' && order.baggedAt) {
+        // Jika sebelumnya READY_FOR_PICKUP tapi pernah di-bag, kembalikan ke BAGGED
         targetStatus = 'BAGGED';
         updateData = {
           packingStatus: 'BAGGED',

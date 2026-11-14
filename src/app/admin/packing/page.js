@@ -108,6 +108,35 @@ const iconCopy = (
   </svg>
 );
 
+const iconUndo = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="1 4 1 10 7 10" />
+    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+  </svg>
+);
+
+// Checkbox Aksesibel Khusus (Identik dengan Checkbox Keranjang Customer)
+function CartStyleCheckbox({ checked, onChange, ariaLabel, id, disabled }) {
+  return (
+    <label className={styles.checkboxWrapper} onClick={(e) => e.stopPropagation()}>
+      <input
+        type="checkbox"
+        id={id}
+        checked={!!checked}
+        onChange={onChange}
+        disabled={disabled}
+        className={styles.checkboxInput}
+        aria-label={ariaLabel}
+      />
+      <span className={styles.customCheckbox} aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </span>
+    </label>
+  );
+}
+
 // Format YYYY-MM-DD untuk input HTML date
 const toDateInputValue = (d) => {
   if (!d) return '';
@@ -252,12 +281,28 @@ function PackingPageInner() {
     setSelectedIds(new Set());
     setExpandedId(null);
 
+    // Tutup kamera otomatis jika berpindah dari tab boxing
+    if (newTab !== 'boxing') {
+      setIsScannerOpen(false);
+    }
+
     // Otomatis arahkan default filter tanggal saat beralih ke/dari tab pickup
     if (newTab === 'shipped') {
       setDateFilter('today');
     } else if (dateFilter === 'today' && activeTab === 'shipped') {
       setDateFilter('all');
     }
+  };
+
+  // Buka inline scanner kamera di atas tabel antrean pack box
+  const handleOpenScanner = () => {
+    setIsScannerOpen(true);
+    setTimeout(() => {
+      const el = document.getElementById('inline-barcode-scanner');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 120);
   };
 
   const handleScanSuccess = useCallback((result) => {
@@ -635,6 +680,49 @@ function PackingPageInner() {
     }
   };
 
+  // Handler Aksi Massal: Kembalikan / Pindahkan ke Pos Sebelumnya
+  const handleBulkRevert = async () => {
+    if (selectedIds.size === 0) return;
+
+    let targetPosName = 'Pos 1 (Bungkus Ikan)';
+    if (activeTab === 'ready') targetPosName = 'Pos 2 (Antrean Pack Box)';
+    if (activeTab === 'shipped') targetPosName = 'Pos 3 (Siap Pickup Kurir)';
+
+    const confirmed = window.confirm(
+      `Apakah Anda yakin ingin memindahkan ${selectedIds.size} pesanan terpilih ke ${targetPosName}?`
+    );
+    if (!confirmed) return;
+
+    setIsBulkBusy(true);
+    try {
+      const orderIds = Array.from(selectedIds);
+      const res = await fetch('/api/admin/packing/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'undo',
+          fromStage: activeTab,
+          orderIds,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal memindahkan pesanan ke pos sebelumnya.');
+
+      toast.success(data.message || `${orderIds.length} pesanan berhasil dikembalikan ke ${targetPosName}!`);
+      setSelectedIds(new Set());
+      loadOrders();
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+      }
+    } catch (err) {
+      toast.error(err.message || 'Terjadi kesalahan saat memindahkan pos pesanan.');
+    } finally {
+      setIsBulkBusy(false);
+    }
+  };
+
   // Helper render badge status yang akurat dan memprioritaskan status pengiriman riil
   const renderStatusBadge = (order) => {
     if (order.status === 'COMPLETED') {
@@ -698,20 +786,6 @@ function PackingPageInner() {
           <p className={styles.subtitle}>
             Manajemen alur serok ikan, bungkus plastik, kemas box, dan scan resi fisik ekspedisi.
           </p>
-        </div>
-
-        <div className={styles.headerActions}>
-          {activeTab === 'boxing' && (
-            <button
-              type="button"
-              onClick={() => setIsScannerOpen(true)}
-              className={styles.scannerBtn}
-              aria-label="Buka scanner kamera smartphone"
-            >
-              {iconCamera}
-              <span>Scan Resi Fisik</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -975,39 +1049,75 @@ function PackingPageInner() {
             )}
 
             {activeTab === 'boxing' && (
-              <button
-                type="button"
-                onClick={handleBulkExecute}
-                disabled={isBulkBusy}
-                className={styles.bulkBtnPrimary}
-              >
-                {iconBox}
-                <span>{isBulkBusy ? 'Memproses...' : `Selesai Pack Box (${selectedIds.size})`}</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkExecute}
+                  disabled={isBulkBusy}
+                  className={styles.bulkBtnPrimary}
+                >
+                  {iconBox}
+                  <span>{isBulkBusy ? 'Memproses...' : `Selesai Pack Box (${selectedIds.size})`}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRevert}
+                  disabled={isBulkBusy}
+                  className={styles.bulkBtnWarning}
+                  title="Kembalikan pesanan terpilih ke Pos 1 (Bungkus Ikan)"
+                >
+                  {iconUndo}
+                  <span>{isBulkBusy ? 'Memproses...' : `Kembalikan ke Pos 1 (${selectedIds.size})`}</span>
+                </button>
+              </>
             )}
 
             {activeTab === 'ready' && (
-              <button
-                type="button"
-                onClick={handleBulkExecute}
-                disabled={isBulkBusy}
-                className={styles.bulkBtnOutline}
-              >
-                {iconCopy}
-                <span>Salin No. Resi Terpilih ({selectedIds.size})</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkExecute}
+                  disabled={isBulkBusy}
+                  className={styles.bulkBtnOutline}
+                >
+                  {iconCopy}
+                  <span>Salin No. Resi Terpilih ({selectedIds.size})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRevert}
+                  disabled={isBulkBusy}
+                  className={styles.bulkBtnWarning}
+                  title="Kembalikan paket terpilih ke Pos 2 (Antrean Pack Box)"
+                >
+                  {iconUndo}
+                  <span>{isBulkBusy ? 'Memproses...' : `Kembalikan ke Pos 2 (${selectedIds.size})`}</span>
+                </button>
+              </>
             )}
 
             {activeTab === 'shipped' && (
-              <button
-                type="button"
-                onClick={handleBulkExecute}
-                disabled={isBulkBusy}
-                className={styles.bulkBtnOutline}
-              >
-                {iconCopy}
-                <span>Salin Rekap Resi Terpilih ({selectedIds.size})</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkExecute}
+                  disabled={isBulkBusy}
+                  className={styles.bulkBtnOutline}
+                >
+                  {iconCopy}
+                  <span>Salin Rekap Resi Terpilih ({selectedIds.size})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRevert}
+                  disabled={isBulkBusy}
+                  className={styles.bulkBtnWarning}
+                  title="Kembalikan paket terpilih ke Pos 3 (Siap Pickup Kurir)"
+                >
+                  {iconUndo}
+                  <span>{isBulkBusy ? 'Memproses...' : `Kembalikan ke Pos 3 (${selectedIds.size})`}</span>
+                </button>
+              </>
             )}
 
             <button
@@ -1015,7 +1125,7 @@ function PackingPageInner() {
               onClick={() => setSelectedIds(new Set())}
               className={styles.bulkBtnGhost}
             >
-              Batal
+              Batalkan Pilihan
             </button>
           </div>
         </div>
@@ -1030,12 +1140,10 @@ function PackingPageInner() {
                 <tr>
                   {isSelectMode && (
                     <th className={styles.thCheckbox}>
-                      <input
-                        type="checkbox"
+                      <CartStyleCheckbox
                         checked={allSelected}
                         onChange={toggleSelectAll}
-                        className={styles.checkboxInput}
-                        aria-label="Pilih semua baris ikan"
+                        ariaLabel="Pilih semua baris ikan"
                       />
                     </th>
                   )}
@@ -1079,12 +1187,11 @@ function PackingPageInner() {
                         className={isSelected ? styles.rowSelected : ''}
                       >
                         {isSelectMode && (
-                          <td className={styles.tdCheckbox}>
-                            <input
-                              type="checkbox"
+                          <td className={styles.tdCheckbox} onClick={(e) => e.stopPropagation()}>
+                            <CartStyleCheckbox
                               checked={isSelected}
                               onChange={(e) => toggleSelectRow(row.id, e)}
-                              className={styles.checkboxInput}
+                              ariaLabel={`Pilih ${row.name}`}
                             />
                           </td>
                         )}
@@ -1196,19 +1303,29 @@ function PackingPageInner() {
 
       {/* 7. TAMPILAN TAHAP 2 & 3: MEJA PACK BOX & RAK KURIR DENGAN ROW-EXPAND */}
       {(activeTab === 'boxing' || activeTab === 'ready') && (
-        <div className={styles.tableWrap}>
+        <>
+          {/* Inline Scanner Kamera Barcode (Hanya di Tahap 2: Pack Box & Resi) */}
+          {activeTab === 'boxing' && isScannerOpen && (
+            <div id="inline-barcode-scanner">
+              <CameraScannerModal
+                isOpen={isScannerOpen}
+                onClose={() => setIsScannerOpen(false)}
+                onScanSuccess={handleScanSuccess}
+              />
+            </div>
+          )}
+
+          <div className={styles.tableWrap}>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
                 <tr>
                   {isSelectMode && (
                     <th className={styles.thCheckbox}>
-                      <input
-                        type="checkbox"
+                      <CartStyleCheckbox
                         checked={allSelected}
                         onChange={toggleSelectAll}
-                        className={styles.checkboxInput}
-                        aria-label="Pilih semua pesanan"
+                        ariaLabel="Pilih semua pesanan"
                       />
                     </th>
                   )}
@@ -1268,11 +1385,10 @@ function PackingPageInner() {
                         >
                           {isSelectMode && (
                             <td className={styles.tdCheckbox} onClick={(e) => e.stopPropagation()}>
-                              <input
-                                type="checkbox"
+                              <CartStyleCheckbox
                                 checked={isSelected}
                                 onChange={(e) => toggleSelectRow(order.id, e)}
-                                className={styles.checkboxInput}
+                                ariaLabel={`Pilih pesanan ${order.id}`}
                               />
                             </td>
                           )}
@@ -1366,11 +1482,10 @@ function PackingPageInner() {
                                           }}
                                         >
                                           <div className={styles.itemLeft}>
-                                            <input
-                                              type="checkbox"
+                                            <CartStyleCheckbox
                                               checked={isChecked}
                                               onChange={() => toggleItemCheck(checkKey)}
-                                              className={styles.checkInput}
+                                              ariaLabel={`Ceklis ${it.customName || it.product?.name || 'Item'}`}
                                             />
                                             {itemImg && (
                                               <Image
@@ -1466,7 +1581,8 @@ function PackingPageInner() {
             </table>
           </div>
         </div>
-      )}
+      </>
+    )}
 
       {/* 8. TAMPILAN TAHAP 4: TABEL KHUSUS PICKUP KURIR / RIWAYAT EKSPEDISI */}
       {activeTab === 'shipped' && (
@@ -1477,12 +1593,10 @@ function PackingPageInner() {
                 <tr>
                   {isSelectMode && (
                     <th className={styles.thCheckbox}>
-                      <input
-                        type="checkbox"
+                      <CartStyleCheckbox
                         checked={allSelected}
                         onChange={toggleSelectAll}
-                        className={styles.checkboxInput}
-                        aria-label="Pilih semua pesanan pickup"
+                        ariaLabel="Pilih semua pesanan pickup"
                       />
                     </th>
                   )}
@@ -1537,12 +1651,11 @@ function PackingPageInner() {
                         className={isSelected ? styles.rowSelected : ''}
                       >
                         {isSelectMode && (
-                          <td className={styles.tdCheckbox}>
-                            <input
-                              type="checkbox"
+                          <td className={styles.tdCheckbox} onClick={(e) => e.stopPropagation()}>
+                            <CartStyleCheckbox
                               checked={isSelected}
                               onChange={(e) => toggleSelectRow(order.id, e)}
-                              className={styles.checkboxInput}
+                              ariaLabel={`Pilih pesanan ${order.id}`}
                             />
                           </td>
                         )}
@@ -1664,25 +1777,18 @@ function PackingPageInner() {
         </div>
       )}
 
-      {/* Floating Action Button (FAB) Scanner Kamera Smartphone (Hanya tampil di Tahap 2: Pack Box & Resi) */}
-      {activeTab === 'boxing' && (
+      {/* Floating Action Button (FAB) Scanner Kamera Smartphone (Hanya tampil di Tahap 2 saat scanner sedang ditutup) */}
+      {activeTab === 'boxing' && !isScannerOpen && (
         <button
           type="button"
-          onClick={() => setIsScannerOpen(true)}
+          onClick={handleOpenScanner}
           className={styles.floatingScannerBtn}
-          aria-label="Scan barcode resi fisik"
+          aria-label="Buka scanner barcode kamera"
         >
           {iconCamera}
-          <span>Scan Resi</span>
+          <span>Scan Resi Fisik</span>
         </button>
       )}
-
-      {/* Modal Scanner Kamera Smartphone */}
-      <CameraScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onScanSuccess={handleScanSuccess}
-      />
     </div>
   );
 }

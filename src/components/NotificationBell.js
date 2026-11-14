@@ -5,7 +5,13 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { getNotificationMeta, formatRelativeTime, getNotificationImage } from '@/lib/notificationHelpers';
+import {
+  getNotificationMeta,
+  formatRelativeTime,
+  getNotificationImage,
+  groupNotifications,
+  extractOrderSnippet,
+} from '@/lib/notificationHelpers';
 import { playAdminNotificationSound, playChatNotificationSound, playNotificationChime, isChimeMuted, setChimeMuted } from '@/lib/notificationSound';
 import styles from './NotificationBell.module.css';
 
@@ -48,6 +54,7 @@ export default function NotificationBell() {
   const [isRinging, setIsRinging] = useState(false);
   const [soundMuted, setSoundMuted] = useState(false);
   const [pushStatus, setPushStatus] = useState('unknown'); // 'enabled' | 'blocked' | 'unsupported' | 'unknown'
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
 
   const prevUnreadRef = useRef(0);
   const isFirstLoadRef = useRef(true);
@@ -84,9 +91,9 @@ export default function NotificationBell() {
     setChimeMuted(next);
     if (!next) {
       if (currentUser?.role === 'admin') {
-        playAdminNotificationSound();
+        playAdminNotificationSound(true);
       } else {
-        playNotificationChime();
+        playNotificationChime(true);
       }
       toast.info('Suara notifikasi diaktifkan.');
     } else {
@@ -259,31 +266,39 @@ export default function NotificationBell() {
     };
   }, [open]);
 
-  // Reset limit tampilan ke 5 saat dropdown ditutup
+  // Reset limit tampilan ke 5 dan collapse group saat dropdown ditutup
   useEffect(() => {
     if (!open) {
       setDisplayLimit(5);
+      setExpandedGroups(new Set());
     }
   }, [open]);
 
-  // Collapse / deduplikasi notifikasi chat agar hanya 1 baris chat terbaru yang tampil
-  const processedItems = useMemo(() => {
-    const seenChat = new Set();
-    const result = [];
-    for (const item of items) {
-      if (item.type === 'chat.reply') {
-        if (seenChat.has('chat.reply')) continue;
-        seenChat.add('chat.reply');
+  // Toggle accordion expand untuk kartu notifikasi grup
+  const toggleGroupExpand = (groupId, e) => {
+    e.stopPropagation();
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
       }
-      result.push(item);
-    }
-    return result;
-  }, [items]);
+      return next;
+    });
+  };
+
+  // Smart Aggregation: kelompokkan pesanan massal beruntun & collapse chat duplikat
+  const processedItems = useMemo(() => {
+    return groupNotifications(items, {
+      role: currentUser?.role === 'admin' ? 'admin' : 'customer',
+    });
+  }, [items, currentUser?.role]);
 
   // Filtered items based on active tab
   const displayedItems = useMemo(() => {
     if (activeTab === 'unread') {
-      return processedItems.filter((n) => !n.readAt);
+      return processedItems.filter((n) => (n.isGroup ? n.unreadCount > 0 : !n.readAt));
     }
     return processedItems;
   }, [processedItems, activeTab]);
@@ -309,6 +324,51 @@ export default function NotificationBell() {
       }
     }
     return targetLink;
+  };
+
+  // Group card click -> mark all child items as read & navigate to filtered order list
+  const handleGroupClick = async (group, e) => {
+    e.preventDefault();
+    const unreadChildIds = (group.items || []).filter((i) => !i.readAt).map((i) => i.id);
+    if (unreadChildIds.length > 0) {
+      try {
+        await fetch('/api/notifications/read-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: unreadChildIds }),
+        });
+        const now = new Date().toISOString();
+        setItems((prev) =>
+          prev.map((n) => (unreadChildIds.includes(n.id) ? { ...n, readAt: n.readAt || now } : n))
+        );
+        setUnread((prev) => Math.max(0, prev - unreadChildIds.length));
+      } catch {
+        // silent
+      }
+    }
+    setOpen(false);
+    if (group.link) {
+      router.push(group.link);
+    }
+  };
+
+  // Individual sub-item click inside expanded group accordion
+  const handleSubItemClick = async (subItem, e) => {
+    e.stopPropagation();
+    if (!subItem.readAt) {
+      try {
+        await fetch(`/api/notifications/${subItem.id}/read`, { method: 'POST' });
+        setItems((prev) => prev.map((n) => (n.id === subItem.id ? { ...n, readAt: new Date().toISOString() } : n)));
+        setUnread((prev) => Math.max(0, prev - 1));
+      } catch {
+        // silent
+      }
+    }
+    setOpen(false);
+    const destination = resolveTargetLink(subItem);
+    if (destination) {
+      router.push(destination);
+    }
   };
 
   // Item click -> mark read and navigate
@@ -528,6 +588,110 @@ export default function NotificationBell() {
                 visibleItems.map((item) => {
                   const meta = getNotificationMeta(item.type);
                   const imageSrc = getNotificationImage(item);
+
+                  // 1. RENDER KARTU NOTIFIKASI GRUP (Aktivitas Massal Berurutan)
+                  if (item.isGroup) {
+                    const isExpanded = expandedGroups.has(item.id);
+                    const isUnread = item.unreadCount > 0;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`${styles.groupCard} ${isUnread ? styles.groupCardUnread : ''}`}
+                      >
+                        <div
+                          className={styles.groupHeader}
+                          onClick={(e) => handleGroupClick(item, e)}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <div className={styles.thumbWrapper}>
+                            <img
+                              src={imageSrc}
+                              alt=""
+                              className={styles.thumbImage}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/img/betta-1.png';
+                              }}
+                            />
+                            <span
+                              className={styles.cornerBadge}
+                              style={{ backgroundColor: meta.badgeColor }}
+                              title={meta.label}
+                            >
+                              {meta.icon}
+                            </span>
+                          </div>
+                          <div className={styles.itemContent}>
+                            <div className={styles.itemMetaRow}>
+                              <span className={styles.itemCategory}>{meta.label}</span>
+                              <span className={styles.groupBadgePill}>
+                                {item.count} pesanan
+                              </span>
+                              <span className={styles.itemSeparator}>•</span>
+                              <span className={styles.itemTime}>{formatRelativeTime(item.createdAt)}</span>
+                              {isUnread && <span className={styles.unreadDot} />}
+                            </div>
+                            <div className={styles.itemTitleText}>{item.title}</div>
+                            {item.body && <div className={styles.itemBody}>{item.body}</div>}
+
+                            <button
+                              type="button"
+                              className={styles.groupToggleBtn}
+                              onClick={(e) => toggleGroupExpand(item.id, e)}
+                              aria-expanded={isExpanded}
+                              title={isExpanded ? 'Sembunyikan rincian pesanan' : 'Lihat rincian pesanan'}
+                            >
+                              <span>{isExpanded ? 'Tutup rincian' : `Rincian (${item.count})`}</span>
+                              <span className={`${styles.groupToggleIcon} ${isExpanded ? styles.groupToggleIconOpen : ''}`}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Accordion Sub-items List */}
+                        {isExpanded && (
+                          <div className={styles.groupSubList}>
+                            {item.items.slice(0, 8).map((subItem) => {
+                              const snippet = extractOrderSnippet(subItem);
+                              return (
+                                <div
+                                  key={subItem.id}
+                                  className={`${styles.subItemRow} ${!subItem.readAt ? styles.subItemRowUnread : ''}`}
+                                  onClick={(e) => handleSubItemClick(subItem, e)}
+                                  role="button"
+                                  tabIndex={0}
+                                  title="Buka detail pesanan ini"
+                                >
+                                  <div className={styles.subItemLeft}>
+                                    {snippet.code && <span className={styles.subItemCode}>{snippet.code}</span>}
+                                    <span className={styles.subItemName}>
+                                      {snippet.name || subItem.title}
+                                    </span>
+                                  </div>
+                                  <div className={styles.subItemRight}>
+                                    <span className={styles.subItemTime}>{formatRelativeTime(subItem.createdAt)}</span>
+                                    {!subItem.readAt && <span className={styles.unreadDot} />}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {item.items.length > 8 && (
+                              <div className={styles.subItemMore}>
+                                +{item.items.length - 8} pesanan lainnya di halaman pesanan
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // 2. RENDER KARTU NOTIFIKASI TUNGGAL (Individual)
                   return (
                     <div
                       key={item.id}
