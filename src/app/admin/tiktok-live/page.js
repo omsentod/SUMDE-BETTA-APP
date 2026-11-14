@@ -97,6 +97,7 @@ export default function AdminTikTokLivePage() {
   }, [toast]);
 
   const [accounts, setAccounts] = useState([]);
+  const [teamUsers, setTeamUsers] = useState([]);
   const [baskets, setBaskets] = useState([]);
   const [catalogProducts, setCatalogProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,9 +112,8 @@ export default function AdminTikTokLivePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedBasketId, setExpandedBasketId] = useState(null);
 
-  // Modals & recent saved deal link banner
+  // Modals
   const [dealModalState, setDealModalState] = useState({ open: false, initialUsername: '' });
-  const [recentSavedBasket, setRecentSavedBasket] = useState(null);
   const [showAccountsModal, setShowAccountsModal] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
@@ -145,6 +145,7 @@ export default function AdminTikTokLivePage() {
 
       const nextAccounts = Array.isArray(data.accounts) ? data.accounts : [];
       setAccounts(nextAccounts);
+      setTeamUsers(Array.isArray(data.teamUsers) ? data.teamUsers : []);
       setBaskets(Array.isArray(data.baskets) ? data.baskets : []);
       setCatalogProducts(Array.isArray(data.catalogProducts) ? data.catalogProducts : []);
 
@@ -246,12 +247,28 @@ export default function AdminTikTokLivePage() {
       toast.warning('Token link belum tersedia, coba segarkan data');
       return;
     }
+    const totalItems = (basket.items || []).reduce(
+      (acc, it) => acc + (Number(it.quantity) || 1),
+      0
+    );
+    const countText = totalItems > 0 ? `${totalItems} ekor ikan` : 'ikan';
     const url = `${window.location.origin}/live/${basket.claimToken}`;
+    const dmText = [
+      `Halo kak @${basket.tiktokUsername}!`,
+      ``,
+      `Terima kasih sudah ikutan sesi TikTok Live Sumde Betta.`,
+      `Berikut link rekap order & keep kamu (${countText}):`,
+      url,
+      ``,
+      `Silakan buka link di atas untuk cek rincian ikan, lengkapi alamat kirim, dan selesaikan pembayaran ya kak.`,
+      `Terima kasih & salam satu air!`,
+    ].join('\n');
+
     try {
-      await navigator.clipboard.writeText(url);
-      toast.success(`Link unik @${basket.tiktokUsername} disalin`);
+      await navigator.clipboard.writeText(dmText);
+      toast.success(`Format pesan DM untuk @${basket.tiktokUsername} disalin ke clipboard`);
     } catch {
-      toast.info(`Link unik @${basket.tiktokUsername}: ${url}`);
+      toast.info(`Link live @${basket.tiktokUsername}: ${url}`);
     }
   };
 
@@ -325,11 +342,14 @@ export default function AdminTikTokLivePage() {
   const accountFilterOptions = useMemo(
     () => [
       { value: 'ALL', label: 'Semua Akun TikTok' },
-      ...accounts.map((acc) => ({
-        value: acc.id,
-        label: acc.name,
-        sublabel: acc.handle,
-      })),
+      ...accounts.map((acc) => {
+        const hostInfo = acc.hostUser?.name || acc.hostName;
+        return {
+          value: acc.id,
+          label: acc.name,
+          sublabel: hostInfo ? `${acc.handle} • Host: ${hostInfo}` : acc.handle,
+        };
+      }),
     ],
     [accounts],
   );
@@ -375,36 +395,6 @@ export default function AdminTikTokLivePage() {
           </button>
         </div>
       </div>
-
-      {/* Banner Link Unik Pembeli Baru Disimpan */}
-      {recentSavedBasket?.claimToken && (
-        <div className={styles.dealLinkBanner}>
-          <div className={styles.dealLinkInfo}>
-            <span>
-              Link klaim unik untuk <strong>@{recentSavedBasket.tiktokUsername}</strong> ({recentSavedBasket.claimCode}) siap dikirim lewat DM:
-            </span>
-            <span className={styles.dealLinkUrl}>
-              /live/{recentSavedBasket.claimToken}
-            </span>
-          </div>
-          <div className={styles.dealLinkActions}>
-            <button
-              type="button"
-              className={styles.btnSmallPrimary}
-              onClick={() => handleCopyBuyerLink(recentSavedBasket)}
-            >
-              Salin Link DM
-            </button>
-            <button
-              type="button"
-              className={styles.btnGhost}
-              onClick={() => setRecentSavedBasket(null)}
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* KPI Cards */}
       <div className={styles.kpiGrid}>
@@ -583,7 +573,12 @@ export default function AdminTikTokLivePage() {
 
                         <td>
                           {basket.tiktokAccount ? (
-                            <span className={styles.accountChip}>{basket.tiktokAccount.name}</span>
+                            <div className={styles.accountCol}>
+                              <span className={styles.accountChip}>{basket.tiktokAccount.name}</span>
+                              {basket.tiktokAccount.hostName ? (
+                                <span className={styles.accountHostSub}>Host: {basket.tiktokAccount.hostName}</span>
+                              ) : null}
+                            </div>
                           ) : (
                             <span className={styles.buyerSub}>-</span>
                           )}
@@ -621,8 +616,22 @@ export default function AdminTikTokLivePage() {
                                 type="button"
                                 className={styles.btnSmall}
                                 onClick={() => handleCopyBuyerLink(basket)}
+                                title="Salin template format DM TikTok ke clipboard"
                               >
-                                Salin Link
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                                Salin DM
                               </button>
                             )}
                             {basket.status === 'OPEN' && (
@@ -681,7 +690,8 @@ export default function AdminTikTokLivePage() {
                                   </span>
                                   {basket.tiktokAccount && (
                                     <span>
-                                      Akun Utama: <strong>{basket.tiktokAccount.handle}</strong>
+                                      Akun Live: <strong>{basket.tiktokAccount.name} ({basket.tiktokAccount.handle})</strong>
+                                      {basket.tiktokAccount.hostName ? ` • Host: ${basket.tiktokAccount.hostName}` : ''}
                                     </span>
                                   )}
                                   {basket.order?.trackingNumber && (
@@ -693,27 +703,29 @@ export default function AdminTikTokLivePage() {
 
                                 <div className={styles.rowActions}>
                                   {basket.claimToken && (
-                                    <button
-                                      type="button"
-                                      className={styles.btnSmall}
-                                      onClick={() => handleCopyBuyerLink(basket)}
+                                    <a
+                                      href={`/live/${basket.claimToken}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={styles.btnSmallGhost}
+                                      title="Buka portal checkout pembeli di tab baru"
                                     >
-                                      Salin Link (/live/{basket.claimToken.slice(0, 8)}...)
-                                    </button>
-                                  )}
-                                  {basket.status === 'OPEN' && (
-                                    <button
-                                      type="button"
-                                      className={styles.btnSmallPrimary}
-                                      onClick={() =>
-                                        setDealModalState({
-                                          open: true,
-                                          initialUsername: `@${basket.tiktokUsername}`,
-                                        })
-                                      }
-                                    >
-                                      + Tambah Ikan ke @{basket.tiktokUsername}
-                                    </button>
+                                      <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <line x1="10" y1="14" x2="21" y2="3" />
+                                      </svg>
+                                      Buka Portal Live
+                                    </a>
                                   )}
                                 </div>
                               </div>
@@ -889,8 +901,7 @@ export default function AdminTikTokLivePage() {
           catalogProducts={catalogProducts}
           initialUsername={dealModalState.initialUsername}
           onClose={() => setDealModalState({ open: false, initialUsername: '' })}
-          onSaved={async (savedBasket) => {
-            if (savedBasket) setRecentSavedBasket(savedBasket);
+          onSaved={async () => {
             await loadData(false);
           }}
         />
@@ -900,6 +911,7 @@ export default function AdminTikTokLivePage() {
       {showAccountsModal && (
         <AccountsModal
           accounts={accounts}
+          teamUsers={teamUsers}
           onClose={() => setShowAccountsModal(false)}
           onSaved={() => loadData(false)}
         />

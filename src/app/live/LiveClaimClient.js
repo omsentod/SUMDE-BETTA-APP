@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
@@ -49,12 +49,46 @@ function LiveClaimContent({ initialToken = '' }) {
   const [lookupError, setLookupError] = useState('');
   const [lookupResult, setLookupResult] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [newItemsAlert, setNewItemsAlert] = useState(null);
+
+  const prevItemsCountRef = useRef(0);
+  const isPollingRef = useRef(false);
 
   const [activeOrder, setActiveOrder] = useState(() =>
     urlOrderId ? { orderId: urlOrderId, paymentUrl: null, total: null, email: '' } : null
   );
   const [paymentState, setPaymentState] = useState(() => (urlOrderId ? 'waiting' : 'idle'));
   const [resumingId, setResumingId] = useState(null);
+
+  const pollActiveBasket = useCallback(async (tokenToPoll) => {
+    if (!tokenToPoll || isPollingRef.current) return;
+    isPollingRef.current = true;
+    try {
+      const res = await fetch(`/api/live/lookup?token=${encodeURIComponent(tokenToPoll)}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data?.found) return;
+
+      const currentCount = data.openBasket?.items?.length || 0;
+      const prevCount = prevItemsCountRef.current;
+
+      if (prevCount > 0 && currentCount > prevCount) {
+        const addedCount = currentCount - prevCount;
+        const msg = `${addedCount} ikan baru deal dari live streaming masuk ke keranjang!`;
+        setNewItemsAlert(msg);
+        toast.info(msg);
+      }
+
+      prevItemsCountRef.current = currentCount;
+      setLookupResult(data);
+    } catch {
+      // Ignore background network transient jitter
+    } finally {
+      isPollingRef.current = false;
+    }
+  }, [toast]);
 
   const performLookup = useCallback(async (rawVal) => {
     const extracted = extractTokenFromInput(rawVal);
@@ -73,6 +107,7 @@ function LiveClaimContent({ initialToken = '' }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal membuka pesanan live.');
 
+      prevItemsCountRef.current = data.openBasket?.items?.length || 0;
       setLookupResult(data);
     } catch (err) {
       setLookupError(err.message);
@@ -82,35 +117,104 @@ function LiveClaimContent({ initialToken = '' }) {
     }
   }, []);
 
-  const checkOrderStatus = useCallback(async (orderId) => {
+  const checkOrderStatus = useCallback(async (orderId, showFeedback = false) => {
     if (!orderId) return;
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (showFeedback) toast.error('Gagal memeriksa status pesanan.');
+        return;
+      }
       const data = await res.json();
       if (['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'].includes(data.status)) {
         setPaymentState('paid');
+        if (showFeedback) {
+          toast.success('Pembayaran terverifikasi! Pesanan Anda sedang diproses.');
+        }
       } else if (data.status === 'CANCELLED') {
         setPaymentState('idle');
         setActiveOrder(null);
         toast.info('Transaksi pembayaran dibatalkan.');
+      } else {
+        if (showFeedback) {
+          toast.info('Status pesanan: Belum Dibayar (PENDING). Selesaikan pembayaran di DOKU atau klik Kembali untuk melihat rincian pesanan.');
+        }
       }
     } catch {
-      // ignore transient network polling failure
+      if (showFeedback) toast.error('Koneksi terganggu saat memeriksa status pesanan.');
     }
   }, [toast]);
+
+  const handleBackToBasket = useCallback(() => {
+    setPaymentState('idle');
+    if (typeof window !== 'undefined') {
+      const cleanUrl = urlToken ? `/live/${encodeURIComponent(urlToken)}` : '/live';
+      window.history.replaceState({}, '', cleanUrl);
+    }
+    if (activeToken) {
+      performLookup(activeToken);
+    }
+  }, [urlToken, activeToken, performLookup]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (paymentState === 'waiting') {
+        handleBackToBasket();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [paymentState, handleBackToBasket]);
 
   useEffect(() => {
     if (!urlOrderId && !urlToken) return;
     const timer = setTimeout(() => {
-      if (urlOrderId) {
-        checkOrderStatus(urlOrderId);
-      } else if (urlToken) {
+      if (urlToken) {
         performLookup(urlToken);
+      }
+      if (urlOrderId) {
+        checkOrderStatus(urlOrderId, false);
       }
     }, 0);
     return () => clearTimeout(timer);
   }, [urlOrderId, urlToken, checkOrderStatus, performLookup]);
+
+  // Real-time background sync every 3.5s while basket is OPEN
+  useEffect(() => {
+    if (!activeToken || paymentState !== 'waiting' && paymentState !== 'idle') return;
+    if (paymentState === 'waiting') return; // Handled by checkOrderStatus
+
+    let cancelled = false;
+
+    const tick = async () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !cancelled) {
+        await pollActiveBasket(activeToken);
+      }
+    };
+
+    const interval = setInterval(tick, 3500);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        tick();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [activeToken, paymentState, pollActiveBasket]);
+
+  // Auto-dismiss new items banner after 6 seconds
+  useEffect(() => {
+    if (!newItemsAlert) return;
+    const t = setTimeout(() => setNewItemsAlert(null), 6000);
+    return () => clearTimeout(t);
+  }, [newItemsAlert]);
 
   useEffect(() => {
     if (paymentState !== 'waiting' || !activeOrder?.orderId) return;
@@ -151,7 +255,7 @@ function LiveClaimContent({ initialToken = '' }) {
       });
       setPaymentState('waiting');
       if (data.paymentUrl) {
-        window.open(data.paymentUrl, '_blank', 'noopener,noreferrer');
+        window.location.assign(data.paymentUrl);
       }
     } catch (err) {
       toast.error(err.message);
@@ -165,7 +269,7 @@ function LiveClaimContent({ initialToken = '' }) {
     setPaymentState('waiting');
     setShowCheckout(false);
     if (info.paymentUrl) {
-      window.open(info.paymentUrl, '_blank', 'noopener,noreferrer');
+      window.location.assign(info.paymentUrl);
     }
   };
 
@@ -175,19 +279,38 @@ function LiveClaimContent({ initialToken = '' }) {
     <div className={styles.wrapper}>
       <div className={styles.container}>
         <div className={styles.hero}>
-          <div className={styles.heroIconWrap}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M23 7l-7 5 7 5V7z" />
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-            </svg>
+          {/* TikTok Live Stream Brand Header */}
+          <div className={styles.liveHeaderBadge}>
+            <div className={styles.liveBadgeLeft}>
+              <div className={styles.tiktokLogoTile} aria-label="TikTok">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                </svg>
+              </div>
+              <span className={styles.livePill}>
+                <span className={styles.liveDot} />
+                LIVE
+              </span>
+              <span className={styles.liveSessionTitle}>Sesi Live Streaming</span>
+            </div>
+
+            {lookupResult?.openBasket?.liveAccountHandles?.length > 0 && (
+              <div className={styles.liveAccountPill}>
+                <span className={styles.liveAccountLabel}>Akun Live:</span>
+                <span className={styles.liveAccountName}>
+                  {lookupResult.openBasket.liveAccountHandles.join(', ')}
+                </span>
+              </div>
+            )}
           </div>
+
           <h1 className={styles.heroTitle}>
             {lookupResult?.tiktokUsername
               ? `Keranjang Live @${lookupResult.tiktokUsername}`
-              : 'Klaim Pesanan TikTok Live'}
+              : 'Checkout TikTok Live'}
           </h1>
           <p className={styles.heroSubtitle}>
-            Semua ikan yang sudah kamu deal di live streaming dikumpulkan dalam satu link pribadi ini agar cukup bayar 1x ongkos kirim.
+            Semua ikan deal live tersinkronisasi otomatis dalam satu link pribadi. Cukup bayar 1x ongkir untuk seluruh ikan.
           </p>
         </div>
 
@@ -283,8 +406,6 @@ function LiveClaimContent({ initialToken = '' }) {
               {activeOrder.paymentUrl && (
                 <a
                   href={activeOrder.paymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className={styles.primaryBtn}
                 >
                   Buka Halaman Pembayaran DOKU
@@ -293,10 +414,24 @@ function LiveClaimContent({ initialToken = '' }) {
               <button
                 type="button"
                 className={styles.outlineBtn}
-                onClick={() => checkOrderStatus(activeOrder.orderId)}
+                onClick={() => checkOrderStatus(activeOrder.orderId, true)}
               >
                 Cek Status Sekarang
               </button>
+              <button
+                type="button"
+                className={styles.outlineBtn}
+                onClick={handleBackToBasket}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Kembali ke Rincian Pesanan
+              </button>
+              <Link href="/customer/orders" className={styles.ghostBtn}>
+                Lihat di Pesanan Saya
+              </Link>
             </div>
           </div>
         )}
@@ -394,13 +529,39 @@ function LiveClaimContent({ initialToken = '' }) {
                 <div className={styles.card}>
                   <div className={styles.basketHeader}>
                     <div>
-                      <h2 className={styles.buyerTitle}>Keranjang @{lookupResult.openBasket.tiktokUsername}</h2>
+                      <div className={styles.basketTitleRow}>
+                        <h2 className={styles.buyerTitle}>Keranjang @{lookupResult.openBasket.tiktokUsername}</h2>
+                        <span className={styles.realtimeSyncBadge} title="Terkoneksi langsung ke admin live streaming">
+                          <span className={styles.syncPulseDot} />
+                          Live Sync Aktif
+                        </span>
+                      </div>
                       <p className={styles.helperText}>
-                        {lookupResult.openBasket.totalQty} item siap di-checkout dalam 1 pengiriman.
+                        {lookupResult.openBasket.totalQty} ikan terkumpul dalam 1 tagihan & 1 kali ongkir.
                       </p>
                     </div>
                     <span className={styles.claimBadge}>{lookupResult.openBasket.claimCode}</span>
                   </div>
+
+                  {/* Sesi Live Boundary Notice (Anti-hoarding across live sessions) */}
+                  <div className={styles.sessionBoundaryNotice}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <div>
+                      <strong>Khusus Sesi Live Saat Ini:</strong> Selesaikan checkout untuk mengamankan ikan sebelum sesi live berakhir. Ikan yang belum dibayar tidak dapat digabung ke sesi live hari berikutnya.
+                    </div>
+                  </div>
+
+                  {newItemsAlert && (
+                    <div className={styles.newItemsAlert}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>{newItemsAlert}</span>
+                    </div>
+                  )}
 
                   <div className={styles.itemList}>
                     {lookupResult.openBasket.items.map((item) => (
@@ -416,9 +577,16 @@ function LiveClaimContent({ initialToken = '' }) {
                           </div>
                           <div className={styles.itemMeta}>
                             {item.quantity} × {formatIDR(item.price)}
-                            {item.accountHandle ? ` · ${item.accountHandle}` : ''}
                             {item.note ? ` · ${item.note}` : ''}
                           </div>
+                          {item.accountHandle && (
+                            <span className={styles.itemAccountBadge}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                              </svg>
+                              Deal di {item.accountHandle}
+                            </span>
+                          )}
                         </div>
                         <div className={styles.itemPrice}>
                           {formatIDR((item.price || 0) * (item.quantity || 1))}
@@ -446,6 +614,7 @@ function LiveClaimContent({ initialToken = '' }) {
                 {showCheckout && (
                   <LiveCheckoutForm
                     basket={lookupResult.openBasket}
+                    newItemsAlert={newItemsAlert}
                     onCancel={() => setShowCheckout(false)}
                     onPaymentCreated={handlePaymentCreated}
                   />

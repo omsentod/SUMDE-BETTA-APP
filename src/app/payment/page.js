@@ -75,12 +75,15 @@ export default function PaymentPage() {
     useEffect(() => {
         let hasFreshShipment = false;
         let shipmentTimestamp = 0;
-        const shipData = localStorage.getItem('temp-shipment');
+        let nextShipment = null;
+        let nextActivePayment = null;
+
+        const shipData = typeof window !== 'undefined' ? localStorage.getItem('temp-shipment') : null;
         if (shipData) {
             try {
                 const parsed = JSON.parse(shipData);
                 if (isFresh(parsed.createdAt)) {
-                    setShipment(parsed);
+                    nextShipment = parsed;
                     hasFreshShipment = true;
                     shipmentTimestamp = parsed.createdAt || 0;
                 } else {
@@ -92,7 +95,7 @@ export default function PaymentPage() {
         }
 
         let hasFreshActivePayment = false;
-        const activePayData = localStorage.getItem('active-payment');
+        const activePayData = typeof window !== 'undefined' ? localStorage.getItem('active-payment') : null;
         if (activePayData) {
             try {
                 const parsed = JSON.parse(activePayData);
@@ -100,10 +103,7 @@ export default function PaymentPage() {
                 // Jika temp-shipment lebih baru, user baru saja dari /checkout untuk pesanan baru.
                 const isNewerCheckout = hasFreshShipment && shipmentTimestamp > (parsed.createdAt || 0);
                 if (isFresh(parsed.createdAt) && !isNewerCheckout) {
-                    setActivePayment(parsed);
-                    setStatus('checkout_created');
-                    // Auto check status immediately on load (in case they just redirected back)
-                    autoCheckPayment(parsed.orderId);
+                    nextActivePayment = parsed;
                     hasFreshActivePayment = true;
                 } else {
                     localStorage.removeItem('active-payment');
@@ -111,6 +111,17 @@ export default function PaymentPage() {
             } catch (e) {
                 console.error('Failed to parse active-payment', e);
             }
+        }
+
+        if (nextShipment) {
+            setTimeout(() => setShipment(nextShipment), 0);
+        }
+        if (nextActivePayment) {
+            setTimeout(() => {
+                setActivePayment(nextActivePayment);
+                setStatus('checkout_created');
+                autoCheckPayment(nextActivePayment.orderId);
+            }, 0);
         }
 
         if (!hasFreshShipment && !hasFreshActivePayment) {
@@ -127,6 +138,17 @@ export default function PaymentPage() {
         }, 4000);
         return () => clearInterval(interval);
     }, [status, activePayment?.orderId, autoCheckPayment]);
+
+    // Handle browser back button when on waiting screen
+    useEffect(() => {
+        const handlePop = () => {
+            if (status === 'checkout_created') {
+                router.push('/customer/orders');
+            }
+        };
+        window.addEventListener('popstate', handlePop);
+        return () => window.removeEventListener('popstate', handlePop);
+    }, [status, router]);
 
     const formatIDR = (v) => new Intl.NumberFormat('id-ID', {
         style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
@@ -634,6 +656,13 @@ export default function PaymentPage() {
                                     disabled={checkingStatus}
                                 >
                                     {checkingStatus ? 'Memeriksa...' : 'Cek Status Pembayaran'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/customer/orders')}
+                                    className={styles.changeMethodBtn}
+                                >
+                                    Lihat Pesanan Saya
                                 </button>
                                 <button
                                     type="button"

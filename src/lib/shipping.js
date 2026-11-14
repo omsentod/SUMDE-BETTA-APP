@@ -51,7 +51,8 @@ export async function searchCities(query, { limit = 25 } = {}) {
   if (!query) return [];
   const { apiKey, base } = baseConfig();
   const res = await fetch(`${base}/maps/areas?countries=ID&input=${encodeURIComponent(query)}`, {
-    headers: { 'Authorization': apiKey }
+    headers: { 'Authorization': apiKey },
+    signal: AbortSignal.timeout(10000),
   });
   const data = await res.json();
   if (!res.ok || !data.success) {
@@ -180,7 +181,8 @@ export async function fetchRates({ destinationPostal, destinationCity: _destinat
       'Authorization': cfg.apiKey,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(12000),
   });
   
   const data = await res.json();
@@ -279,7 +281,8 @@ export async function createShipment(order, totalQty) {
       'Authorization': cfg.apiKey,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(15000),
   });
   
   const data = await res.json();
@@ -344,8 +347,9 @@ export async function getTrackingDetails(waybillId, courierCode) {
   const res = await fetch(`${cfg.base}/trackings/${waybillId}/couriers/${courierCode}`, {
     method: 'GET',
     headers: {
-      'Authorization': cfg.apiKey
-    }
+      'Authorization': cfg.apiKey,
+    },
+    signal: AbortSignal.timeout(10000),
   });
   const data = await res.json();
   if (!res.ok || !data.success) {
@@ -366,6 +370,7 @@ export async function getBiteshipOrder(biteshipOrderId) {
   const res = await fetch(`${cfg.base}/orders/${biteshipOrderId}`, {
     method: 'GET',
     headers: { 'Authorization': cfg.apiKey },
+    signal: AbortSignal.timeout(10000),
   });
   const data = await res.json();
   if (!res.ok || !data.success) {

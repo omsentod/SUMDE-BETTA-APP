@@ -22,6 +22,10 @@ This document defines the strict aesthetic standard for SUMDE-BETTA. It codifies
 | **Giant Centered Dialogs**: Giant 60px circle icon with glowing rings, centered text, and 3D gradient buttons. | **Crisp, Focused Dialogs**: Clean title, concise 1-line description, right-aligned buttons (*Batal* subtle outline + *Aksi* solid background). |
 | **Text Emoticons & Emojis**: Using raw emojis (`⚠️`, `💾`, `★`, `🛒`, `❌`, `✅`) in markup. | **Monochrome Vector SVG**: Clean SVG icons with matching stroke-width and line-height. |
 | **CSS camelCase Errors**: Writing `fontSize: 0.9rem;` inside `.css` or `.module.css`. | **Valid CSS Syntax**: Always kebab-case (`font-size: 0.9rem;`). |
+| **Duplicate Action Buttons**: Repeating identical action buttons in both parent table rows and expanded accordion views. | **Singular Purposeful Actions**: Each action lives in one predictable spot; expanded views show details or complementary sub-actions. |
+| **Wall of Save Buttons in Modals**: Plastering individual "Simpan" buttons on every single row of a settings modal. | **Focused Item Editing**: Clean list view with "Edit" trigger leading to a focused form with a single [Simpan] action. |
+| **Persistent Screen-Eating Banners**: Showing permanent banner boxes for routine CRUD actions (e.g. newly created order links). | **Calm Ephemeral Feedback**: Inform via quiet toast notifications; place actionable buttons directly on the relevant table row. |
+| **Cold Naked URLs on Copy**: Copying a raw bare link when the intent is to message a buyer. | **Ready-to-Send DM Templates**: Copy a polite, formatted Indonesian message template (greeting, item count, secure link, and closing). |
 
 ---
 
@@ -90,3 +94,7 @@ Before concluding any UI work, check:
 4. [ ] Did you write camelCase inside CSS files (e.g. `fontSize:`)? (If yes, **FIX TO KEBAB-CASE**).
 5. [ ] Is the notification positioned unobtrusively (bottom-right on desktop, above bottom nav on mobile)?
 6. [ ] Did you test both Light Mode and Dark Mode (`[data-theme="dark"]`) using CSS variables?
+7. [ ] Are there duplicate action buttons doing the same thing in immediate proximity? (If yes, **UNIFY THEM**).
+8. [ ] Does a management modal have a wall of repeating "Simpan" buttons? (If yes, **REFACTOR TO FOCUSED EDITING**).
+9. [ ] Are there persistent banners eating screen space for routine CRUD operations? (If yes, **REMOVE IN FAVOR OF TOASTS**).
+10. [ ] When copying links for customer outreach, is it formatted as a ready-to-send message template?

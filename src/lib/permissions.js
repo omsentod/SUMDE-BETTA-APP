@@ -97,6 +97,12 @@ export const SYSTEM_PERMISSIONS = [
         label: 'Cetak Label Thermal & Resi',
         description: 'Mencetak label alamat dan barcode resi thermal siap tempel.',
       },
+      {
+        key: 'shipping:packing',
+        action: 'custom',
+        label: 'Packing & Verifikasi Resi',
+        description: 'Membuka menu packing gudang dan memverifikasi barcode resi via kamera smartphone.',
+      },
     ],
   },
   {

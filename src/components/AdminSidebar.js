@@ -45,6 +45,17 @@ const iconCetakResi = (
     }
   />
 );
+const iconPacking = (
+  <Icon
+    path={
+      <>
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="m9 16 2 2 4-4" />
+      </>
+    }
+  />
+);
 const iconTrash = (
   <Icon
     path={
@@ -98,7 +109,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
     }
   }
 
-  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0, unreadChat: 0 });
+  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, readyForPickup: 0, pendingPacking: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0, unreadChat: 0 });
   const isOnOrdersRoute = pathname.startsWith('/admin/orders');
   const [userOrdersOpen, setUserOrdersOpen] = useState(null);
   const isOrdersOpen = userOrdersOpen !== null ? userOrdersOpen : isOnOrdersRoute;
@@ -111,7 +122,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
 
   useEffect(() => {
     if (!currentUser) return;
-    if (!can('orders:view') && !can('products:view') && !can('shipping:view') && !can('shipping:label') && !can('shipping:pickup') && !can('chat:view')) return;
+    if (!can('orders:view') && !can('products:view') && !can('shipping:view') && !can('shipping:label') && !can('shipping:pickup') && !can('shipping:packing') && !can('chat:view')) return;
     let cancelled = false;
     let inFlight = false;
     let lastLoaded = Date.now();
@@ -204,6 +215,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
     // (belum bayar + sudah bayar tapi belum panggil kurir).
     { label: 'Pesanan Baru', href: '/admin/orders?status=NEW', active: isOrdersStatus('NEW'), badge: counts.pendingOrders },
     { label: 'Diproses', href: '/admin/orders?status=PROCESSING', active: isOrdersStatus('PROCESSING'), badge: counts.processing },
+    { label: 'Menunggu Kurir', href: '/admin/orders?status=READY_FOR_PICKUP', active: isOrdersStatus('READY_FOR_PICKUP'), badge: counts.readyForPickup },
     { label: 'Dikirim', href: '/admin/orders?status=SHIPPED', active: isOrdersStatus('SHIPPED') },
     { label: 'Selesai', href: '/admin/orders?status=COMPLETED', active: isOrdersStatus('COMPLETED') },
     { label: 'Dibatalkan', href: '/admin/orders?status=CANCELLED', active: isOrdersStatus('CANCELLED') },
@@ -313,6 +325,20 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
                     </div>
                   )}
                 </>
+              )}
+
+              {(can('shipping:packing') || can('shipping:manage') || can('orders:view')) && (
+                <Link
+                  href="/admin/packing"
+                  onClick={() => setOpen(false)}
+                  className={`${styles.link} ${isActive('/admin/packing') ? styles.linkActive : ''}`.trim()}
+                >
+                  <span className={styles.linkContent}>
+                    {iconPacking}
+                    <span className={styles.linkLabel}>Packing Gudang</span>
+                  </span>
+                  <Badge count={counts.pendingPacking} />
+                </Link>
               )}
 
               <Link

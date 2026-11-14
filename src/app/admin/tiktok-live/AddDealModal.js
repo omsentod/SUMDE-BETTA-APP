@@ -416,15 +416,25 @@ export default function AddDealModal({
                   className={styles.btnSmall}
                   onClick={async () => {
                     const url = `${window.location.origin}/live/${savedFeedback.claimToken}`;
+                    const dmText = [
+                      `Halo kak @${savedFeedback.tiktokUsername}!`,
+                      ``,
+                      `Terima kasih sudah ikutan sesi TikTok Live Sumde Betta.`,
+                      `Berikut link rekap order & keep ikan kamu:`,
+                      url,
+                      ``,
+                      `Silakan buka link di atas untuk cek rincian ikan, lengkapi alamat kirim, dan selesaikan pembayaran ya kak.`,
+                      `Terima kasih & salam satu air!`,
+                    ].join('\n');
                     try {
-                      await navigator.clipboard.writeText(url);
-                      toast.success(`Link unik @${savedFeedback.tiktokUsername} disalin`);
+                      await navigator.clipboard.writeText(dmText);
+                      toast.success(`Pesan DM untuk @${savedFeedback.tiktokUsername} disalin ke clipboard`);
                     } catch {
-                      toast.info(url);
+                      toast.info(`Link live: ${url}`);
                     }
                   }}
                 >
-                  Salin Link DM
+                  Salin Pesan DM
                 </button>
               )}
             </div>

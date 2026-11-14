@@ -29,6 +29,7 @@ const STATUS_OPTIONS = [
   { value: 'PENDING', label: 'Belum Bayar', dotTone: 'pending' },
   { value: 'PAID', label: 'Lunas', dotTone: 'paid' },
   { value: 'PROCESSING', label: 'Diproses', dotTone: 'processing' },
+  { value: 'READY_FOR_PICKUP', label: 'Menunggu Kurir', dotTone: 'processing' },
   { value: 'SHIPPED', label: 'Dikirim', dotTone: 'shipped' },
   { value: 'COMPLETED', label: 'Selesai', dotTone: 'completed' },
   { value: 'CANCELLED', label: 'Dibatalkan', dotTone: 'cancelled' },
@@ -71,10 +72,10 @@ const iconStatusFilter = (
 
 // Kalau URL sudah membawa status spesifik (dari klik sidebar), dropdown
 // tidak perlu tampil — konteks sudah jelas dari halaman.
-const SINGLE_STATUS_PAGES = new Set(['PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
+const SINGLE_STATUS_PAGES = new Set(['PROCESSING', 'READY_FOR_PICKUP', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED']);
 
 const VALID_STATUSES = new Set([
-  'NEW', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED',
+  'NEW', 'PENDING', 'PAID', 'PROCESSING', 'READY_FOR_PICKUP', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED',
 ]);
 
 // Pseudo-status "NEW" → real statuses yang di-include saat filter.
@@ -99,6 +100,7 @@ const STATUS_BADGE_CLASS = {
   PENDING: styles.badgePending,
   PAID: styles.badgePaid,
   PROCESSING: styles.badgeProcessing,
+  READY_FOR_PICKUP: styles.badgeProcessing,
   SHIPPED: styles.badgeShipped,
   COMPLETED: styles.badgeCompleted,
   CANCELLED: styles.badgeCancelled,
@@ -111,6 +113,7 @@ const STATUS_LABEL = {
   PENDING: 'Belum Bayar',
   PAID: 'Lunas',
   PROCESSING: 'Diproses',
+  READY_FOR_PICKUP: 'Menunggu Kurir',
   SHIPPED: 'Dikirim',
   COMPLETED: 'Selesai',
   CANCELLED: 'Dibatalkan',
@@ -298,7 +301,9 @@ function AdminOrdersPageInner() {
       }
     };
     const onWindowFocus = () => {
-      loadOrders(true);
+      if (Date.now() - lastLoadedRef.current >= 5_000) {
+        loadOrders(true);
+      }
     };
 
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -338,6 +343,9 @@ function AdminOrdersPageInner() {
         channel = client.channels.get(`user:${currentUser.id}`);
         channel.subscribe('notification', () => {
           loadOrders(true);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
         }).catch(() => {});
       } catch (err) {
         console.warn('Admin orders Ably setup failed:', err.message);
@@ -372,7 +380,13 @@ function AdminOrdersPageInner() {
       let matchStatus;
       if (statusFilter === 'All') matchStatus = true;
       else if (statusFilter === 'NEW') matchStatus = NEW_ORDER_STATUSES.has(o.status);
-      else matchStatus = o.status === statusFilter;
+      else if (statusFilter === 'READY_FOR_PICKUP') {
+        matchStatus = o.status === 'PROCESSING' && o.packingStatus === 'READY_FOR_PICKUP';
+      } else if (statusFilter === 'PROCESSING') {
+        matchStatus = o.status === 'PROCESSING' && o.packingStatus !== 'READY_FOR_PICKUP';
+      } else {
+        matchStatus = o.status === statusFilter;
+      }
       const src = o.orderSource === 'TIKTOK_LIVE'
         ? 'TIKTOK_LIVE'
         : (o.orderSource === 'TELEGRAM' || o.telegramUsername)
@@ -411,14 +425,75 @@ function AdminOrdersPageInner() {
   const eligiblePrint = selectedOrders.filter((o) => PRINTABLE_STATUSES.has(o.status)).length;
 
   const handleBulkPrint = () => {
-    const ids = selectedOrders
-      .filter((o) => PRINTABLE_STATUSES.has(o.status))
-      .map((o) => o.id);
+    const eligibleOrders = selectedOrders.filter((o) => PRINTABLE_STATUSES.has(o.status));
+    const ids = eligibleOrders.map((o) => o.id);
     if (ids.length === 0) {
       toast.warning('Tidak ada order yang bisa dicetak resinya. Hanya order PAID, PROCESSING, SHIPPED, atau COMPLETED yang eligible.');
       return;
     }
-    window.open(`/admin/orders/labels-batch?ids=${ids.join(',')}`, '_blank');
+
+    // Buka tab pratinjau resi batch secara decoupled (noopener) agar thread utama tidak terblokir
+    window.open(`/admin/orders/labels-batch?ids=${ids.join(',')}`, '_blank', 'noopener,noreferrer');
+
+    // Trigger transisi otomatis: pesanan berstatus PAID langsung berpindah ke PROCESSING
+    const paidIds = eligibleOrders.filter((o) => o.status === 'PAID').map((o) => o.id);
+    if (paidIds.length > 0) {
+      const paidSet = new Set(paidIds);
+      // Optimistic update agar langsung pindah ke 'Diproses' dan keluar dari filter 'Pesanan Baru'
+      setOrders((prev) =>
+        prev.map((o) => (paidSet.has(o.id) ? { ...o, status: 'PROCESSING' } : o))
+      );
+
+      fetch('/api/admin/orders/bulk/mark-printed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: paidIds }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
+        })
+        .catch((err) => {
+          console.error('Gagal memperbarui status order batch ke PROCESSING:', err);
+        });
+
+      toast.info(`Membuka ${ids.length} resi. ${paidIds.length} pesanan diubah ke Diproses.`);
+    }
+
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+  };
+
+  const handlePrintSingle = (order) => {
+    if (!order) return;
+
+    // Buka tab pratinjau resi dengan noopener agar thread browser utama tetap lancar (anti-freeze)
+    window.open(`/admin/orders/${order.id}/label`, '_blank', 'noopener,noreferrer');
+
+    // Jika status masih PAID, langsung trigger transisi ke PROCESSING saat tombol ditekan
+    if (order.status === 'PAID') {
+      // Optimistic update agar langsung pindah ke 'Diproses' dan keluar dari filter 'Pesanan Baru'
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, status: 'PROCESSING' } : o))
+      );
+
+      fetch('/api/admin/orders/bulk/mark-printed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: [order.id] }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
+        })
+        .catch((err) => {
+          console.error('Gagal memperbarui status order ke PROCESSING:', err);
+        });
+
+      toast.info('Membuka resi. Status pesanan diubah ke Diproses.');
+    }
   };
 
   const handleBulkStatus = async () => {
@@ -589,7 +664,9 @@ function AdminOrdersPageInner() {
               ? 'Tidak ada pesanan yang cocok dengan filter aktif.'
               : statusFilter === 'All'
                 ? 'Belum ada pesanan.'
-                : `Tidak ada pesanan berstatus ${statusFilter === 'NEW' ? 'Pesanan Baru' : (STATUS_LABEL[statusFilter] || statusFilter)}.`}
+                : statusFilter === 'READY_FOR_PICKUP'
+                  ? 'Tidak ada pesanan yang sedang menunggu kurir.'
+                  : `Tidak ada pesanan berstatus ${statusFilter === 'NEW' ? 'Pesanan Baru' : (STATUS_LABEL[statusFilter] || statusFilter)}.`}
           </span>
           {(search.trim() || sourceFilter !== 'All' || statusFilter !== initialStatus) && (
             <button
@@ -669,19 +746,21 @@ function AdminOrdersPageInner() {
                         <td className={styles.tdTotal}>{formatIDR(order.total)}</td>
                         <td>
                           <span className={`${styles.badge} ${STATUS_BADGE_CLASS[order.status] || styles.badgeCancelled}`}>
-                            {STATUS_LABEL[order.status] || order.status}
+                            {order.status === 'PROCESSING' && order.packingStatus === 'READY_FOR_PICKUP'
+                              ? 'Menunggu Kurir'
+                              : (STATUS_LABEL[order.status] || order.status)}
                           </span>
                         </td>
                         <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
                           {PRINTABLE_STATUSES.has(order.status) && (
-                            <a
-                              href={`/admin/orders/${order.id}/label`}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button
+                              type="button"
                               className={styles.actionBtn}
+                              onClick={() => handlePrintSingle(order)}
+                              title="Cetak Resi Pengiriman"
                             >
                               Resi
-                            </a>
+                            </button>
                           )}
                           {isOrderTrackable(order) && (
                             <button

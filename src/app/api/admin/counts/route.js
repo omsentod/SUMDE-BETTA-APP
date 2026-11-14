@@ -12,6 +12,7 @@ export async function GET(request) {
       'orders:view',
       'orders:read',
       'shipping:view',
+      'shipping:packing',
       'products:view',
       'reports:view',
       'events:view',
@@ -22,7 +23,7 @@ export async function GET(request) {
 
     // Gunakan groupBy untuk status agar hanya butuh 1 query agregat (1 koneksi DB)
     // untuk menghitung PENDING, PAID, PROCESSING, dan RETURNED secara efisien.
-    const [statusGroups, awaitingWaybill, archivedProducts, otherRecycledCount, unreadChatCount] = await Promise.all([
+    const [statusGroups, awaitingWaybill, archivedProducts, otherRecycledCount, unreadChatCount, pendingPacking, readyForPickup] = await Promise.all([
       prisma.order.groupBy({
         by: ['status'],
         _count: { id: true },
@@ -40,6 +41,18 @@ export async function GET(request) {
       prisma.conversation.count({
         where: { unreadAdminCount: { gt: 0 } },
       }).catch(() => 0),
+      prisma.order.count({
+        where: {
+          status: { in: ['PAID', 'PROCESSING'] },
+          packingStatus: 'PENDING',
+        },
+      }).catch(() => 0),
+      prisma.order.count({
+        where: {
+          status: 'PROCESSING',
+          packingStatus: 'READY_FOR_PICKUP',
+        },
+      }).catch(() => 0),
     ]);
 
     const countsByStatus = {};
@@ -48,13 +61,17 @@ export async function GET(request) {
     }
 
     const pendingOrders = (countsByStatus['PENDING'] || 0) + (countsByStatus['PAID'] || 0);
-    const processing = countsByStatus['PROCESSING'] || 0;
+    const totalProcessing = countsByStatus['PROCESSING'] || 0;
+    const readyForPickupCount = readyForPickup || 0;
+    const processing = Math.max(0, totalProcessing - readyForPickupCount);
     const returned = countsByStatus['RETURNED'] || 0;
     const totalRecycled = (archivedProducts || 0) + (otherRecycledCount || 0);
 
     return NextResponse.json({
       pendingOrders,
       processing,
+      readyForPickup: readyForPickupCount,
+      pendingPacking,
       awaitingWaybill,
       returned,
       archivedProducts: totalRecycled,

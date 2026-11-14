@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    '*.trycloudflare.com',
+    '*.ngrok-free.app',
+    '*.ngrok.app',
+    'localhost:3000',
+  ],
   images: { unoptimized: true },
   serverExternalPackages: ['@prisma/client', '.prisma/client'],
   experimental: {

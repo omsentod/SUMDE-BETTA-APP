@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   try {
     const ip = clientIp(request);
-    const rl = consume(`live-lookup:${ip}`, { limit: 40, windowMs: 60 * 1000 });
+    const rl = consume(`live-lookup:${ip}`, { limit: 120, windowMs: 60 * 1000 });
     if (!rl.ok) {
       return NextResponse.json(
         { error: 'Terlalu banyak permintaan. Coba lagi sebentar.' },
@@ -65,6 +65,19 @@ export async function GET(request) {
     const pendingOrders = [];
     let paidCount = 0;
 
+    const primaryAccount = basket.tiktokAccount
+      ? { name: basket.tiktokAccount.name, handle: basket.tiktokAccount.handle }
+      : null;
+
+    const liveAccountHandles = [
+      ...new Set(
+        [
+          basket.tiktokAccount?.handle,
+          ...basket.items.map((it) => it.tiktokAccount?.handle),
+        ].filter(Boolean)
+      ),
+    ];
+
     if (basket.status === 'OPEN') {
       openBasket = {
         id: basket.id,
@@ -72,6 +85,8 @@ export async function GET(request) {
         claimToken: basket.claimToken,
         tiktokUsername: basket.tiktokUsername,
         updatedAt: basket.updatedAt,
+        primaryAccount,
+        liveAccountHandles,
         items: basket.items.map((item) => ({
           id: item.id,
           name: item.name,
@@ -100,6 +115,7 @@ export async function GET(request) {
           paymentMethod: basket.order.paymentMethod,
           total: basket.order.total,
           createdAt: basket.order.createdAt,
+          liveAccountHandles,
           items: basket.items.map((it) => ({
             id: it.id,
             name: it.name,

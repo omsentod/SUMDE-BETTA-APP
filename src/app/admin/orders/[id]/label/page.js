@@ -14,8 +14,8 @@ export default async function ShippingLabelPage({ params }) {
 
   if (!order) return notFound();
 
-  // Self-heal: jika order PAID belum memiliki shipment Biteship, lakukan auto-book sekarang
-  if (order.status === 'PAID' && !order.biteshipShipmentId) {
+  // Self-heal: jika order PAID atau PROCESSING belum memiliki shipment Biteship, lakukan auto-book sekarang
+  if ((order.status === 'PAID' || order.status === 'PROCESSING') && !order.biteshipShipmentId) {
     try {
       order = await autoBookOrderShipment(order);
     } catch (err) {

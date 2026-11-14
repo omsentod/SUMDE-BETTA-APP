@@ -113,12 +113,12 @@ export default function BatchPrintSidebar({ orders = [], single = false }) {
           <span>{single ? 'Cetak Resi Ini' : `Cetak Semua (${totalOrders})`}</span>
         </button>
 
-        {printUpdated ? (
+        {printUpdated || (orders.length > 0 && orders.every((o) => o.status !== 'PAID')) ? (
           <div className={`${styles.printStatusIndicator} ${styles.statusSuccess}`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>Status diperbarui ke DIPROSES</span>
+            <span>Status pesanan: DIPROSES</span>
           </div>
         ) : (
           <div className={`${styles.printStatusIndicator} ${styles.statusInfo}`}>

@@ -58,6 +58,7 @@ export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl
       invoice_number: invoiceNumber,
       amount: Math.round(amount), // Doku requires integer for IDR amount
       callback_url: callbackUrl,
+      callback_url_cancel: callbackUrl,
       callback_url_result: callbackUrl,
       auto_redirect: true,
     },

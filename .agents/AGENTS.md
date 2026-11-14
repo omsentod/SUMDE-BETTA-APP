@@ -34,6 +34,10 @@
   - **Single-Sentence Toasts Without Forced Headers**: Never force artificial bold titles (`PERINGATAN`, `BERHASIL`, `INFORMASI`) above single-sentence notifications. Let the message speak for itself.
   - **No Spammy Micro-Interaction Toasts**: Never trigger toast notifications on micro-interactions like clicking a disabled input or tab change. Use quiet inline indicators.
   - **Clean, Minimalist Dialogs**: Confirmation modals must have a clean layout (max-width 400px), crisp question title, concise description, and right-aligned buttons (*Batal* ghost/outline + *Aksi* solid). No giant centered glowing halos or 3D gradient buttons.
+  - **No Duplicate Action Buttons**: Never offer the exact same action twice in immediate visual proximity (e.g. redundant buttons in both the main table row and its expanded accordion row). Keep action buttons singular, purposeful, and located where the user naturally expects them.
+  - **No "Wall of Save Buttons" in Modals**: In configuration or account management modals, avoid placing individual "Simpan" buttons on every single row. Use focused item editing (switching to a dedicated edit state with a single [Batal] [Simpan] action) or a consolidated form.
+  - **No Unsolicited Persistent Banners**: Do not inject loud, screen-eating banner boxes for routine CRUD actions (e.g. newly created order links). Rely on calm toasts and place actions directly on the relevant table row.
+  - **Contextual Ready-to-Send DM Templates**: When a copy button is intended for customer communication (e.g. TikTok DM, WhatsApp), copy a polite, formatted Indonesian message template (greeting, order recap summary, secure link, closing) instead of a cold, naked URL.
   - **CSS Syntax Integrity**: Always write valid kebab-case properties in `.css` / `.module.css` (e.g. `font-size:`, never camelCase `fontSize:`).
 
 ## 5. Auth (Email Verification, Password Reset, Change Password)
@@ -161,6 +165,23 @@
   - *Default (Proportional)*: If `variantPrices` is omitted for a variant, `discountRatio = (basePrice - tierPrice) / basePrice` is automatically and proportionally applied to variant base price (`Math.round(variantBasePrice * (1 - discountRatio))`).
   - *Custom Variant Override*: Admin can specify a custom price per variant for any tier in `tier.variantPrices[variant.size]`. If set, custom price takes precedence over the proportional formula, granting complete fine-grained pricing control.
   - *Cross-Variant Quantity Pooling*: `POST /api/orders` and `CartContext.js` pool quantities of all variants under the same `productId`. Mixing variants (e.g. 5 Male + 5 Female) grants wholesale eligibility once combined quantity reaches tier `minQty`.
+
+## 17. Pos Packing Gudang & Verifikasi Barcode Resi Fisik (`/admin/packing`)
+- **Parallel Admin & Packing Workflow**:
+  - Saat pesanan lunas (`PAID`), Admin mencetak resi fisik di printer thermal meja kasir/admin (area kering) yang mengubah status menjadi `PROCESSING`.
+  - Secara paralel, Tim Packing di area farm/akuarium (area basah) membungkus ikan (kantong plastik + oksigen).
+  - Admin menyerahkan tumpukan kertas resi fisik ke Tim Packing.
+- **Dua Karakteristik Sumber Ikan**:
+  - *Website Reguler (`orderSource === 'WEB'`)*: Produk sampel dari kolam/pos per jenis. Tim packing melihat rincian jenis ikan, ukuran, dan jumlah ekor (comot langsung dari pos jenis).
+  - *TikTok Live / Telegram (`orderSource === 'TIKTOK_LIVE'` | `'TELEGRAM'`)*: Ikan spesifik yang sudah di-claim dan tank fisiknya diberi label nama pembeli (`tiktokUsername` / `telegramUsername`). Tim packing melihat banner instruksi tangki fisik dan mengambil seluruh ikan milik nama tersebut.
+- **Scan-to-Verify Quality Control via Smartphone Camera**:
+  - Begitu ikan masuk ke box styrofoam/kardus dan resi fisik ditempel di luar box, Tim Packing men-scan barcode pada kertas resi (`order.id` Reference Barcode atau `trackingNumber` AWB Barcode) menggunakan kamera HP di `/admin/packing`.
+  - Endpoint `POST /api/admin/packing/scan` memvalidasi barcode, mengupdate `packingStatus = 'READY_FOR_PICKUP'`, `packedAt = now()`, `packedBy = session.name`, dan memastikan status order `PROCESSING` (Menunggu Pick Up Kurir).
+  - Mengeliminasi human error paket tertinggal atau tercecer sebelum kurir datang jemput.
+- **Audio & Haptic Feedback**:
+  - Menggunakan Web Audio API oscillator (`A5 sine beep`) dan `navigator.vibrate` tanpa aset eksternal.
+  - Native `BarcodeDetector` API diutamakan dengan fallback input manual jika kamera tidak tersedia.
+
 
 
 

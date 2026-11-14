@@ -12,15 +12,35 @@ export default function OrderSourceBadge({ order, showAccountSubtext = false }) 
   const source = resolveSource(order);
 
   if (source === 'TIKTOK_LIVE') {
-    const detail = [order?.tiktokAccountName, order?.tiktokUsername ? `@${order.tiktokUsername}` : null]
+    // Username TikTok yang digunakan tim untuk live streaming
+    let liveHandle = order?.tiktokLiveBasket?.tiktokAccount?.handle || null;
+    if (!liveHandle && order?.tiktokAccountName) {
+      const raw = order.tiktokAccountName.trim();
+      if (raw.startsWith('@')) {
+        liveHandle = raw;
+      } else {
+        const matchDefault = raw.match(/Akun\s+Live\s+(\d+)/i);
+        if (matchDefault) {
+          liveHandle = `@sumdebetta.live${matchDefault[1]}`;
+        } else {
+          liveHandle = `@${raw.toLowerCase().replace(/\s+/g, '.')}`;
+        }
+      }
+    }
+
+    const tooltipDetail = [
+      liveHandle ? `Akun Live: ${liveHandle}` : null,
+      order?.tiktokUsername ? `Pembeli: @${order.tiktokUsername.replace(/^@+/, '')}` : null,
+    ]
       .filter(Boolean)
       .join(' · ');
+
     return (
       <div className={styles.sourceCell}>
         <span
           className={styles.iconOnly}
-          title={detail ? `TikTok Live (${detail})` : 'TikTok Live'}
-          aria-label={detail ? `TikTok Live (${detail})` : 'TikTok Live'}
+          title={tooltipDetail ? `TikTok Live (${tooltipDetail})` : 'TikTok Live'}
+          aria-label={tooltipDetail ? `TikTok Live (${tooltipDetail})` : 'TikTok Live'}
         >
           <svg
             className={styles.icon}
@@ -47,8 +67,8 @@ export default function OrderSourceBadge({ order, showAccountSubtext = false }) 
             </g>
           </svg>
         </span>
-        {showAccountSubtext && order?.tiktokAccountName && (
-          <span className={styles.subtext}>{order.tiktokAccountName}</span>
+        {showAccountSubtext && liveHandle && (
+          <span className={styles.subtext}>{liveHandle}</span>
         )}
       </div>
     );

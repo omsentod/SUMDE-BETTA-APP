@@ -42,7 +42,8 @@ export PATH=/opt/alt/alt-nodejs20/root/usr/bin:$PATH
 # 3. Cari UUID versions terbaru
 ls ~/domains/<DOMAIN>/hbuilds/versions/
 
-# 4. Push schema (ganti <UUID> dengan hasil di atas)
+# 4. Generate & Push schema (ganti <UUID> dengan hasil di atas)
+npx prisma@6.19.3 db generate --schema=$HOME/domains/<DOMAIN>/hbuilds/last-source/prisma/schema.prisma
 npx prisma@6.19.3 db push --schema=$HOME/domains/<DOMAIN>/hbuilds/last-source/prisma/schema.prisma
 ```
 

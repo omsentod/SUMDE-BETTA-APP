@@ -15,7 +15,10 @@ const formatCurrency = (v) =>
 
 const formatOrderId = (id) => (id ? `#${String(id).slice(-6).toUpperCase()}` : '');
 
-const statusBadge = (status) => {
+const statusBadge = (status, order = null) => {
+  if (status === 'PROCESSING' && order?.packingStatus === 'READY_FOR_PICKUP') {
+    return { label: 'Menunggu Kurir', cls: styles.badgeInfo };
+  }
   switch (status) {
     case 'PENDING':
       return { label: 'Menunggu', cls: styles.badgeWarning };
@@ -297,7 +300,7 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {recentOrders.map((o) => {
-                      const badge = statusBadge(o.status);
+                      const badge = statusBadge(o.status, o);
                       const itemCount = (o.items || []).reduce((n, it) => n + (it.quantity || 1), 0);
                       return (
                         <tr key={o.id} className={styles.tableRow}>

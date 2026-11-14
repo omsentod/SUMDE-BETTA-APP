@@ -33,6 +33,7 @@ model User {
   notifications      Notification[]
   pushSubscriptions  PushSubscription[]
   conversations      Conversation[]
+  hostedTikTokAccounts TikTokAccount[]
 }
 
 model Role {
@@ -223,12 +224,18 @@ model Order {
   orderSource        String    @default("WEB") // WEB | TELEGRAM | TIKTOK_LIVE
   tiktokUsername     String?   // Username pembeli TikTok Live
   tiktokAccountName  String?   // Nama/handle akun TikTok tempat live berlangsung
+  packingStatus      String    @default("PENDING") // PENDING | BAGGED | READY_FOR_PICKUP | PICKED_UP
+  baggedAt           DateTime?
+  baggedBy           String?
+  packedAt           DateTime?
+  packedBy           String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   items              OrderItem[]
   tiktokLiveBasket   TikTokLiveBasket?
 
   @@index([orderSource])
+  @@index([packingStatus])
 }
 
 model OrderItem {
@@ -252,6 +259,10 @@ model TikTokAccount {
   id         String             @id @default(uuid())
   name       String
   handle     String             @unique
+  avatar     String?            @db.Text
+  hostUserId String?
+  hostUser   User?              @relation(fields: [hostUserId], references: [id], onDelete: SetNull)
+  hostName   String?
   isActive   Boolean            @default(true)
   orderIndex Int                @default(0)
   createdAt  DateTime           @default(now())
@@ -260,6 +271,7 @@ model TikTokAccount {
   items      TikTokLiveItem[]
 
   @@index([orderIndex])
+  @@index([hostUserId])
 }
 
 model TikTokLiveBasket {

@@ -26,19 +26,33 @@ export async function GET(request) {
 
     await ensureDefaultTikTokAccounts(prisma);
 
-    const [accounts, baskets, catalogProducts] = await Promise.all([
+    const [accounts, baskets, catalogProducts, rawTeamUsers] = await Promise.all([
       prisma.tikTokAccount.findMany({
         orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
+        include: {
+          hostUser: {
+            select: { id: true, name: true, email: true, role: true, avatarUrl: true },
+          },
+        },
       }),
       prisma.tikTokLiveBasket.findMany({
         orderBy: { updatedAt: 'desc' },
         take: 200,
         include: {
-          tiktokAccount: { select: { id: true, name: true, handle: true } },
+          tiktokAccount: {
+            select: {
+              id: true,
+              name: true,
+              handle: true,
+              avatar: true,
+              hostName: true,
+              hostUser: { select: { id: true, name: true, role: true } },
+            },
+          },
           items: {
             orderBy: { createdAt: 'asc' },
             include: {
-              tiktokAccount: { select: { id: true, name: true, handle: true } },
+              tiktokAccount: { select: { id: true, name: true, handle: true, avatar: true } },
               product: { select: { id: true, name: true, image: true } },
             },
           },
@@ -73,7 +87,21 @@ export async function GET(request) {
           },
         },
       }),
+      prisma.user.findMany({
+        where: { role: { not: 'customer' } },
+        select: { id: true, name: true, email: true, role: true, avatarUrl: true },
+        orderBy: { name: 'asc' },
+      }),
     ]);
+
+    let teamUsers = rawTeamUsers;
+    if (teamUsers.length === 0) {
+      teamUsers = await prisma.user.findMany({
+        take: 50,
+        select: { id: true, name: true, email: true, role: true, avatarUrl: true },
+        orderBy: { name: 'asc' },
+      });
+    }
 
     // Pastikan setiap keranjang lama/baru memiliki claimToken unik
     const missingTokenBaskets = baskets.filter((b) => !b.claimToken);
@@ -90,7 +118,7 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json({ accounts, baskets, catalogProducts });
+    return NextResponse.json({ accounts, baskets, catalogProducts, teamUsers });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

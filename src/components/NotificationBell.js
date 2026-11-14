@@ -194,6 +194,9 @@ export default function NotificationBell() {
         channel.subscribe('notification', (msg) => {
           // Realtime incoming payload
           loadNotifications(true);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('admin:refresh-counts'));
+          }
           if (msg.data) {
             setIsRinging(true);
             setTimeout(() => setIsRinging(false), 1400);

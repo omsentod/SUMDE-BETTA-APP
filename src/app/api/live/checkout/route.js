@@ -155,12 +155,14 @@ export async function POST(request) {
     const session = await getSession(request);
     const userId = session?.id ?? null;
 
-    const accountLabels = [...new Set(
+    const accountHandles = [...new Set(
       basket.items
-        .map((it) => it.tiktokAccount?.name || basket.tiktokAccount?.name)
+        .map((it) => it.tiktokAccount?.handle || basket.tiktokAccount?.handle || it.tiktokAccount?.name || basket.tiktokAccount?.name)
         .filter(Boolean)
     )];
-    const tiktokAccountName = accountLabels.length > 0 ? accountLabels.join(', ').slice(0, 190) : null;
+    const tiktokAccountName = accountHandles.length > 0
+      ? accountHandles.join(', ').slice(0, 190)
+      : (basket.tiktokAccount?.handle || basket.tiktokAccount?.name || null);
 
     const order = await prisma.$transaction(async (tx) => {
       const lock = await tx.tikTokLiveBasket.updateMany({

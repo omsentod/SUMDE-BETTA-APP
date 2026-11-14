@@ -6,7 +6,7 @@
 export const LEGACY_ALIASES = {
   'orders:read': ['orders:view'],
   'orders:write': ['orders:update', 'orders:cancel'],
-  'shipping:manage': ['shipping:pickup', 'shipping:label', 'shipping:view'],
+  'shipping:manage': ['shipping:pickup', 'shipping:label', 'shipping:view', 'shipping:packing'],
   'products:manage': ['products:create', 'products:update', 'products:delete', 'products:import', 'products:view'],
   'events:manage': ['events:create', 'events:update', 'events:delete', 'events:view'],
   'reports:view': ['reports:view', 'reports:export'],

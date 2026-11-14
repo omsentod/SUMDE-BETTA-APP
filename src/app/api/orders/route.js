@@ -35,6 +35,19 @@ export async function GET(request) {
           },
         },
         user: true,
+        tiktokLiveBasket: {
+          select: {
+            claimCode: true,
+            tiktokUsername: true,
+            tiktokAccount: {
+              select: {
+                id: true,
+                name: true,
+                handle: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' }
     });

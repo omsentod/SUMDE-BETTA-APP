@@ -66,46 +66,74 @@ npm run build
 - [ ] `SHIPPING_ORIGIN_CITY_ID` in production `.env` = correct merchant city id
 - [ ] Free tier quota check (100 req/day) — dashboard "Total API HIT / Day"
 
-## Deploy procedure (Hostinger Node.js hosting)
+## Deploy procedure (Hostinger Deployments + Next.js)
 
-### Step 1 — push
+Hostinger menggunakan **Git Deployments** (`hbuilds/` architecture) yang auto-build saat ada commit baru ke `main`.
+
+### Step 0 — Push kode
 ```bash
 git push origin main
 ```
+Tunggu ~2-3 menit sampai build Hostinger selesai di **hPanel → Websites → Deployments**.
 
-### Step 2 — pull on server
-- **Git integration**: Hostinger panel → "Pull latest"
-- **SSH**: `ssh <user>@<host> && cd <path> && git pull`
-- **NOT FTP** — misses `.git` diff, can't rollback cleanly
+---
 
-### Step 3 — install
+### Step 1 — Prisma push di empty DB (Sync Schema)
+Balik ke SSH terminal (atau login ulang):
 ```bash
-npm ci --production=false
-# --production=false because build needs devDependencies (Tailwind, etc.)
-```
-Fallback if `npm ci` fails: `npm install` + investigate lockfile drift after.
+ssh -p 65002 u707667165@147.93.80.69
+set -a && source ~/domains/sumdebetta.com/hbuilds/config/.env && set +a
+export PATH=/opt/alt/alt-nodejs20/root/usr/bin:$PATH
 
-### Step 4 — build
+npx prisma@6.19.3 db generate --schema=$HOME/domains/sumdebetta.com/hbuilds/last-source/prisma/schema.prisma
+npx prisma@6.19.3 db push --schema=$HOME/domains/sumdebetta.com/hbuilds/last-source/prisma/schema.prisma
+```
+Jauh lebih cepat di empty DB (10-20 detik). Output yang diharapkan:
+```
+🚀  Your database is now in sync with your Prisma schema.
+```
+> *Catatan*: Kalau tetap stuck di stage yang sama seperti sebelumnya → SSH ke terminal bermasalah/terputus, bukan Prisma.
+
+---
+
+### Step 2 — Seed data (admin + produk demo)
+Sesuai kebutuhan (jika inisialisasi awal DB atau reset):
 ```bash
-npm run build
-```
-If OOM: `NODE_OPTIONS=--max-old-space-size=1024 npm run build`
+cd ~/domains/sumdebetta.com/hbuilds/last-source
+node prisma/(seed-file).js
 
-### Step 5 — migration
+# Atau jika copy seed ke nodejs run directory:
+# cp $HOME/domains/sumdebetta.com/hbuilds/last-source/prisma/seed.js ./seed-run.js
+# node ./seed-run.js
+# rm ./seed-run.js
+```
+
+---
+
+### Step 3 — Restart app (Passenger)
+Cari UUID deployment terbaru (`ls ~/domains/sumdebetta.com/hbuilds/versions/`), lalu:
 ```bash
-npx prisma db push
+cd ~/domains/sumdebetta.com/hbuilds/versions/<UUID_TERBARU>/nodejs/
+mkdir -p tmp && touch tmp/restart.txt
 ```
-Only if step 4 of pre-deploy flagged schema change. Idempotent, safe to always run.
 
-### Step 6 — restart
-- Hostinger panel → Node.js app → Restart
-- OR SSH: `pm2 restart <app>` (if using PM2)
+---
 
-### Step 7 — smoke tests (LIVE URL, not localhost)
+### Step 4 — Cek smoke test & log
+Cek runtime log di server:
 ```bash
-curl -sf https://<domain>/api/health | jq
+tail -30 console.log
 ```
-Expected: `{"status":"ok","message":"SUMDE-BETTA API Server is healthy"}`
+Cari baris seperti `▲ Next.js ... Ready in ...ms` — artinya app restart sukses.
+
+Dari komputer lokal:
+```bash
+curl -s https://sumdebetta.com/api/health
+```
+Expected:
+```json
+{"status":"ok","message":"SUMDE-BETTA API Server is healthy"}
+```
 
 Browser check:
 - [ ] Homepage loads, products + categories render

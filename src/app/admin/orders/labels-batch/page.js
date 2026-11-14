@@ -55,10 +55,10 @@ export default async function LabelsBatchPage({ searchParams }) {
   const orderById = new Map(orders.map((o) => [o.id, o]));
   const rawOrdered = ids.map((id) => orderById.get(id)).filter(Boolean);
 
-  // Self-heal: jika ada order PAID yang belum memiliki shipment Biteship, lakukan auto-book
+  // Self-heal: jika ada order PAID atau PROCESSING yang belum memiliki shipment Biteship, lakukan auto-book
   const ordered = await Promise.all(
     rawOrdered.map(async (o) => {
-      if (o.status === 'PAID' && !o.biteshipShipmentId) {
+      if ((o.status === 'PAID' || o.status === 'PROCESSING') && !o.biteshipShipmentId) {
         try {
           return await autoBookOrderShipment(o);
         } catch (err) {
