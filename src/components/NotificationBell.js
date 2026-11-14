@@ -147,8 +147,15 @@ export default function NotificationBell() {
 
   // Initial load + Polling fallback
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset memory on logout
+      setItems([]);
+      setUnread(0);
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap notifications on user mount
+    setItems([]);
+    setUnread(0);
     loadNotifications(false);
     const interval = setInterval(() => loadNotifications(true), POLL_MS);
 

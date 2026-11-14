@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { createCheckoutSession } from '@/lib/doku';
 import { PAYMENT_METHODS } from '@/lib/paymentFee';
 import { markChannelInactive, isChannelRuntimeInactive } from '@/lib/channelStatus';
+import { isOrderExpired } from '@/lib/orderExpiry';
 
 export async function POST(request) {
   try {
@@ -19,6 +20,25 @@ export async function POST(request) {
 
     if (!order) {
       return NextResponse.json({ error: 'Pesanan tidak ditemukan.' }, { status: 404 });
+    }
+
+    if (order.status !== 'PENDING') {
+      return NextResponse.json(
+        { error: `Pesanan sudah berstatus ${order.status} dan tidak dapat dibayar.` },
+        { status: 400 }
+      );
+    }
+
+    // Tolak pembuatan sesi pembayaran baru jika pesanan telah kadaluwarsa (> 24 jam)
+    if (isOrderExpired(order)) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'CANCELLED' },
+      });
+      return NextResponse.json(
+        { error: 'Batas waktu pembayaran pesanan ini (24 jam) telah berakhir. Pesanan otomatis dibatalkan.' },
+        { status: 400 }
+      );
     }
 
     // Restrict DOKU hosted page to the specific channel the customer picked

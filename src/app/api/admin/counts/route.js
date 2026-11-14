@@ -64,6 +64,9 @@ export async function GET(request) {
     const totalProcessing = countsByStatus['PROCESSING'] || 0;
     const readyForPickupCount = readyForPickup || 0;
     const processing = Math.max(0, totalProcessing - readyForPickupCount);
+    const shipped = countsByStatus['SHIPPED'] || 0;
+    const completed = countsByStatus['COMPLETED'] || 0;
+    const cancelled = countsByStatus['CANCELLED'] || 0;
     const returned = countsByStatus['RETURNED'] || 0;
     const totalRecycled = (archivedProducts || 0) + (otherRecycledCount || 0);
 
@@ -73,6 +76,9 @@ export async function GET(request) {
       readyForPickup: readyForPickupCount,
       pendingPacking,
       awaitingWaybill,
+      shipped,
+      completed,
+      cancelled,
       returned,
       archivedProducts: totalRecycled,
       unreadChat: unreadChatCount,

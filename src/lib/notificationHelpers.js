@@ -238,7 +238,10 @@ export function groupNotifications(items = [], options = {}) {
         const prevItem = currentCluster[currentCluster.length - 1];
         const prevTime = new Date(prevItem.createdAt || 0).getTime();
         const currTime = new Date(item.createdAt || 0).getTime();
-        if (Math.abs(prevTime - currTime) <= maxClusterGapMs) {
+        const isSameReadState = Boolean(prevItem.readAt) === Boolean(item.readAt);
+
+        // Hanya kelompokkan jika kategori sama, status baca sama, dan selisih waktu <= maxClusterGapMs
+        if (isSameReadState && Math.abs(prevTime - currTime) <= maxClusterGapMs) {
           currentCluster.push(item);
         } else {
           clusters.push(currentCluster);

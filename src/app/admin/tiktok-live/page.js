@@ -2,7 +2,10 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import AccountsModal from './AccountsModal';
 import AddDealModal from './AddDealModal';
 import LiveSelect from './LiveSelect';
@@ -90,11 +93,22 @@ function getEmptyCopy(statusFilter, hasSearchOrAccount) {
 }
 
 export default function AdminTikTokLivePage() {
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const canView = canUser(currentUser, ['events:tiktok', 'events:view', 'events:manage', 'orders:view', 'orders:manage', 'products:view']);
+
   const { toast } = useToast();
   const toastRef = useRef(toast);
   useEffect(() => {
     toastRef.current = toast;
   }, [toast]);
+
+  useEffect(() => {
+    if (!authLoading && (!currentUser || !canView)) {
+      const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p)) || '/customer/dashboard';
+      router.push(fallback);
+    }
+  }, [currentUser, authLoading, canView, router]);
 
   const [accounts, setAccounts] = useState([]);
   const [teamUsers, setTeamUsers] = useState([]);
@@ -169,6 +183,7 @@ export default function AdminTikTokLivePage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading || !currentUser || !canView) return;
     let active = true;
     const timer = setTimeout(() => {
       if (active) loadData(false);
@@ -181,7 +196,7 @@ export default function AdminTikTokLivePage() {
       clearTimeout(timer);
       clearInterval(poll);
     };
-  }, [loadData]);
+  }, [authLoading, currentUser, canView, loadData]);
 
   const kpis = useMemo(() => {
     let openBaskets = 0;
@@ -511,6 +526,7 @@ export default function AdminTikTokLivePage() {
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th className={styles.thIndex}>No.</th>
                   <th>Kode</th>
                   <th>Pembeli TikTok</th>
                   <th>Akun Live</th>
@@ -522,7 +538,7 @@ export default function AdminTikTokLivePage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBaskets.map((basket) => {
+                {filteredBaskets.map((basket, index) => {
                   const isExpanded = expandedBasketId === basket.id;
                   const effStatus = getEffectiveStatus(basket);
                   const badge = getStatusBadge(effStatus);
@@ -543,6 +559,7 @@ export default function AdminTikTokLivePage() {
                           setExpandedBasketId((prev) => (prev === basket.id ? null : basket.id))
                         }
                       >
+                        <td className={styles.tdIndex}>{index + 1}</td>
                         <td>
                           <span className={styles.codeCell}>
                             <svg
@@ -666,7 +683,7 @@ export default function AdminTikTokLivePage() {
                             )}
                             {basket.order?.id && (
                               <Link
-                                href={`/admin/orders?search=${encodeURIComponent(basket.order.id)}`}
+                                href={`/admin/orders?highlightOrder=${encodeURIComponent(basket.order.id)}`}
                                 className={styles.btnSmall}
                               >
                                 Lihat Order
@@ -678,7 +695,7 @@ export default function AdminTikTokLivePage() {
 
                       {isExpanded && (
                         <tr className={styles.expandRow}>
-                          <td colSpan={8}>
+                          <td colSpan={9}>
                             <div className={styles.expandInner}>
                               <div className={styles.expandTop}>
                                 <div className={styles.expandMeta}>
@@ -862,7 +879,7 @@ export default function AdminTikTokLivePage() {
                                 {basket.order && (
                                   <div className={styles.orderLinks}>
                                     <Link
-                                      href={`/admin/orders?search=${encodeURIComponent(basket.order.id)}`}
+                                      href={`/admin/orders?highlightOrder=${encodeURIComponent(basket.order.id)}`}
                                       className={styles.btnSmall}
                                     >
                                       Buka di Pesanan

@@ -6,10 +6,12 @@ import Link from 'next/link';
 import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
 import { useChat } from '@/context/ChatContext';
+import { useAuth } from '@/context/AuthContext';
 import ProductCard from '@/components/ProductCard';
 import { getSimilarProducts } from '@/lib/recommendation';
 import { parseYouTubeId } from '@/lib/productImages';
 import { normalizeWholesaleTiers, getApplicableWholesaleTier, getEffectiveUnitPrice } from '@/lib/wholesale';
+import { waLink } from '@/lib/constants';
 import styles from './productDetail.module.css';
 
 // Normalisasi galeri media (foto dan video) yang aman dan berurutan sesuai setting admin.
@@ -103,6 +105,7 @@ export default function ProductDetailClient() {
     const router = useRouter();
     const { addToCart, buyNow } = useCart();
     const { openChat } = useChat();
+    const { currentUser } = useAuth();
     const { products, isLoading } = useProducts();
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
@@ -340,6 +343,13 @@ export default function ProductDetailClient() {
 
     const handleAskSeller = () => {
         if (!product) return;
+        if (!currentUser) {
+            const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+            const sizeInfo = selectedSize ? ` (Ukuran: ${selectedSize})` : '';
+            const text = `Halo SUMDE BETTA, saya ingin bertanya tentang ${product.name}${sizeInfo}.\n${currentUrl}`;
+            window.open(waLink({ text }), '_blank', 'noopener,noreferrer');
+            return;
+        }
         openChat({
             attachedType: 'PRODUCT',
             attachedId: product.id,
@@ -867,8 +877,8 @@ export default function ProductDetailClient() {
                                             type="button"
                                             onClick={handleAskSeller}
                                             className={styles.askSellerBtn}
-                                            aria-label="Tanya Penjual"
-                                            title="Tanya Penjual seputar produk ini"
+                                            aria-label={currentUser ? 'Tanya Penjual' : 'Chat via WhatsApp'}
+                                            title={currentUser ? 'Tanya Penjual seputar produk ini' : 'Chat via WhatsApp seputar produk ini'}
                                         >
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -991,8 +1001,8 @@ export default function ProductDetailClient() {
                         type="button"
                         onClick={handleAskSeller}
                         className={styles.mobileAskBtn}
-                        aria-label="Tanya Penjual"
-                        title="Tanya Penjual"
+                        aria-label={currentUser ? 'Tanya Penjual' : 'Chat via WhatsApp'}
+                        title={currentUser ? 'Tanya Penjual' : 'Chat via WhatsApp'}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>

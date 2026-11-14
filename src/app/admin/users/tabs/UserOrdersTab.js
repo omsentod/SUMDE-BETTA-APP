@@ -96,7 +96,7 @@ export default function UserOrdersTab({ orders = [] }) {
                 </span>
 
                 <Link
-                  href={`/admin/orders?search=${order.id}`}
+                  href={`/admin/orders?highlightOrder=${encodeURIComponent(order.id)}`}
                   target="_blank"
                   className={styles.btnSecondarySmall}
                   style={{ textDecoration: 'none' }}

@@ -6,10 +6,14 @@ import { notifyAllAdmins } from '@/lib/notification';
 import { calcPaymentFee, isValidPaymentMethod } from '@/lib/paymentFee';
 import { hasPermission } from '@/lib/permissions';
 import { getEffectiveUnitPrice } from '@/lib/wholesale';
+import { sweepExpiredPendingOrders } from '@/lib/orderExpiry';
 
 export async function GET(request) {
   try {
     const session = await requireUser(request);
+
+    // Sapu pesanan PENDING yang telah melebihi batas waktu 24 jam menjadi CANCELLED
+    await sweepExpiredPendingOrders(prisma);
     const { searchParams } = new URL(request.url);
     const mineOnly = searchParams.get('mine') === 'true' || searchParams.get('scope') === 'mine';
 

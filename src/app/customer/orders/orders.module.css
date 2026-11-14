@@ -208,6 +208,26 @@
 }
 
 /* Status Badges */
+.cardHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.expiryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  background: var(--status-warning-bg, rgba(245, 158, 11, 0.12));
+  color: var(--status-warning, #f59e0b);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
 .statusBadge {
   display: inline-flex;
   align-items: center;

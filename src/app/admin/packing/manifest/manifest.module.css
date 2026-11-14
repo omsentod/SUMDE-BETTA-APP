@@ -1,0 +1,650 @@
+/* ==========================================================================
+   Daftar Pengiriman / Packing List Stylesheet
+   Shopee Seller Center Style (Clean, Ink-Friendly, Universal)
+   ========================================================================== */
+
+.pageViewport {
+  background: #F4F4F5;
+  min-height: 100vh;
+  padding-bottom: 3rem;
+  color: #18181B;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* 1. Bar Kontrol Atas (Tersembunyi saat diprint) */
+.noPrintBar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #18181B;
+  border-bottom: 1px solid #27272A;
+  padding: 0.65rem 1.5rem;
+  box-shadow: 0 4px 12px #00000030;
+}
+
+.barContainer {
+  max-width: 1050px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.barLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.backBtn:hover {
+  background: #3F3F46;
+}
+
+.barStats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #A1A1AA;
+}
+
+.statsBadge {
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  color: #FAFAFA;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.statsSeparator {
+  color: #52525B;
+}
+
+.statsText {
+  color: #E4E4E7;
+  font-weight: 600;
+}
+
+.barRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.printActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #09090B;
+  border: 1px solid #3F3F46;
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 0.5rem 1.15rem;
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.printActionBtn:hover {
+  background: #27272A;
+}
+
+/* 2. Lembar Kertas Standar (A4 / Folio Cetak) */
+.paperSheet {
+  max-width: 1050px;
+  margin: 1.5rem auto 0 auto;
+  background: #FFFFFF;
+  border: 1px solid #D4D4D8;
+  border-radius: 4px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 16px #00000010;
+  box-sizing: border-box;
+}
+
+/* Header Lembar Pengiriman ala Shopee Seller Center */
+.manifestHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+  gap: 1rem;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.storeTitle {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #09090B;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.docSubtitle {
+  font-size: 0.75rem;
+  color: #71717A;
+  margin: 0;
+  font-weight: 500;
+}
+
+.headerRight {
+  text-align: right;
+}
+
+.docTitle {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #09090B;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Baris Ringkasan Metadata Tipis */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #3F3F46;
+  padding: 0.45rem 0;
+  border-top: 1px solid #18181B;
+  border-bottom: 1.5px solid #18181B;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.metaSep {
+  color: #A1A1AA;
+}
+
+/* 3. Tabel Utama ala Shopee Seller Center */
+.manifestTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  color: #18181B;
+  border: 1px solid #18181B;
+}
+
+.manifestTable thead th {
+  background: #F4F4F5;
+  color: #18181B;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: left;
+  border: 1px solid #18181B;
+}
+
+.manifestTable tbody td {
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #D4D4D8;
+  vertical-align: top;
+  line-height: 1.35;
+}
+
+/* Baris Terakhir Tiap Pesanan Memiliki Garis Bawah Hitam Tegas */
+.orderLastRow td {
+  border-bottom: 2px solid #18181B;
+}
+
+/* Kolom Lebar & Tipografi */
+.colNum {
+  width: 32px;
+  text-align: center !important;
+}
+
+.tdNum {
+  text-align: center;
+  font-weight: 800;
+  color: #18181B;
+  font-size: 0.8rem;
+}
+
+.colOrder {
+  width: 140px;
+}
+
+.tdOrder {
+  vertical-align: top;
+}
+
+.orderNumber {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #09090B;
+}
+
+.orderDate {
+  font-size: 0.68rem;
+  color: #71717A;
+  margin-top: 2px;
+}
+
+.sourceBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #18181B;
+  background: #F4F4F5;
+  border: 1px solid #D4D4D8;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.colShipping {
+  width: 200px;
+}
+
+.tdShipping {
+  vertical-align: top;
+}
+
+.courierRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.courierName {
+  font-weight: 800;
+  color: #09090B;
+  font-size: 0.75rem;
+}
+
+.courierService {
+  font-size: 0.68rem;
+  color: #52525B;
+  font-weight: 600;
+}
+
+.trackingRow {
+  font-size: 0.7rem;
+  color: #52525B;
+  margin-top: 2px;
+}
+
+.trackingText {
+  font-family: monospace;
+  font-weight: 800;
+  color: #09090B;
+  font-size: 0.75rem;
+}
+
+.recipientName {
+  font-weight: 700;
+  color: #09090B;
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+
+.recipientAddress {
+  font-size: 0.68rem;
+  color: #52525B;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+/* Kolom Foto Item Produk */
+.colThumb {
+  width: 52px;
+  text-align: center !important;
+}
+
+.tdThumb {
+  text-align: center;
+  vertical-align: middle !important;
+  width: 52px;
+}
+
+.productThumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid #D4D4D8;
+  display: block;
+  margin: 0 auto;
+  background: #FAFAFA;
+}
+
+/* Tata Letak Vertikal Item TikTok (Bebas koma, anti salah baca) */
+.verticalThumbList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.verticalThumbItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verticalFishList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.verticalFishRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.fishItemQty {
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #09090B;
+  flex-shrink: 0;
+}
+
+.verticalVariantList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.verticalVariantRow {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Kolom Nama Produk & Variasi */
+.colProduct {
+  min-width: 220px;
+}
+
+.tdProduct {
+  vertical-align: middle !important;
+}
+
+.productName {
+  font-weight: 600;
+  color: #09090B;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.productVariant {
+  font-size: 0.68rem;
+  color: #52525B;
+  margin-top: 3px;
+}
+
+.productSubtitle {
+  font-size: 0.68rem;
+  color: #71717A;
+  margin-top: 2px;
+}
+
+/* Kolom Khusus Tahap 1 (Varian & Asal/Soliter) */
+.colVariant {
+  width: 90px;
+  text-align: center !important;
+}
+
+.tdVariant {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.variantBadgePlain {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #18181B;
+  background: #F4F4F5;
+  border: 1px solid #D4D4D8;
+  padding: 0.12rem 0.45rem;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.dashText {
+  color: #A1A1AA;
+}
+
+.colOrigin {
+  width: 170px;
+}
+
+.originCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.originTagWeb {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #09090B;
+  background: #F4F4F5;
+  border: 1px solid #D4D4D8;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.originTagTelegram {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #09090B;
+  background: #E4E4E7;
+  border: 1px solid #D4D4D8;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.hostAccountTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #18181B;
+}
+
+.buyerSoliterTag {
+  font-size: 0.7rem;
+  color: #52525B;
+}
+
+/* Kolom Kuantitas */
+.colQty {
+  width: 45px;
+  text-align: center !important;
+}
+
+.tdQty {
+  text-align: center;
+  vertical-align: middle !important;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #09090B;
+}
+
+/* Kolom Ceklist Manual Meja Gudang */
+.colCheck {
+  width: 40px;
+  text-align: center !important;
+}
+
+.tdCheck {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.checkSquare {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid #18181B;
+  border-radius: 2px;
+  margin: 0 auto;
+  background: transparent;
+}
+
+/* Empty State Card */
+.emptyCard {
+  max-width: 600px;
+  margin: 4rem auto;
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #18181B;
+  margin: 0.5rem 0;
+}
+
+.emptyDesc {
+  font-size: 0.825rem;
+  color: #71717A;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Print Overrides (@media print)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 8mm 8mm 8mm;
+  }
+
+  .noPrintBar {
+    display: none !important;
+  }
+
+  .pageViewport {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  .paperSheet {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .manifestHeader {
+    margin-bottom: 0.4rem !important;
+  }
+
+  .storeTitle {
+    color: #000000 !important;
+    font-size: 1.15rem !important;
+  }
+
+  .docTitle {
+    color: #000000 !important;
+    font-size: 1.15rem !important;
+  }
+
+  .metaRow {
+    color: #000000 !important;
+    border-top: 1px solid #000000 !important;
+    border-bottom: 1.5px solid #000000 !important;
+    padding: 0.35rem 0 !important;
+    margin-bottom: 0.6rem !important;
+  }
+
+  .manifestTable {
+    border: 1px solid #000000 !important;
+  }
+
+  .manifestTable thead {
+    display: table-header-group;
+  }
+
+  .manifestTable thead th {
+    background: #F4F4F5 !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .manifestTable tbody td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+  }
+
+  .orderLastRow td {
+    border-bottom: 2px solid #000000 !important;
+  }
+
+  .manifestTable tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .productThumb {
+    border: 1px solid #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .verticalThumbList {
+    gap: 4px !important;
+  }
+
+  .verticalFishList {
+    gap: 4px !important;
+  }
+
+  .fishItemQty {
+    color: #000000 !important;
+  }
+
+  .verticalVariantList {
+    gap: 4px !important;
+  }
+
+  .checkSquare {
+    border: 1.5px solid #000000 !important;
+  }
+}

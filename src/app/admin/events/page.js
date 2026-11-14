@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
 import { useToast } from '@/context/ToastContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const emptyEventForm = () => ({
@@ -53,8 +53,13 @@ export default function AdminEventsPage() {
   const confirm = useConfirmModal();
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || !canView)) {
-      router.push('/admin/dashboard');
+    if (!authLoading) {
+      if (!currentUser) {
+        router.push('/login');
+      } else if (!canView) {
+        const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p));
+        router.push(fallback || '/customer/dashboard');
+      }
     }
   }, [currentUser, authLoading, canView, router]);
 
@@ -243,6 +248,7 @@ export default function AdminEventsPage() {
             <table className={styles.dataTable}>
               <thead>
                 <tr>
+                  <th className={styles.thIndex}>No.</th>
                   <th>Banner</th>
                   <th>Judul Event</th>
                   <th className={styles.hideOnMobile}>Link Target</th>
@@ -252,7 +258,7 @@ export default function AdminEventsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((event) => {
+                {filtered.map((event, index) => {
                   const now = new Date();
                   const start = event.startDate ? new Date(event.startDate) : null;
                   const end = event.endDate ? new Date(event.endDate) : null;
@@ -273,6 +279,7 @@ export default function AdminEventsPage() {
 
                   return (
                     <tr key={event.id} className={styles.tableRow}>
+                      <td className={styles.tdIndex}>{index + 1}</td>
                       <td>
                         <div className={styles.eventThumb}>
                           <Image src={event.image} alt={event.title} fill style={{ objectFit: 'cover' }} />

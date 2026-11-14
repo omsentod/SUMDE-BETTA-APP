@@ -79,11 +79,10 @@ Run per HTTP handler in the file. Note N/A inline (comment) if a rule doesn't ap
 
 Auth endpoints punya class of bugs sendiri. Checklist tambahan kalau route menyentuh auth:
 
-- [ ] **Register**: user dibuat dengan `emailVerified: null`; login akan diblokir sampai OTP di-verify
+- [ ] **Register**: user dibuat dengan role customer; auto-login diterbitkan session cookie; verifikasi email bersifat opsional
 - [ ] **Register**: OTP di-hash sebelum simpan (scrypt/bcrypt), jangan plaintext
 - [ ] **Register**: kalau email send gagal, JANGAN rollback user create — log error, biarkan user retry via resend-otp
-- [ ] **Login**: return 403 `{code: 'EMAIL_NOT_VERIFIED', email}` untuk unverified, BUKAN generic 401 (UI perlu redirect)
-- [ ] **Login**: admin di-whitelist dari verify-check (biar seeded admin tetap bisa manage)
+- [ ] **Login**: verifikasi email opsional (tidak memblokir login unverified user)
 - [ ] **Verify OTP**: cek `attempts < MAX_ATTEMPTS`, increment on fail, delete row on success (jangan cuma mark used)
 - [ ] **Verify OTP**: pakai `crypto.timingSafeEqual` untuk compare hash (bukan `===` — timing attack)
 - [ ] **Verify OTP**: set session cookie DALAM response — auto-login supaya UX smooth

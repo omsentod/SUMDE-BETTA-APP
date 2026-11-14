@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import styles from './reports.module.css';
 
 const formatIDR = (v) =>
@@ -84,8 +84,13 @@ export default function AdminReportsPage() {
   const range = useMemo(() => computeRange(preset, customFrom, customTo), [preset, customFrom, customTo]);
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || !canView)) {
-      router.push('/admin/dashboard');
+    if (!authLoading) {
+      if (!currentUser) {
+        router.push('/login');
+      } else if (!canView) {
+        const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p));
+        router.push(fallback || '/customer/dashboard');
+      }
     }
   }, [currentUser, authLoading, canView, router]);
 
@@ -254,14 +259,16 @@ export default function AdminReportsPage() {
                 <table className={styles.topTable}>
                   <thead>
                     <tr>
+                      <th className={styles.thIndex}>No.</th>
                       <th>Produk</th>
                       <th className="num" style={{ textAlign: 'right' }}>Qty</th>
                       <th className="num" style={{ textAlign: 'right' }}>Revenue</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {report.topProducts.map((p) => (
+                    {report.topProducts.map((p, index) => (
                       <tr key={p.productId}>
+                        <td className={styles.tdIndex}>{index + 1}</td>
                         <td>{p.name}</td>
                         <td className={styles.num || 'num'} style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.quantity}</td>
                         <td className={styles.num || 'num'} style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{formatIDR(p.revenue)}</td>

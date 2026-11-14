@@ -7,8 +7,9 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import { isYouTubeUrl } from '@/lib/telegram';
+import AdminCheckbox from '@/components/admin/AdminCheckbox';
 import styles from './telegram.module.css';
 
 const formatIDR = (v) =>
@@ -20,8 +21,8 @@ function AdminTelegramContent() {
   const router = useRouter();
   const confirm = useConfirmModal();
 
-  const canView = canUser(currentUser, ['events:view', 'events:manage', 'products:view', 'products:manage']);
-  const canManage = canUser(currentUser, ['events:manage', 'products:manage']);
+  const canView = canUser(currentUser, ['events:telegram', 'events:view', 'events:manage', 'products:view', 'products:manage']);
+  const canManage = canUser(currentUser, ['events:telegram', 'events:manage', 'products:manage']);
 
   const [data, setData] = useState({
     config: { isConfigured: false, hasChatId: false, defaultChatId: null },
@@ -60,7 +61,8 @@ function AdminTelegramContent() {
   // Proteksi hak akses
   useEffect(() => {
     if (!authLoading && (!currentUser || !canView)) {
-      router.push('/admin/dashboard');
+      const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p)) || '/customer/dashboard';
+      router.push(fallback);
     }
   }, [currentUser, authLoading, canView, router]);
 
@@ -833,6 +835,7 @@ function AdminTelegramContent() {
                 <table className={styles.dataTable}>
                   <thead>
                     <tr>
+                      <th className={styles.thIndex}>No.</th>
                       <th>Media & Kode</th>
                       <th>Nama Ikan & Spesifikasi</th>
                       <th>Harga</th>
@@ -842,7 +845,7 @@ function AdminTelegramContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDrops.map((drop) => {
+                    {filteredDrops.map((drop, index) => {
                       const now = new Date();
                       const isYt = isYouTubeUrl(drop.videoUrl);
                       const isBooked = drop.bookedUntil && new Date(drop.bookedUntil) > now && !drop.isSold;
@@ -879,6 +882,7 @@ function AdminTelegramContent() {
 
                       return (
                         <tr key={drop.id} className={styles.tableRow}>
+                          <td className={styles.tdIndex}>{index + 1}</td>
                           <td>
                             <div className={styles.mediaCell}>
                               <div className={styles.eventThumb}>
@@ -1156,6 +1160,7 @@ function AdminTelegramContent() {
                   <thead>
                     <tr>
                       <th className={styles.checkboxTh}>Pilih</th>
+                      <th className={styles.thIndex}>No.</th>
                       <th>Produk</th>
                       <th>Kategori & Form</th>
                       <th>Harga</th>
@@ -1165,12 +1170,12 @@ function AdminTelegramContent() {
                   <tbody>
                     {poolProductsForModal.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className={styles.tdEmptyModal}>
+                        <td colSpan={6} className={styles.tdEmptyModal}>
                           Tidak ada produk yang cocok dengan pencarian.
                         </td>
                       </tr>
                     ) : (
-                      poolProductsForModal.map((p) => {
+                      poolProductsForModal.map((p, index) => {
                         const isChecked = selectedProductIds.includes(p.id);
                         const seqIndex = selectedProductIds.indexOf(p.id);
 
@@ -1189,13 +1194,13 @@ function AdminTelegramContent() {
                             onClick={() => handleToggleProductInEvent(p.id)}
                           >
                             <td className={styles.checkboxTd} onClick={(e) => e.stopPropagation()}>
-                              <input
-                                type="checkbox"
+                              <AdminCheckbox
                                 checked={isChecked}
                                 onChange={() => handleToggleProductInEvent(p.id)}
-                                className={styles.customCheck}
+                                ariaLabel={`Pilih ${p.name}`}
                               />
                             </td>
+                            <td className={styles.tdIndex}>{index + 1}</td>
                             <td>
                               <div className={styles.productMiniCell}>
                                 <div className={styles.eventThumbSm}>

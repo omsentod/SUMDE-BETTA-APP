@@ -44,7 +44,7 @@ export async function createCheckoutSession({ invoiceNumber, amount, callbackUrl
   const timestamp = new Date().toISOString().split('.')[0] + 'Z'; // UTC ISO 8601 e.g. 2026-06-21T16:50:00Z
 
   const paymentBlock = {
-    payment_due_date: 60, // Expiration time in minutes (1 hour)
+    payment_due_date: 1440, // Expiration time in minutes (24 hours)
   };
   // If we pass a specific type (e.g. ["VIRTUAL_ACCOUNT_BCA"]), DOKU hosted
   // checkout restricts the page to just that channel. Omitting it shows the

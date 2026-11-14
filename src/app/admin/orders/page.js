@@ -5,9 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getMethodLabel } from '@/lib/paymentFee';
 import { useToast } from '@/context/ToastContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import ShipmentTracker, { getCourierTrackingUrl } from '@/app/customer/orders/ShipmentTracker';
 import OrderSourceBadge from '@/components/admin/OrderSourceBadge';
+import AdminCheckbox from '@/components/admin/AdminCheckbox';
 import OrderSelect from './OrderSelect';
 import styles from './orders.module.css';
 
@@ -126,7 +127,11 @@ function AdminOrdersPageInner() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const urlStatus = searchParams.get('status');
-  const highlightParam = searchParams.get('highlightOrder');
+  const highlightParam =
+    searchParams.get('highlightOrder') ||
+    searchParams.get('highlight') ||
+    searchParams.get('orderId') ||
+    (searchParams.get('search') && !searchParams.get('search').includes(' ') ? searchParams.get('search') : null);
   const initialStatus = urlStatus && VALID_STATUSES.has(urlStatus) ? urlStatus : 'All';
 
   const canView = canUser(currentUser, 'orders:view');
@@ -208,8 +213,13 @@ function AdminOrdersPageInner() {
   };
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || !canView)) {
-      router.push('/admin/dashboard');
+    if (!authLoading) {
+      if (!currentUser) {
+        router.push('/login');
+      } else if (!canView) {
+        const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p));
+        router.push(fallback || '/customer/dashboard');
+      }
     }
   }, [currentUser, authLoading, canView, router]);
 
@@ -693,14 +703,14 @@ function AdminOrdersPageInner() {
                 <tr>
                   {isSelectMode && (
                     <th className={styles.tdCheck}>
-                      <input
-                        type="checkbox"
+                      <AdminCheckbox
                         checked={allFilteredSelected}
                         onChange={toggleAllSelect}
-                        aria-label="Pilih semua"
+                        ariaLabel="Pilih semua"
                       />
                     </th>
                   )}
+                  <th className={styles.thIndex}>No.</th>
                   <th>ID</th>
                   <th>Sumber</th>
                   <th className={styles.hideOnMobile}>Tanggal</th>
@@ -711,7 +721,7 @@ function AdminOrdersPageInner() {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order) => {
+                {filteredOrders.map((order, index) => {
                   const isExpanded = expandedId === order.id;
                   const isSelected = isSelectMode && selectedIds.has(order.id);
                   return (
@@ -723,14 +733,14 @@ function AdminOrdersPageInner() {
                       >
                         {isSelectMode && (
                           <td className={styles.tdCheck} onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
+                            <AdminCheckbox
                               checked={isSelected}
                               onChange={() => toggleRowSelect(order.id)}
-                              aria-label={`Pilih order ${order.id.slice(0, 8)}`}
+                              ariaLabel={`Pilih order ${order.id.slice(0, 8)}`}
                             />
                           </td>
                         )}
+                        <td className={styles.tdIndex}>{index + 1}</td>
                         <td className={styles.tdId}>#{order.id.slice(0, 8)}</td>
                         <td>
                           <OrderSourceBadge order={order} showAccountSubtext />
@@ -782,7 +792,7 @@ function AdminOrdersPageInner() {
                       </tr>
                       {isExpanded && (
                         <tr className={styles.expandRow}>
-                          <td colSpan={isSelectMode ? 8 : 7}>
+                          <td colSpan={isSelectMode ? 9 : 8}>
                             <div className={styles.expandGrid}>
                               <div className={styles.expandSection}>
                                 <h5>Produk</h5>

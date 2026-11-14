@@ -173,6 +173,26 @@
   font-weight: 700;
 }
 
+.thIndex,
+.tdIndex {
+  width: 44px;
+  min-width: 40px;
+  max-width: 52px;
+  text-align: center !important;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+  padding: 0.55rem 0.35rem !important;
+}
+
+.thIndex {
+  font-weight: 700;
+  color: var(--text-secondary, var(--text-muted));
+}
+
 .topTable td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;

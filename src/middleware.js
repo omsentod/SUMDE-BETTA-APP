@@ -58,7 +58,7 @@ export async function middleware(request) {
     if (session) {
       const nextParam = request.nextUrl.searchParams.get('next');
       const safeNext = nextParam && /^\/[a-zA-Z0-9/\-_?=&]*$/.test(nextParam) ? nextParam : null;
-      const defaultDest = session.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard';
+      const defaultDest = session.role !== 'customer' ? '/admin/dashboard' : '/customer/dashboard';
       return NextResponse.redirect(new URL(safeNext || defaultDest, base));
     }
   }

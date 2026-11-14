@@ -10,8 +10,9 @@ import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConf
 import BulkProductModal from '@/components/admin/BulkProductModal';
 import ManageHierarchyModal from '@/components/admin/ManageHierarchyModal';
 import { useToast } from '@/context/ToastContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import { parseYouTubeId } from '@/lib/productImages';
+import AdminCheckbox from '@/components/admin/AdminCheckbox';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const DEFAULT_CATEGORIES = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double Tail', 'Dumbo Ear'];
@@ -143,8 +144,13 @@ function AdminProductsInner() {
   const confirm = useConfirmModal();
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || !canView)) {
-      router.push('/admin/dashboard');
+    if (!authLoading) {
+      if (!currentUser) {
+        router.push('/login');
+      } else if (!canView) {
+        const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p));
+        router.push(fallback || '/customer/dashboard');
+      }
     }
   }, [currentUser, authLoading, canView, router]);
 
@@ -1032,9 +1038,8 @@ function AdminProductsInner() {
                 <thead>
                   <tr>
                     {isSelectMode && (
-                      <th style={{ width: '38px', textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
+                      <th className={styles.thSelectCol}>
+                        <AdminCheckbox
                           checked={filtered.length > 0 && filtered.every((p) => selectedIds.has(p.id))}
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -1047,11 +1052,11 @@ function AdminProductsInner() {
                               setSelectedIds(next);
                             }
                           }}
-                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                          aria-label="Pilih semua produk"
+                          ariaLabel="Pilih semua produk"
                         />
                       </th>
                     )}
+                    <th className={styles.thIndex}>No.</th>
                     <th className={styles.hideOnMobile}>Gambar</th>
                     <th>Nama Produk</th>
                     <th className={styles.hideOnMobile}>
@@ -1065,12 +1070,11 @@ function AdminProductsInner() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((product) => (
+                  {filtered.map((product, index) => (
                     <tr key={product.id} className={styles.tableRow}>
                       {isSelectMode && (
-                        <td style={{ width: '38px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
+                        <td className={styles.tdSelectCol} onClick={(e) => e.stopPropagation()}>
+                          <AdminCheckbox
                             checked={selectedIds.has(product.id)}
                             onChange={() => {
                               setSelectedIds((prev) => {
@@ -1080,11 +1084,11 @@ function AdminProductsInner() {
                                 return next;
                               });
                             }}
-                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                            aria-label={`Pilih ${product.name}`}
+                            ariaLabel={`Pilih ${product.name}`}
                           />
                         </td>
                       )}
+                      <td className={styles.tdIndex}>{index + 1}</td>
                       <td className={styles.hideOnMobile}>
                         <div className={styles.productThumb}>
                         {product.image ? (

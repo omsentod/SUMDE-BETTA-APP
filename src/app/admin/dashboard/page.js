@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import OrderSourceBadge from '@/components/admin/OrderSourceBadge';
 import styles from './adminDashboard.module.css';
 
@@ -63,13 +63,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!authLoading && currentUser) {
       if (!canViewDashboard) {
-        // Alihkan ke menu pertama yang diizinkan untuk staf ini
-        if (can('orders:view')) router.push('/admin/orders');
-        else if (can('products:view')) router.push('/admin/products');
-        else if (can('reports:view')) router.push('/admin/reports');
-        else if (can('users:view') || can('roles:view')) router.push('/admin/users');
-        else if (can('events:view')) router.push('/admin/events');
-        else router.push('/customer/dashboard');
+        // Alihkan ke menu pertama yang diizinkan untuk staf ini secara dinamis
+        const dest = getFirstAccessibleAdminRoute(can);
+        if (dest && dest !== '/admin/dashboard') {
+          router.push(dest);
+        } else {
+          router.push('/customer/dashboard');
+        }
       }
     } else if (!authLoading && !currentUser) {
       router.push('/login');
@@ -289,6 +289,7 @@ export default function AdminDashboard() {
                 <table className={styles.dataTable}>
                   <thead>
                     <tr>
+                      <th className={styles.thIndex}>No.</th>
                       <th>ID</th>
                       <th>Sumber</th>
                       <th>Pelanggan</th>
@@ -299,11 +300,12 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentOrders.map((o) => {
+                    {recentOrders.map((o, index) => {
                       const badge = statusBadge(o.status, o);
                       const itemCount = (o.items || []).reduce((n, it) => n + (it.quantity || 1), 0);
                       return (
                         <tr key={o.id} className={styles.tableRow}>
+                          <td className={styles.tdIndex}>{index + 1}</td>
                           <td>
                             <Link href={`/admin/orders?highlightOrder=${o.id}`} className={styles.orderIdLink}>
                               {formatOrderId(o.id)}
@@ -373,6 +375,7 @@ export default function AdminDashboard() {
                 <table className={styles.dataTable}>
                   <thead>
                     <tr>
+                      <th className={styles.thIndex}>No.</th>
                       <th className={styles.hideOnMobile}>Gambar</th>
                       <th>Nama Produk</th>
                       <th className={styles.hideOnMobile}>Kategori</th>
@@ -381,8 +384,9 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lowStockProducts.map((p) => (
+                    {lowStockProducts.map((p, index) => (
                       <tr key={p.id} className={styles.tableRow}>
+                        <td className={styles.tdIndex}>{index + 1}</td>
                         <td className={styles.hideOnMobile}>
                           <div className={styles.productThumb}>
                             {p.image ? (

@@ -51,12 +51,13 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === '1' || searchParams.get('force') === 'true' || searchParams.get('test') === '1';
+    const kloter = searchParams.get('kloter') || '';
     const targetsParam = searchParams.get('targets');
     const customTargets = targetsParam
       ? targetsParam.split(',').map((t) => t.trim()).filter(Boolean)
       : null;
 
-    const result = await sendAdminPackingDigestTelegram('', customTargets, { force });
+    const result = await sendAdminPackingDigestTelegram(kloter, customTargets, { force });
 
     return NextResponse.json({
       success: true,

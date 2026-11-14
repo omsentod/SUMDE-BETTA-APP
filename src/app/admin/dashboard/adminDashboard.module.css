@@ -472,6 +472,37 @@
     font-size: 0.875rem;
 }
 
+/* Checkbox Column for DataTables */
+.thSelectCol,
+.tdSelectCol {
+    width: 38px !important;
+    min-width: 38px;
+    max-width: 38px;
+    text-align: center !important;
+    padding: 0.5rem 0.35rem !important;
+}
+
+/* Responsive Nomor Urut Column */
+.thIndex,
+.tdIndex {
+    width: 44px;
+    min-width: 40px;
+    max-width: 52px;
+    text-align: center !important;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
+    padding: 0.5rem 0.35rem !important;
+}
+
+.thIndex {
+    font-weight: 600;
+    color: var(--text-secondary, var(--text-muted));
+}
+
 .tableRow {
     transition: background 0.15s ease;
 }
@@ -1240,6 +1271,21 @@
 
     .dataTable td {
         font-size: 0.72rem;
+    }
+
+    .thSelectCol,
+    .tdSelectCol {
+        width: 32px !important;
+        min-width: 32px;
+        padding: 0.35rem 0.2rem !important;
+    }
+
+    .thIndex,
+    .tdIndex {
+        width: 36px;
+        min-width: 32px;
+        font-size: 0.72rem;
+        padding: 0.35rem 0.2rem !important;
     }
 
     .badge {

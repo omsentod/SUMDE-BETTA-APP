@@ -329,9 +329,19 @@ export default function CustomerDashboard() {
             <h2 className={styles.cardTitle}>Informasi Pribadi</h2>
             <p className={styles.cardSubtitle}>Data ini digunakan sebagai informasi penerima pada transaksi.</p>
           </div>
-          <span className={isVerified ? styles.verifiedBadge : styles.unverifiedBadge}>
-            {isVerified ? 'Email Terverifikasi' : 'Belum Terverifikasi'}
-          </span>
+          <div className={styles.badgeWrapper}>
+            <span className={isVerified ? styles.verifiedBadge : styles.unverifiedBadge}>
+              {isVerified ? 'Email Terverifikasi' : 'Belum Terverifikasi'}
+            </span>
+            {!isVerified && currentUser?.email && (
+              <Link
+                href={`/verify-email?email=${encodeURIComponent(currentUser.email)}`}
+                className={styles.verifyEmailLink}
+              >
+                Verifikasi Email
+              </Link>
+            )}
+          </div>
         </div>
 
         {successMsg && (

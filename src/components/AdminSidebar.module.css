@@ -144,8 +144,9 @@
 }
 
 .badgeMuted {
-  background: color-mix(in oklab, var(--text-muted) 25%, transparent);
+  background: color-mix(in oklab, var(--text-muted) 20%, transparent);
   color: var(--text-muted);
+  font-weight: 600;
 }
 
 .drawerHeader {

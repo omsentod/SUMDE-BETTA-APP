@@ -1,12 +1,37 @@
 'use client';
+
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { CONTACT, waLink, WA_DEFAULT_MESSAGE } from '@/lib/constants';
 
-// Fixed bottom-right WhatsApp CTA — the "chat via WA" expectation for
-// Indonesian e-commerce. Hidden on admin routes because admins don't need it.
+// Fixed bottom-right WhatsApp CTA untuk customer guest / belum login.
+// Jika user sudah login, posisinya digantikan oleh fitur live chat (CustomerChatWidget).
+// Sembunyikan di rute admin dan printable label.
 export default function WhatsAppFloatingButton() {
     const pathname = usePathname();
-    if (pathname?.startsWith('/admin')) return null;
+    const { currentUser, isLoading } = useAuth();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Cegah render di SSR untuk menghindari hydration mismatch dengan sesi auth client
+    if (!mounted || (isLoading && !currentUser)) return null;
+
+    // Sembunyikan di rute admin atau printable label
+    if (
+        pathname?.startsWith('/admin') ||
+        (pathname?.includes('/orders/') && pathname?.endsWith('/label')) ||
+        pathname === '/admin/orders/labels-batch' ||
+        pathname?.startsWith('/admin/packing/manifest')
+    ) {
+        return null;
+    }
+
+    // Jika user sudah login, fitur live chat (CustomerChatWidget) yang akan aktif
+    if (currentUser) return null;
 
     return (
         <a

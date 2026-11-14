@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import OfflineLabel from './OfflineLabel';
 import { downloadOfflineWaybillTemplate, generateAutoTrackingCode, parseOfflineWaybillsExcel } from './excelHelper';
 import styles from './generateResi.module.css';
@@ -94,8 +94,13 @@ function GenerateResiPageInner() {
   }, [items]);
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || !canAccess)) {
-      router.push('/admin/dashboard');
+    if (!authLoading) {
+      if (!currentUser) {
+        router.push('/login');
+      } else if (!canAccess) {
+        const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p));
+        router.push(fallback || '/customer/dashboard');
+      }
     }
   }, [currentUser, authLoading, canAccess, router]);
 
@@ -538,7 +543,7 @@ function GenerateResiPageInner() {
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      <th className={styles.thIndex}>#</th>
+                      <th className={styles.thIndex}>No.</th>
                       <th>Reference ID</th>
                       <th>Penerima</th>
                       <th>Alamat Lengkap</th>

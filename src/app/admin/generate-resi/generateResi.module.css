@@ -467,9 +467,23 @@
   white-space: nowrap;
 }
 
+.thIndex,
+.tdIndex {
+  width: 44px;
+  min-width: 40px;
+  max-width: 52px;
+  text-align: center !important;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+
 .thIndex {
-  width: 36px;
-  text-align: center;
+  font-weight: 600;
+  color: var(--text-secondary, var(--text-muted));
 }
 
 .thAction {
@@ -499,13 +513,6 @@
   padding: 0.75rem 0.85rem;
   color: var(--text-main);
   vertical-align: middle;
-}
-
-.tdIndex {
-  font-weight: 700;
-  color: var(--text-muted);
-  width: 32px;
-  text-align: center;
 }
 
 .tdCustomerName {

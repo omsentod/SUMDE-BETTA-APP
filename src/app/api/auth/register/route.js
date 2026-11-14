@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth';
 import { sendMail, otpEmailTemplate } from '@/lib/email';
 import { consume, clientIp } from '@/lib/rateLimit';
+import { getRolePermissions } from '@/lib/permissions';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_TTL_MINUTES = 10;
@@ -49,9 +50,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 400 });
     }
 
-    // User dibuat dengan emailVerified=null. Login akan diblokir sampai OTP
-    // di-verify di /api/auth/verify-otp — lihat AGENTS.md §Auth.
-    await prisma.user.create({
+    // Verifikasi email opsional (tidak memblokir registrasi / login).
+    // User dibuat dengan role customer.
+    const newUser = await prisma.user.create({
       data: {
         email: normalizedEmail,
         password: hashPassword(password),
@@ -61,6 +62,17 @@ export async function POST(request) {
       }
     });
 
+    // Auto-claim pesanan tamu yang pernah dibuat dengan email ini
+    try {
+      await prisma.order.updateMany({
+        where: { email: normalizedEmail, userId: null },
+        data: { userId: newUser.id },
+      });
+    } catch (claimErr) {
+      console.warn('Auto-claim guest orders non-fatal warning:', claimErr.message);
+    }
+
+    // Buat kode OTP & kirim email secara best-effort untuk verifikasi opsional
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
     await prisma.emailVerification.upsert({
@@ -76,15 +88,25 @@ export async function POST(request) {
         html: otpEmailTemplate({ name, otp, expiresMinutes: OTP_TTL_MINUTES }),
       });
     } catch (mailErr) {
-      // Log tapi jangan gagalkan register — user bisa retry via resend-otp.
+      // Log tapi jangan gagalkan register
       console.error('Register OTP email send failed:', mailErr.message);
     }
 
-    return NextResponse.json({
+    // Auto-login langsung: terbitkan session cookie agar customer langsung masuk
+    const token = await signSession({ id: newUser.id, role: newUser.role });
+    const { password: _, ...userData } = newUser;
+    const permissions = await getRolePermissions(newUser.role);
+    const canAccessAdmin = newUser.role === 'admin' || (Array.isArray(permissions) && permissions.length > 0);
+
+    const res = NextResponse.json({
       success: true,
-      email: normalizedEmail,
-      message: 'Registrasi berhasil. Cek email untuk kode verifikasi.',
+      ...userData,
+      permissions,
+      canAccessAdmin,
+      message: 'Registrasi berhasil. Selamat datang di SUMDE BETTA!',
     }, { status: 201 });
+    res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
+    return res;
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: error.status || 500 });
   }

@@ -11,13 +11,12 @@ export async function GET(request) {
     ]);
 
     const { searchParams } = new URL(request.url);
-    const tab = (searchParams.get('tab') || 'bagging').toLowerCase(); // bagging | boxing | ready | shipped | all
+    const tab = (searchParams.get('tab') || 'bagging').toLowerCase(); // bagging | boxing | ready | all
     const search = (searchParams.get('search') || '').trim();
-    // Default filter tanggal: khusus tab shipped default 'today' (real-time monitor pickup kurir hari ini)
     const rawDateFilter = searchParams.get('dateFilter');
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
-    const dateFilter = rawDateFilter || (tab === 'shipped' ? 'today' : 'all');
+    const dateFilter = rawDateFilter || 'all';
 
     // Helper rentang tanggal (WIB / Local timezone server)
     const getDateRange = (filter) => {
@@ -57,13 +56,10 @@ export async function GET(request) {
     };
 
     const dateRange = getDateRange(dateFilter);
-    const todayRange = getDateRange('today');
 
     // 1. Ambil agregat jumlah per tahap alur packing
-    // Khusus Pos 1-3 hanya berlaku untuk pesanan berstatus PROCESSING (resi sudah dicetak / pesanan diproses).
-    // Status PAID belum masuk ke Pos 1 (menunggu cetak resi).
-    // Khusus shipped: hitung pickup hari ini agar KPI real-time relevan dengan shift hari ini
-    const [baggingCount, boxingCount, readyCount, shippedTodayCount, shippedTotalCount] = await Promise.all([
+    // Khusus Pos 1-3 berlaku untuk pesanan berstatus PROCESSING (resi sudah dicetak / pesanan diproses).
+    const [baggingCount, boxingCount, readyCount] = await Promise.all([
       prisma.order.count({
         where: {
           status: 'PROCESSING',
@@ -80,17 +76,6 @@ export async function GET(request) {
         where: {
           status: 'PROCESSING',
           packingStatus: 'READY_FOR_PICKUP',
-        },
-      }),
-      prisma.order.count({
-        where: {
-          status: { in: ['SHIPPED', 'COMPLETED'] },
-          updatedAt: todayRange,
-        },
-      }),
-      prisma.order.count({
-        where: {
-          status: { in: ['SHIPPED', 'COMPLETED'] },
         },
       }),
     ]);
@@ -116,17 +101,11 @@ export async function GET(request) {
       if (dateRange) {
         whereClause.createdAt = dateRange;
       }
-    } else if (tab === 'shipped') {
-      whereClause.status = { in: ['SHIPPED', 'COMPLETED'] };
-      // Khusus tab riwayat ekspedisi / pickup: filter berdasarkan waktu update pickup (updatedAt)
-      if (dateRange) {
-        whereClause.updatedAt = dateRange;
-      }
     } else {
       // 'all'
-      whereClause.status = { in: ['PROCESSING', 'SHIPPED', 'COMPLETED'] };
+      whereClause.status = 'PROCESSING';
       if (dateRange) {
-        whereClause.updatedAt = dateRange;
+        whereClause.createdAt = dateRange;
       }
     }
 
@@ -212,8 +191,6 @@ export async function GET(request) {
         bagging: baggingCount,
         boxing: boxingCount,
         ready: readyCount,
-        shipped: shippedTodayCount,
-        shippedTotal: shippedTotalCount,
         pendingTotal: baggingCount + boxingCount,
       },
       dateFilter,

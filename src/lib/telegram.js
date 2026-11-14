@@ -398,6 +398,47 @@ export function formatIndoDate(date = new Date()) {
 }
 
 /**
+ * Format Hari, Tanggal, dan Jam Indonesia dengan zona waktu WIB
+ * Contoh: "Minggu, 15 November 2026 • 10:00 WIB"
+ */
+export function formatIndoDateTime(date = new Date()) {
+  try {
+    const d = new Date(date);
+    const day = d.toLocaleDateString('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' });
+    const dateFormatted = d.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta',
+    });
+    const timeFormatted = d
+      .toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Jakarta',
+      })
+      .replace('.', ':');
+
+    return {
+      day,
+      date: dateFormatted,
+      time: `${timeFormatted} WIB`,
+      full: `${day}, ${dateFormatted} • ${timeFormatted} WIB`,
+      fullWithPukul: `${day}, ${dateFormatted} pukul ${timeFormatted} WIB`,
+    };
+  } catch {
+    return {
+      day: '',
+      date: '',
+      time: '',
+      full: '',
+      fullWithPukul: '',
+    };
+  }
+}
+
+/**
  * Format Pesan Banner Pengumuman Pembuka Event Broadcast
  */
 export function formatEventHeaderMessage(event, itemsCount = 0, firstCode = '', lastCode = '') {
@@ -532,11 +573,9 @@ export async function broadcastLiveRecap(eventId, targetChatId = null) {
 }
 
 /**
- * Notifikasi Rekap Jam Packing Toko via Bot Telegram (Kloter Jam 10.00 & 15.00 WIB)
+ * Notifikasi Rekap Jam Packing & Pengiriman Toko via Bot Telegram (Kloter Jam 10.00 & 15.00 WIB)
  * Mampu mengirim ke BANYAK tujuan sekaligus (Akun Pribadi, Staff Packing, Grup Admin).
- * Format anti-AI-slop (hanya 2 baris ringkas):
- * 📦 5 pesanan lunas siap dipacking.
- * Buka dashboard: https://sumdebetta.com/admin/orders?status=PAID
+ * Menyertakan info Hari, Tanggal, dan Jam operasional.
  */
 export async function sendAdminPackingDigestTelegram(kloterLabel = '', customTargets = null, options = {}) {
   try {
@@ -568,7 +607,14 @@ export async function sendAdminPackingDigestTelegram(kloterLabel = '', customTar
     }
 
     const displayCount = paidCount > 0 ? paidCount : (options.mockCount || 1);
-    const message = `📦 ${displayCount} pesanan lunas siap dipacking.\nBuka dashboard: ${appUrl}/admin/orders?status=PAID`;
+    const dt = formatIndoDateTime(new Date());
+    const kloterSuffix = kloterLabel ? ` (${kloterLabel})` : '';
+
+    const message =
+      `📦 *${displayCount} pesanan lunas siap dipacking${kloterSuffix}.*\n` +
+      `📅 *Hari/Tanggal:* ${dt.day}, ${dt.date}\n` +
+      `⏰ *Waktu:* ${dt.time}\n` +
+      `🔗 Buka dashboard: ${appUrl}/admin/orders?status=PAID`;
 
     const deliveries = [];
     for (const chatId of targets) {
@@ -576,6 +622,7 @@ export async function sendAdminPackingDigestTelegram(kloterLabel = '', customTar
         const res = await callTelegramApi('sendMessage', {
           chat_id: chatId,
           text: message,
+          parse_mode: 'Markdown',
           disable_web_page_preview: false,
         });
         deliveries.push({ chatId, ok: true, messageId: res?.message_id });
@@ -598,6 +645,94 @@ export async function sendAdminPackingDigestTelegram(kloterLabel = '', customTar
     };
   } catch (err) {
     console.error('Error sendAdminPackingDigestTelegram:', err.message);
+    return { sent: false, channel: 'telegram', error: err.message };
+  }
+}
+
+/**
+ * Notifikasi Bot Telegram saat ada Pengiriman Pesanan (status SHIPPED / kurir pick up)
+ * Mengirimkan info Hari, Tanggal, Jam, Kurir, No. Resi, dan Nama Penerima
+ * ke target notifikasi admin/staff, serta update ke grup Telegram jika pesanan berasal dari Telegram Drop.
+ */
+export async function sendOrderShippedTelegram(order, waybill = null) {
+  if (!order || !isTelegramConfigured()) return { sent: false };
+
+  try {
+    const { appUrl } = getTelegramConfig();
+    const targets = getTelegramNotifTargets();
+    const trackingNo = waybill || order.trackingNumber || '-';
+    const courier = (order.shippingCourier || 'Ekspedisi').toUpperCase();
+    const service = order.shippingService ? ` (${order.shippingService})` : '';
+    const orderCode = String(order.id).slice(0, 8).toUpperCase();
+    const recipient = order.name || 'Pelanggan';
+    const destination = [order.city, order.province].filter(Boolean).join(', ') || '-';
+
+    const dt = formatIndoDateTime(new Date());
+
+    const message =
+      `🚚 *PENGIRIMAN PESANAN (SHIPPED)*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📦 *Order ID:* \`#${orderCode}\`\n` +
+      `👤 *Penerima:* ${recipient}\n` +
+      `📍 *Tujuan:* ${destination}\n` +
+      `🚛 *Kurir:* ${courier}${service}\n` +
+      `🔖 *No. Resi:* \`${trackingNo}\`\n` +
+      `📅 *Hari, Tanggal & Jam:*\n` +
+      `   ${dt.day}, ${dt.date} pukul ${dt.time}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔗 Lacak Pesanan: ${appUrl}/lacak-pesanan?orderId=${encodeURIComponent(order.id)}${order.email ? `&email=${encodeURIComponent(order.email)}` : ''}`;
+
+    const deliveries = [];
+
+    // 1. Kirim ke target admin / staff packing
+    for (const chatId of targets) {
+      try {
+        const res = await callTelegramApi('sendMessage', {
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown',
+        });
+        deliveries.push({ chatId, ok: true, messageId: res?.message_id });
+      } catch (err) {
+        console.error(`Gagal kirim notif pengiriman ke Telegram target ${chatId}:`, err.message);
+        deliveries.push({ chatId, ok: false, error: err.message });
+      }
+    }
+
+    // 2. Jika pesanan memiliki item dari Telegram Drop, berikan notifikasi reply ke postingan drop jika ada
+    if (order.items && Array.isArray(order.items)) {
+      for (const item of order.items) {
+        const prod = item.product;
+        if (prod?.telegramMessageId && prod?.telegramChatId) {
+          try {
+            await callTelegramApi('sendMessage', {
+              chat_id: prod.telegramChatId,
+              reply_to_message_id: prod.telegramMessageId,
+              text:
+                `🚚 *PESANAN TELAH DIKIRIM!*\n` +
+                `Ikan *${prod.dropNumber || '#IKAN'} (${prod.name})* untuk *${prod.bookedBy || order.name}* sedang dalam perjalanan menuju tujuan.\n\n` +
+                `🚛 *Kurir:* ${courier}\n` +
+                `🔖 *No. Resi:* \`${trackingNo}\`\n` +
+                `📅 *Hari/Tanggal:* ${dt.day}, ${dt.date}\n` +
+                `⏰ *Jam Kirim:* ${dt.time}\n\n` +
+                `Paket dikemas aman berstandar karantina 100% garansi hidup sampai tempat!`,
+              parse_mode: 'Markdown',
+            });
+          } catch (dropErr) {
+            console.warn('Gagal kirim update resi ke pesan drop Telegram:', dropErr.message);
+          }
+        }
+      }
+    }
+
+    const successCount = deliveries.filter((d) => d.ok).length;
+    return {
+      sent: successCount > 0,
+      channel: 'telegram',
+      deliveries,
+    };
+  } catch (err) {
+    console.error('Error sendOrderShippedTelegram:', err.message);
     return { sent: false, channel: 'telegram', error: err.message };
   }
 }

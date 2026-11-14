@@ -28,13 +28,9 @@ export default function RegisterPage() {
         setIsLoading(true);
 
         try {
-            const data = await register(name, email, password);
+            await register(name, email, password);
             setSuccess(true);
-            // Redirect ke /verify-email — email + OTP sudah dikirim di endpoint.
-            const target = data?.email
-                ? `/verify-email?email=${encodeURIComponent(data.email)}`
-                : '/verify-email';
-            setTimeout(() => router.push(target), 1200);
+            setTimeout(() => router.push('/customer/dashboard'), 1000);
         } catch (err) {
             setError(err.message || 'Registrasi gagal.');
         } finally {
@@ -62,7 +58,7 @@ export default function RegisterPage() {
 
                 {success && (
                     <div className="auth-alert-success">
-                        Registrasi berhasil! Mengarahkan ke halaman verifikasi email...
+                        Registrasi berhasil! Mengarahkan ke dashboard...
                     </div>
                 )}
 

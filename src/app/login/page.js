@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 
 function LoginPageInner() {
     const { currentUser, login } = useAuth();
@@ -23,8 +24,11 @@ function LoginPageInner() {
 
             if (safeNext && !(safeNext === '/customer/dashboard' && hasAdminAccess)) {
                 router.replace(safeNext);
+            } else if (hasAdminAccess) {
+                const target = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p)) || '/admin/dashboard';
+                router.replace(target);
             } else {
-                router.replace(hasAdminAccess ? '/admin/dashboard' : '/customer/dashboard');
+                router.replace('/customer/dashboard');
             }
         }
     }, [currentUser, router, searchParams]);
@@ -53,13 +57,6 @@ function LoginPageInner() {
             await login(email, password);
             // Pengalihan halaman ditangani otomatis oleh effect di atas saat currentUser terisi
         } catch (err) {
-            // Backend kirim code=EMAIL_NOT_VERIFIED kalau user harus verifikasi.
-            // Redirect ke /verify-email dengan email prefill supaya user
-            // tinggal masukkan OTP (atau klik "Kirim ulang").
-            if (err.code === 'EMAIL_NOT_VERIFIED' && err.email) {
-                router.push(`/verify-email?email=${encodeURIComponent(err.email)}`);
-                return;
-            }
             setError(err.message || 'Email atau password salah.');
         } finally {
             setIsLoading(false);

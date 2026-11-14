@@ -28,6 +28,15 @@ export async function GET(request) {
     const unreadOnly = searchParams.get('unread') === 'true';
     const filter = searchParams.get('filter'); // 'transaction' | 'system'
 
+    // Auto-Prune (Option B): bersihkan notifikasi user ini yang sudah dibaca lebih dari 24 jam lalu
+    const autoPruneCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await prisma.notification.deleteMany({
+      where: {
+        userId: session.id,
+        readAt: { not: null, lt: autoPruneCutoff },
+      },
+    }).catch((e) => console.warn('[Notification] Auto-prune failed:', e.message));
+
     const where = {
       userId: session.id,
       ...(unreadOnly ? { readAt: null } : {}),

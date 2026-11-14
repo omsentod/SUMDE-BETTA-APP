@@ -185,11 +185,31 @@
 }
 
 .tdCheck {
-  width: 32px;
+  width: 38px !important;
+  min-width: 38px;
+  max-width: 38px;
+  text-align: center !important;
+  padding: 0.5rem 0.35rem !important;
 }
 
-.tdCheck input {
-  cursor: pointer;
+.thIndex,
+.tdIndex {
+  width: 44px;
+  min-width: 40px;
+  max-width: 52px;
+  text-align: center !important;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+  padding: 0.5rem 0.35rem !important;
+}
+
+.thIndex {
+  font-weight: 600;
+  color: var(--text-secondary, var(--text-muted));
 }
 
 .tdId {
@@ -744,7 +764,16 @@
   }
 
   .tdCheck {
-    width: 22px;
+    width: 32px !important;
+    min-width: 32px;
+  }
+
+  .thIndex,
+  .tdIndex {
+    width: 36px;
+    min-width: 32px;
+    font-size: 0.72rem;
+    padding: 0.45rem 0.2rem !important;
   }
 
   .tdId {

@@ -10,13 +10,8 @@ import styles from './payment.module.css';
 
 // Ambang basi untuk state checkout yang tersimpan di localStorage
 // (temp-shipment, active-payment), disamakan dengan payment_due_date DOKU
-// (60 menit, lihat createCheckoutSession di src/lib/doku.js). Tanpa ini,
-// checkout yang ditinggal begitu saja (tab ditutup sebelum bayar) bisa
-// nyangkut selamanya — dan karena active-payment SELALU menang begitu
-// mount effect membacanya, kunjungan berikutnya ke /payment (bahkan untuk
-// belanja lain sama sekali, bertahun kemudian) bisa langsung "sukses" atau
-// menampilkan alamat lama, alih-alih checkout yang sedang berjalan sekarang.
-const CHECKOUT_SESSION_TTL_MS = 60 * 60 * 1000;
+// (24 jam, lihat createCheckoutSession di src/lib/doku.js).
+const CHECKOUT_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
 function isFresh(createdAt) {
     return typeof createdAt === 'number' && Date.now() - createdAt <= CHECKOUT_SESSION_TTL_MS;
@@ -41,6 +36,7 @@ export default function PaymentPage() {
     const [activePayment, setActivePayment] = useState(null);
     const [status, setStatus] = useState('pending'); // 'pending' | 'checkout_created' | 'success'
     const [completedOrderId, setCompletedOrderId] = useState(null);
+    const [timeLeftMs, setTimeLeftMs] = useState(null);
 
     // Auto-check helper — polls the minimal /status endpoint (no PII exposed).
     const autoCheckPayment = useCallback(async (orderId) => {
@@ -139,10 +135,38 @@ export default function PaymentPage() {
         return () => clearInterval(interval);
     }, [status, activePayment?.orderId, autoCheckPayment]);
 
-    // Handle browser back button when on waiting screen
+    // 1c. Countdown timer 24 jam untuk sesi pembayaran aktif
+    useEffect(() => {
+        if (status !== 'checkout_created' || !activePayment?.createdAt) return;
+
+        const calcRemaining = () => {
+            const expiresAt = activePayment.createdAt + CHECKOUT_SESSION_TTL_MS;
+            return Math.max(0, expiresAt - Date.now());
+        };
+
+        setTimeLeftMs(calcRemaining());
+
+        const timer = setInterval(() => {
+            const remaining = calcRemaining();
+            setTimeLeftMs(remaining);
+            if (remaining <= 0) {
+                clearInterval(timer);
+                if (activePayment?.orderId) {
+                    autoCheckPayment(activePayment.orderId);
+                }
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [status, activePayment?.createdAt, activePayment?.orderId, autoCheckPayment]);
+
+    // Handle browser back button when on waiting screen:
+    // Arahkan ke Pesanan Saya dan bersihkan state lokal tanpa membatalkan order di DB
     useEffect(() => {
         const handlePop = () => {
             if (status === 'checkout_created') {
+                localStorage.removeItem('active-payment');
+                localStorage.removeItem('temp-shipment');
                 router.push('/customer/orders');
             }
         };
@@ -268,6 +292,10 @@ export default function PaymentPage() {
             localStorage.setItem('active-payment', JSON.stringify(payDetails));
             setIsChangingMethod(false);
 
+            // Bersihkan keranjang checkout sekarang karena order PENDING sudah tercatat di DB
+            clearCart();
+            localStorage.removeItem('temp-shipment');
+
             // Redirect to Doku Hosted Checkout Page
             window.location.href = data.paymentUrl;
 
@@ -304,6 +332,26 @@ export default function PaymentPage() {
         } finally {
             setResuming(false);
         }
+    };
+
+    const formatCountdown = (ms) => {
+        if (ms === null) return '--:--:--';
+        if (ms <= 0) return '00:00:00 (Waktu Habis)';
+        const totalSec = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSec / 3600);
+        const minutes = Math.floor((totalSec % 3600) / 60);
+        const seconds = totalSec % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    // Saat user memilih "Bayar Nanti (Pesanan Saya)" setelah kembali/back dari DOKU:
+    // Pesanan di database TETAP berstatus PENDING (tidak dibatalkan).
+    // State lokal dibersihkan dan user diarahkan ke Pesanan Saya.
+    const handlePayLater = () => {
+        localStorage.removeItem('active-payment');
+        localStorage.removeItem('temp-shipment');
+        toast.info('Pesanan tersimpan di menu Pesanan Saya. Selesaikan pembayaran dalam 24 jam.');
+        router.push('/customer/orders');
     };
 
     const handleOpenChangeMethod = () => {
@@ -622,54 +670,82 @@ export default function PaymentPage() {
                         </div>
                     )}
 
-                    {/* Step 2: Waiting/Callback state */}
+                    {/* Step 2: Waiting/Callback state saat kembali dari DOKU */}
                     {status === 'checkout_created' && activePayment && !isChangingMethod && (
                         <div className={styles.waitingCard}>
-                            <div className={styles.spinner}></div>
+                            <div className={styles.waitingIconCircle}>
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                            </div>
 
-                            <h2 className={styles.waitingTitle}>Menunggu Pembayaran</h2>
+                            <span className={styles.waitingBadge}>Menunggu Pembayaran</span>
+                            <h2 className={styles.waitingTitle}>Selesaikan Pembayaran Anda</h2>
+
+                            <div className={styles.waitingRecapBox}>
+                                <div className={styles.waitingRecapRow}>
+                                    <span className={styles.waitingRecapLabel}>No. Pesanan</span>
+                                    <span className={styles.waitingRecapValue}>#{activePayment.orderId.slice(0, 8).toUpperCase()}</span>
+                                </div>
+                                <div className={styles.waitingRecapRow}>
+                                    <span className={styles.waitingRecapLabel}>Total Tagihan</span>
+                                    <span className={styles.waitingRecapTotal}>{formatIDR(activePayment.amount)}</span>
+                                </div>
+                            </div>
+
+                            <div className={styles.countdownContainer}>
+                                <div className={styles.countdownHeader}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    <span>Batas Waktu Pembayaran (24 Jam)</span>
+                                </div>
+                                <div className={styles.countdownDigits}>
+                                    {formatCountdown(timeLeftMs)}
+                                </div>
+                            </div>
+
                             <p className={styles.waitingText}>
-                                Sesi pembayaran DOKU Checkout telah berhasil dibuat. Silakan selesaikan transaksi Anda di jendela DOKU, lalu klik periksa status di bawah. Kalau Anda kembali dari DOKU tanpa membayar, lanjutkan sesi ini atau ganti metode pembayaran.
+                                Pesanan Anda telah tersimpan dengan aman. Silakan selesaikan transaksi di portal <b>DOKU</b> atau pilih <b>Bayar Nanti</b> untuk menyelesaikannya melalui menu Pesanan Saya sebelum batas waktu berakhir.
                             </p>
 
-                            <div className={styles.btnGroup}>
+                            <div className={styles.twoBtnGroup}>
+                                <button
+                                    type="button"
+                                    onClick={handlePayLater}
+                                    className={`btn btn-outline ${styles.payLaterBtn}`}
+                                    disabled={resuming}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    <span>Bayar Nanti</span>
+                                </button>
                                 <button
                                     type="button"
                                     onClick={handleResumeToDoku}
                                     className={`btn btn-primary ${styles.continueBtn}`}
-                                    disabled={resuming}
+                                    disabled={resuming || (timeLeftMs !== null && timeLeftMs <= 0)}
                                 >
-                                    {resuming ? 'Menyiapkan...' : 'Lanjutkan Ke DOKU'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleOpenChangeMethod}
-                                    className={styles.changeMethodBtn}
-                                    disabled={resuming}
-                                >
-                                    Ganti Metode Pembayaran
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCheckStatus}
-                                    className={styles.checkStatusBtn}
-                                    disabled={checkingStatus}
-                                >
-                                    {checkingStatus ? 'Memeriksa...' : 'Cek Status Pembayaran'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => router.push('/customer/orders')}
-                                    className={styles.changeMethodBtn}
-                                >
-                                    Lihat Pesanan Saya
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCancelPayment}
-                                    className={styles.cancelBtn}
-                                >
-                                    Batal
+                                    {resuming ? (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.btnSpinner} aria-hidden="true">
+                                                <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
+                                            </svg>
+                                            <span>Menghubungkan...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                <line x1="2" y1="10" x2="22" y2="10" />
+                                            </svg>
+                                            <span>Bayar Sekarang</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>

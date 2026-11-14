@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { requirePermission, hasPermission } from '@/lib/permissions';
+import { isOrderExpired } from '@/lib/orderExpiry';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'RETURNED'];
 
@@ -14,6 +15,15 @@ export async function GET(request, { params }) {
     });
     if (!order) {
       return NextResponse.json({ error: 'Pesanan tidak ditemukan.' }, { status: 404 });
+    }
+
+    // Auto-cancel jika pesanan PENDING melebihi batas waktu 24 jam
+    if (order.status === 'PENDING' && isOrderExpired(order)) {
+      order.status = 'CANCELLED';
+      await prisma.order.update({
+        where: { id },
+        data: { status: 'CANCELLED' },
+      });
     }
 
     // Full order details (name, email, phone, address, items) are PII —

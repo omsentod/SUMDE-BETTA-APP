@@ -178,6 +178,9 @@ export function AuthProvider({ children }) {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Registrasi gagal.');
+        if (data.id) {
+            setCurrentUser(data);
+        }
         broadcastAuthChange();
         return data;
     }, []);

@@ -9,7 +9,7 @@ import UserAvatar from '@/components/UserAvatar';
 import RoleManagementTab from './RoleManagementTab';
 import UserRoleModal from './UserRoleModal';
 import UserDetailModal from './UserDetailModal';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import dashboardStyles from '../dashboard/adminDashboard.module.css';
 import roleStyles from './roles.module.css';
 import usersStyles from './users.module.css';
@@ -73,7 +73,8 @@ export default function AdminUsersPage() {
       if (!currentUser) {
         router.push('/login');
       } else if (!canViewUsers && !canViewRoles) {
-        router.push('/admin/dashboard');
+        const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p)) || '/customer/dashboard';
+        router.push(fallback);
       }
     }
   }, [currentUser, authLoading, canViewUsers, canViewRoles, router]);
@@ -490,6 +491,7 @@ export default function AdminUsersPage() {
                 <table className={usersStyles.usersTable}>
                   <thead>
                     <tr>
+                      <th className={usersStyles.colIndex}>No.</th>
                       <th className={usersStyles.colUser}>Pengguna</th>
                       <th className={usersStyles.colWhatsapp}>WhatsApp / Kontak</th>
                       <th className={usersStyles.colRole}>Role</th>
@@ -498,7 +500,7 @@ export default function AdminUsersPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((user) => {
+                    {filteredUsers.map((user, index) => {
                       const roleObj = roles.find((r) => r.slug === user.role);
                       const roleDisplayName = roleObj ? roleObj.name : user.role.toUpperCase();
                       const isAdminRole = user.role === 'admin';
@@ -506,6 +508,7 @@ export default function AdminUsersPage() {
 
                       return (
                         <tr key={user.id} className={usersStyles.tableRow}>
+                          <td className={usersStyles.colIndex}>{index + 1}</td>
                           {/* Col 1: Pengguna (Nama, Avatar, Email) */}
                           <td className={usersStyles.colUser}>
                             <div className={usersStyles.userIdentityCell}>

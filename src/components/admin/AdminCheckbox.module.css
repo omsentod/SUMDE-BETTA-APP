@@ -1,0 +1,75 @@
+/* Custom Accessible Checkbox - Identik dengan Checkbox Modul Packing Gudang */
+.checkboxWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.checkboxWrapper.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.checkboxInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.checkboxInput:disabled {
+  cursor: not-allowed;
+}
+
+.customCheckbox {
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+.checkboxInput:focus-visible + .customCheckbox {
+  box-shadow: 0 0 0 2px var(--primary-glow);
+  border-color: var(--primary);
+}
+
+.checkboxInput:checked + .customCheckbox {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.customCheckbox svg {
+  width: 12px;
+  height: 12px;
+  stroke: #FFFFFF;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.checkboxInput:checked + .customCheckbox svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkboxWrapper:hover:not(.disabled) .customCheckbox {
+  border-color: var(--primary);
+}

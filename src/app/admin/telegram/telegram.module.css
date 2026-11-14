@@ -656,8 +656,31 @@
 
 .checkboxTh,
 .checkboxTd {
-    width: 36px;
-    text-align: center;
+    width: 38px !important;
+    min-width: 38px;
+    max-width: 38px;
+    text-align: center !important;
+    padding: 0.5rem 0.35rem !important;
+}
+
+.thIndex,
+.tdIndex {
+    width: 44px;
+    min-width: 40px;
+    max-width: 52px;
+    text-align: center !important;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
+    padding: 0.75rem 0.35rem !important;
+}
+
+.thIndex {
+    font-weight: 600;
+    color: var(--text-secondary, var(--text-muted));
 }
 
 .customCheck {

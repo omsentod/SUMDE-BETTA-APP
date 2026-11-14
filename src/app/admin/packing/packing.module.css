@@ -106,14 +106,14 @@
 
 .kpiStagesGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 0.625rem;
   margin-bottom: 1rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .kpiStagesGrid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.875rem;
     margin-bottom: 1.25rem;
   }
@@ -282,45 +282,6 @@
   color: #A7F3D0;
 }
 
-/* Box 4: Sudah Dikirim (Soft Ice & Sapphire Blue) */
-.kpiCardShipped {
-  background: #F4F9FF;
-  border: 1px solid #BAE6FD;
-  border-top: 4px solid #0284C7;
-}
-.kpiCardShipped .kpiStepBadge {
-  background: #0284C7;
-  color: #FFFFFF;
-}
-.kpiCardShipped .kpiTitle {
-  color: #0C4A6E;
-}
-.kpiCardShipped .kpiNumber {
-  color: #0284C7;
-}
-.kpiCardShipped .kpiUnit {
-  color: #075985;
-}
-
-[data-theme="dark"] .kpiCardShipped {
-  background: #07192A;
-  border: 1px solid #0369A1;
-  border-top: 4px solid #38BDF8;
-}
-[data-theme="dark"] .kpiCardShipped .kpiStepBadge {
-  background: #38BDF8;
-  color: #07192A;
-}
-[data-theme="dark"] .kpiCardShipped .kpiTitle {
-  color: #F0F9FF;
-}
-[data-theme="dark"] .kpiCardShipped .kpiNumber {
-  color: #38BDF8;
-}
-[data-theme="dark"] .kpiCardShipped .kpiUnit {
-  color: #BAE6FD;
-}
-
 /* SAAT ACTIVE: SAMA SEMUA untuk setiap tahap (Highlight Solid Tegas) */
 .kpiCardActive {
   border: 2px solid #09090B !important;
@@ -409,7 +370,6 @@
 .stageDotBagging { background: #D97706; }
 .stageDotBoxing { background: #EA580C; }
 .stageDotReady { background: #059669; }
-.stageDotShipped { background: #0284C7; }
 
 .stageInfoText {
   line-height: 1.4;
@@ -749,6 +709,40 @@
   cursor: not-allowed;
 }
 
+.bulkBtnPdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  color: #FAFAFA;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.bulkBtnPdf:hover:not(:disabled) {
+  background: #3F3F46;
+  border-color: #52525B;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .bulkBtnPdf {
+  background: #18181B;
+  border-color: #3F3F46;
+  color: #F4F4F5;
+}
+
+[data-theme="dark"] .bulkBtnPdf:hover:not(:disabled) {
+  background: #27272A;
+  border-color: #52525B;
+  color: #FFFFFF;
+}
+
 .bulkBtnGhost {
   background: transparent;
   border: none;
@@ -846,6 +840,27 @@
   max-width: 38px;
   text-align: center !important;
   padding: 0.5rem 0.35rem !important;
+}
+
+/* Responsive Nomor Urut Column */
+.thIndex,
+.tdIndex {
+  width: 44px;
+  min-width: 40px;
+  max-width: 52px;
+  text-align: center !important;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+  padding: 0.5rem 0.35rem !important;
+}
+
+.thIndex {
+  font-weight: 600;
+  color: var(--text-secondary, var(--text-muted));
 }
 
 /* Custom Accessible Checkbox (Identik dengan Checkbox Keranjang Customer) */
@@ -1004,6 +1019,58 @@
   flex-direction: column;
   gap: 0.15rem;
   min-width: 160px;
+}
+
+/* Susunan Vertikal Multi-Item Tahap 1 (Bebas Koma & Anti-Human-Error) */
+.verticalThumbList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.verticalThumbItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+}
+
+.verticalFishList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.verticalFishRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-height: 38px;
+  line-height: 1.3;
+}
+
+.fishItemQty {
+  font-weight: 800;
+  color: #D97706;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .fishItemQty {
+  color: #F59E0B;
+}
+
+.verticalVariantList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.verticalVariantRow {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
 }
 
 .fishName {
@@ -1457,6 +1524,29 @@
   flex-wrap: wrap;
 }
 
+.copyWaybillInlineBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0.4rem;
+  transition: all 0.12s ease;
+  vertical-align: middle;
+}
+
+.copyWaybillInlineBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
 .actionButtonGroup {
   display: flex;
   align-items: center;
@@ -1493,151 +1583,7 @@
 }
 
 /* ==========================================================================
-   10. Struktur Khusus Tabel Pickup Kurir (Tab 4)
-   ========================================================================== */
-
-.thWaybill {
-  width: 180px;
-  min-width: 160px;
-}
-
-.tdWaybillCol {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.waybillRow {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.waybillCode {
-  font-family: monospace;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: 0.02em;
-}
-
-.copyIconBtn {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  border-radius: 4px;
-  padding: 0.15rem 0.3rem;
-  font-size: 0.65rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.copyIconBtn:hover {
-  color: var(--text-main);
-  background: var(--bg-hover);
-  border-color: var(--text-muted);
-}
-
-.courierServiceRow {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.courierNameBadge {
-  font-size: 0.65rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  background: #0284C7;
-  color: #FFFFFF;
-  padding: 0.12rem 0.4rem;
-  border-radius: 4px;
-}
-
-[data-theme="dark"] .courierNameBadge {
-  background: #38BDF8;
-  color: #07192A;
-}
-
-.courierServiceText {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.pickupTimeCol {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  white-space: nowrap;
-}
-
-.pickupTimePrimary {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.pickupTimeSub {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-}
-
-.packageSummaryCol {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.packageSummaryTop {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.packageItemsPreview {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pickupActionCol {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  justify-content: flex-end;
-}
-
-.btnActionSm {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 0.35rem 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-main);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btnActionSm:hover {
-  background: var(--bg-hover);
-  border-color: var(--text-muted);
-}
-
-/* ==========================================================================
-   11. Floating Action Button & Fallback
+   10. Floating Action Button & Fallback
    ========================================================================== */
 
 .floatingScannerBtn {
@@ -2405,4 +2351,232 @@
   color: #71717A;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Modal Konfirmasi Mundurkan Tahapan Packing (Clean Minimalist Dialog)
+   ========================================================================== */
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: modalFadeIn 0.15s ease-out forwards;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalBox {
+  background: var(--modal-bg, var(--bg-card));
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-sizing: border-box;
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.modalIconWarning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #FEF3C7;
+  border: 1px solid #F59E0B;
+  color: #B45309;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .modalIconWarning {
+  background: #78350F40;
+  border-color: #B45309;
+  color: #FCD34D;
+}
+
+.modalHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.modalTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.modalSubtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.modalWarningCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.modalWarningTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.modalStatusChangeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.stageChipFrom {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.stageArrow {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.stageChipTo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .stageChipTo {
+  background: #78350F40;
+  color: #FDE68A;
+  border-color: #B45309;
+}
+
+.modalWarningDesc {
+  font-size: 0.775rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.modalPromptText {
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.modalBtnCancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modalBtnCancel:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.modalBtnCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modalBtnConfirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #D97706;
+  border: 1px solid #B45309;
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 0.5rem 1.15rem;
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modalBtnConfirm:hover:not(:disabled) {
+  background: #B45309;
+}
+
+.modalBtnConfirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

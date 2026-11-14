@@ -8,7 +8,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useProducts } from '@/context/ProductContext';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
 import { useToast } from '@/context/ToastContext';
-import { canUser } from '@/lib/permission-utils';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
+import AdminCheckbox from '@/components/admin/AdminCheckbox';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const TABS = [
@@ -149,7 +150,8 @@ function AdminRecycleBinInner() {
 
   useEffect(() => {
     if (!authLoading && (!currentUser || !canView)) {
-      router.push('/admin/dashboard');
+      const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p)) || '/customer/dashboard';
+      router.push(fallback);
     }
   }, [currentUser, authLoading, canView, router]);
 
@@ -515,9 +517,8 @@ function AdminRecycleBinInner() {
                 <thead>
                   <tr>
                     {isSelectMode && (
-                      <th style={{ width: '38px', textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
+                      <th className={styles.thSelectCol}>
+                        <AdminCheckbox
                           checked={items.length > 0 && items.every((i) => selectedIds.has(i.id))}
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -530,11 +531,11 @@ function AdminRecycleBinInner() {
                               setSelectedIds(next);
                             }
                           }}
-                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                          aria-label="Pilih semua"
+                          ariaLabel="Pilih semua"
                         />
                       </th>
                     )}
+                    <th className={styles.thIndex}>No.</th>
                     <th style={{ width: '56px' }}>Ikon</th>
                     <th>Nama &amp; Identitas Data</th>
                     <th>Tipe Data</th>
@@ -544,14 +545,13 @@ function AdminRecycleBinInner() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => {
+                  {items.map((item, index) => {
                     const badge = getEntityBadge(item.entityType);
                     return (
                       <tr key={item.id} className={styles.tableRow}>
                         {isSelectMode && (
-                          <td style={{ width: '38px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
+                          <td className={styles.tdSelectCol} onClick={(e) => e.stopPropagation()}>
+                            <AdminCheckbox
                               checked={selectedIds.has(item.id)}
                               onChange={() => {
                                 setSelectedIds((prev) => {
@@ -561,11 +561,11 @@ function AdminRecycleBinInner() {
                                   return next;
                                 });
                               }}
-                              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                              aria-label={`Pilih ${item.name}`}
+                              ariaLabel={`Pilih ${item.name}`}
                             />
                           </td>
                         )}
+                        <td className={styles.tdIndex}>{index + 1}</td>
 
                         <td>
                           <EntityThumbnail item={item} />

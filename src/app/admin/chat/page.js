@@ -3,9 +3,11 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import * as Ably from 'ably';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import { playChatNotificationSound } from '@/lib/notificationSound';
 import { startTabTitleFlash } from '@/lib/tabFlashing';
 import UserAvatar from '@/components/UserAvatar';
@@ -83,10 +85,23 @@ function generateAdminTempId() {
 }
 
 function AdminChatInner() {
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading: authLoading } = useAuth();
   const { toast, confirmDialog } = useToast();
+  const router = useRouter();
+
+  const canView = canUser(currentUser, 'chat:view');
+  const canReply = canUser(currentUser, ['chat:reply', 'chat:manage']);
+  const canTemplates = canUser(currentUser, ['chat:templates', 'chat:manage']);
+  const canSettings = canUser(currentUser, ['chat:settings', 'chat:manage']);
 
   const [activeTab, setActiveTab] = useState('inbox'); // 'inbox' | 'templates' | 'settings'
+
+  useEffect(() => {
+    if (!authLoading && (!currentUser || !canView)) {
+      const fallback = getFirstAccessibleAdminRoute((p) => canUser(currentUser, p)) || '/customer/dashboard';
+      router.push(fallback);
+    }
+  }, [currentUser, authLoading, canView, router]);
 
   // ==========================================
   // STATE TAB 1: INBOX & PESAN
@@ -985,23 +1000,27 @@ function AdminChatInner() {
             Obrolan Masuk
             {totalUnread > 0 && <span className={styles.tabBadge}>{totalUnread}</span>}
           </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'templates' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('templates')}
-          >
-            Template Q&A & Balasan Cepat
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'settings' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('settings');
-              fetchSettings();
-            }}
-          >
-            Status & Jam Kerja
-          </button>
+          {canTemplates && (
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'templates' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('templates')}
+            >
+              Template Q&A & Balasan Cepat
+            </button>
+          )}
+          {canSettings && (
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'settings' ? styles.tabBtnActive : ''}`}
+              onClick={() => {
+                setActiveTab('settings');
+                fetchSettings();
+              }}
+            >
+              Status & Jam Kerja
+            </button>
+          )}
         </div>
       </div>
 
@@ -1482,7 +1501,7 @@ function AdminChatInner() {
                   )}
 
                   {/* Bilah Balasan Cepat Admin (Canned Answers) */}
-                  {!editingMessage && quickReplies.length > 0 && (
+                  {canReply && !editingMessage && quickReplies.length > 0 && (
                     <div className={styles.quickTemplatesBar}>
                       <span className={styles.quickTemplatesBarTitle}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1504,33 +1523,39 @@ function AdminChatInner() {
                     </div>
                   )}
 
-                  <form className={styles.composerForm} onSubmit={handleSendReply}>
-                    <textarea
-                      ref={replyInputRef}
-                      rows={1}
-                      className={styles.composerTextarea}
-                      placeholder={
-                        editingMessage
-                          ? 'Perbarui pesan... (Enter untuk simpan, Esc untuk batal)'
-                          : 'Ketik balasan admin... (Enter untuk kirim, Shift+Enter baris baru)'
-                      }
-                      value={replyText}
-                      onChange={handleReplyTextChange}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendReply();
+                  {canReply ? (
+                    <form className={styles.composerForm} onSubmit={handleSendReply}>
+                      <textarea
+                        ref={replyInputRef}
+                        rows={1}
+                        className={styles.composerTextarea}
+                        placeholder={
+                          editingMessage
+                            ? 'Perbarui pesan... (Enter untuk simpan, Esc untuk batal)'
+                            : 'Ketik balasan admin... (Enter untuk kirim, Shift+Enter baris baru)'
                         }
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!replyText.trim() || sending}
-                      className={styles.sendBtn}
-                    >
-                      {sending ? 'Memproses...' : editingMessage ? 'Simpan' : 'Kirim'}
-                    </button>
-                  </form>
+                        value={replyText}
+                        onChange={handleReplyTextChange}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendReply();
+                          }
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!replyText.trim() || sending}
+                        className={styles.sendBtn}
+                      >
+                        {sending ? 'Memproses...' : editingMessage ? 'Simpan' : 'Kirim'}
+                      </button>
+                    </form>
+                  ) : (
+                    <div className={styles.readOnlyNotice}>
+                      Anda hanya memiliki izin melihat percakapan (Read-only).
+                    </div>
+                  )}
                 </div>
               </>
             ) : (

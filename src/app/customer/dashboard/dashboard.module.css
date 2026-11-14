@@ -248,6 +248,26 @@
     font-weight: 600;
 }
 
+.badgeWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.verifyEmailLink {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: opacity 0.15s ease;
+}
+
+.verifyEmailLink:hover {
+    opacity: 0.8;
+}
+
 .successAlert {
     display: flex;
     align-items: center;

@@ -171,6 +171,18 @@ export const SYSTEM_PERMISSIONS = [
         label: 'Hapus Event',
         description: 'Menghapus banner kampanye promo dari sistem.',
       },
+      {
+        key: 'events:telegram',
+        action: 'custom',
+        label: 'Broadcast Telegram Bot',
+        description: 'Mengirimkan pesan drop ikan dan siaran promo ke channel Telegram.',
+      },
+      {
+        key: 'events:tiktok',
+        action: 'custom',
+        label: 'TikTok Live Commerce',
+        description: 'Mengelola keranjang live deal dan sinkronisasi pesanan TikTok Live.',
+      },
     ],
   },
   {
@@ -279,8 +291,8 @@ export const ALL_PERMISSION_KEYS = SYSTEM_PERMISSIONS.flatMap((m) =>
   m.permissions.map((p) => p.key)
 );
 
-import { LEGACY_ALIASES, checkPermissionMatch } from '@/lib/permission-utils';
-export { LEGACY_ALIASES, checkPermissionMatch };
+import { LEGACY_ALIASES, checkPermissionMatch, PERMISSION_IMPLICATIONS, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
+export { LEGACY_ALIASES, checkPermissionMatch, PERMISSION_IMPLICATIONS, getFirstAccessibleAdminRoute };
 
 // Cache in-memory role permissions (TTL 30 detik untuk mitigasi load database)
 const roleCache = new Map();

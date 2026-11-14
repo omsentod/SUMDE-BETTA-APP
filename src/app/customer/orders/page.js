@@ -86,6 +86,21 @@ function formatOrderDate(dateStr) {
     });
 }
 
+function formatRemainingTime(dateStr) {
+    if (!dateStr) return '24 jam';
+    const createdAtMs = new Date(dateStr).getTime();
+    if (Number.isNaN(createdAtMs)) return '24 jam';
+    const diff = (createdAtMs + 24 * 60 * 60 * 1000) - Date.now();
+    if (diff <= 0) return 'Waktu habis';
+    const totalMinutes = Math.floor(diff / (60 * 1000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+        return `${hours}j ${minutes}m`;
+    }
+    return `${minutes}m`;
+}
+
 export default function OrdersPage() {
     const { currentUser, isLoading: authLoading, fetchMyOrders } = useAuth();
     const { toast, confirmDialog } = useToast();
@@ -287,9 +302,20 @@ export default function OrdersPage() {
                                             {formatOrderDate(order.createdAt)}
                                         </span>
                                     </div>
-                                    <span className={`${styles.statusBadge} ${cfg.className || styles.statusPending}`}>
-                                        {cfg.label}
-                                    </span>
+                                    <div className={styles.cardHeaderRight}>
+                                        {order.status === 'PENDING' && (
+                                            <span className={styles.expiryBadge} title="Batas waktu pembayaran pesanan ini (24 jam)">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <polyline points="12 6 12 12 16 14" />
+                                                </svg>
+                                                <span>Bayar dlm {formatRemainingTime(order.createdAt)}</span>
+                                            </span>
+                                        )}
+                                        <span className={`${styles.statusBadge} ${cfg.className || styles.statusPending}`}>
+                                            {cfg.label}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Order Items with Thumbnails */}

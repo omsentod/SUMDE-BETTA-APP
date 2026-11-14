@@ -109,7 +109,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
     }
   }
 
-  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, readyForPickup: 0, pendingPacking: 0, awaitingWaybill: 0, returned: 0, archivedProducts: 0, unreadChat: 0 });
+  const [counts, setCounts] = useState({ pendingOrders: 0, processing: 0, readyForPickup: 0, pendingPacking: 0, awaitingWaybill: 0, shipped: 0, completed: 0, cancelled: 0, returned: 0, archivedProducts: 0, unreadChat: 0 });
   const isOnOrdersRoute = pathname.startsWith('/admin/orders');
   const [userOrdersOpen, setUserOrdersOpen] = useState(null);
   const isOrdersOpen = userOrdersOpen !== null ? userOrdersOpen : isOnOrdersRoute;
@@ -214,27 +214,27 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
     // "NEW" pseudo-status di halaman /admin/orders di-map ke PENDING + PAID
     // (belum bayar + sudah bayar tapi belum panggil kurir).
     { label: 'Pesanan Baru', href: '/admin/orders?status=NEW', active: isOrdersStatus('NEW'), badge: counts.pendingOrders },
-    { label: 'Diproses', href: '/admin/orders?status=PROCESSING', active: isOrdersStatus('PROCESSING'), badge: counts.processing },
-    { label: 'Menunggu Kurir', href: '/admin/orders?status=READY_FOR_PICKUP', active: isOrdersStatus('READY_FOR_PICKUP'), badge: counts.readyForPickup },
-    { label: 'Dikirim', href: '/admin/orders?status=SHIPPED', active: isOrdersStatus('SHIPPED') },
+    { label: 'Diproses', href: '/admin/orders?status=PROCESSING', active: isOrdersStatus('PROCESSING'), badge: counts.processing, muted: true },
+    { label: 'Menunggu Kurir', href: '/admin/orders?status=READY_FOR_PICKUP', active: isOrdersStatus('READY_FOR_PICKUP'), badge: counts.readyForPickup, muted: true },
+    { label: 'Dikirim', href: '/admin/orders?status=SHIPPED', active: isOrdersStatus('SHIPPED'), badge: counts.shipped, muted: true },
     { label: 'Selesai', href: '/admin/orders?status=COMPLETED', active: isOrdersStatus('COMPLETED') },
     { label: 'Dibatalkan', href: '/admin/orders?status=CANCELLED', active: isOrdersStatus('CANCELLED') },
-    { label: 'Retur', href: '/admin/orders?status=RETURNED', active: isOrdersStatus('RETURNED'), badge: counts.returned },
+    { label: 'Retur', href: '/admin/orders?status=RETURNED', active: isOrdersStatus('RETURNED') },
   ];
 
   const eventSubmenuItems = [
     ...(can('events:view')
       ? [{ label: 'Daftar Event', href: '/admin/events', active: pathname.startsWith('/admin/events') }]
       : []),
-    ...((can('events:view') || can('products:view'))
+    ...((can('events:telegram') || can('events:view') || can('products:view'))
       ? [{ label: 'Broadcast Telegram', href: '/admin/telegram', active: pathname.startsWith('/admin/telegram') }]
       : []),
-    ...((can('events:view') || can('orders:view') || can('products:view'))
+    ...((can('events:tiktok') || can('events:view') || can('orders:view') || can('products:view'))
       ? [{ label: 'TikTok Live', href: '/admin/tiktok-live', active: pathname.startsWith('/admin/tiktok-live') }]
       : []),
   ];
 
-  const showMasterData = can('products:view') || can('users:view') || can('roles:view') || can('events:view');
+  const showMasterData = can('products:view') || can('users:view') || can('roles:view') || can('events:view') || can('events:telegram') || can('events:tiktok');
 
   return (
     <>
@@ -287,7 +287,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
             </div>
           )}
 
-          {(can('orders:view') || can('shipping:view') || can('shipping:manage') || can('shipping:label') || can('shipping:pickup')) && (
+          {(can('orders:view') || can('shipping:view') || can('shipping:manage') || can('shipping:label') || can('shipping:pickup') || can('shipping:packing') || can('chat:view')) && (
             <div className={styles.section}>
               <div className={styles.sectionTitle}>Operasional</div>
               {can('orders:view') && (
@@ -319,7 +319,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
                           <span className={styles.linkContent}>
                             <span className={styles.linkLabel}>{it.label}</span>
                           </span>
-                          <Badge count={it.badge} />
+                          <Badge count={it.badge} muted={it.muted} />
                         </Link>
                       ))}
                     </div>
@@ -341,16 +341,18 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
                 </Link>
               )}
 
-              <Link
-                href="/admin/generate-resi"
-                onClick={() => setOpen(false)}
-                className={`${styles.link} ${isActive('/admin/generate-resi') ? styles.linkActive : ''}`.trim()}
-              >
-                <span className={styles.linkContent}>
-                  {iconCetakResi}
-                  <span className={styles.linkLabel}>Cetak Resi</span>
-                </span>
-              </Link>
+              {(can('shipping:label') || can('shipping:manage') || can('shipping:view') || can('orders:view')) && (
+                <Link
+                  href="/admin/generate-resi"
+                  onClick={() => setOpen(false)}
+                  className={`${styles.link} ${isActive('/admin/generate-resi') ? styles.linkActive : ''}`.trim()}
+                >
+                  <span className={styles.linkContent}>
+                    {iconCetakResi}
+                    <span className={styles.linkLabel}>Cetak Resi</span>
+                  </span>
+                </Link>
+              )}
 
               {can('chat:view') && (
                 <Link
@@ -381,7 +383,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
                   <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User & Role</span></span>
                 </Link>
               )}
-              {(can('events:view') || can('products:view')) && (
+              {(can('events:view') || can('events:telegram') || can('events:tiktok') || can('products:view')) && (
                 <>
                   <button
                     type="button"
@@ -421,7 +423,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
             </div>
           )}
 
-          {(can('products:view') || can('dashboard:view')) && (
+          {(can('products:delete') || can('products:view') || can('dashboard:view')) && (
             <div className={styles.bottomSection}>
               <Link
                 href="/admin/recycle-bin"

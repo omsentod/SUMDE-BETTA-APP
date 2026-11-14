@@ -10,6 +10,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { ChatProvider } from '@/context/ChatContext';
 import CustomerChatWidget from '@/components/chat/CustomerChatWidget';
+import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 import styles from './LayoutWrapper.module.css';
 
 export default function LayoutWrapper({ children }) {
@@ -31,16 +32,17 @@ export default function LayoutWrapper({ children }) {
   }, []);
 
   const isAdminRoute = pathname.startsWith('/admin');
-  const isLabelRoute =
+  const isPrintableRoute =
     (pathname.includes('/admin/orders/') && pathname.endsWith('/label')) ||
-    pathname === '/admin/orders/labels-batch';
+    pathname === '/admin/orders/labels-batch' ||
+    pathname.startsWith('/admin/packing/manifest');
 
   // Halaman /produk/[id] pakai action bar sticky sendiri; MobileBottomNav
   // self-hide di sana (cek di dalam komponen supaya SSR/CSR konsisten,
   // jangan conditional render di sini karena bikin hydration mismatch).
 
-  if (isLabelRoute) {
-    // Printable label page — render raw children with no headers/footers
+  if (isPrintableRoute) {
+    // Printable page — render raw children with no headers/footers/sidebars
     return <main>{children}</main>;
   }
 
@@ -65,6 +67,7 @@ export default function LayoutWrapper({ children }) {
       <main className="has-mobile-bottom-nav">{children}</main>
       <Footer />
       <CustomerChatWidget />
+      <WhatsAppFloatingButton />
       <MobileBottomNav />
     </ChatProvider>
   );
