@@ -84,6 +84,49 @@
     color: var(--text-muted);
 }
 
+.fieldLabelRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.fieldLabelRow .fieldLabel {
+    margin-bottom: 0;
+}
+
+.useAccountEmailBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.725rem;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: all 0.2s ease;
+}
+
+.useAccountEmailBtn:hover {
+    background: var(--primary-glow);
+    border-style: solid;
+}
+
+.accountEmailActiveBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.725rem;
+    color: #10B981;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
 .fullCol {
     grid-column: 1 / -1;
 }

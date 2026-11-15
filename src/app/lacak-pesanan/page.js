@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { CONTACT, waLink } from '@/lib/constants';
 import { useToast } from '@/context/ToastContext';
 import styles from './lacakPesanan.module.css';
@@ -94,11 +95,12 @@ function getStatusInfo(status) {
 }
 
 function TrackOrderContent() {
+    const { currentUser } = useAuth();
     const searchParams = useSearchParams();
     const router = useRouter();
     const { toast } = useToast();
 
-    const paramOrderId = searchParams.get('orderId') || searchParams.get('id') || '';
+    const paramOrderId = searchParams.get('orderId') || searchParams.get('id') || searchParams.get('resi') || searchParams.get('waybill') || searchParams.get('awb') || '';
     const paramEmail = searchParams.get('email') || searchParams.get('phone') || searchParams.get('identifier') || '';
 
     const [orderIdInput, setOrderIdInput] = useState(paramOrderId);
@@ -111,12 +113,23 @@ function TrackOrderContent() {
     const [liveTracking, setLiveTracking] = useState(null);
     const [loadingTracking, setLoadingTracking] = useState(false);
 
+    // Auto-fill identifier jika user login dan belum ada input identifier
+    useEffect(() => {
+        if (currentUser?.email && !identifierInput && !paramEmail) {
+            setIdentifierInput(currentUser.email);
+        }
+    }, [currentUser?.email, paramEmail]);
+
     const fetchTracking = useCallback(async (orderId, identifier) => {
-        if (!orderId || !identifier) return;
+        if (!orderId) return;
         setIsLoading(true);
         setError('');
         try {
-            const res = await fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&identifier=${encodeURIComponent(identifier)}`);
+            let url = `/api/orders/track?orderId=${encodeURIComponent(orderId)}`;
+            if (identifier) {
+                url += `&identifier=${encodeURIComponent(identifier)}`;
+            }
+            const res = await fetch(url);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || 'Pesanan tidak ditemukan.');
@@ -146,7 +159,7 @@ function TrackOrderContent() {
 
     // Auto-fetch if query params are present on mount
     useEffect(() => {
-        if (paramOrderId && paramEmail) {
+        if (paramOrderId) {
             fetchTracking(paramOrderId, paramEmail);
         }
     }, [paramOrderId, paramEmail, fetchTracking]);
@@ -155,12 +168,17 @@ function TrackOrderContent() {
         e.preventDefault();
         const cleanId = orderIdInput.trim();
         const cleanIdent = identifierInput.trim();
-        if (!cleanId || !cleanIdent) {
-            setError('Silakan masukkan Nomor Pesanan dan Email / No. WhatsApp.');
+        if (!cleanId) {
+            setError('Silakan masukkan Nomor Pesanan atau No. Resi (AWB).');
             return;
         }
         // Update URL query params without reloading
-        router.replace(`/lacak-pesanan?orderId=${encodeURIComponent(cleanId)}&email=${encodeURIComponent(cleanIdent)}`);
+        const params = new URLSearchParams();
+        params.set('orderId', cleanId);
+        if (cleanIdent) {
+            params.set('email', cleanIdent);
+        }
+        router.replace(`/lacak-pesanan?${params.toString()}`);
         fetchTracking(cleanId, cleanIdent);
     };
 
@@ -216,7 +234,7 @@ function TrackOrderContent() {
 
                         <div className={styles.formGroup}>
                             <label htmlFor="orderIdInput" className={styles.label}>
-                                Nomor / ID Pesanan
+                                Nomor Pesanan atau No. Resi (AWB)
                             </label>
                             <div className={styles.inputWrapper}>
                                 <svg className={styles.inputIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -228,21 +246,40 @@ function TrackOrderContent() {
                                     id="orderIdInput"
                                     type="text"
                                     className={styles.input}
-                                    placeholder="Contoh: 01a19032... atau 8 digit awal"
+                                    placeholder="Contoh: ID Pesanan (01a19032...) atau No. Resi AWB (TKP01-...)"
                                     value={orderIdInput}
                                     onChange={(e) => setOrderIdInput(e.target.value)}
                                     required
                                 />
                             </div>
                             <p className={styles.helpText}>
-                                Dapat ditemukan pada rincian transaksi atau email konfirmasi pesanan Anda.
+                                Dapat berupa ID pesanan (dari rincian belanja) atau Nomor Resi pengiriman kurir (JNE, J&amp;T, SiCepat, dll).
                             </p>
                         </div>
 
                         <div className={styles.formGroup}>
-                            <label htmlFor="identifierInput" className={styles.label}>
-                                Email atau Nomor WhatsApp
-                            </label>
+                            <div className={styles.labelRow}>
+                                <label htmlFor="identifierInput" className={styles.label}>
+                                    Email atau Nomor WhatsApp
+                                </label>
+                                {currentUser?.email && identifierInput !== currentUser.email && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIdentifierInput(currentUser.email);
+                                            toast.success('Email akun berhasil diterapkan.');
+                                        }}
+                                        className={styles.useAccountBtn}
+                                        title={`Gunakan email: ${currentUser.email}`}
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                            <polyline points="22,6 12,13 2,6" />
+                                        </svg>
+                                        <span>Pakai email akun</span>
+                                    </button>
+                                )}
+                            </div>
                             <div className={styles.inputWrapper}>
                                 <svg className={styles.inputIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -255,11 +292,10 @@ function TrackOrderContent() {
                                     placeholder="Email atau No. WhatsApp saat checkout"
                                     value={identifierInput}
                                     onChange={(e) => setIdentifierInput(e.target.value)}
-                                    required
                                 />
                             </div>
                             <p className={styles.helpText}>
-                                Digunakan sebagai verifikasi keamanan untuk melindungi privasi pengiriman Anda.
+                                Digunakan sebagai verifikasi keamanan privasi. (Wajib untuk ID Pesanan, opsional jika memakai No. Resi).
                             </p>
                         </div>
 
@@ -340,9 +376,12 @@ function TrackOrderContent() {
                             <div>
                                 <div className={styles.orderHeaderId}>
                                     <span>Pesanan #{orderData.shortId}</span>
+                                    {orderData.trackingNumber && (
+                                        <span className={styles.resiHeaderTag}>Resi: {orderData.trackingNumber}</span>
+                                    )}
                                 </div>
                                 <div className={styles.orderDate}>
-                                    Penerima: {orderData.recipientName} ({orderData.maskedPhone})
+                                    Penerima: {orderData.recipientName} {orderData.maskedPhone ? `(${orderData.maskedPhone})` : ''}
                                 </div>
                             </div>
 

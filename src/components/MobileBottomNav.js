@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useVip } from '@/context/VipContext';
 import styles from './MobileBottomNav.module.css';
 
 const POLL_MS = 30_000;
@@ -34,16 +35,20 @@ function Badge({ count }) {
   return <span className={styles.badge}>{count > 99 ? '99+' : count}</span>;
 }
 
-export default function MobileBottomNav() {
+export default function MobileBottomNav({ isVip: isVipProp }) {
   const pathname = usePathname() || '';
+  const vipContext = useVip();
+  const isVip = isVipProp ?? vipContext.isVip;
   const { itemCount, toggleCart } = useCart();
   const { currentUser, isLoading } = useAuth();
 
   const [unread, setUnread] = useState(0);
 
+  const isProductDetailPage = pathname.startsWith('/produk/') && pathname !== '/produk';
+
   // Fetch unread count untuk badge — reuse endpoint yang dipakai NotificationBell
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id || isProductDetailPage) return;
     let cancelled = false;
     const load = async () => {
       try {
@@ -56,7 +61,14 @@ export default function MobileBottomNav() {
     load();
     const t = setInterval(load, POLL_MS);
     return () => { cancelled = true; clearInterval(t); };
-  }, [currentUser?.id]);
+  }, [currentUser?.id, isProductDetailPage]);
+
+  // Sembunyikan bottom navigation utama di halaman detail produk (/produk/[id]),
+  // karena halaman detail produk memiliki action bar sticky tersendiri (Keranjang + Beli).
+  // Catatan: Return ditaruh SETELAH semua hooks agar urutan hook selalu konsisten (Rules of Hooks).
+  if (isProductDetailPage) {
+    return null;
+  }
 
   const isActive = (href) => {
     if (href === '/') return pathname === '/';
@@ -71,7 +83,7 @@ export default function MobileBottomNav() {
   const AccountIcon = currentUser ? IconUser : IconLogin;
 
   return (
-    <nav className={styles.bar} aria-label="Navigasi utama mobile">
+    <nav className={`${styles.bar} ${isVip ? styles.barVip : ''}`} aria-label="Navigasi utama mobile">
       <Link
         href="/"
         className={`${styles.item} ${isActive('/') ? styles.active : ''}`.trim()}

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProductProvider } from "@/context/ProductContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { VipProvider } from "@/context/VipContext";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -31,17 +32,19 @@ export default function RootLayout({ children }) {
             </head>
             <body>
                 <TopProgressBar />
-                <InteractiveAtmosphereBackground />
                 <ThemeProvider>
-                    <AuthProvider>
-                        <ProductProvider>
-                            <CartProvider>
-                                <ToastProvider>
-                                    <LayoutWrapper>{children}</LayoutWrapper>
-                                </ToastProvider>
-                            </CartProvider>
-                        </ProductProvider>
-                    </AuthProvider>
+                    <VipProvider>
+                        <InteractiveAtmosphereBackground />
+                        <AuthProvider>
+                            <ProductProvider>
+                                <CartProvider>
+                                    <ToastProvider>
+                                        <LayoutWrapper>{children}</LayoutWrapper>
+                                    </ToastProvider>
+                                </CartProvider>
+                            </ProductProvider>
+                        </AuthProvider>
+                    </VipProvider>
                 </ThemeProvider>
             </body>
         </html>

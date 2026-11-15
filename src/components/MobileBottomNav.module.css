@@ -110,4 +110,37 @@
     border-radius: 4px;
     margin-top: 2px;
   }
+
+  /* ✦ VIP Salon Mode for Mobile Bottom Nav */
+  .barVip {
+    background: rgba(10, 10, 16, 0.94) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(245, 158, 11, 0.28) !important;
+    box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.75) !important;
+  }
+
+  .barVip .item {
+    color: #94a3b8 !important;
+  }
+
+  .barVip .item:hover,
+  .barVip .item:active {
+    color: #fbbf24 !important;
+  }
+
+  .barVip .active {
+    color: #fbbf24 !important;
+  }
+
+  .barVip .active::before {
+    background: linear-gradient(90deg, #d97706, #fbbf24) !important;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.7) !important;
+  }
+
+  .barVip .badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5) !important;
+  }
 }

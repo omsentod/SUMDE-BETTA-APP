@@ -110,6 +110,11 @@ export default function AdminHeader({ onToggleSidebar, isSidebarOpen = false }) 
 
     async function initAdminChatListener() {
       try {
+        const statusRes = await fetch('/api/ably/status');
+        if (!statusRes.ok || cancelled) return;
+        const { enabled } = await statusRes.json();
+        if (!enabled || cancelled) return;
+
         const Ably = await import('ably');
         if (cancelled) return;
 

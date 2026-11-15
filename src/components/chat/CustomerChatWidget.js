@@ -218,13 +218,13 @@ export default function CustomerChatWidget() {
     };
   }, [isOpen]);
 
-  // 2. Muat percakapan customer
+  // 2. Muat percakapan customer (dengan fallback polling saat chat terbuka)
   useEffect(() => {
     if (isAdminRoute || !currentUser) return;
     let cancelled = false;
 
-    (async () => {
-      setLoading(true);
+    const loadConversation = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const res = await fetch('/api/chat/conversation');
         if (res.ok && !cancelled) {
@@ -245,14 +245,24 @@ export default function CustomerChatWidget() {
           }
         }
       } catch (err) {
-        console.error('Gagal fetch conversation:', err.message);
+        if (!silent) console.error('Gagal fetch conversation:', err.message);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !silent) setLoading(false);
       }
-    })();
+    };
+
+    loadConversation(false);
+
+    let interval = null;
+    if (isOpen) {
+      interval = setInterval(() => {
+        loadConversation(true);
+      }, 6000);
+    }
 
     return () => {
       cancelled = true;
+      if (interval) clearInterval(interval);
     };
   }, [isOpen, setUnreadCount, currentUser, isAdminRoute]);
 
@@ -310,6 +320,11 @@ export default function CustomerChatWidget() {
 
     async function initAbly() {
       try {
+        const statusRes = await fetch('/api/ably/status');
+        if (!statusRes.ok || cancelled) return;
+        const { enabled } = await statusRes.json();
+        if (!enabled || cancelled) return;
+
         const convoId = conversation?.id;
         const authUrl = `/api/chat/auth${convoId ? `?conversationId=${convoId}` : ''}`;
 
@@ -866,7 +881,7 @@ export default function CustomerChatWidget() {
       {!isOpen && (
         <button
           type="button"
-          className={styles.floatingTrigger}
+          className={`${styles.floatingTrigger} ${pathname?.startsWith('/produk/') && pathname !== '/produk' ? styles.hiddenOnMobileProduct : ''}`}
           onClick={toggleChat}
           aria-label="Buka Live Chat Admin"
           title="Tanya Admin Langsung"

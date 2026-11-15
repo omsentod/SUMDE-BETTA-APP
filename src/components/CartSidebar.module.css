@@ -608,3 +608,249 @@
         padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
     }
 }
+
+/* ==========================================================================
+   VIP Chamber Cart Drawer Polish (Complete Contrast & Typography Parity)
+   ========================================================================== */
+:global([data-vip="true"]) .sidebar,
+:global(.vip-app-shell) .sidebar {
+    background: #12121a !important;
+    border-left: 1px solid rgba(245, 158, 11, 0.35) !important;
+    box-shadow: -12px 0 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(245, 158, 11, 0.1) !important;
+}
+
+:global([data-vip="true"]) .header,
+:global(.vip-app-shell) .header {
+    background: #0d0d14 !important;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .headerIconWrapper,
+:global(.vip-app-shell) .headerIconWrapper {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .title,
+:global(.vip-app-shell) .title {
+    color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .itemBadge,
+:global(.vip-app-shell) .itemBadge {
+    background: rgba(245, 158, 11, 0.2) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .closeBtn,
+:global(.vip-app-shell) .closeBtn {
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .closeBtn:hover,
+:global(.vip-app-shell) .closeBtn:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #ffffff !important;
+}
+
+/* Bulk Selection Bar */
+:global([data-vip="true"]) .bulkBar,
+:global(.vip-app-shell) .bulkBar {
+    background: #101018 !important;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .selectAllLabel,
+:global(.vip-app-shell) .selectAllLabel {
+    color: #f1f5f9 !important;
+}
+
+:global([data-vip="true"]) .selectAllCount,
+:global(.vip-app-shell) .selectAllCount {
+    color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .bulkDeleteBtn,
+:global(.vip-app-shell) .bulkDeleteBtn {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #f87171 !important;
+}
+
+:global([data-vip="true"]) .bulkDeleteBtn:hover,
+:global(.vip-app-shell) .bulkDeleteBtn:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Custom Checkbox */
+:global([data-vip="true"]) .customCheckbox,
+:global(.vip-app-shell) .customCheckbox {
+    background: #181824 !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+:global([data-vip="true"]) .checkboxInput:checked + .customCheckbox,
+:global(.vip-app-shell) .checkboxInput:checked + .customCheckbox {
+    background: linear-gradient(135deg, #d97706, #fbbf24) !important;
+    border-color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .checkboxInput:checked + .customCheckbox svg,
+:global(.vip-app-shell) .checkboxInput:checked + .customCheckbox svg {
+    stroke: #0d0d12 !important;
+}
+
+/* Item Card & Row */
+:global([data-vip="true"]) .itemCard,
+:global(.vip-app-shell) .itemCard {
+    background: #171724 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+:global([data-vip="true"]) .itemCard.isSelected,
+:global(.vip-app-shell) .itemCard.isSelected {
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    background: #1a1a28 !important;
+}
+
+:global([data-vip="true"]) .itemImageWrapper,
+:global(.vip-app-shell) .itemImageWrapper {
+    background: #101018 !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+:global([data-vip="true"]) .itemTitle,
+:global(.vip-app-shell) .itemTitle {
+    color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .itemTitle:hover,
+:global(.vip-app-shell) .itemTitle:hover {
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .itemDeleteBtn,
+:global(.vip-app-shell) .itemDeleteBtn {
+    color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .itemDeleteBtn:hover,
+:global(.vip-app-shell) .itemDeleteBtn:hover {
+    color: #f87171 !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+}
+
+:global([data-vip="true"]) .variantTag,
+:global(.vip-app-shell) .variantTag {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #fde68a !important;
+}
+
+:global([data-vip="true"]) .itemPrice,
+:global(.vip-app-shell) .itemPrice {
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .stepper,
+:global(.vip-app-shell) .stepper {
+    background: #101018 !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+:global([data-vip="true"]) .stepperBtn,
+:global(.vip-app-shell) .stepperBtn {
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .stepperBtn:hover:not(:disabled),
+:global(.vip-app-shell) .stepperBtn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .stepperValue,
+:global(.vip-app-shell) .stepperValue {
+    color: #ffffff !important;
+}
+
+/* Footer & Order Summary */
+:global([data-vip="true"]) .footer,
+:global(.vip-app-shell) .footer {
+    background: #0d0d14 !important;
+    border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .summaryLabel,
+:global(.vip-app-shell) .summaryLabel {
+    color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .summarySublabel,
+:global(.vip-app-shell) .summarySublabel {
+    color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .summaryTotal,
+:global(.vip-app-shell) .summaryTotal {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 14px rgba(251, 191, 36, 0.4) !important;
+}
+
+:global([data-vip="true"]) .checkoutBtn,
+:global(.vip-app-shell) .checkoutBtn {
+    background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%) !important;
+    color: #0d0d12 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45) !important;
+}
+
+:global([data-vip="true"]) .checkoutBtn:hover:not(:disabled),
+:global(.vip-app-shell) .checkoutBtn:hover:not(:disabled) {
+    filter: brightness(1.08) !important;
+    box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6) !important;
+}
+
+:global([data-vip="true"]) .checkoutBtn:disabled,
+:global(.vip-app-shell) .checkoutBtn:disabled {
+    background: #1e1e2c !important;
+    color: #64748b !important;
+    box-shadow: none !important;
+}
+
+:global([data-vip="true"]) .trustBadge,
+:global(.vip-app-shell) .trustBadge {
+    color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .trustBadge svg,
+:global(.vip-app-shell) .trustBadge svg {
+    color: #fbbf24 !important;
+}
+
+/* Empty State */
+:global([data-vip="true"]) .emptyIconCircle,
+:global(.vip-app-shell) .emptyIconCircle {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .emptyTitle,
+:global(.vip-app-shell) .emptyTitle {
+    color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .emptyDesc,
+:global(.vip-app-shell) .emptyDesc {
+    color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .emptyCta,
+:global(.vip-app-shell) .emptyCta {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    color: #0d0d12 !important;
+    font-weight: 700 !important;
+}

@@ -449,7 +449,7 @@ export default function ProductCard({
                             <span className={`${styles.price} ${isPremium ? styles.pricePremium : ''}`}>{formattedPrice}</span>
                             <div className={styles.statusMetaRow}>
                                 {isWholesale && !effectiveSold && (
-                                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10b981', background: 'color-mix(in oklab, #10b981 12%, transparent)', padding: '1px 6px', borderRadius: '4px', border: '1px solid color-mix(in oklab, #10b981 25%, transparent)' }}>
+                                    <span className={styles.wholesaleBadge}>
                                         Partai
                                     </span>
                                 )}

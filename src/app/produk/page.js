@@ -3,9 +3,11 @@ import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from "@/components/ProductCard";
+import ProductCardVIP from "@/components/ProductCardVIP";
 import InteractiveBettaAquarium from "@/components/InteractiveBettaAquarium";
 import ArtisticBettaEmpty from "@/components/ArtisticBettaEmpty";
 import { useProducts } from "@/context/ProductContext";
+import { useVip } from "@/context/VipContext";
 import Loading from "./loading";
 import styles from './produk.module.css';
 
@@ -100,6 +102,17 @@ function GalleryContent() {
         return 'sample';
     }, [paramTab]);
 
+    const { setIsVip } = useVip();
+
+    // Sinkronkan status VIP ke shell global (Header, Body, Footer, Ambient)
+    useEffect(() => {
+        const isVipMode = activeTab === 'premium';
+        setIsVip(isVipMode);
+        return () => {
+            setIsVip(false);
+        };
+    }, [activeTab, setIsVip]);
+
     const handleTabChange = (newTab) => {
         const params = new URLSearchParams(searchParams.toString());
         if (newTab === 'premium') {
@@ -116,7 +129,28 @@ function GalleryContent() {
         const params = new URLSearchParams(searchParams.toString());
         params.set('dept', deptSlug);
         params.delete('sub');
+        params.delete('category');
+        params.delete('form');
+        params.delete('gender');
+        params.delete('color');
+        params.delete('coloration');
         if (deptSlug !== 'ikan-hias' && activeTab === 'premium') {
+            params.set('tab', 'sample');
+        }
+        router.replace(`/produk?${params.toString()}`, { scroll: false });
+    };
+
+    const handleGoToAllCategory = () => {
+        setFilters({ genders: [], forms: [], colors: [], brands: [], priceMin: 0, priceMax: 5000000 });
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('dept', 'all');
+        params.delete('sub');
+        params.delete('category');
+        params.delete('form');
+        params.delete('gender');
+        params.delete('color');
+        params.delete('coloration');
+        if (activeTab === 'premium') {
             params.set('tab', 'sample');
         }
         router.replace(`/produk?${params.toString()}`, { scroll: false });
@@ -416,6 +450,13 @@ function GalleryContent() {
 
     const clearFilters = () => {
         setFilters({ genders: [], forms: [], colors: [], brands: [], priceMin: 0, priceMax: 5000000 });
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('category');
+        params.delete('form');
+        params.delete('gender');
+        params.delete('color');
+        params.delete('coloration');
+        router.replace(`/produk?${params.toString()}`, { scroll: false });
     };
 
     return (
@@ -1017,9 +1058,19 @@ function GalleryContent() {
                         {/* Grid */}
                         {filteredProducts.length > 0 ? (
                             <div className={`productGrid ${!isDesktopFilterOpen ? styles.productGridExpanded : ''} ${activeTab === 'premium' ? styles.productGridVip : ''}`}>
-                                {filteredProducts.map((product) => (
-                                    <ProductCard key={product.id} {...product} />
-                                ))}
+                                {filteredProducts.map((product) => {
+                                    const isVipCard = activeTab === 'premium' || Boolean(product.isPremium);
+                                    if (isVipCard) {
+                                        return (
+                                            <ProductCardVIP
+                                                key={product.id}
+                                                {...product}
+                                                isPremium={true}
+                                            />
+                                        );
+                                    }
+                                    return <ProductCard key={product.id} {...product} />;
+                                })}
                             </div>
                         ) : (
                             <ArtisticBettaEmpty
@@ -1029,6 +1080,8 @@ function GalleryContent() {
                                         ? 'Belum Ada Koleksi Gallery'
                                         : activeDept?.isLiveFish === false
                                         ? `Belum Ada Produk di ${activeDept.name}`
+                                        : paramSub && paramSub !== 'all'
+                                        ? 'Koleksi Belum Tersedia'
                                         : activeTab === 'sample'
                                         ? 'Koleksi Reguler Belum Tersedia'
                                         : 'Tidak Ada Produk Ditemukan'
@@ -1038,24 +1091,26 @@ function GalleryContent() {
                                         ? 'Seluruh koleksi gallery saat ini sedang teradopsi atau dalam kurasi farm. Silakan jelajahi Koleksi Reguler kami.'
                                         : activeDept?.isLiveFish === false
                                         ? `Produk untuk kategori ${activeDept.name} sedang dalam proses restock.`
+                                        : paramSub && paramSub !== 'all'
+                                        ? 'Belum ada produk untuk sub-kategori ini saat ini. Silakan jelajahi koleksi lainnya.'
                                         : activeTab === 'sample'
                                         ? 'Tidak ada produk reguler yang cocok dengan kriteria filter saat ini.'
                                         : 'Tidak ada produk yang cocok dengan kombinasi filter saat ini.'
                                 }
                                 actionText={
-                                    filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin > 0
+                                    activeFilterCount > 0
                                         ? 'Reset Filter'
                                         : activeTab === 'premium'
                                         ? 'Buka Koleksi Reguler'
                                         : 'Tampilkan Seluruh Koleksi'
                                 }
                                 onAction={() => {
-                                    if (filters.genders.length > 0 || filters.forms.length > 0 || filters.colors.length > 0 || filters.priceMin > 0) {
+                                    if (activeFilterCount > 0) {
                                         clearFilters();
                                     } else if (activeTab === 'premium') {
                                         handleTabChange('sample');
                                     } else {
-                                        handleTabChange('all');
+                                        handleGoToAllCategory();
                                     }
                                 }}
                             />

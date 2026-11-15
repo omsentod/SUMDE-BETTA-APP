@@ -7,6 +7,7 @@ import { useProducts } from '@/context/ProductContext';
 import { useCart } from '@/context/CartContext';
 import { useChat } from '@/context/ChatContext';
 import { useAuth } from '@/context/AuthContext';
+import { useVip } from '@/context/VipContext';
 import ProductCard from '@/components/ProductCard';
 import { getSimilarProducts } from '@/lib/recommendation';
 import { parseYouTubeId } from '@/lib/productImages';
@@ -106,7 +107,7 @@ export default function ProductDetailClient() {
     const { addToCart, buyNow } = useCart();
     const { openChat } = useChat();
     const { currentUser } = useAuth();
-    const { products, isLoading } = useProducts();
+    const { products, isLoading: isCatalogLoading } = useProducts();
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
@@ -115,7 +116,55 @@ export default function ProductDetailClient() {
     const touchStartX = useRef(null);
     const thumbRefs = useRef([]);
 
-    const product = products.find((p) => p.id === id);
+    // Direct fetch fallback: jika data produk belum ada di cache context
+    // (misal user datang dari link langsung / refresh), fetch langsung per ID
+    // agar halaman tampil instan tanpa menunggu seluruh katalog toko terunduh.
+    const [directProduct, setDirectProduct] = useState(null);
+    const [directLoading, setDirectLoading] = useState(false);
+
+    const contextProduct = useMemo(() => products.find((p) => p.id === id) || null, [products, id]);
+    const product = contextProduct || directProduct;
+    const { setIsVip } = useVip();
+
+    useEffect(() => {
+        setDirectProduct(null);
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) return;
+        if (contextProduct) return;
+
+        let cancelled = false;
+        setDirectLoading(true);
+
+        fetch(`/api/products/${id}`)
+            .then((res) => {
+                if (res.ok) return res.json();
+                return null;
+            })
+            .then((data) => {
+                if (!cancelled && data) {
+                    setDirectProduct(data);
+                }
+            })
+            .catch(() => {})
+            .finally(() => {
+                if (!cancelled) setDirectLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id, contextProduct]);
+
+    // Sinkronkan status VIP ke shell global (Header, Body, Footer, Atmosphere)
+    useEffect(() => {
+        const isVipMode = Boolean(product?.isPremium);
+        setIsVip(isVipMode);
+        return () => {
+            setIsVip(false);
+        };
+    }, [product?.isPremium, setIsVip]);
 
     // Algoritma Content-Based Recommendation: hitung produk dengan
     // karakteristik (form, corak warna, gender, harga, grade) paling serupa
@@ -260,6 +309,8 @@ export default function ProductDetailClient() {
         }
     }, [idx]);
 
+    const isLoading = (!product && isCatalogLoading && !directProduct) || (!product && directLoading);
+
     if (isLoading) {
         return (
             <div className={`pageContainer ${styles.stateWrap}`}>
@@ -381,15 +432,43 @@ export default function ProductDetailClient() {
     };
 
     return (
-        <div className={styles.page}>
-            <section className={styles.section}>
+        <div className={`${styles.page} ${product.isPremium ? styles.pageVip : ''}`}>
+            <section className={`${styles.section} ${product.isPremium ? styles.sectionVip : ''}`}>
                 <div className="container">
+
+                    {/* Curatorial Continuity Breadcrumb */}
+                    {product.isPremium ? (
+                        <div className={styles.vipBreadcrumbBar}>
+                            <Link href="/produk?tab=premium" className={styles.vipBackBtn}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <polyline points="15 18 9 12 15 6" />
+                                </svg>
+                                <span>Kembali ke Gallery VIP</span>
+                            </Link>
+                            <span className={styles.vipBreadcrumbDivider} aria-hidden="true">/</span>
+                            <span className={styles.vipBreadcrumbBadge}>
+                                ✦ Gallery VIP Edisi Tunggal
+                            </span>
+                        </div>
+                    ) : (
+                        <div className={styles.standardBreadcrumbBar}>
+                            <Link href="/produk" className={styles.standardBackBtn}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <polyline points="15 18 9 12 15 6" />
+                                </svg>
+                                <span>Katalog Produk</span>
+                            </Link>
+                            <span className={styles.standardBreadcrumbDivider} aria-hidden="true">/</span>
+                            <span className={styles.standardBreadcrumbCurrent}>{product.name}</span>
+                        </div>
+                    )}
+
                     <div className={styles.grid}>
 
                         {/* Media gallery — geser sesuai urutan yang di-set admin (foto + video) */}
                         <div className={styles.galleryColumn}>
                             <div
-                                className={styles.imageFrame}
+                                className={`${styles.imageFrame} ${product.isPremium ? styles.imageFrameVip : ''}`}
                                 onTouchStart={onTouchStart}
                                 onTouchEnd={onTouchEnd}
                                 onClick={() => {
@@ -492,13 +571,13 @@ export default function ProductDetailClient() {
                             </div>
 
                             {hasMultiple && (
-                                <div className={styles.thumbStrip}>
+                                <div className={`${styles.thumbStrip} ${product.isPremium ? styles.thumbStripVip : ''}`}>
                                     {gallery.map((media, i) => (
                                         <button
                                             key={`${media.url}-${i}`}
                                             ref={(el) => { thumbRefs.current[i] = el; }}
                                             type="button"
-                                            className={`${styles.thumb} ${i === idx ? styles.thumbActive : ''}`}
+                                            className={`${styles.thumb} ${product.isPremium ? styles.thumbVip : ''} ${i === idx ? (product.isPremium ? styles.thumbActiveVip : styles.thumbActive) : ''}`}
                                             onClick={() => setActiveIndex(i)}
                                             aria-label={`Lihat ${media.type === 'video' ? 'video' : 'foto'} ${i + 1}`}
                                         >
@@ -538,14 +617,23 @@ export default function ProductDetailClient() {
 
                         {/* Info — punya class `infoColumn` supaya mobile bisa jadi flex + reorder */}
                         <div className={styles.infoColumn}>
-                            <span className={styles.eyebrow}>
-                                Edisi #{product.id.slice(0, 8).toUpperCase()} — {product.category}
-                            </span>
-                            <h1 className={styles.title}>{product.name}</h1>
+                            {product.isPremium ? (
+                                <div className={styles.eyebrowVip}>
+                                    <span className={styles.eyebrowVipSparkle}>✦</span>
+                                    <span>GALLERY VIP MASTERWORK • 1 OF 1</span>
+                                    <span className={styles.eyebrowVipDivider}>•</span>
+                                    <span className={styles.eyebrowVipDept}>{product.category}</span>
+                                </div>
+                            ) : (
+                                <span className={styles.eyebrow}>
+                                    Edisi #{product.id.slice(0, 8).toUpperCase()} — {product.category}
+                                </span>
+                            )}
+                            <h1 className={`${styles.title} ${product.isPremium ? styles.titleVip : ''}`}>{product.name}</h1>
 
 
                             <div className={styles.priceRow}>
-                                <div className={`${styles.priceBlock} ${product.isPremium ? styles.priceBlockPremium : ''}`}>
+                                <div className={`${styles.priceBlock} ${product.isPremium ? styles.priceBlockVip : ''}`}>
                                     {hasDiscount ? (
                                         <>
                                             <del className={styles.originalPrice}>
@@ -637,7 +725,7 @@ export default function ProductDetailClient() {
                             )}
 
                             {product.department?.isLiveFish === false ? (
-                                <div className={styles.metaCard}>
+                                <div className={`${styles.metaCard} ${product.isPremium ? styles.metaCardPremium : ''}`}>
                                     <div className={styles.metaItem}>
                                         <label className={styles.metaLabel}>Sub-Kategori</label>
                                         <span className={styles.metaValue}>{product.subCategory?.name || product.category || 'Peralatan'}</span>
@@ -652,7 +740,7 @@ export default function ProductDetailClient() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className={styles.metaCard}>
+                                <div className={`${styles.metaCard} ${product.isPremium ? styles.metaCardPremium : ''}`}>
                                     <div className={styles.metaItem}>
                                         <label className={styles.metaLabel}>Grade Bentuk</label>
                                         <span className={styles.metaValue}>{product.statsForm || 'COMP'}</span>
@@ -858,13 +946,13 @@ export default function ProductDetailClient() {
                                 </div>
                             )}
 
-                            <div className={styles.actionBar}>
+                            <div className={`${styles.actionBar} ${product.isPremium ? styles.actionBarVip : ''}`}>
                                 {canBuy ? (
                                     <>
                                         <button
                                             type="button"
                                             onClick={handleAddToCart}
-                                            className={styles.cartIconBtn}
+                                            className={`${styles.cartIconBtn} ${product.isPremium ? styles.cartIconBtnVip : ''}`}
                                             aria-label="Tambah ke Keranjang"
                                             title="Tambah ke Keranjang"
                                         >
@@ -876,24 +964,24 @@ export default function ProductDetailClient() {
                                         <button
                                             type="button"
                                             onClick={handleAskSeller}
-                                            className={styles.askSellerBtn}
+                                            className={`${styles.askSellerBtn} ${product.isPremium ? styles.askSellerBtnVip : ''}`}
                                             aria-label={currentUser ? 'Tanya Penjual' : 'Chat via WhatsApp'}
                                             title={currentUser ? 'Tanya Penjual seputar produk ini' : 'Chat via WhatsApp seputar produk ini'}
                                         >
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                                             </svg>
-                                            <span>Tanya Penjual</span>
+                                            <span>{product.isPremium ? 'Chat' : 'Tanya Penjual'}</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={handleAcquire}
-                                            className={styles.buyBtn}
+                                            className={`${styles.buyBtn} ${product.isPremium ? styles.buyBtnVip : ''}`}
                                         >
                                             <span className={styles.buyBtnPrice}>
                                                 {formattedAccumulatedTotal}
                                             </span>
-                                            <span className={styles.buyBtnLabel}>Beli Sekarang</span>
+                                            <span className={styles.buyBtnLabel}>{product.isPremium ? 'Adopsi Koleksi VIP' : 'Beli Sekarang'}</span>
                                         </button>
                                     </>
                                 ) : (
@@ -902,49 +990,49 @@ export default function ProductDetailClient() {
                             </div>
 
                             {/* Garansi & Standar Pengiriman Farm SUMDE */}
-                            <div className={styles.assuranceSection}>
-                                <div className={styles.assuranceItem}>
-                                    <div className={styles.assuranceIconWrapper}>
+                            <div className={`${styles.assuranceSection} ${product.isPremium ? styles.assuranceSectionVip : ''}`}>
+                                <div className={`${styles.assuranceItem} ${product.isPremium ? styles.assuranceItemVip : ''}`}>
+                                    <div className={`${styles.assuranceIconWrapper} ${product.isPremium ? styles.assuranceIconWrapperVip : ''}`}>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                                             <polyline points="9 12 11 14 15 10" />
                                         </svg>
                                     </div>
                                     <div className={styles.assuranceContent}>
-                                        <h4 className={styles.assuranceTitle}>Garansi Selamat (DOA 100%)</h4>
-                                        <p className={styles.assuranceDesc}>
+                                        <h4 className={`${styles.assuranceTitle} ${product.isPremium ? styles.assuranceTitleVip : ''}`}>Garansi Selamat (DOA 100%)</h4>
+                                        <p className={`${styles.assuranceDesc} ${product.isPremium ? styles.assuranceDescVip : ''}`}>
                                             Garansi hidup sampai tujuan. Jika ada kendala perjalanan, sertakan video unboxing tanpa jeda untuk penggantian penuh.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className={styles.assuranceItem}>
-                                    <div className={styles.assuranceIconWrapper}>
+                                <div className={`${styles.assuranceItem} ${product.isPremium ? styles.assuranceItemVip : ''}`}>
+                                    <div className={`${styles.assuranceIconWrapper} ${product.isPremium ? styles.assuranceIconWrapperVip : ''}`}>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
                                             <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
                                         </svg>
                                     </div>
                                     <div className={styles.assuranceContent}>
-                                        <h4 className={styles.assuranceTitle}>Kemasan Oksigen Murni Ganda</h4>
-                                        <p className={styles.assuranceDesc}>
+                                        <h4 className={`${styles.assuranceTitle} ${product.isPremium ? styles.assuranceTitleVip : ''}`}>Kemasan Oksigen Murni Ganda</h4>
+                                        <p className={`${styles.assuranceDesc} ${product.isPremium ? styles.assuranceDescVip : ''}`}>
                                             Kemasan kantong ganda dengan injeksi oksigen murni, kardus tebal, dan insulasi styrofoam penahan suhu.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className={styles.assuranceItem}>
-                                    <div className={styles.assuranceIconWrapper}>
+                                <div className={`${styles.assuranceItem} ${product.isPremium ? styles.assuranceItemVip : ''}`}>
+                                    <div className={`${styles.assuranceIconWrapper} ${product.isPremium ? styles.assuranceIconWrapperVip : ''}`}>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                             <rect x="1" y="3" width="15" height="13" />
-                                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                                            <polygon points="16 8 20 8 23 11 23 16 16 16 8" />
                                             <circle cx="5.5" cy="18.5" r="2.5" />
                                             <circle cx="18.5" cy="18.5" r="2.5" />
                                         </svg>
                                     </div>
                                     <div className={styles.assuranceContent}>
-                                        <h4 className={styles.assuranceTitle}>Pengiriman Nusantara Terverifikasi</h4>
-                                        <p className={styles.assuranceDesc}>
+                                        <h4 className={`${styles.assuranceTitle} ${product.isPremium ? styles.assuranceTitleVip : ''}`}>Pengiriman Nusantara Terverifikasi</h4>
+                                        <p className={`${styles.assuranceDesc} ${product.isPremium ? styles.assuranceDescVip : ''}`}>
                                             Ekspedisi resmi terintegrasi dengan pelacakan nomor resi otomatis serta pembaruan berkala langsung ke sistem.
                                         </p>
                                     </div>
@@ -958,18 +1046,27 @@ export default function ProductDetailClient() {
 
             {/* Section Produk Serupa (Content-Based Recommendation) */}
             {similarProducts.length > 0 && (
-                <section className={styles.similarSection}>
+                <section className={`${styles.similarSection} ${product.isPremium ? styles.similarSectionVip : ''}`}>
                     <div className="container">
                         <div className={styles.similarHeader}>
                             <div>
-                                <span className={styles.similarEyebrow}>Rekomendasi Koleksi</span>
-                                <h2 className={styles.similarTitle}>Produk Serupa</h2>
-                                <p className={styles.similarSubtitle}>
-                                    Ikan dengan form {product.form}, corak {product.coloration}, dan karakteristik serupa.
+                                <span className={`${styles.similarEyebrow} ${product.isPremium ? styles.similarEyebrowVip : ''}`}>
+                                    {product.isPremium ? '✦ CURATED EXHIBITION' : 'Rekomendasi Koleksi'}
+                                </span>
+                                <h2 className={`${styles.similarTitle} ${product.isPremium ? styles.similarTitleVip : ''}`}>
+                                    {product.isPremium ? 'Koleksi Gallery VIP Lainnya' : 'Produk Serupa'}
+                                </h2>
+                                <p className={`${styles.similarSubtitle} ${product.isPremium ? styles.similarSubtitleVip : ''}`}>
+                                    {product.isPremium
+                                        ? 'Pilihan edisi koleksi gallery terkurasi lainnya dengan keunikan visual dan estetika mutu pilihan.'
+                                        : `Ikan dengan form ${product.form}, corak ${product.coloration}, dan karakteristik serupa.`}
                                 </p>
                             </div>
-                            <Link href={product.form || product.category ? `/produk?category=${encodeURIComponent((product.form || product.category).trim())}` : '/produk'} className={styles.similarViewAll}>
-                                <span>Lihat Semua {product.form || product.category || 'Koleksi'}</span>
+                            <Link
+                                href={product.isPremium ? '/produk?tab=premium' : (product.form || product.category ? `/produk?category=${encodeURIComponent((product.form || product.category).trim())}` : '/produk')}
+                                className={`${styles.similarViewAll} ${product.isPremium ? styles.similarViewAllVip : ''}`}
+                            >
+                                <span>{product.isPremium ? 'Jelajahi Seluruh Gallery VIP' : `Lihat Semua ${product.form || product.category || 'Koleksi'}`}</span>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="5" y1="12" x2="19" y2="12" />
                                     <polyline points="12 5 19 12 12 19" />
@@ -982,6 +1079,7 @@ export default function ProductDetailClient() {
                                 <ProductCard
                                     key={simProd.id}
                                     {...simProd}
+                                    isPremium={Boolean(simProd.isPremium)}
                                     onClick={() => {
                                         if (typeof window !== 'undefined') {
                                             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -996,38 +1094,50 @@ export default function ProductDetailClient() {
 
             {/* Mobile-only sticky bottom action bar */}
             {canBuy && (
-                <div className={styles.mobileActionBar}>
+                <div className={`${styles.mobileActionBar} ${product.isPremium ? styles.mobileActionBarVip : ''}`}>
+                    {/* Tombol 1: Chat / Tanya Penjual */}
                     <button
                         type="button"
                         onClick={handleAskSeller}
-                        className={styles.mobileAskBtn}
+                        className={`${styles.mobileActionBtn} ${styles.mobileAskBtn} ${product.isPremium ? styles.mobileAskBtnVip : ''}`}
                         aria-label={currentUser ? 'Tanya Penjual' : 'Chat via WhatsApp'}
-                        title={currentUser ? 'Tanya Penjual' : 'Chat via WhatsApp'}
+                        title={product.isPremium ? 'Chat seputar koleksi ini' : 'Tanya Penjual seputar produk ini'}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                         </svg>
-                        <span>Chat</span>
+                        <span className={styles.mobileActionBtnLabel}>Chat</span>
                     </button>
+
+                    {/* Tombol 2: Tambah ke Keranjang */}
                     <button
                         type="button"
                         onClick={handleAddToCart}
-                        className={styles.mobileCartBtn}
+                        className={`${styles.mobileActionBtn} ${styles.mobileCartBtn} ${product.isPremium ? styles.mobileCartBtnVip : ''}`}
                         aria-label="Tambah ke Keranjang"
+                        title="Tambah ke Keranjang"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        <span>Keranjang</span>
+                        <span className={styles.mobileActionBtnLabel}>Keranjang</span>
                     </button>
+
+                    {/* Tombol 3: Hero CTA Beli / Adopsi Koleksi */}
                     <button
                         type="button"
                         onClick={handleAcquire}
-                        className={styles.mobileBuyBtn}
+                        className={`${styles.mobileBuyBtn} ${product.isPremium ? styles.mobileBuyBtnVip : ''}`}
                     >
-                        <span className={styles.mobileBuyLabel}>Beli ({quantity})</span>
-                        <span className={styles.mobileBuyPrice}>{quantity > 1 ? formattedTotalPrice : formattedPrice}</span>
+                        <div className={styles.mobileBuyBtnContent}>
+                            <span className={styles.mobileBuyLabel}>
+                                {product.isPremium ? 'Adopsi Koleksi' : 'Beli Sekarang'}
+                            </span>
+                            <span className={styles.mobileBuyPrice}>
+                                {quantity > 1 ? formattedTotalPrice : formattedPrice}
+                            </span>
+                        </div>
                     </button>
                 </div>
             )}

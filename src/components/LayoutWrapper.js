@@ -11,10 +11,12 @@ import MobileBottomNav from '@/components/MobileBottomNav';
 import { ChatProvider } from '@/context/ChatContext';
 import CustomerChatWidget from '@/components/chat/CustomerChatWidget';
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
+import { useVip } from '@/context/VipContext';
 import styles from './LayoutWrapper.module.css';
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname() || '';
+  const { isVip } = useVip();
   const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
@@ -62,13 +64,15 @@ export default function LayoutWrapper({ children }) {
 
   return (
     <ChatProvider>
-      <Header />
-      <CartSidebar />
-      <main className="has-mobile-bottom-nav">{children}</main>
-      <Footer />
-      <CustomerChatWidget />
-      <WhatsAppFloatingButton />
-      <MobileBottomNav />
+      <div className={isVip ? 'vip-app-shell' : ''} data-vip={isVip ? 'true' : undefined}>
+        <Header isVip={isVip} />
+        <CartSidebar />
+        <main className={`has-mobile-bottom-nav ${isVip ? 'vip-main-container' : ''}`}>{children}</main>
+        <Footer isVip={isVip} />
+        <CustomerChatWidget />
+        <WhatsAppFloatingButton />
+        <MobileBottomNav isVip={isVip} />
+      </div>
     </ChatProvider>
   );
 }

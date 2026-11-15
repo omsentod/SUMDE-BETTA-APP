@@ -73,132 +73,51 @@
     mix-blend-mode: screen;
 }
 
-/* Subtle Interactive Cursor Follow Spotlight */
-.cursorSpotlight {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 500px;
-    height: 500px;
-    margin-top: -250px;
-    margin-left: -250px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.06) 0%, rgba(245, 158, 11, 0.02) 45%, transparent 70%);
-    filter: blur(25px);
-    will-change: transform;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    mix-blend-mode: screen;
+/* Mode Context Modifiers */
+.adminMode {
+    opacity: 0.25;
 }
 
-:global([data-theme="dark"]) .cursorSpotlight {
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.09) 0%, rgba(245, 158, 11, 0.04) 40%, transparent 70%);
+.sectionedMode {
+    opacity: 0.9;
 }
 
-.spotlightActive {
+.bodyFocusMode {
     opacity: 1;
 }
 
-/* Organic Floating Aquatic Micro-Light Particles */
-.particlesContainer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+/* ✦ VIP Salon Curatorial Atmosphere (Obsidian & Champagne Gold Caustics) */
+.vipMode {
+    opacity: 1;
 }
 
-.particle {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(255, 190, 90, 0.3) 60%, transparent 100%);
-    filter: blur(1px);
-    will-change: transform, opacity;
+.vipMode .gradientMesh {
+    background: radial-gradient(circle at 20% 20%, rgba(245, 158, 11, 0.09) 0%, transparent 50%),
+                radial-gradient(circle at 80% 75%, rgba(217, 119, 6, 0.07) 0%, transparent 55%),
+                radial-gradient(circle at 50% 15%, rgba(251, 191, 36, 0.06) 0%, transparent 60%) !important;
+    opacity: 1 !important;
 }
 
-:global([data-theme="light"]) .particle {
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.4) 0%, rgba(245, 158, 11, 0.2) 60%, transparent 100%);
+.vipMode .vectorOrnamentLayer {
+    opacity: 0.35 !important;
+    mix-blend-mode: screen !important;
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.25));
 }
 
-.p1 {
-    width: 5px;
-    height: 5px;
-    top: 25%;
-    left: 15%;
-    animation: floatParticle1 18s ease-in-out infinite;
+.vipMode .particle {
+    background: radial-gradient(circle, rgba(254, 240, 138, 0.9) 0%, rgba(245, 158, 11, 0.4) 60%, transparent 100%) !important;
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
 }
 
-.p2 {
-    width: 7px;
-    height: 7px;
-    top: 65%;
-    left: 82%;
-    animation: floatParticle2 24s ease-in-out infinite 3s;
+.vipMode .cursorSpotlight {
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.04) 45%, transparent 70%) !important;
 }
 
-.p3 {
-    width: 4px;
-    height: 4px;
-    top: 40%;
-    left: 55%;
-    animation: floatParticle3 20s ease-in-out infinite 6s;
+.vipMode .aquaticWaterTexture {
+    opacity: 0.08 !important;
+    mix-blend-mode: screen !important;
 }
 
-.p4 {
-    width: 6px;
-    height: 6px;
-    top: 80%;
-    left: 28%;
-    animation: floatParticle1 22s ease-in-out infinite 2s;
-}
-
-.p5 {
-    width: 8px;
-    height: 8px;
-    top: 15%;
-    left: 70%;
-    animation: floatParticle2 26s ease-in-out infinite 5s;
-}
-
-.p6 {
-    width: 4px;
-    height: 4px;
-    top: 85%;
-    left: 45%;
-    animation: floatParticle3 19s ease-in-out infinite 4s;
-}
-
-@keyframes floatParticle1 {
-    0%, 100% {
-        transform: translate3d(0, 0, 0);
-        opacity: 0.2;
-    }
-    50% {
-        transform: translate3d(25px, -45px, 0);
-        opacity: 0.65;
-    }
-}
-
-@keyframes floatParticle2 {
-    0%, 100% {
-        transform: translate3d(0, 0, 0);
-        opacity: 0.15;
-    }
-    50% {
-        transform: translate3d(-35px, -55px, 0);
-        opacity: 0.6;
-    }
-}
-
-@keyframes floatParticle3 {
-    0%, 100% {
-        transform: translate3d(0, 0, 0);
-        opacity: 0.25;
-    }
-    50% {
-        transform: translate3d(20px, -35px, 0);
-        opacity: 0.7;
-    }
-}
 
 @keyframes meshDrift {
     0% {
@@ -212,130 +131,4 @@
     }
 }
 
-/* Subtle Interactive Cursor Follow Spotlight */
-.cursorSpotlight {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 500px;
-    height: 500px;
-    margin-top: -250px;
-    margin-left: -250px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.06) 0%, rgba(245, 158, 11, 0.02) 45%, transparent 70%);
-    filter: blur(25px);
-    will-change: transform;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    mix-blend-mode: screen;
-}
-
-:global([data-theme="dark"]) .cursorSpotlight {
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.09) 0%, rgba(245, 158, 11, 0.04) 40%, transparent 70%);
-}
-
-.spotlightActive {
-    opacity: 1;
-}
-
-/* Organic Floating Aquatic Micro-Light Particles */
-.particlesContainer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.particle {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(255, 190, 90, 0.3) 60%, transparent 100%);
-    filter: blur(1px);
-    will-change: transform, opacity;
-}
-
-:global([data-theme="light"]) .particle {
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.4) 0%, rgba(245, 158, 11, 0.2) 60%, transparent 100%);
-}
-
-.p1 {
-    width: 5px;
-    height: 5px;
-    top: 25%;
-    left: 15%;
-    animation: floatParticle1 18s ease-in-out infinite;
-}
-
-.p2 {
-    width: 7px;
-    height: 7px;
-    top: 65%;
-    left: 82%;
-    animation: floatParticle2 24s ease-in-out infinite 3s;
-}
-
-.p3 {
-    width: 4px;
-    height: 4px;
-    top: 40%;
-    left: 55%;
-    animation: floatParticle3 20s ease-in-out infinite 6s;
-}
-
-.p4 {
-    width: 6px;
-    height: 6px;
-    top: 80%;
-    left: 28%;
-    animation: floatParticle1 22s ease-in-out infinite 2s;
-}
-
-.p5 {
-    width: 8px;
-    height: 8px;
-    top: 15%;
-    left: 70%;
-    animation: floatParticle2 26s ease-in-out infinite 5s;
-}
-
-.p6 {
-    width: 4px;
-    height: 4px;
-    top: 85%;
-    left: 45%;
-    animation: floatParticle3 19s ease-in-out infinite 4s;
-}
-
-@keyframes floatParticle1 {
-    0%, 100% {
-        transform: translate3d(0, 0, 0);
-        opacity: 0.2;
-    }
-    50% {
-        transform: translate3d(25px, -45px, 0);
-        opacity: 0.65;
-    }
-}
-
-@keyframes floatParticle2 {
-    0%, 100% {
-        transform: translate3d(0, 0, 0);
-        opacity: 0.15;
-    }
-    50% {
-        transform: translate3d(-35px, -55px, 0);
-        opacity: 0.6;
-    }
-}
-
-@keyframes floatParticle3 {
-    0%, 100% {
-        transform: translate3d(0, 0, 0);
-        opacity: 0.25;
-    }
-    50% {
-        transform: translate3d(20px, -35px, 0);
-        opacity: 0.7;
-    }
-}
 

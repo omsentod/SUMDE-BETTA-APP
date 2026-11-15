@@ -742,7 +742,7 @@ export default function NotificationBell() {
             </div>
 
             {/* Trigger Pengatur Panjang Daftar (5 / 10 / 15) */}
-            {displayedItems.length > 5 && (
+            {displayedItems.length > 0 && (
               <div className={styles.limitBar}>
                 <span className={styles.limitLabel}>
                   {visibleItems.length} dari {displayedItems.length} notifikasi
@@ -765,16 +765,14 @@ export default function NotificationBell() {
                   >
                     10
                   </button>
-                  {displayedItems.length > 10 && (
-                    <button
-                      type="button"
-                      className={`${styles.limitBtn} ${displayLimit === 15 ? styles.limitBtnActive : ''}`}
-                      onClick={() => setDisplayLimit(15)}
-                      title="Tampilkan 15 notifikasi"
-                    >
-                      15
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`${styles.limitBtn} ${displayLimit === 15 ? styles.limitBtnActive : ''}`}
+                    onClick={() => setDisplayLimit(15)}
+                    title="Tampilkan 15 notifikasi"
+                  >
+                    15
+                  </button>
                 </div>
               </div>
             )}

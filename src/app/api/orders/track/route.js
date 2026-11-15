@@ -18,6 +18,12 @@ function maskPhone(phone) {
   return `${clean.slice(0, 4)}****${clean.slice(-3)}`;
 }
 
+function maskName(name) {
+  if (!name) return '***';
+  const parts = name.trim().split(/\s+/);
+  return parts.map((p) => (p.length <= 2 ? `${p[0]}*` : `${p[0]}***${p.slice(-1)}`)).join(' ');
+}
+
 function phoneMatches(p1, p2) {
   if (!p1 || !p2) return false;
   let d1 = String(p1).replace(/\D/g, '');
@@ -32,76 +38,90 @@ async function lookupOrder(orderId, identifier) {
   const cleanId = String(orderId || '').trim().replace(/^#/, '');
   const cleanIdent = String(identifier || '').trim().toLowerCase();
 
-  if (!cleanId || !cleanIdent) {
-    return { error: 'Nomor pesanan dan Email/Nomor HP wajib diisi.', status: 400 };
+  if (!cleanId) {
+    return { error: 'Nomor pesanan atau No. Resi (AWB) wajib diisi.', status: 400 };
   }
 
-  // 1. Cari pesanan by UUID penuh atau 8 digit awalan
+  const includeQuery = {
+    items: {
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+        variant: {
+          select: {
+            id: true,
+            size: true,
+            imageUrl: true,
+          },
+        },
+      },
+    },
+  };
+
   let order = null;
-  if (cleanId.length === 36) {
-    order = await prisma.order.findUnique({
-      where: { id: cleanId },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-            variant: {
-              select: {
-                id: true,
-                size: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  } else if (cleanId.length >= 6) {
+  let isAwbMatch = false;
+
+  // 1. Cari berdasarkan No. Resi (AWB / trackingNumber) terlebih dahulu
+  if (cleanId.length >= 4) {
+    const cleanAwb = cleanId.replace(/\s+/g, '');
     order = await prisma.order.findFirst({
-      where: { id: { startsWith: cleanId } },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-            variant: {
-              select: {
-                id: true,
-                size: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
+      where: {
+        OR: [
+          { trackingNumber: cleanId },
+          { trackingNumber: cleanAwb },
+          { trackingNumber: { equals: cleanId, mode: 'insensitive' } },
+          { trackingNumber: { equals: cleanAwb, mode: 'insensitive' } },
+          { biteshipShipmentId: cleanId },
+        ],
       },
+      include: includeQuery,
       orderBy: { createdAt: 'desc' },
     });
+    if (order) isAwbMatch = true;
+  }
+
+  // 2. Jika belum ditemukan by AWB, cari berdasarkan ID Pesanan (UUID penuh atau prefix >= 6 digit)
+  if (!order) {
+    if (cleanId.length === 36) {
+      order = await prisma.order.findUnique({
+        where: { id: cleanId },
+        include: includeQuery,
+      });
+    } else if (cleanId.length >= 6) {
+      order = await prisma.order.findFirst({
+        where: { id: { startsWith: cleanId } },
+        include: includeQuery,
+        orderBy: { createdAt: 'desc' },
+      });
+    }
   }
 
   if (!order) {
-    return { error: 'Pesanan tidak ditemukan atau data verifikasi tidak cocok.', status: 404 };
+    return { error: 'Pesanan atau No. Resi tidak ditemukan.', status: 404 };
   }
 
-  // 2. Verifikasi kepemilikan via Email OR Phone
-  const emailMatch = order.email && order.email.toLowerCase() === cleanIdent;
-  const phoneMatch = phoneMatches(order.phone, cleanIdent);
+  // 3. Verifikasi kepemilikan
+  // Jika mencari dengan ID Pesanan, identifier (Email/WA) WAJIB diisi untuk keamanan privasi.
+  // Jika mencari dengan No. Resi (AWB), identifier opsional: jika diisi diverifikasi; jika tidak diisi, info alamat disanitasi.
+  const hasIdentifier = Boolean(cleanIdent);
+  const emailMatch = hasIdentifier && order.email && order.email.toLowerCase() === cleanIdent;
+  const phoneMatch = hasIdentifier && phoneMatches(order.phone, cleanIdent);
+  const isVerified = emailMatch || phoneMatch;
 
-  if (!emailMatch && !phoneMatch) {
-    return { error: 'Pesanan tidak ditemukan atau data verifikasi tidak cocok.', status: 404 };
+  if (!isAwbMatch && !hasIdentifier) {
+    return { error: 'Email atau Nomor WhatsApp wajib diisi untuk verifikasi ID Pesanan.', status: 400 };
   }
 
-  // 3. Format payload aman (sanitized PII)
+  if (hasIdentifier && !isVerified) {
+    return { error: 'Pesanan ditemukan, tetapi Email atau Nomor WhatsApp tidak sesuai dengan data pesanan.', status: 404 };
+  }
+
+  // 4. Format payload aman (sanitized PII)
   const items = (order.items || []).map((item) => {
     const fallbackImage = item.variant?.imageUrl || item.product?.image || item.customImage || '/img/betta-1.png';
     return {
@@ -121,14 +141,14 @@ async function lookupOrder(orderId, identifier) {
       shortId: order.id.slice(0, 8),
       status: order.status,
       createdAt: order.createdAt,
-      recipientName: order.name,
+      recipientName: isVerified ? order.name : maskName(order.name),
       maskedEmail: maskEmail(order.email),
       maskedPhone: maskPhone(order.phone),
-      streetAddress: order.streetAddress,
+      streetAddress: isVerified ? order.streetAddress : null,
       city: order.city,
       district: order.district,
       province: order.province,
-      postalCode: order.postalCode,
+      postalCode: isVerified ? order.postalCode : null,
       subtotal: order.subtotal,
       shippingFee: order.shippingFee,
       paymentFee: order.paymentFee,
@@ -139,6 +159,8 @@ async function lookupOrder(orderId, identifier) {
       shippingEta: order.shippingEta,
       trackingNumber: order.trackingNumber,
       items,
+      isVerified,
+      matchedBy: isAwbMatch ? 'AWB' : 'ORDER_ID',
     },
   };
 }
@@ -154,7 +176,7 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const orderId = searchParams.get('orderId') || searchParams.get('id');
+    const orderId = searchParams.get('orderId') || searchParams.get('id') || searchParams.get('waybill') || searchParams.get('resi') || searchParams.get('awb');
     const identifier = searchParams.get('identifier') || searchParams.get('email') || searchParams.get('phone');
 
     const result = await lookupOrder(orderId, identifier);
@@ -180,7 +202,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const orderId = body.orderId || body.id;
+    const orderId = body.orderId || body.id || body.waybill || body.resi || body.awb;
     const identifier = body.identifier || body.email || body.phone;
 
     const result = await lookupOrder(orderId, identifier);

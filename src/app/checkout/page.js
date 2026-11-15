@@ -26,7 +26,7 @@ function CheckoutContent() {
 
     const [formData, setFormData] = useState({
         name: '',
-        email: '',
+        email: currentUser?.email || '',
         phone: '',
         streetAddress: '',
         rtRw: '',
@@ -201,9 +201,16 @@ function CheckoutContent() {
         setAutofillTarget({ province: currentUser.province, city: currentUser.city, district: currentUser.district });
     };
 
+    const handleUseAccountEmail = () => {
+        if (!currentUser?.email) return;
+        setFormData(prev => ({ ...prev, email: currentUser.email }));
+        toast.success(`Menggunakan email akun (${currentUser.email})`);
+    };
+
     // Load saved addresses on mount; auto-fill the default one (else profile)
     useEffect(() => {
         if (!currentUser) return;
+        setFormData(prev => prev.email ? prev : { ...prev, email: currentUser.email || '' });
         let cancelled = false;
         fetchMyAddresses().then(list => {
             if (cancelled) return;
@@ -628,7 +635,32 @@ function CheckoutContent() {
                                         <input type="text" name="name" className={`search-input ${styles.inputFull}`} value={formData.name} onChange={handleInputChange} required />
                                     </div>
                                     <div>
-                                        <label className={styles.fieldLabel}>Alamat Email</label>
+                                        <div className={styles.fieldLabelRow}>
+                                            <label className={styles.fieldLabel}>Alamat Email</label>
+                                            {currentUser?.email && (
+                                                formData.email !== currentUser.email ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleUseAccountEmail}
+                                                        className={styles.useAccountEmailBtn}
+                                                        title={`Gunakan email login: ${currentUser.email}`}
+                                                    >
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                                            <polyline points="22,6 12,13 2,6" />
+                                                        </svg>
+                                                        <span>Pakai email akun</span>
+                                                    </button>
+                                                ) : (
+                                                    <span className={styles.accountEmailActiveBadge} title={`Menggunakan email login: ${currentUser.email}`}>
+                                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <polyline points="20 6 9 17 4 12" />
+                                                        </svg>
+                                                        <span>Email akun aktif</span>
+                                                    </span>
+                                                )
+                                            )}
+                                        </div>
                                         <input type="email" name="email" className={`search-input ${styles.inputFull}`} value={formData.email} onChange={handleInputChange} required />
                                     </div>
                                     <div>

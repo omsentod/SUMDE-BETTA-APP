@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import NotificationBell from '@/components/NotificationBell';
 import UserAvatar from '@/components/UserAvatar';
 import { useAuth } from '@/context/AuthContext';
+import { useVip } from '@/context/VipContext';
 
 // ── ThemeIcon dinonaktifkan sementara bersama toggle theme (mode terang dikunci) ──
 // function ThemeIcon({ theme }) {
@@ -33,7 +34,9 @@ function CartIcon() {
     );
 }
 
-export default function Header() {
+export default function Header({ isVip: isVipProp }) {
+    const vipContext = useVip();
+    const isVip = isVipProp ?? vipContext.isVip;
     const { itemCount, toggleCart } = useCart();
     // const { theme, toggleTheme } = useTheme(); // theme toggle dinonaktifkan sementara
     const { currentUser, logout, isLoading } = useAuth();
@@ -59,7 +62,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="header">
+            <header className={`header ${isVip ? 'headerVip' : ''}`}>
                 <div className="container header-container">
 
                     {/* Logo */}

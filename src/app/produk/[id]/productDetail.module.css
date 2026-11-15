@@ -53,7 +53,10 @@
         grid-template-columns: minmax(0, 1fr);
         gap: 2.5rem;
     }
-    .section { padding: 5rem 0; }
+    .section {
+        padding-top: calc(75px + 1.5rem);
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+    }
 }
 
 .galleryColumn {
@@ -1166,71 +1169,109 @@
 }
 
 @media (max-width: 767px) {
+    .section {
+        padding-bottom: calc(75px + env(safe-area-inset-bottom, 0)) !important;
+    }
+
     .mobileActionBar {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: calc(56px + env(safe-area-inset-bottom, 0));
-        z-index: 999;
-        display: grid;
-        grid-template-columns: 1fr 1.4fr;
+        bottom: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
         background: var(--bg-card);
         border-top: 1px solid var(--border-color);
-        padding: 0.5rem 0.75rem;
-        gap: 0.5rem;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        padding: 0.55rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom, 0));
+        gap: 8px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
     }
 
-    .mobileCartBtn,
-    .mobileBuyBtn {
-        display: inline-flex;
+    /* Compact Utility Icon Buttons (Chat & Cart) */
+    .mobileActionBtn {
+        display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.4rem;
-        border-radius: 999px;
-        padding: 0.85rem 1rem;
-        font-family: inherit;
-        font-size: 0.95rem;
-        font-weight: 700;
+        gap: 2px;
+        height: 46px;
+        padding: 4px 6px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        background: var(--input-bg);
+        color: var(--text-main);
         cursor: pointer;
-        transition: transform 0.1s, filter 0.15s;
-        min-height: 46px;
+        flex-shrink: 0;
+        transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .mobileCartBtn:active,
-    .mobileBuyBtn:active {
-        transform: scale(0.97);
+    .mobileActionBtn:active {
+        transform: scale(0.93);
     }
 
+    .mobileAskBtn {
+        width: 50px;
+        min-width: 50px;
+    }
     .mobileCartBtn {
-        background: color-mix(in oklab, var(--primary) 8%, transparent);
-        color: var(--primary);
-        border: 1px solid color-mix(in oklab, var(--primary) 25%, transparent);
+        width: 54px;
+        min-width: 54px;
     }
 
+    .mobileActionBtnLabel {
+        font-size: 0.65rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    /* Hero CTA Buy Button */
     .mobileBuyBtn {
+        flex: 1;
+        min-width: 0;
+        height: 46px;
+        border-radius: 999px;
         background: var(--primary);
         color: #fff;
         border: 1px solid var(--primary);
-        flex-direction: column;
-        gap: 0.1rem;
-        padding: 0.55rem 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem 0.85rem;
+        cursor: pointer;
+        transition: transform 0.1s ease, filter 0.15s ease;
+    }
+    .mobileBuyBtn:active {
+        transform: scale(0.98);
     }
     .mobileBuyBtn:hover {
         filter: brightness(1.05);
     }
 
+    .mobileBuyBtnContent {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .mobileBuyLabel {
-        font-size: 0.72rem;
-        font-weight: 600;
-        opacity: 0.92;
+        font-size: 0.825rem;
+        font-weight: 700;
         line-height: 1;
+        letter-spacing: 0.01em;
     }
 
     .mobileBuyPrice {
         font-size: 0.95rem;
         font-weight: 800;
-        line-height: 1.1;
+        line-height: 1;
         letter-spacing: -0.01em;
+        padding-left: 8px;
+        border-left: 1.5px solid rgba(255, 255, 255, 0.4);
     }
 }
 
@@ -1508,4 +1549,755 @@
         height: 75vh;
     }
 }
+
+/* ==========================================================================
+   ✦ VIP GALLERY PRIVATE SALON EXHIBITION MODE (/produk/[id])
+   Full-page cohesive continuity matching the VIP Chamber
+   ========================================================================== */
+
+.pageVip {
+    color: #f1f5f9 !important;
+}
+
+.sectionVip {
+    padding-top: calc(90px + 2rem) !important;
+    padding-bottom: 5rem !important;
+}
+
+@media (max-width: 900px) {
+    .sectionVip {
+        padding-top: calc(75px + 1.5rem) !important;
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0)) !important;
+    }
+}
+
+/* --- VIP Breadcrumb Continuity Bar --- */
+.vipBreadcrumbBar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 1.15rem;
+    font-size: 0.85rem;
+}
+
+.vipBackBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    background: rgba(24, 24, 34, 0.85);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #fbbf24;
+    font-size: 0.825rem;
+    font-weight: 700;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.vipBackBtn:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: #fbbf24;
+    color: #ffffff;
+    transform: translateX(-3px);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+
+.vipBreadcrumbDivider {
+    color: rgba(245, 158, 11, 0.5);
+    font-size: 0.85rem;
+}
+
+.vipBreadcrumbBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #fde68a;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.775rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+/* --- Standard Breadcrumb Bar --- */
+.standardBreadcrumbBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2rem;
+    font-size: 0.85rem;
+}
+
+.standardBackBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.standardBackBtn:hover {
+    color: var(--primary);
+}
+
+.standardBreadcrumbDivider {
+    color: var(--border-color);
+}
+
+.standardBreadcrumbCurrent {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* --- VIP Media Gallery Showcase Frame --- */
+.imageFrameVip {
+    background: radial-gradient(ellipse 90% 70% at 50% 10%, rgba(245, 158, 11, 0.14), transparent 70%),
+                linear-gradient(180deg, #12121c 0%, #08080c 100%) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(245, 158, 11, 0.15) !important;
+}
+
+.imageFrameVip:hover {
+    border-color: #fbbf24 !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* --- VIP Thumbnail Strip --- */
+.thumbStripVip {
+    /* smooth obsidian backdrop */
+}
+
+.thumbVip {
+    background: #101018 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.thumbVip:hover {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+.thumbActiveVip {
+    border: 2px solid #fbbf24 !important;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.5) !important;
+}
+
+/* --- VIP Eyebrow & Title --- */
+.eyebrowVip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.38);
+    color: #fbbf24;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
+.eyebrowVipSparkle {
+    color: #fbbf24;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+}
+
+.eyebrowVipDivider {
+    color: rgba(245, 158, 11, 0.4);
+}
+
+.eyebrowVipDept {
+    color: #fde68a;
+    font-weight: 600;
+}
+
+.titleVip {
+    color: #ffffff !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+    margin: 0 0 0.5rem 0 !important;
+    font-size: clamp(1.5rem, 2.2vw, 1.95rem) !important;
+}
+
+/* --- VIP Right Column Vertical Spacing Tightening --- */
+.pageVip .priceRow {
+    margin-bottom: 0.75rem !important;
+}
+
+.pageVip .authenticityBoxPremium {
+    margin-bottom: 0.75rem !important;
+    padding: 0.85rem 1.15rem !important;
+}
+
+.pageVip .metaCardPremium {
+    margin-bottom: 0.85rem !important;
+    padding: 0.85rem 1.15rem !important;
+    gap: 1rem !important;
+}
+
+.pageVip .sizeSection {
+    margin-bottom: 0.85rem !important;
+}
+
+.pageVip .purchaseConfigSection {
+    margin-bottom: 0.85rem !important;
+    gap: 0.5rem !important;
+}
+
+/* --- VIP Zoom Button (Dark Translucent with Gold Border & Icon) --- */
+.pageVip .zoomBtn,
+.imageFrameVip .zoomBtn {
+    background: rgba(13, 13, 18, 0.75) !important;
+    border: 1px solid rgba(212, 175, 55, 0.35) !important;
+    color: #fbbf24 !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.pageVip .zoomBtn:hover,
+.imageFrameVip .zoomBtn:hover {
+    background: rgba(24, 24, 34, 0.95) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+    transform: scale(1.08) !important;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.4) !important;
+}
+
+/* --- VIP Price Block Plaque --- */
+.priceBlockVip {
+    background: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.18), transparent 60%),
+                linear-gradient(135deg, rgba(24, 24, 36, 0.95), rgba(13, 13, 18, 0.95)) !important;
+    border: 1px solid rgba(245, 158, 11, 0.42) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 18px rgba(245, 158, 11, 0.14) !important;
+    padding: 0.65rem 1.15rem !important;
+    border-radius: 10px !important;
+}
+
+.priceBlockVip .priceAmount {
+    color: #fbbf24 !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 14px rgba(251, 191, 36, 0.4) !important;
+}
+
+/* --- VIP Action Bar Buttons (Unified Gold Gradient CTA) --- */
+.actionBarVip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+}
+
+.buyBtnVip {
+    flex: 1;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%) !important;
+    color: #0d0d12 !important;
+    border: none !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45) !important;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.buyBtnVip:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.65) !important;
+}
+
+.buyBtnVip:active {
+    transform: scale(0.98);
+}
+
+.buyBtnVip .buyBtnPrice {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    color: #0d0d12 !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+.buyBtnVip .buyBtnLabel {
+    color: #0d0d12 !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    padding-left: 0.5rem;
+    border-left: 1.5px solid rgba(13, 13, 18, 0.25);
+}
+
+.askSellerBtnVip {
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(22, 22, 34, 0.9) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fde68a !important;
+}
+
+.askSellerBtnVip:hover {
+    background: rgba(30, 30, 46, 0.95) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25) !important;
+}
+
+.cartIconBtnVip {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.12) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+}
+
+.cartIconBtnVip:hover {
+    background: rgba(245, 158, 11, 0.24) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* --- VIP Assurance Items (Clean Translucent Black & Hairline Gold) --- */
+.assuranceSectionVip {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-top: 1.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+}
+
+.assuranceItemVip {
+    background: rgba(13, 13, 18, 0.65) !important;
+    border: 1px solid rgba(245, 158, 11, 0.18) !important;
+    border-radius: 12px !important;
+    padding: 0.85rem 1.15rem !important;
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease !important;
+}
+
+.assuranceItemVip:hover {
+    background: rgba(18, 18, 26, 0.9) !important;
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    transform: translateX(3px) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(245, 158, 11, 0.12) !important;
+}
+
+.assuranceIconWrapperVip {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    border-radius: 8px !important;
+}
+
+.assuranceTitleVip {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.assuranceDescVip {
+    color: #cbd5e1 !important;
+    font-size: 0.775rem !important;
+    line-height: 1.5 !important;
+}
+
+/* --- VIP Recommendations Section --- */
+.similarSectionVip {
+    border-top: 1px solid rgba(245, 158, 11, 0.2) !important;
+    background: transparent !important;
+    padding: 4.5rem 0 !important;
+}
+
+.similarEyebrowVip {
+    color: #fbbf24 !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+}
+
+.similarTitleVip {
+    color: #ffffff !important;
+}
+
+.similarSubtitleVip {
+    color: #94a3b8 !important;
+}
+
+.similarViewAllVip {
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    padding: 6px 16px !important;
+    border-radius: 9999px !important;
+    transition: all 0.2s ease !important;
+}
+
+.similarViewAllVip:hover {
+    background: rgba(245, 158, 11, 0.2) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* --- VIP Mobile Action Bar --- */
+.mobileActionBarVip {
+    background: rgba(10, 10, 16, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(245, 158, 11, 0.3) !important;
+    box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.8) !important;
+}
+
+.mobileAskBtnVip {
+    color: #fde68a !important;
+    background: rgba(22, 22, 34, 0.85) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+.mobileAskBtnVip:active {
+    background: rgba(245, 158, 11, 0.2) !important;
+    border-color: #fbbf24 !important;
+}
+
+.mobileCartBtnVip {
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.12) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+.mobileCartBtnVip:active {
+    background: rgba(245, 158, 11, 0.25) !important;
+    border-color: #fbbf24 !important;
+}
+
+.mobileBuyBtnVip {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    color: #0d0d12 !important;
+    border: none !important;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45) !important;
+}
+
+.mobileBuyBtnVip .mobileBuyLabel,
+.mobileBuyBtnVip .mobileBuyPrice {
+    color: #0d0d12 !important;
+    font-weight: 800 !important;
+}
+
+.mobileBuyBtnVip .mobileBuyPrice {
+    border-left-color: rgba(13, 13, 18, 0.25) !important;
+}
+
+/* --- VIP Typography & Quantity Refinements --- */
+.pageVip .description {
+    color: #cbd5e1 !important;
+}
+
+.pageVip .originalPrice {
+    color: #64748b !important;
+}
+
+.pageVip .quantityBlock {
+    background: rgba(18, 18, 26, 0.75) !important;
+    border: 1px solid rgba(245, 158, 11, 0.22) !important;
+    border-radius: 12px !important;
+    padding: 0.55rem 0.95rem !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+.pageVip .quantityLabel {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.pageVip .quantityStockText {
+    color: #94a3b8 !important;
+}
+
+.pageVip .quantityControls {
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    background: rgba(10, 10, 16, 0.9) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.pageVip .qtyBtn {
+    color: #fbbf24 !important;
+}
+
+.pageVip .qtyBtn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.pageVip .qtyInput {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    background: transparent !important;
+    border-left: 1px solid rgba(245, 158, 11, 0.25) !important;
+    border-right: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+.pageVip .orderSubtotalBar {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    color: #cbd5e1 !important;
+}
+
+.pageVip .orderSubtotalAmount {
+    color: #fbbf24 !important;
+}
+
+/* --- VIP Lightbox Polish --- */
+.pageVip .lightboxOverlay {
+    background: rgba(4, 4, 7, 0.96) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.pageVip .lightboxClose:hover {
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.2) !important;
+    border-color: #fbbf24 !important;
+}
+
+.pageVip .lightboxNav:hover {
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.2) !important;
+    border-color: #fbbf24 !important;
+}
+
+.pageVip .lightboxCounter {
+    background: rgba(16, 16, 24, 0.9) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+}
+
+/* --- VIP Variant (Size) Selectors (Translucent Dark + Gold Outline) --- */
+.pageVip .sizeHeader {
+    color: #94a3b8 !important;
+}
+
+.pageVip .sizeBtn {
+    background: rgba(18, 18, 26, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+    border-radius: 10px !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pageVip .sizeBtn:hover:not(:disabled):not(.sizeBtnSelected) {
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+    color: #f1f5f9 !important;
+    transform: translateY(-1px);
+}
+
+.pageVip .sizeBtnSelected {
+    background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.22), transparent 75%),
+                rgba(24, 24, 34, 0.95) !important;
+    border: 1.5px solid #fbbf24 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.25), inset 0 0 12px rgba(245, 158, 11, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+.pageVip .sizeBtnSelected .sizeLabel {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.pageVip .sizeBtnSelected .sizePrice {
+    color: #fbbf24 !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.35) !important;
+}
+
+.pageVip .sizeBtnSelected .sizeStock {
+    color: #fde68a !important;
+}
+
+.pageVip .sizePrice {
+    color: #fbbf24 !important;
+}
+
+.pageVip .sizeStock {
+    color: #94a3b8 !important;
+}
+
+.pageVip .sizeError {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: #ef4444 !important;
+    color: #fca5a5 !important;
+}
+
+.pageVip .quantityLabel {
+    color: #cbd5e1 !important;
+}
+
+.pageVip .quantityStockText {
+    color: #94a3b8 !important;
+}
+
+.pageVip .soldOutTag {
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+/* --- VIP Authenticity Box High Contrast --- */
+.pageVip .authenticityBoxPremium {
+    background: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.15), transparent 60%),
+                rgba(24, 24, 34, 0.95) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+.pageVip .authenticityTitlePremium {
+    color: #fbbf24 !important;
+}
+
+.pageVip .authenticityTag {
+    background: rgba(245, 158, 11, 0.22) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+.pageVip .authenticityIconPremium {
+    color: #fbbf24 !important;
+}
+
+.pageVip .authenticityDesc {
+    color: #cbd5e1 !important;
+}
+
+/* --- VIP Meta Specification Card High Contrast --- */
+.pageVip .metaCard,
+.pageVip .metaCardPremium {
+    background: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.12), transparent 60%),
+                #14141f !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+.pageVip .metaLabel {
+    color: #fbbf24 !important;
+}
+
+.pageVip .metaValue {
+    color: #ffffff !important;
+}
+
+/* --- VIP Sold Badge & Discount Tag --- */
+.pageVip .soldBadgeTag {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+}
+
+.pageVip .discountBadge {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+    color: #fca5a5 !important;
+}
+
+.pageVip .typeHintBubble {
+    background: #1e1e2c !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    color: #fbbf24 !important;
+}
+
+/* --- VIP Wholesale Card --- */
+.pageVip .wholesaleCard {
+    background: #14141f !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.pageVip .wholesaleTitle {
+    color: #fbbf24 !important;
+}
+
+.pageVip .wholesaleLevelCount {
+    color: #94a3b8 !important;
+}
+
+.pageVip .tierBtn {
+    background: #181824 !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: #f1f5f9 !important;
+}
+
+.pageVip .tierBtn:hover:not(:disabled):not(.tierBtnActive) {
+    border-color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.pageVip .tierBtnActive {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    border-color: #fbbf24 !important;
+    color: #0d0d12 !important;
+}
+
+.pageVip .tierBtnActive .tierBtnQty,
+.pageVip .tierBtnActive .tierBtnPrice {
+    color: #0d0d12 !important;
+}
+
+.pageVip .tierBtnPrice {
+    color: #fbbf24 !important;
+}
+
+.pageVip .tierBtnDiscount {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+}
+
+/* --- VIP Recommendations Grid: Tetap 2 kolom di mobile dan proporsional seperti katalog biasa --- */
+.productGridVip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .productGridVip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .productGridVip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .productGridVip {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+
+
 

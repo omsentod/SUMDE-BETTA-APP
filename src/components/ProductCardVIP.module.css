@@ -1,0 +1,457 @@
+/* ==========================================================================
+   ProductCardVIP.module.css
+   Estetika Luxury Obsidian & Gold untuk VIP Gallery Chamber di SUMDE BETTA
+   Komponen, proporsi, dan ukuran identik dengan ProductCard biasa (2-kolom mobile),
+   dilengkapi 3D tilt dan holographic sheen interaktif pada desktop.
+   ========================================================================== */
+
+/* ── 1. Wadah Utama Kartu (Obsidian Canvas) ── */
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: #ffffff;
+    position: relative;
+    background: linear-gradient(180deg, #181822 0%, #0d0d12 100%);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(212, 175, 55, 0.15);
+    cursor: pointer;
+    outline: none;
+    will-change: transform;
+    transform-style: preserve-3d;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.45s cubic-bezier(0.22, 0.78, 0.45, 1.02),
+                box-shadow 0.45s cubic-bezier(0.22, 0.78, 0.45, 1.02),
+                border-color 0.3s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .card:hover {
+        border-color: #fbbf24;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 158, 11, 0.3);
+    }
+}
+
+.cardSold {
+    opacity: 0.85;
+}
+
+/* ── 2. Holographic Sheen Layer (Desktop Mouse Tracking) ── */
+.holographicSheen {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    background: radial-gradient(
+        circle 320px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(212, 175, 55, 0.22) 0%,
+        rgba(251, 191, 36, 0.08) 40%,
+        transparent 70%
+    );
+    transition: opacity 0.3s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .card:hover .holographicSheen {
+        opacity: 1;
+    }
+}
+
+/* ── 3. Wadah Gambar (1:1 Ratio) ── */
+.imageContainer {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #08080c;
+    overflow: hidden;
+}
+
+.image {
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .card:hover .image {
+        transform: scale(1.05) rotate(-0.5deg);
+    }
+}
+
+.imageSold {
+    filter: grayscale(70%) opacity(0.75);
+}
+
+.placeholderIcon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(212, 175, 55, 0.4);
+}
+
+/* Desktop multi-photo nav arrows */
+.navBtn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(13, 13, 18, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s, transform 0.15s;
+    z-index: 4;
+}
+
+.navBtnPrev { left: 6px; }
+.navBtnNext { right: 6px; }
+
+@media (hover: hover) and (pointer: fine) {
+    .card:hover .navBtn {
+        opacity: 0.9;
+    }
+    .navBtn:hover {
+        opacity: 1 !important;
+        background: rgba(212, 175, 55, 0.25);
+        transform: translateY(-50%) scale(1.08);
+    }
+}
+
+/* Multi-photo dot indicators */
+.cardDots {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+    pointer-events: auto;
+}
+
+.cardDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cardDotActive {
+    background: #fbbf24;
+    width: 14px;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.7);
+}
+
+/* Top Badges Bar */
+.topBadgeBar {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.topBadgeLeft,
+.topBadgeRight {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.vipPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #d4af37 0%, #f59e0b 100%);
+    color: #0d0d12;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.sparkleIcon {
+    font-size: 0.65rem;
+    color: #0d0d12;
+}
+
+.badgeVideo {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(13, 13, 18, 0.75);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-size: 0.58rem;
+    font-weight: 600;
+}
+
+.videoIcon {
+    width: 9px;
+    height: 9px;
+    color: #fbbf24;
+}
+
+.badgeSingleStock {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(13, 13, 18, 0.75);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #cbd5e1;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    font-size: 0.58rem;
+    font-weight: 600;
+}
+
+/* Sold overlay */
+.soldOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 8, 0.68);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+}
+
+.soldOverlayCircle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+/* ── 4. Area Konten Informasi (Proporsional & Seragam) ── */
+.contentContainer {
+    padding: 0.625rem 0.65rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    z-index: 2;
+}
+
+@media (min-width: 640px) {
+    .contentContainer {
+        padding: 0.75rem 0.85rem 0.85rem;
+    }
+}
+
+.taxonomyContainer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.taxonomyItem {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.taxonomyDot {
+    color: rgba(212, 175, 55, 0.6);
+    font-size: 0.65rem;
+}
+
+.title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.25rem;
+    transition: color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+    .title {
+        font-size: 0.95rem;
+        min-height: 2.4rem;
+        margin-bottom: 8px;
+    }
+}
+
+.card:hover .title {
+    color: #fbbf24;
+}
+
+/* ── 5. Baris Bawah (Harga di Kiri, Tombol Keranjang di Kanan) ── */
+.bottomRow {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 4px;
+}
+
+.priceCol {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.price {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #fbbf24;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
+}
+
+@media (min-width: 640px) {
+    .price {
+        font-size: 1.0625rem;
+    }
+}
+
+.statusMetaRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-height: 15px;
+}
+
+.soldCountText {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.soldBadgeMuted {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 500;
+    line-height: 1.2;
+    display: inline-block;
+}
+
+.wholesaleBadge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* Quick Add to Cart Button (Bottom Right) */
+.cartBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    z-index: 6;
+}
+
+@media (min-width: 640px) {
+    .cartBtn {
+        width: 34px;
+        height: 34px;
+    }
+}
+
+.cartBtn:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5) !important;
+    transform: translateY(-2px) scale(1.08);
+}
+
+.cartBtn:active {
+    transform: scale(0.9);
+}
+
+.cartIcon {
+    width: 15px;
+    height: 15px;
+    transition: transform 0.2s ease;
+}
+
+/* Accessibility & Touch Safe */
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .image,
+    .cartBtn {
+        transition: none !important;
+        transform: none !important;
+    }
+}

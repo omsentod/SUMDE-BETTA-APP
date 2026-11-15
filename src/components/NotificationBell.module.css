@@ -79,7 +79,7 @@
   right: 0;
   width: 380px;
   max-width: calc(100vw - 20px);
-  max-height: 520px;
+  max-height: min(85vh, 640px);
   background: var(--modal-bg, var(--bg-card));
   border: 1px solid var(--border-color);
   border-radius: 14px;
@@ -956,4 +956,300 @@
     left: 1rem;
     width: auto;
   }
+}
+
+/* ==========================================================================
+   VIP Chamber Notification Polish (Complete Color & Contrast Parity)
+   ========================================================================== */
+:global([data-vip="true"]) .trigger,
+:global(.vip-app-shell) .trigger {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .trigger:hover,
+:global(.vip-app-shell) .trigger:hover {
+  border-color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .dropdown,
+:global(.vip-app-shell) .dropdown {
+  background: #14141f !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(245, 158, 11, 0.12) !important;
+}
+
+:global([data-vip="true"]) .dropdownHeader,
+:global(.vip-app-shell) .dropdownHeader {
+  background: #101018 !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .dropdownTitle,
+:global(.vip-app-shell) .dropdownTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .iconBtn,
+:global(.vip-app-shell) .iconBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .iconBtn:hover,
+:global(.vip-app-shell) .iconBtn:hover {
+  color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+
+:global([data-vip="true"]) .readAllBtn,
+:global(.vip-app-shell) .readAllBtn {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .readAllBtn:hover:not(:disabled),
+:global(.vip-app-shell) .readAllBtn:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+
+:global([data-vip="true"]) .readAllBtn:disabled,
+:global(.vip-app-shell) .readAllBtn:disabled {
+  color: #64748b !important;
+}
+
+/* Tabs Bar */
+:global([data-vip="true"]) .tabsBar,
+:global(.vip-app-shell) .tabsBar {
+  background: #0f0f17 !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .tabBtn,
+:global(.vip-app-shell) .tabBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .tabBtn:hover,
+:global(.vip-app-shell) .tabBtn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global([data-vip="true"]) .tabActive,
+:global(.vip-app-shell) .tabActive {
+  color: #0d0d12 !important;
+  background: linear-gradient(135deg, #d97706, #fbbf24) !important;
+  font-weight: 700 !important;
+}
+
+:global([data-vip="true"]) .tabActive .tabPill,
+:global(.vip-app-shell) .tabActive .tabPill {
+  background: #0d0d12 !important;
+  color: #fbbf24 !important;
+}
+
+/* Single Items */
+:global([data-vip="true"]) .item,
+:global(.vip-app-shell) .item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #cbd5e1 !important;
+  background: transparent !important;
+}
+
+:global([data-vip="true"]) .item:hover,
+:global(.vip-app-shell) .item:hover {
+  background: rgba(245, 158, 11, 0.08) !important;
+}
+
+:global([data-vip="true"]) .itemUnread,
+:global(.vip-app-shell) .itemUnread {
+  background: rgba(245, 158, 11, 0.12) !important;
+}
+
+:global([data-vip="true"]) .itemCategory,
+:global(.vip-app-shell) .itemCategory {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .itemSeparator,
+:global(.vip-app-shell) .itemSeparator {
+  color: rgba(245, 158, 11, 0.4) !important;
+}
+
+:global([data-vip="true"]) .itemTime,
+:global(.vip-app-shell) .itemTime {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .itemTitleText,
+:global(.vip-app-shell) .itemTitleText {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+:global([data-vip="true"]) .itemBody,
+:global(.vip-app-shell) .itemBody {
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .thumbImage,
+:global(.vip-app-shell) .thumbImage {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  background: #181824 !important;
+}
+
+/* Group Notifications */
+:global([data-vip="true"]) .groupCard,
+:global(.vip-app-shell) .groupCard {
+  background: #171724 !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .groupHeader:hover,
+:global(.vip-app-shell) .groupHeader:hover {
+  background: rgba(245, 158, 11, 0.08) !important;
+}
+
+:global([data-vip="true"]) .groupTitle,
+:global(.vip-app-shell) .groupTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .groupCountBadge,
+:global(.vip-app-shell) .groupCountBadge {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+:global([data-vip="true"]) .groupDesc,
+:global(.vip-app-shell) .groupDesc {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .groupAccordion,
+:global(.vip-app-shell) .groupAccordion {
+  background: #111119 !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .subItemRow,
+:global(.vip-app-shell) .subItemRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .subItemRow:hover,
+:global(.vip-app-shell) .subItemRow:hover {
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+:global([data-vip="true"]) .subItemCode,
+:global(.vip-app-shell) .subItemCode {
+  color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+
+:global([data-vip="true"]) .subItemName,
+:global(.vip-app-shell) .subItemName {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .subItemTime,
+:global(.vip-app-shell) .subItemTime {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .subItemMore,
+:global(.vip-app-shell) .subItemMore {
+  color: #fbbf24 !important;
+}
+
+/* Limit Bar (5 / 10 / 15 selector) */
+:global([data-vip="true"]) .limitBar,
+:global(.vip-app-shell) .limitBar {
+  background: #101018 !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.2) !important;
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .limitLabel,
+:global(.vip-app-shell) .limitLabel {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .limitGroupLabel,
+:global(.vip-app-shell) .limitGroupLabel {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .limitBtn,
+:global(.vip-app-shell) .limitBtn {
+  background: #181824 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .limitBtn:hover,
+:global(.vip-app-shell) .limitBtn:hover {
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .limitBtnActive,
+:global(.vip-app-shell) .limitBtnActive {
+  background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+  color: #0d0d12 !important;
+  border-color: #fbbf24 !important;
+  font-weight: 700 !important;
+}
+
+/* Push Prompt Banner */
+:global([data-vip="true"]) .pushPrompt,
+:global(.vip-app-shell) .pushPrompt {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .pushPromptBtn,
+:global(.vip-app-shell) .pushPromptBtn {
+  background: #fbbf24 !important;
+  color: #0d0d12 !important;
+  font-weight: 700 !important;
+}
+
+/* Empty State */
+:global([data-vip="true"]) .emptyTitle,
+:global(.vip-app-shell) .emptyTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .emptyDesc,
+:global(.vip-app-shell) .emptyDesc {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .emptyIcon,
+:global(.vip-app-shell) .emptyIcon {
+  color: #fbbf24 !important;
+  opacity: 0.7 !important;
+}
+
+/* Dropdown Footer */
+:global([data-vip="true"]) .dropdownFooter,
+:global(.vip-app-shell) .dropdownFooter {
+  background: #101018 !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .footerLink,
+:global(.vip-app-shell) .footerLink {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .footerLink:hover,
+:global(.vip-app-shell) .footerLink:hover {
+  color: #ffffff !important;
 }

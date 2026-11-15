@@ -97,6 +97,34 @@
     color: var(--text-main);
 }
 
+.labelRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.useAccountBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: all 0.2s ease;
+}
+
+.useAccountBtn:hover {
+    background: var(--primary-glow);
+    border-style: solid;
+}
+
 .inputWrapper {
     position: relative;
     display: flex;
@@ -271,6 +299,17 @@
     font-size: 1.15rem;
     font-weight: 800;
     color: var(--text-main);
+    flex-wrap: wrap;
+}
+
+.resiHeaderTag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 6px;
 }
 
 .orderDate {

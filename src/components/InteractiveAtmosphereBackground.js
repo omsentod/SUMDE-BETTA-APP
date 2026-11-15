@@ -1,19 +1,20 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useVip } from '@/context/VipContext';
 import styles from './InteractiveAtmosphereBackground.module.css';
 
 export default function InteractiveAtmosphereBackground() {
     const pathname = usePathname() || '';
+    const { isVip } = useVip();
     const spotlightRef = useRef(null);
     const [isActive, setIsActive] = useState(false);
 
     // Determine current route context:
     // 1. Admin: ultra-quiet, minimal opacity for clean ERP tables
-    // 2. Body-focused (Login, Register, Forgot Password, Checkout, Customer Dashboard, Orders):
-    //    richer ambient depth, gold chamber atmosphere framing floating cards
-    // 3. Sectioned (Home, Catalog, About):
-    //    balanced atmospheric caustics framing section borders without visual clutter
+    // 2. VIP Salon: deep obsidian immersion, warm champagne gold caustics & shimmer
+    // 3. Body-focused: richer ambient depth
+    // 4. Sectioned: balanced atmospheric caustics
     const isAdmin = pathname.startsWith('/admin');
     const isBodyFocused =
         pathname.startsWith('/login') ||
@@ -27,6 +28,8 @@ export default function InteractiveAtmosphereBackground() {
 
     const modeClass = isAdmin
         ? styles.adminMode
+        : isVip
+        ? styles.vipMode
         : isBodyFocused
         ? styles.bodyFocusMode
         : styles.sectionedMode;

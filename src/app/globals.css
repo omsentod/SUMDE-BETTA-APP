@@ -3779,6 +3779,335 @@ select option,
 }
 
 /* ============================================================
+ * ✦ VIP PRIVATE SALON CURATORIAL THEME
+ * Cohesive Obsidian & Champagne Gold Architecture (Header to Footer)
+ * ============================================================ */
+
+body.vip-mode-active {
+    background-color: #08080c !important;
+    color: #f1f5f9 !important;
+}
+
+.vip-app-shell {
+    position: relative;
+    min-height: 100vh;
+    background: radial-gradient(ellipse 90% 50% at 50% -5%, rgba(245, 158, 11, 0.16), transparent 70%),
+                linear-gradient(180deg, #0d0d14 0%, #08080c 35%, #050508 100%) !important;
+    color: #f1f5f9;
+    transition: background 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vip-main-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* ── VIP Header Luxury Glass ── */
+[data-vip="true"] .header,
+.header.headerVip {
+    background: rgba(10, 10, 16, 0.88) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.28) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 158, 11, 0.08) !important;
+}
+
+[data-vip="true"] .header .logo-text,
+.headerVip .logo-text {
+    color: #ffffff !important;
+}
+
+[data-vip="true"] .header .logo-highlight,
+.headerVip .logo-highlight {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+}
+
+[data-vip="true"] .header .nav-links a,
+.headerVip .nav-links a {
+    color: #cbd5e1 !important;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+[data-vip="true"] .header .nav-links a:hover,
+.headerVip .nav-links a:hover {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+}
+
+[data-vip="true"] .header .header-action-btn,
+.headerVip .header-action-btn {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    color: #fbbf24 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-vip="true"] .header .header-action-btn:hover,
+.headerVip .header-action-btn:hover {
+    background: rgba(245, 158, 11, 0.2) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+}
+
+[data-vip="true"] .header .cart-badge,
+.headerVip .cart-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.6) !important;
+}
+
+[data-vip="true"] .header .mobile-menu-btn,
+.headerVip .mobile-menu-btn {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    color: #fbbf24 !important;
+}
+
+/* ── VIP Header Login & Profile Dropdown ── */
+[data-vip="true"] .header-login-btn,
+.headerVip .header-login-btn {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    color: #0d0d12 !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+}
+
+[data-vip="true"] .header-login-btn:hover,
+.headerVip .header-login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5) !important;
+}
+
+[data-vip="true"] .profile-dropdown,
+.headerVip .profile-dropdown {
+    background: #14141f !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.12) !important;
+}
+
+[data-vip="true"] .profile-dropdown-header,
+.headerVip .profile-dropdown-header {
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+    background: #101018;
+}
+
+[data-vip="true"] .profile-dropdown-name,
+.headerVip .profile-dropdown-name {
+    color: #ffffff !important;
+}
+
+[data-vip="true"] .profile-dropdown-role,
+.headerVip .profile-dropdown-role {
+    color: #fbbf24 !important;
+}
+
+[data-vip="true"] .profile-dropdown-item,
+.headerVip .profile-dropdown-item {
+    color: #cbd5e1 !important;
+}
+
+[data-vip="true"] .profile-dropdown-item:hover,
+.headerVip .profile-dropdown-item:hover {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #fbbf24 !important;
+}
+
+[data-vip="true"] .profile-dropdown-divider,
+.headerVip .profile-dropdown-divider {
+    background: rgba(245, 158, 11, 0.2) !important;
+}
+
+/* ── VIP Mobile Action Bar & Bottom-Sheet Filter Harmonization ── */
+[data-vip="true"] .mobileActionBar,
+.vipRoomContainer .mobileActionBar {
+    background: #14141f !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(245, 158, 11, 0.1) !important;
+}
+
+[data-vip="true"] .mobileActionBtn,
+.vipRoomContainer .mobileActionBtn {
+    color: #f1f5f9 !important;
+}
+
+[data-vip="true"] .mobileActionBtn svg,
+.vipRoomContainer .mobileActionBtn svg {
+    color: #fbbf24 !important;
+    opacity: 1 !important;
+}
+
+[data-vip="true"] .mobileActionBadge,
+.vipRoomContainer .mobileActionBadge {
+    background: #fbbf24 !important;
+    color: #0d0d12 !important;
+}
+
+[data-vip="true"] .mobileActionDivider,
+.vipRoomContainer .mobileActionDivider {
+    background: rgba(245, 158, 11, 0.25) !important;
+}
+
+[data-vip="true"] .mobileActionSelect,
+.vipRoomContainer .mobileActionSelect {
+    color: #f1f5f9 !important;
+    background: #14141f !important;
+}
+
+@media (max-width: 767px) {
+    .sidebar.sidebarVip {
+        background: #12121a !important;
+        border-top: 1px solid rgba(245, 158, 11, 0.35) !important;
+        box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.1) !important;
+    }
+
+    .sidebar.sidebarVip::before {
+        background: rgba(245, 158, 11, 0.4) !important;
+    }
+
+    .sidebar.sidebarVip .filterHeader {
+        background: #0f0f16 !important;
+        border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+    }
+
+    .sidebar.sidebarVip .filterCloseBtn {
+        background: rgba(245, 158, 11, 0.15) !important;
+        color: #fbbf24 !important;
+    }
+
+    .sidebar.sidebarVip .filterSheetFooter {
+        background: #0f0f16 !important;
+        border-top: 1px solid rgba(245, 158, 11, 0.2) !important;
+    }
+
+    .sidebar.sidebarVip .filterResetBtn {
+        border-color: rgba(245, 158, 11, 0.35) !important;
+        color: #cbd5e1 !important;
+    }
+
+    .sidebar.sidebarVip .filterResetBtn:hover:not(:disabled) {
+        background: rgba(245, 158, 11, 0.15) !important;
+        color: #fbbf24 !important;
+    }
+
+    .sidebar.sidebarVip .filterApplyBtn {
+        background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+        color: #0d0d12 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4) !important;
+    }
+
+    .sidebar.sidebarVip .divider {
+        border-color: rgba(245, 158, 11, 0.18) !important;
+    }
+
+    .sidebar.sidebarVip .checkboxInput {
+        accent-color: #fbbf24 !important;
+    }
+}
+
+[data-vip="true"] .mobile-nav-overlay,
+.mobile-nav-vip {
+    background: #0d0d14 !important;
+    border-left: 1px solid rgba(245, 158, 11, 0.28) !important;
+}
+
+[data-vip="true"] .mobile-nav-overlay .logo-text,
+.mobile-nav-vip .logo-text {
+    color: #ffffff !important;
+}
+
+[data-vip="true"] .mobile-nav-overlay .logo-highlight,
+.mobile-nav-vip .logo-highlight {
+    color: #fbbf24 !important;
+}
+
+[data-vip="true"] .mobile-nav-overlay .mobile-close-btn,
+.mobile-nav-vip .mobile-close-btn {
+    color: #fbbf24 !important;
+}
+
+[data-vip="true"] .mobile-nav-links .mobile-nav-link,
+.mobile-nav-vip .mobile-nav-links .mobile-nav-link {
+    color: #cbd5e1 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-vip="true"] .mobile-nav-links .mobile-nav-link:hover,
+.mobile-nav-vip .mobile-nav-links .mobile-nav-link:hover {
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+}
+
+/* ── VIP Footer Luxury Salon Finish ── */
+[data-vip="true"] .footer,
+.footer.footerVip {
+    background: linear-gradient(180deg, #0d0d14 0%, #050508 100%) !important;
+    border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6) !important;
+    color: #cbd5e1 !important;
+    margin-top: 0 !important;
+}
+
+[data-vip="true"] .footer .logo-text,
+.footerVip .logo-text {
+    color: #ffffff !important;
+}
+
+[data-vip="true"] .footer .logo-highlight,
+.footerVip .logo-highlight {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+}
+
+[data-vip="true"] .footer h4,
+.footerVip h4 {
+    color: #ffffff !important;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+[data-vip="true"] .footer p,
+.footerVip p {
+    color: #94a3b8 !important;
+}
+
+[data-vip="true"] .footer .footer-links a,
+.footerVip .footer-links a {
+    color: #94a3b8 !important;
+    transition: color 0.2s ease;
+}
+
+[data-vip="true"] .footer .footer-links a:hover,
+.footerVip .footer-links a:hover {
+    color: #fbbf24 !important;
+}
+
+[data-vip="true"] .footer .footer-contact-link,
+.footerVip .footer-contact-link {
+    color: #94a3b8 !important;
+}
+
+[data-vip="true"] .footer .footer-contact-link:hover,
+.footerVip .footer-contact-link:hover {
+    color: #fbbf24 !important;
+}
+
+[data-vip="true"] .footer .footer-contact-icon,
+.footerVip .footer-contact-icon {
+    color: #f59e0b !important;
+}
+
+[data-vip="true"] .footer .footer-bottom,
+.footerVip .footer-bottom {
+    border-top: 1px solid rgba(245, 158, 11, 0.15) !important;
+    color: #64748b !important;
+}
+
+/* ============================================================
  * PRINT MEDIA RULES (Standard Thermal 100mm x 150mm & Document Print)
  * ============================================================ */
 @media print {

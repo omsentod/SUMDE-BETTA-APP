@@ -27,6 +27,14 @@
   transform: scale(0.96);
 }
 
+@media (max-width: 767px) {
+  /* Di halaman detail produk mobile, trigger chat mengambang disembunyikan
+   * karena sudah menyatu langsung di dalam sticky bottom action bar */
+  .hiddenOnMobileProduct {
+    display: none !important;
+  }
+}
+
 .unreadBadge {
   position: absolute;
   top: -3px;
@@ -70,7 +78,7 @@
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
-  z-index: 550;
+  z-index: 1100;
   overflow: hidden;
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -338,6 +346,10 @@
 
 .bubbleCustomer .bubbleTime {
   color: rgba(255, 255, 255, 0.85);
+}
+
+.bubbleAdmin .bubbleTime {
+  color: var(--text-muted);
 }
 
 /* Card Attachment di Bubble */
@@ -900,6 +912,11 @@
   line-height: 1.4;
 }
 
+.composerInput::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
 .composerInput:focus {
   border-color: var(--primary);
 }
@@ -931,17 +948,25 @@
     right: 1rem;
     width: 50px;
     height: 50px;
+    z-index: 1010;
   }
 
   .chatWindow {
-    bottom: 0;
-    right: 0;
-    left: 0;
-    width: 100%;
-    height: 85vh;
-    max-height: 85vh;
-    border-radius: 20px 20px 0 0;
-    border-bottom: none;
+    position: fixed;
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    z-index: 1200 !important;
+  }
+
+  .composerArea {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
   }
 }
 
@@ -1408,4 +1433,591 @@
 
 .confirmModalBtnDelete:hover {
   opacity: 0.9;
+}
+
+/* ==========================================================================
+   VIP Dark Luxury Mode (Obsidian & Gold Chat Harmony)
+   ========================================================================== */
+:global([data-vip="true"]) .floatingTrigger,
+:global(.vip-app-shell) .floatingTrigger {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%) !important;
+  color: #0d0d12 !important;
+  border: 1px solid rgba(251, 191, 36, 0.5) !important;
+  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5), 0 0 16px rgba(251, 191, 36, 0.3) !important;
+}
+
+:global([data-vip="true"]) .floatingTrigger:hover,
+:global(.vip-app-shell) .floatingTrigger:hover {
+  transform: scale(1.08) !important;
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.7), 0 0 22px rgba(251, 191, 36, 0.45) !important;
+  filter: brightness(1.08) !important;
+}
+
+:global([data-vip="true"]) .floatingTrigger svg,
+:global(.vip-app-shell) .floatingTrigger svg {
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .unreadBadge,
+:global(.vip-app-shell) .unreadBadge {
+  background-color: #ef4444 !important;
+  border-color: #0d0d12 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+}
+
+:global([data-vip="true"]) .onlineIndicatorDot,
+:global(.vip-app-shell) .onlineIndicatorDot {
+  border-color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .chatWindow,
+:global(.vip-app-shell) .chatWindow {
+  background: #0d0d14 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(245, 158, 11, 0.12) !important;
+}
+
+:global([data-vip="true"]) .chatHeader,
+:global(.vip-app-shell) .chatHeader {
+  background: #141420 !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .farmAvatar,
+:global(.vip-app-shell) .farmAvatar {
+  background: #181827 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+:global([data-vip="true"]) .headerTitle,
+:global(.vip-app-shell) .headerTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .headerStatus,
+:global(.vip-app-shell) .headerStatus {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .closeBtn,
+:global(.vip-app-shell) .closeBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .closeBtn:hover,
+:global(.vip-app-shell) .closeBtn:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Banners */
+:global([data-vip="true"]) .offlineBanner,
+:global(.vip-app-shell) .offlineBanner {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25) !important;
+  color: #f8fafc !important;
+}
+
+:global([data-vip="true"]) .waFallbackLink,
+:global(.vip-app-shell) .waFallbackLink {
+  color: #4ade80 !important;
+}
+
+:global([data-vip="true"]) .guestBanner,
+:global(.vip-app-shell) .guestBanner {
+  background-color: #12121d !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2) !important;
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .guestLoginLink,
+:global(.vip-app-shell) .guestLoginLink {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .adminConnectedBanner,
+:global(.vip-app-shell) .adminConnectedBanner {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+}
+
+/* Messages Container & Empty State */
+:global([data-vip="true"]) .messagesContainer,
+:global(.vip-app-shell) .messagesContainer {
+  background-color: #09090f !important;
+}
+
+:global([data-vip="true"]) .emptyState,
+:global(.vip-app-shell) .emptyState {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .emptyTitle,
+:global(.vip-app-shell) .emptyTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .emptySubtitle,
+:global(.vip-app-shell) .emptySubtitle {
+  color: #94a3b8 !important;
+}
+
+/* Bubbles */
+:global([data-vip="true"]) .bubbleCustomer,
+:global(.vip-app-shell) .bubbleCustomer {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%) !important;
+  color: #0d0d12 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleTime,
+:global(.vip-app-shell) .bubbleCustomer .bubbleTime,
+:global([data-vip="true"]) .bubbleCustomer .bubbleEdited,
+:global(.vip-app-shell) .bubbleCustomer .bubbleEdited,
+:global([data-vip="true"]) .bubbleCustomer .deletedMessage,
+:global(.vip-app-shell) .bubbleCustomer .deletedMessage {
+  color: rgba(13, 13, 18, 0.75) !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleCard,
+:global(.vip-app-shell) .bubbleCustomer .bubbleCard {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(0, 0, 0, 0.25) !important;
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleCardName,
+:global(.vip-app-shell) .bubbleCustomer .bubbleCardName {
+  color: #0d0d12 !important;
+  font-weight: 700 !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleCardSub,
+:global(.vip-app-shell) .bubbleCustomer .bubbleCardSub {
+  color: rgba(13, 13, 18, 0.8) !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleOrderCard,
+:global(.vip-app-shell) .bubbleCustomer .bubbleOrderCard {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(0, 0, 0, 0.25) !important;
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleOrderNumber,
+:global(.vip-app-shell) .bubbleCustomer .bubbleOrderNumber {
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleStatusBadge,
+:global(.vip-app-shell) .bubbleCustomer .bubbleStatusBadge {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .bubbleCustomer .bubbleOrderActionLink,
+:global(.vip-app-shell) .bubbleCustomer .bubbleOrderActionLink {
+  background: rgba(0, 0, 0, 0.25) !important;
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin,
+:global(.vip-app-shell) .bubbleAdmin {
+  background-color: #151522 !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleTime,
+:global(.vip-app-shell) .bubbleAdmin .bubbleTime,
+:global([data-vip="true"]) .bubbleAdmin .bubbleEdited,
+:global(.vip-app-shell) .bubbleAdmin .bubbleEdited,
+:global([data-vip="true"]) .bubbleAdmin .deletedMessage,
+:global(.vip-app-shell) .bubbleAdmin .deletedMessage {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleCard,
+:global(.vip-app-shell) .bubbleAdmin .bubbleCard {
+  background: #0d0d14 !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+  color: #f8fafc !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleCardName,
+:global(.vip-app-shell) .bubbleAdmin .bubbleCardName {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleCardSub,
+:global(.vip-app-shell) .bubbleAdmin .bubbleCardSub {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleOrderCard,
+:global(.vip-app-shell) .bubbleAdmin .bubbleOrderCard {
+  background: #0d0d14 !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+  color: #f8fafc !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleOrderNumber,
+:global(.vip-app-shell) .bubbleAdmin .bubbleOrderNumber {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleStatusBadge,
+:global(.vip-app-shell) .bubbleAdmin .bubbleStatusBadge {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .bubbleOrderActionLink,
+:global(.vip-app-shell) .bubbleAdmin .bubbleOrderActionLink {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .orderIconBox,
+:global(.vip-app-shell) .bubbleAdmin .orderIconBox {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .bubbleAdmin .autoReplyBadge,
+:global(.vip-app-shell) .bubbleAdmin .autoReplyBadge {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+:global([data-vip="true"]) .adminBubbleAvatar,
+:global(.vip-app-shell) .adminBubbleAvatar {
+  background: #151522 !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+:global([data-vip="true"]) .typingBubble,
+:global(.vip-app-shell) .typingBubble {
+  background-color: #151522 !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .typingText,
+:global(.vip-app-shell) .typingText {
+  color: #94a3b8 !important;
+}
+
+/* Shopee Template Suggestion Bubbles */
+:global([data-vip="true"]) .shopeeTemplateBubble,
+:global(.vip-app-shell) .shopeeTemplateBubble {
+  background-color: #181827 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  border-right: 3px solid #fbbf24 !important;
+  color: #f1f5f9 !important;
+}
+
+:global([data-vip="true"]) .shopeeTemplateBubble:hover,
+:global(.vip-app-shell) .shopeeTemplateBubble:hover {
+  background-color: #222236 !important;
+  border-color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .shopeeTemplateText,
+:global(.vip-app-shell) .shopeeTemplateText {
+  color: #f1f5f9 !important;
+}
+
+:global([data-vip="true"]) .shopeeTemplateAction,
+:global(.vip-app-shell) .shopeeTemplateAction {
+  color: #fbbf24 !important;
+}
+
+/* Composer Area */
+:global([data-vip="true"]) .composerArea,
+:global(.vip-app-shell) .composerArea {
+  background-color: #11111a !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .composerInput,
+:global(.vip-app-shell) .composerInput {
+  background-color: #171724 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .composerInput:focus,
+:global(.vip-app-shell) .composerInput:focus {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .composerInput::placeholder,
+:global(.vip-app-shell) .composerInput::placeholder {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .sendBtn,
+:global(.vip-app-shell) .sendBtn {
+  background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+  color: #0d0d12 !important;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3) !important;
+}
+
+:global([data-vip="true"]) .sendBtn:disabled,
+:global(.vip-app-shell) .sendBtn:disabled {
+  opacity: 0.45 !important;
+}
+
+/* Editing Banner */
+:global([data-vip="true"]) .editingBanner,
+:global(.vip-app-shell) .editingBanner {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+  border-left: 3px solid #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .editingBannerIcon,
+:global(.vip-app-shell) .editingBannerIcon,
+:global([data-vip="true"]) .editingBannerTitle,
+:global(.vip-app-shell) .editingBannerTitle {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .editingBannerPreview,
+:global(.vip-app-shell) .editingBannerPreview {
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .editingCancelBtn,
+:global(.vip-app-shell) .editingCancelBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .editingCancelBtn:hover,
+:global(.vip-app-shell) .editingCancelBtn:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Quick Templates Bar */
+:global([data-vip="true"]) .quickTemplatesBarTitleBtn,
+:global(.vip-app-shell) .quickTemplatesBarTitleBtn {
+  background: #171724 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .quickTemplatesBarTitleBtn:hover,
+:global(.vip-app-shell) .quickTemplatesBarTitleBtn:hover,
+:global([data-vip="true"]) .quickTitleBtnActive,
+:global(.vip-app-shell) .quickTitleBtnActive {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .quickTemplateChip,
+:global(.vip-app-shell) .quickTemplateChip {
+  background-color: #171724 !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  color: #e2e8f0 !important;
+}
+
+:global([data-vip="true"]) .quickTemplateChip:hover,
+:global(.vip-app-shell) .quickTemplateChip:hover {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+/* Expanded Templates Card */
+:global([data-vip="true"]) .customerExpandedTemplatesCard,
+:global(.vip-app-shell) .customerExpandedTemplatesCard {
+  background-color: #12121d !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+:global([data-vip="true"]) .customerExpandedTemplatesHeader,
+:global(.vip-app-shell) .customerExpandedTemplatesHeader {
+  border-bottom-color: rgba(245, 158, 11, 0.2) !important;
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .customerExpandedHeaderTitle,
+:global(.vip-app-shell) .customerExpandedHeaderTitle {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .customerExpandedTemplateItem,
+:global(.vip-app-shell) .customerExpandedTemplateItem {
+  background-color: #181827 !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+:global([data-vip="true"]) .customerExpandedTemplateItem:hover,
+:global(.vip-app-shell) .customerExpandedTemplateItem:hover {
+  background-color: #202033 !important;
+  border-color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .customerExpandedChipLabel,
+:global(.vip-app-shell) .customerExpandedChipLabel,
+:global([data-vip="true"]) .customerExpandedSendAction,
+:global(.vip-app-shell) .customerExpandedSendAction {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .customerExpandedFullText,
+:global(.vip-app-shell) .customerExpandedFullText {
+  color: #f1f5f9 !important;
+}
+
+/* Attached Cards */
+:global([data-vip="true"]) .shopeeAttachedCard,
+:global(.vip-app-shell) .shopeeAttachedCard {
+  background-color: #151522 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+:global([data-vip="true"]) .shopeeAttachedTitle,
+:global(.vip-app-shell) .shopeeAttachedTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .shopeeAttachedSubtitle,
+:global(.vip-app-shell) .shopeeAttachedSubtitle {
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .shopeeSendOrderBtn,
+:global(.vip-app-shell) .shopeeSendOrderBtn {
+  background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+  color: #0d0d12 !important;
+}
+
+:global([data-vip="true"]) .shopeeDismissBtn,
+:global(.vip-app-shell) .shopeeDismissBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .shopeeDismissBtn:hover,
+:global(.vip-app-shell) .shopeeDismissBtn:hover {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .draftContextBar,
+:global(.vip-app-shell) .draftContextBar {
+  background-color: #151522 !important;
+  border-top: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .draftContextTitle,
+:global(.vip-app-shell) .draftContextTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .dismissDraftBtn,
+:global(.vip-app-shell) .dismissDraftBtn {
+  color: #94a3b8 !important;
+}
+
+/* Selection Mode */
+:global([data-vip="true"]) .selectionBar,
+:global(.vip-app-shell) .selectionBar {
+  background-color: #141420 !important;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+:global([data-vip="true"]) .selectionCloseBtn,
+:global(.vip-app-shell) .selectionCloseBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .selectionCloseBtn:hover,
+:global(.vip-app-shell) .selectionCloseBtn:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global([data-vip="true"]) .selectionCount,
+:global(.vip-app-shell) .selectionCount {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .selectionActionBtn,
+:global(.vip-app-shell) .selectionActionBtn {
+  background-color: #1a1a29 !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  color: #e2e8f0 !important;
+}
+
+:global([data-vip="true"]) .selectionActionBtn:hover:not(:disabled),
+:global(.vip-app-shell) .selectionActionBtn:hover:not(:disabled) {
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .bubbleRowSelectMode:hover,
+:global(.vip-app-shell) .bubbleRowSelectMode:hover {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+}
+
+:global([data-vip="true"]) .bubbleRowSelected,
+:global(.vip-app-shell) .bubbleRowSelected {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+
+:global([data-vip="true"]) .bubbleMenuDropdown,
+:global(.vip-app-shell) .bubbleMenuDropdown {
+  background-color: #181827 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+:global([data-vip="true"]) .bubbleMenuItem,
+:global(.vip-app-shell) .bubbleMenuItem {
+  color: #f1f5f9 !important;
+}
+
+:global([data-vip="true"]) .bubbleMenuItem:hover,
+:global(.vip-app-shell) .bubbleMenuItem:hover {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+}
+
+:global([data-vip="true"]) .confirmModalBox,
+:global(.vip-app-shell) .confirmModalBox {
+  background-color: #151522 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75) !important;
+}
+
+:global([data-vip="true"]) .confirmModalTitle,
+:global(.vip-app-shell) .confirmModalTitle {
+  color: #ffffff !important;
+}
+
+:global([data-vip="true"]) .confirmModalDesc,
+:global(.vip-app-shell) .confirmModalDesc {
+  color: #94a3b8 !important;
+}
+
+:global([data-vip="true"]) .confirmModalBtnCancel,
+:global(.vip-app-shell) .confirmModalBtnCancel {
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  color: #cbd5e1 !important;
+}
+
+:global([data-vip="true"]) .confirmModalBtnCancel:hover,
+:global(.vip-app-shell) .confirmModalBtnCancel:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
 }

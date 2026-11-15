@@ -1,10 +1,14 @@
+'use client';
 import Link from 'next/link';
 import { CONTACT, waLink, WA_DEFAULT_MESSAGE } from '@/lib/constants';
+import { useVip } from '@/context/VipContext';
 
-export default function Footer() {
+export default function Footer({ isVip: isVipProp }) {
+    const vipContext = useVip();
+    const isVip = isVipProp ?? vipContext.isVip;
     const currentYear = new Date().getFullYear();
     return (
-        <footer className="footer">
+        <footer className={`footer ${isVip ? 'footerVip' : ''}`}>
             <div className="container">
                 <div className="footer-content">
                     <div className="footer-brand">

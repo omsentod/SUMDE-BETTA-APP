@@ -341,6 +341,11 @@ function AdminChatInner() {
 
     async function initAbly() {
       try {
+        const statusRes = await fetch('/api/ably/status');
+        if (!statusRes.ok || cancelled) return;
+        const { enabled } = await statusRes.json();
+        if (!enabled || cancelled) return;
+
         ablyClient = new Ably.Realtime({
           authUrl: '/api/chat/auth',
           authMethod: 'GET',
