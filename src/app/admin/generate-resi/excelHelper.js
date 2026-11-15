@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx';
-
 /**
  * Menghasilkan Reference ID yang 100% UNIK (Collision-Proof).
  * Struktur:
@@ -37,8 +35,11 @@ export function generateAutoTrackingCode(prefix = 'REF-OFF', existingIds = []) {
  * Mengunduh file template Excel (.xlsx) untuk cetak resi offline massal.
  * Hanya memuat 4 kolom esensial: Nama, No Telepon, Alamat Lengkap, dan Kurir.
  * Reference ID akan di-generate otomatis oleh sistem saat impor.
+ * Menggunakan dynamic import 'xlsx' agar tidak membebani initial chunk bundle (~400KB).
  */
-export function downloadOfflineWaybillTemplate() {
+export async function downloadOfflineWaybillTemplate() {
+  const XLSX = await import('xlsx');
+
   const sampleData = [
     {
       'Nama Penerima': 'Budi Santoso',
@@ -76,8 +77,11 @@ export function downloadOfflineWaybillTemplate() {
 /**
  * Membaca file Excel (.xlsx / .xls / .csv) dan mengekstrak daftar resi offline.
  * Menghasilkan Reference ID 100% unik dan berurutan per baris impor.
+ * Menggunakan dynamic import 'xlsx' agar tidak membebani initial chunk bundle.
  */
-export function parseOfflineWaybillsExcel(file) {
+export async function parseOfflineWaybillsExcel(file) {
+  const XLSX = await import('xlsx');
+
   return new Promise((resolve, reject) => {
     if (!file) {
       reject(new Error('File tidak ditemukan.'));

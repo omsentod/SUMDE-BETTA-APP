@@ -9,9 +9,15 @@ function ProgressBarInner() {
     const searchParams = useSearchParams();
     const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'complete' | 'fade'
     const isFirstMount = useRef(true);
+    const loadingTimeoutRef = useRef(null);
 
     // Route updated -> finish animation to 100% then fade out
     useEffect(() => {
+        if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+            loadingTimeoutRef.current = null;
+        }
+
         if (isFirstMount.current) {
             isFirstMount.current = false;
             return;
@@ -31,6 +37,45 @@ function ProgressBarInner() {
             clearTimeout(resetTimer);
         };
     }, [pathname, searchParams]);
+
+    // Global listener: Cegah loading bar menggantung jika terjadi error runtime / ChunkLoadError
+    useEffect(() => {
+        const handleChunkError = (eventOrError) => {
+            const error = eventOrError?.error || eventOrError?.reason || eventOrError;
+            const message = error?.message || (typeof eventOrError === 'string' ? eventOrError : '');
+            const isChunkError =
+                error?.name === 'ChunkLoadError' ||
+                /loading chunk/i.test(message) ||
+                /chunkloaderror/i.test(message);
+
+            if (isChunkError && typeof window !== 'undefined') {
+                const retryKey = 'sumde_chunk_reload_cooldown';
+                const lastRetry = sessionStorage.getItem(retryKey);
+                const now = Date.now();
+                // Cooldown 15 detik agar tidak reload berulang jika ada kendala jaringan sungguhan
+                if (!lastRetry || now - parseInt(lastRetry, 10) > 15000) {
+                    sessionStorage.setItem(retryKey, String(now));
+                    window.location.reload();
+                    return;
+                }
+            }
+
+            // Jika error lain, batalkan status loading bar agar tidak stuck di layar
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+                loadingTimeoutRef.current = null;
+            }
+            setStatus('idle');
+        };
+
+        window.addEventListener('error', handleChunkError);
+        window.addEventListener('unhandledrejection', handleChunkError);
+
+        return () => {
+            window.removeEventListener('error', handleChunkError);
+            window.removeEventListener('unhandledrejection', handleChunkError);
+        };
+    }, []);
 
     // Intercept navigation link clicks globally
     useEffect(() => {
@@ -70,12 +115,19 @@ function ProgressBarInner() {
 
             // Immediately start loading indicator
             setStatus('loading');
+
+            // Safety timeout: jika navigasi terhambat atau chunk macet, jangan biarkan bar ngehang selamanya
+            if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+            loadingTimeoutRef.current = setTimeout(() => {
+                setStatus('idle');
+            }, 5000);
         };
 
         document.addEventListener('click', handleClick);
 
         return () => {
             document.removeEventListener('click', handleClick);
+            if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
         };
     }, []);
 

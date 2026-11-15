@@ -4,9 +4,33 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 
 export default function RootGlobalError({ error, reset }) {
+  const isChunkError =
+    error?.name === 'ChunkLoadError' ||
+    /loading chunk/i.test(error?.message || '') ||
+    /chunkloaderror/i.test(error?.message || '');
+
   useEffect(() => {
     console.error('Root global error:', error);
-  }, [error]);
+
+    // Auto-recover jika ChunkLoadError terjadi akibat rilis/deploy baru di Hostinger
+    if (isChunkError && typeof window !== 'undefined') {
+      const retryKey = 'sumde_chunk_reload_cooldown';
+      const lastRetry = sessionStorage.getItem(retryKey);
+      const now = Date.now();
+      if (!lastRetry || now - parseInt(lastRetry, 10) > 15000) {
+        sessionStorage.setItem(retryKey, String(now));
+        window.location.reload();
+      }
+    }
+  }, [error, isChunkError]);
+
+  const handleReload = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    } else {
+      reset();
+    }
+  };
   return (
     <html lang="id">
       <body style={{
@@ -80,7 +104,7 @@ export default function RootGlobalError({ error, reset }) {
           </p>
 
           <button
-            onClick={() => reset()}
+            onClick={handleReload}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

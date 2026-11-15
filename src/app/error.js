@@ -5,10 +5,34 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function GlobalErrorPage({ error, reset }) {
+  const isChunkError =
+    error?.name === 'ChunkLoadError' ||
+    /loading chunk/i.test(error?.message || '') ||
+    /chunkloaderror/i.test(error?.message || '');
+
   useEffect(() => {
     // Log the error to console for monitoring
     console.error('App runtime error caught by boundary:', error);
-  }, [error]);
+
+    // Auto-recover jika ChunkLoadError terjadi akibat rilis/deploy baru di Hostinger
+    if (isChunkError && typeof window !== 'undefined') {
+      const retryKey = 'sumde_chunk_reload_cooldown';
+      const lastRetry = sessionStorage.getItem(retryKey);
+      const now = Date.now();
+      if (!lastRetry || now - parseInt(lastRetry, 10) > 15000) {
+        sessionStorage.setItem(retryKey, String(now));
+        window.location.reload();
+      }
+    }
+  }, [error, isChunkError]);
+
+  const handleReload = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    } else {
+      reset();
+    }
+  };
 
   return (
     <div style={{
@@ -79,7 +103,7 @@ export default function GlobalErrorPage({ error, reset }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
-            onClick={() => reset()}
+            onClick={handleReload}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -95,7 +119,7 @@ export default function GlobalErrorPage({ error, reset }) {
               boxShadow: '0 4px 14px rgba(212, 175, 55, 0.25)',
             }}
           >
-            Coba Muat Ulang
+            Muat Ulang Halaman
           </button>
 
           <Link

@@ -275,12 +275,12 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
             <div className={styles.section}>
               <div className={styles.sectionTitle}>Ringkasan</div>
               {can('dashboard:view') && (
-                <Link href="/admin/dashboard" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/dashboard') ? styles.linkActive : ''}`.trim()}>
+                <Link href="/admin/dashboard" prefetch={false} onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/dashboard') ? styles.linkActive : ''}`.trim()}>
                   <span className={styles.linkContent}>{iconDashboard}<span className={styles.linkLabel}>Dashboard</span></span>
                 </Link>
               )}
               {can('reports:view') && (
-                <Link href="/admin/reports" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/reports') ? styles.linkActive : ''}`.trim()}>
+                <Link href="/admin/reports" prefetch={false} onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/reports') ? styles.linkActive : ''}`.trim()}>
                   <span className={styles.linkContent}>{iconReports}<span className={styles.linkLabel}>Laporan Penjualan</span></span>
                 </Link>
               )}
@@ -313,6 +313,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
                         <Link
                           key={it.href}
                           href={it.href}
+                          prefetch={false}
                           onClick={() => setOpen(false)}
                           className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
                         >
@@ -330,6 +331,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
               {(can('shipping:packing') || can('shipping:manage') || can('orders:view')) && (
                 <Link
                   href="/admin/packing"
+                  prefetch={false}
                   onClick={() => setOpen(false)}
                   className={`${styles.link} ${isActive('/admin/packing') ? styles.linkActive : ''}`.trim()}
                 >
@@ -344,6 +346,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
               {(can('shipping:label') || can('shipping:manage') || can('shipping:view') || can('orders:view')) && (
                 <Link
                   href="/admin/generate-resi"
+                  prefetch={false}
                   onClick={() => setOpen(false)}
                   className={`${styles.link} ${isActive('/admin/generate-resi') ? styles.linkActive : ''}`.trim()}
                 >
@@ -357,6 +360,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
               {can('chat:view') && (
                 <Link
                   href="/admin/chat"
+                  prefetch={false}
                   onClick={() => setOpen(false)}
                   className={`${styles.link} ${isActive('/admin/chat') ? styles.linkActive : ''}`.trim()}
                 >
@@ -374,12 +378,12 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
             <div className={styles.section}>
               <div className={styles.sectionTitle}>Master Data</div>
               {can('products:view') && (
-                <Link href="/admin/products" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
+                <Link href="/admin/products" prefetch={false} onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/products') ? styles.linkActive : ''}`.trim()}>
                   <span className={styles.linkContent}>{iconProducts}<span className={styles.linkLabel}>Produk</span></span>
                 </Link>
               )}
               {(can('users:view') || can('roles:view')) && (
-                <Link href="/admin/users" onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
+                <Link href="/admin/users" prefetch={false} onClick={() => setOpen(false)} className={`${styles.link} ${isActive('/admin/users') ? styles.linkActive : ''}`.trim()}>
                   <span className={styles.linkContent}>{iconUsers}<span className={styles.linkLabel}>User & Role</span></span>
                 </Link>
               )}
@@ -408,6 +412,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
                         <Link
                           key={it.href}
                           href={it.href}
+                          prefetch={false}
                           onClick={() => setOpen(false)}
                           className={`${styles.link} ${styles.subLink} ${it.active ? styles.linkActive : ''}`.trim()}
                         >
@@ -427,6 +432,7 @@ function AdminSidebarInner({ open: controlledOpen, onClose }) {
             <div className={styles.bottomSection}>
               <Link
                 href="/admin/recycle-bin"
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className={`${styles.link} ${isActive('/admin/recycle-bin') ? styles.linkActive : ''}`.trim()}
               >
