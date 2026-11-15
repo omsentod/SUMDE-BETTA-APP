@@ -405,9 +405,6 @@
 }
 
 @media (max-width: 767px) {
-    .section {
-        padding: 5.5rem 0 calc(135px + env(safe-area-inset-bottom, 0));
-    }
     .grid {
         gap: 1.25rem;
     }
@@ -452,13 +449,6 @@
     .infoColumn {
         display: flex;
         flex-direction: column;
-    }
-
-    /* Harga geser ke posisi paling atas info column — visually tepat di bawah
-     * gambar (karena image ada di kolom atasnya saat stacked). */
-    .infoColumn > .priceBlock {
-        order: -1;
-        margin-top: 0.5rem;
     }
 
     /* Hide badge "Edisi #xxx — Category" di mobile; langsung nama produk saja. */
@@ -644,22 +634,76 @@
 
 /* --- Size picker --- */
 .sizeSection {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.25rem;
     color: var(--text-main);
 }
 
+.sizeHeaderRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+    flex-wrap: wrap;
+}
+
 .sizeHeader {
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1rem;
+    letter-spacing: 0.05em;
+    color: var(--text-main);
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.sizeHeaderChosen {
+    color: var(--primary);
+    font-weight: 700;
+    text-transform: none;
+    font-size: 0.8125rem;
+}
+
+.sizeHeaderPrompt {
     color: var(--text-muted);
-    margin: 0 0 1rem 0;
+    font-weight: 500;
+    text-transform: none;
+    font-size: 0.75rem;
+}
+
+.sizeInlineError {
+    color: #ef4444;
+    font-size: 0.75rem;
     font-weight: 600;
+    animation: variantAttention 0.35s ease;
+}
+
+.sizeStockIndicator {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+@keyframes variantAttention {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+
+.sizeSectionInvalid {
+    animation: variantAttention 0.4s ease-in-out;
+}
+
+.sizeSectionInvalid .sizeList .sizeBtn:not(.sizeBtnSelected):not(.sizeBtnOut) {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1px #ef4444;
 }
 
 .sizeList {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.65rem;
     flex-wrap: wrap;
 }
 
@@ -670,18 +714,18 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.2rem;
-    min-width: 5.5rem;
-    padding: 0.65rem 1.25rem;
+    gap: 0.15rem;
+    min-width: 4.8rem;
+    padding: 0.5rem 0.95rem;
     background: var(--bg-card);
     border: 1.5px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 10px;
     color: var(--text-main);
     cursor: pointer;
-    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
-                border-color 0.2s ease,
-                background-color 0.2s ease,
-                box-shadow 0.2s ease;
+    transition: transform 0.15s ease,
+                border-color 0.15s ease,
+                background-color 0.15s ease,
+                box-shadow 0.15s ease;
     position: relative;
     text-align: center;
 }
@@ -689,7 +733,7 @@
 .sizeBtn:hover:not(:disabled):not(.sizeBtnSelected) {
     border-color: var(--primary);
     background: color-mix(in oklab, var(--primary) 8%, var(--bg-card));
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
 }
 
@@ -718,13 +762,13 @@
 
 .sizeLabel {
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     line-height: 1.2;
     color: inherit;
 }
 
 .sizePrice {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--primary);
     line-height: 1.2;
@@ -737,7 +781,7 @@
 }
 
 .sizeStock {
-    font-size: 0.6875rem;
+    font-size: 0.65rem;
     color: var(--text-muted);
     line-height: 1.2;
     margin-top: 1px;
@@ -759,38 +803,34 @@
     font-size: 0.85rem;
 }
 
-.sizeSectionInvalid .sizeList .sizeBtn:not(.sizeBtnSelected):not(.sizeBtnOut) {
-    border-color: #ef4444;
-}
-
 /* --- Quantity & Wholesale (Partai) Section --- */
 .purchaseConfigSection {
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.75rem;
 }
 
 .quantityBlock {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.85rem 1.15rem;
+    gap: 0.75rem;
+    padding: 0.45rem 0.85rem;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 10px;
 }
 
 .quantityLabelCol {
     display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
+    align-items: baseline;
+    gap: 0.4rem;
 }
 
 .quantityLabel {
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-size: 0.8125rem;
+    font-weight: 600;
     color: var(--text-main);
 }
 
@@ -852,13 +892,14 @@
     align-items: center;
     border: 1px solid var(--border-color);
     background: var(--input-bg);
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
+    height: 30px;
 }
 
 .qtyBtn {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -866,7 +907,7 @@
     border: none;
     color: var(--text-main);
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
     transition: background 0.15s ease, color 0.15s ease;
 }
@@ -882,19 +923,33 @@
 }
 
 .qtyInput {
-    width: 52px;
-    height: 36px;
+    width: 40px;
+    height: 30px;
     border: none;
     border-left: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
     background: transparent;
     text-align: center;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     font-weight: 700;
     color: var(--text-main);
     outline: none;
     -moz-appearance: textfield;
+}
+
+.descriptionSection {
+    margin-top: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.sectionHeadingMini {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 0 0 0.4rem 0;
 }
 
 .qtyInput::-webkit-outer-spin-button,
@@ -1021,12 +1076,13 @@
     .tierBtn {
         flex-direction: row;
         justify-content: space-between;
-        padding: 0.6rem 0.85rem;
+        padding: 0.5rem 0.75rem;
     }
     .quantityBlock {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.65rem;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.4rem 0.75rem;
     }
 }
 
@@ -2298,6 +2354,220 @@
     }
 }
 
+/* ==========================================================================
+   MOBILE COMPACT OVERHAUL — Shopee-parity layout (≤767px)
+   ========================================================================== */
 
+@media (max-width: 767px) {
+    /* 1. Section padding-top — aman di bawah mobile navbar (75px) */
+    .section,
+    .sectionVip {
+        padding-top: calc(75px + 1rem) !important;
+        padding-bottom: calc(75px + env(safe-area-inset-bottom, 0)) !important;
+    }
 
+    /* 2. Grid gap antar gallery dan info column */
+    .grid {
+        gap: 0.65rem;
+    }
+
+    /* 3. Breadcrumb bar margin-bottom & font */
+    .standardBreadcrumbBar,
+    .vipBreadcrumbBar {
+        margin-bottom: 0.65rem !important;
+        font-size: 0.775rem !important;
+    }
+
+    .standardBackBtn,
+    .vipBackBtn {
+        font-size: 0.75rem !important;
+        padding: 4px 10px !important;
+    }
+
+    /* 4. Title font lebih proporsional di mobile */
+    .title {
+        font-size: clamp(1.15rem, 4.5vw, 1.4rem);
+        margin: 0 0 0.35rem 0;
+        line-height: 1.25;
+    }
+
+    /* 5. Price row compact */
+    .priceRow {
+        margin-bottom: 0.45rem;
+        gap: 0.5rem;
+    }
+
+    .priceBlock {
+        padding: 0.45rem 0.75rem;
+    }
+
+    .priceAmount {
+        font-size: 1.5rem;
+    }
+
+    .originalPrice {
+        font-size: 1rem;
+    }
+
+    .soldBadgeTag {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+    }
+
+    /* 6. Size / Varian Section di Mobile (Shopee-Style Chips) */
+    .sizeSection {
+        margin-bottom: 0.55rem;
+    }
+
+    .sizeHeaderRow {
+        margin-bottom: 0.4rem;
+    }
+
+    .sizeHeader {
+        font-size: 0.75rem;
+    }
+
+    .sizeList {
+        gap: 0.45rem;
+    }
+
+    .sizeBtn {
+        min-width: 3.8rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 8px;
+        gap: 0.1rem;
+    }
+
+    .sizeLabel {
+        font-size: 0.8125rem;
+    }
+
+    .sizePrice {
+        font-size: 0.6875rem;
+    }
+
+    .sizeStock {
+        font-size: 0.625rem;
+    }
+
+    /* 7. Quantity Block — Selalu 1 Baris Sejajar Kompak */
+    .purchaseConfigSection {
+        gap: 0.45rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .quantityBlock {
+        padding: 0.35rem 0.65rem;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        border-radius: 8px;
+    }
+
+    .quantityLabel {
+        font-size: 0.775rem;
+    }
+
+    .quantityStockText {
+        font-size: 0.7rem;
+    }
+
+    .quantityControls {
+        height: 28px;
+    }
+
+    .qtyBtn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.95rem;
+    }
+
+    .qtyInput {
+        width: 36px;
+        height: 28px;
+        font-size: 0.8125rem;
+    }
+
+    /* 8. Description Section compact */
+    .descriptionSection {
+        margin-top: 0.4rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .sectionHeadingMini {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .description {
+        font-size: 0.85rem;
+        line-height: 1.55;
+        margin-bottom: 0.65rem;
+    }
+
+    /* 9. Meta card (Spesifikasi) compact */
+    .metaCard {
+        padding: 0.65rem 0.85rem;
+        gap: 0.65rem;
+        margin-bottom: 0.65rem;
+        border-radius: 10px;
+    }
+
+    .metaLabel {
+        font-size: 0.65rem;
+    }
+
+    .metaValue {
+        font-size: 0.9rem;
+    }
+
+    /* 10. Authenticity box compact */
+    .authenticityBoxSample,
+    .authenticityBoxPremium {
+        margin-bottom: 0.65rem;
+        padding: 0.65rem 0.85rem;
+        border-radius: 10px;
+    }
+
+    .authenticityTitle {
+        font-size: 0.8125rem;
+    }
+
+    .authenticityDesc {
+        font-size: 0.775rem;
+        line-height: 1.45;
+    }
+
+    /* 11. Assurance section */
+    .assuranceSection {
+        margin-top: 0.65rem;
+        padding: 0.75rem;
+        gap: 0.65rem;
+        border-radius: 10px;
+    }
+
+    .assuranceTitle {
+        font-size: 0.8rem;
+    }
+
+    .assuranceDesc {
+        font-size: 0.725rem;
+        line-height: 1.4;
+    }
+
+    /* 12. Thumbnail strip lebih compact */
+    .thumb {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+    }
+
+    /* 13. Mobile action bar buttons — tap-friendly 48px */
+    .mobileActionBtn {
+        height: 48px;
+    }
+    .mobileBuyBtn {
+        height: 48px;
+    }
+}
 

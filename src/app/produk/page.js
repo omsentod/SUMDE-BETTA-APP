@@ -460,7 +460,7 @@ function GalleryContent() {
     };
 
     return (
-        <div className={`pageContainer ${activeTab === 'premium' ? styles.vipRoomContainer : ''}`}>
+        <div className={`pageContainer ${styles.catalogPageContainer} ${activeTab === 'premium' ? styles.vipRoomContainer : ''}`}>
             <div className="innerContainer">
 
                 {/* Atmospheric Aquatic Hero */}

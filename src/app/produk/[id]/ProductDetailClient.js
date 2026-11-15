@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useChat } from '@/context/ChatContext';
 import { useAuth } from '@/context/AuthContext';
 import { useVip } from '@/context/VipContext';
+import { useToast } from '@/context/ToastContext';
 import ProductCard from '@/components/ProductCard';
 import { getSimilarProducts } from '@/lib/recommendation';
 import { parseYouTubeId } from '@/lib/productImages';
@@ -107,6 +108,7 @@ export default function ProductDetailClient() {
     const { addToCart, buyNow } = useCart();
     const { openChat } = useChat();
     const { currentUser } = useAuth();
+    const { toast } = useToast();
     const { products, isLoading: isCatalogLoading } = useProducts();
     const [selectedSize, setSelectedSize] = useState('');
     const [sizeError, setSizeError] = useState('');
@@ -235,8 +237,7 @@ export default function ProductDetailClient() {
 
     if (product && product.id !== prevProductId) {
         setPrevProductId(product.id);
-        const firstAvailable = variants.find((v) => (v.stock ?? v.quantity ?? 0) > 0)?.size || '';
-        setSelectedSize(firstAvailable);
+        setSelectedSize('');
         setSizeError('');
         setActiveIndex(0);
         setIsZoomOpen(false);
@@ -351,7 +352,16 @@ export default function ProductDetailClient() {
 
     const handleAcquire = () => {
         if (requiresSizePick) {
-            setSizeError('Mohon pilih varian terlebih dahulu.');
+            setSizeError('Pilih varian terlebih dahulu');
+            if (toast?.warning) {
+                toast.warning('Silakan pilih varian terlebih dahulu.');
+            }
+            if (typeof document !== 'undefined') {
+                const el = document.getElementById('variant-picker-section');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
             return;
         }
         setSizeError('');
@@ -373,7 +383,16 @@ export default function ProductDetailClient() {
 
     const handleAddToCart = () => {
         if (requiresSizePick) {
-            setSizeError('Mohon pilih varian terlebih dahulu.');
+            setSizeError('Pilih varian terlebih dahulu');
+            if (toast?.warning) {
+                toast.warning('Silakan pilih varian terlebih dahulu.');
+            }
+            if (typeof document !== 'undefined') {
+                const el = document.getElementById('variant-picker-section');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
             return;
         }
         setSizeError('');
@@ -660,7 +679,202 @@ export default function ProductDetailClient() {
                                 )}
                             </div>
 
-                            <p className={styles.description}>{product.description}</p>
+                            {/* 1. SELEKSI VARIAN — Langsung di bawah harga (Standar Shopee) */}
+                            {hasSizes && (
+                                <div
+                                    id="variant-picker-section"
+                                    className={`${styles.sizeSection} ${sizeError ? styles.sizeSectionInvalid : ''}`}
+                                >
+                                    <div className={styles.sizeHeaderRow}>
+                                        <h3 className={styles.sizeHeader}>
+                                            <span>Pilih Varian</span>
+                                            {selectedSize ? (
+                                                <span className={styles.sizeHeaderChosen}>: {selectedSize}</span>
+                                            ) : (
+                                                <span className={styles.sizeHeaderPrompt}>(Wajib dipilih)</span>
+                                            )}
+                                        </h3>
+                                        {sizeError ? (
+                                            <span className={styles.sizeInlineError} role="alert">
+                                                {sizeError}
+                                            </span>
+                                        ) : activeVariant ? (
+                                            <span className={styles.sizeStockIndicator}>
+                                                Stok: {maxStock} ekor
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                    <div className={styles.sizeList}>
+                                        {variants.map((v) => {
+                                            const stock = v.stock ?? v.quantity ?? 0;
+                                            const isOutOfStock = stock <= 0;
+                                            const isSelected = selectedSize === v.size;
+                                            const cls = [
+                                                styles.sizeBtn,
+                                                isSelected && styles.sizeBtnSelected,
+                                                isOutOfStock && styles.sizeBtnOut,
+                                            ].filter(Boolean).join(' ');
+                                            const vPriceFormatted = v.price != null
+                                                ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v.price)
+                                                : null;
+                                            return (
+                                                <button
+                                                    key={v.size}
+                                                    type="button"
+                                                    disabled={isOutOfStock}
+                                                    onClick={() => {
+                                                        setSelectedSize(v.size);
+                                                        if (sizeError) setSizeError('');
+                                                        if (v.imageUrl) {
+                                                            const foundIdx = gallery.findIndex((m) => m.url === v.imageUrl);
+                                                            if (foundIdx >= 0) setActiveIndex(foundIdx);
+                                                        }
+                                                    }}
+                                                    className={cls}
+                                                >
+                                                    <span className={styles.sizeLabel}>{v.size}</span>
+                                                    {vPriceFormatted && (
+                                                        <span className={styles.sizePrice}>
+                                                            {vPriceFormatted}
+                                                        </span>
+                                                    )}
+                                                    <span className={styles.sizeStock}>
+                                                        {isOutOfStock ? 'Habis' : `Stok: ${stock}`}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 2. JUMLAH PESANAN — Kompak 1 Baris Sejajar */}
+                            {canBuy && (
+                                <div className={styles.purchaseConfigSection}>
+                                    {/* Wholesale Tier Quick Select (if product has wholesale active) */}
+                                    {isWholesale && wholesaleTiers.length > 0 && (
+                                        <div className={styles.wholesaleCard}>
+                                            <div className={styles.wholesaleCardHeader}>
+                                                <div className={styles.wholesaleTitle}>
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.wholesaleIcon}>
+                                                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                                                        <polyline points="2 17 12 22 22 17" />
+                                                        <polyline points="2 12 12 17 22 12" />
+                                                    </svg>
+                                                    <span>Pilihan Pesanan Partai (Grosir)</span>
+                                                </div>
+                                                <span className={styles.wholesaleLevelCount}>
+                                                    {wholesaleTiers.length} Level Tersedia
+                                                </span>
+                                            </div>
+
+                                            <div className={styles.wholesaleTiersGrid}>
+                                                {wholesaleTiers.map((tier, idx) => {
+                                                    const isTierActive = activeTierMatch?.minQty === tier.minQty;
+                                                    const isOutOfStock = maxStock < tier.minQty;
+                                                    const tierMatch = getApplicableWholesaleTier(product, tier.minQty, activeVariant);
+                                                    const tierDisplayPrice = tierMatch ? tierMatch.unitPrice : tier.price;
+                                                    const savings = tierMatch ? tierMatch.discountPerItem : Math.max(0, currentPrice - tier.price);
+
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            disabled={isOutOfStock}
+                                                            onClick={() => {
+                                                                setQuantity(tier.minQty);
+                                                                if (sizeError) setSizeError('');
+                                                            }}
+                                                            className={[
+                                                                styles.tierBtn,
+                                                                isTierActive && styles.tierBtnActive,
+                                                                isOutOfStock && styles.tierBtnDisabled,
+                                                            ].filter(Boolean).join(' ')}
+                                                            title={isOutOfStock ? 'Stok tidak mencukupi untuk tier ini' : `Pilih Partai ${tier.minQty}+ ekor`}
+                                                        >
+                                                            <span className={styles.tierBtnQty}>Partai {tier.minQty}+</span>
+                                                            <span className={styles.tierBtnPrice}>
+                                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(tierDisplayPrice)}
+                                                            </span>
+                                                            {savings > 0 && (
+                                                                <span className={styles.tierBtnDiscount}>
+                                                                    -Rp {savings.toLocaleString('id-ID')}
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Input Nominal / Quantity Selector — Kompak 1 Baris */}
+                                    <div className={styles.quantityBlock}>
+                                        <div className={styles.quantityLabelCol}>
+                                            <span className={styles.quantityLabel}>Jumlah</span>
+                                            <span className={styles.quantityStockText}>
+                                                {activeVariant
+                                                    ? `(Stok: ${maxStock})`
+                                                    : hasSizes
+                                                    ? `(Pilih varian dulu)`
+                                                    : `(Stok: ${maxStock})`}
+                                            </span>
+                                        </div>
+                                        <div className={styles.stepperWrapper}>
+                                            <div className={styles.quantityControls}>
+                                                <button
+                                                    type="button"
+                                                    className={styles.qtyBtn}
+                                                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                                                    disabled={quantity <= 1}
+                                                    aria-label="Kurangi jumlah"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max={maxStock}
+                                                    className={styles.qtyInput}
+                                                    value={quantity}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value, 10);
+                                                        if (Number.isNaN(val) || val < 1) {
+                                                            setQuantity(1);
+                                                        } else {
+                                                            setQuantity(Math.min(maxStock, val));
+                                                        }
+                                                    }}
+                                                    aria-label="Jumlah pesanan"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={styles.qtyBtn}
+                                                    onClick={() => setQuantity((q) => Math.min(maxStock, q + 1))}
+                                                    disabled={quantity >= maxStock}
+                                                    aria-label="Tambah jumlah"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Order Subtotal Bar */}
+                                    {quantity > 1 && (
+                                        <div className={styles.orderSubtotalBar}>
+                                            <span>Subtotal ({quantity} ekor):</span>
+                                            <span className={styles.orderSubtotalAmount}>{formattedTotalPrice}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 3. DESKRIPSI PRODUK */}
+                            <div className={styles.descriptionSection}>
+                                <h4 className={styles.sectionHeadingMini}>Deskripsi Produk</h4>
+                                <p className={styles.description}>{product.description}</p>
+                            </div>
 
                             {/* Authenticity / Specification Trust Box */}
                             {product.isPremium ? (
@@ -751,194 +965,6 @@ export default function ProductDetailClient() {
                                             {product.form || product.category || 'PLAKAT'}
                                         </span>
                                     </div>
-                                </div>
-                            )}
-
-                            {hasSizes && (
-                                <div className={`${styles.sizeSection} ${sizeError ? styles.sizeSectionInvalid : ''}`}>
-                                    <h3 className={styles.sizeHeader}>Pilih Varian</h3>
-                                    <div className={styles.sizeList}>
-                                        {variants.map((v) => {
-                                            const stock = v.stock ?? v.quantity ?? 0;
-                                            const isOutOfStock = stock <= 0;
-                                            const isSelected = selectedSize === v.size;
-                                            const cls = [
-                                                styles.sizeBtn,
-                                                isSelected && styles.sizeBtnSelected,
-                                                isOutOfStock && styles.sizeBtnOut,
-                                            ].filter(Boolean).join(' ');
-                                            const vPriceFormatted = v.price != null
-                                                ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v.price)
-                                                : null;
-                                            return (
-                                                <button
-                                                    key={v.size}
-                                                    type="button"
-                                                    disabled={isOutOfStock}
-                                                    onClick={() => {
-                                                        setSelectedSize(v.size);
-                                                        if (sizeError) setSizeError('');
-                                                        if (v.imageUrl) {
-                                                            const foundIdx = gallery.findIndex((m) => m.url === v.imageUrl);
-                                                            if (foundIdx >= 0) setActiveIndex(foundIdx);
-                                                        }
-                                                    }}
-                                                    className={cls}
-                                                >
-                                                    <span className={styles.sizeLabel}>{v.size}</span>
-                                                    {vPriceFormatted && (
-                                                        <span className={styles.sizePrice}>
-                                                            {vPriceFormatted}
-                                                        </span>
-                                                    )}
-                                                    <span className={styles.sizeStock}>
-                                                        {isOutOfStock ? 'Habis' : `Stok: ${stock}`}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    {sizeError && (
-                                        <div className={styles.sizeError} role="alert">
-                                            {sizeError}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Quantity & Wholesale Options */}
-                            {canBuy && (
-                                <div className={styles.purchaseConfigSection}>
-                                    {/* Wholesale Tier Quick Select (if product has wholesale active) */}
-                                    {isWholesale && wholesaleTiers.length > 0 && (
-                                        <div className={styles.wholesaleCard}>
-                                            <div className={styles.wholesaleCardHeader}>
-                                                <div className={styles.wholesaleTitle}>
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.wholesaleIcon}>
-                                                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                                                        <polyline points="2 17 12 22 22 17" />
-                                                        <polyline points="2 12 12 17 22 12" />
-                                                    </svg>
-                                                    <span>Pilihan Pesanan Partai (Grosir)</span>
-                                                </div>
-                                                <span className={styles.wholesaleLevelCount}>
-                                                    {wholesaleTiers.length} Level Tersedia
-                                                </span>
-                                            </div>
-
-                                            <div className={styles.wholesaleTiersGrid}>
-                                                {wholesaleTiers.map((tier, idx) => {
-                                                    const isTierActive = activeTierMatch?.minQty === tier.minQty;
-                                                    const isOutOfStock = maxStock < tier.minQty;
-                                                    const tierMatch = getApplicableWholesaleTier(product, tier.minQty, activeVariant);
-                                                    const tierDisplayPrice = tierMatch ? tierMatch.unitPrice : tier.price;
-                                                    const savings = tierMatch ? tierMatch.discountPerItem : Math.max(0, currentPrice - tier.price);
-
-                                                    return (
-                                                        <button
-                                                            key={idx}
-                                                            type="button"
-                                                            disabled={isOutOfStock}
-                                                            onClick={() => {
-                                                                setQuantity(tier.minQty);
-                                                                if (sizeError) setSizeError('');
-                                                            }}
-                                                            className={[
-                                                                styles.tierBtn,
-                                                                isTierActive && styles.tierBtnActive,
-                                                                isOutOfStock && styles.tierBtnDisabled,
-                                                            ].filter(Boolean).join(' ')}
-                                                            title={isOutOfStock ? 'Stok tidak mencukupi untuk tier ini' : `Pilih Partai ${tier.minQty}+ ekor`}
-                                                        >
-                                                            <span className={styles.tierBtnQty}>Partai {tier.minQty}+</span>
-                                                            <span className={styles.tierBtnPrice}>
-                                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(tierDisplayPrice)}
-                                                            </span>
-                                                            {savings > 0 && (
-                                                                <span className={styles.tierBtnDiscount}>
-                                                                    -Rp {savings.toLocaleString('id-ID')}
-                                                                </span>
-                                                            )}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Input Nominal / Quantity Selector */}
-                                    <div className={styles.quantityBlock}>
-                                        <div className={styles.quantityLabelCol}>
-                                            <label className={styles.quantityLabel}>Jumlah Pesanan</label>
-                                            <span className={styles.quantityStockText}>
-                                                {activeVariant
-                                                    ? `Stok varian ${activeVariant.size}: ${maxStock} ekor`
-                                                    : `Stok tersedia: ${maxStock} ekor`}
-                                            </span>
-                                        </div>
-                                        <div className={styles.stepperWrapper}>
-                                            {showTypeHint && (
-                                                <div className={styles.typeHintBubble} role="status" aria-live="polite">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                                    </svg>
-                                                    <span>Bisa ketik jumlah langsung</span>
-                                                </div>
-                                            )}
-
-                                            <div className={styles.quantityControls}>
-                                                <button
-                                                    type="button"
-                                                    className={styles.qtyBtn}
-                                                    onClick={() => {
-                                                        setQuantity((q) => Math.max(1, q - 1));
-                                                        triggerTypeHint();
-                                                    }}
-                                                    disabled={quantity <= 1}
-                                                    aria-label="Kurangi jumlah"
-                                                >
-                                                    −
-                                                </button>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max={maxStock}
-                                                    className={styles.qtyInput}
-                                                    value={quantity}
-                                                    onFocus={() => setShowTypeHint(false)}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value, 10);
-                                                        if (Number.isNaN(val) || val < 1) {
-                                                            setQuantity(1);
-                                                        } else {
-                                                            setQuantity(Math.min(maxStock, val));
-                                                        }
-                                                    }}
-                                                    aria-label="Jumlah pesanan"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    className={styles.qtyBtn}
-                                                    onClick={() => {
-                                                        setQuantity((q) => Math.min(maxStock, q + 1));
-                                                        triggerTypeHint();
-                                                    }}
-                                                    disabled={quantity >= maxStock}
-                                                    aria-label="Tambah jumlah"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Order Subtotal Bar */}
-                                    {quantity > 1 && (
-                                        <div className={styles.orderSubtotalBar}>
-                                            <span>Subtotal ({quantity} ekor):</span>
-                                            <span className={styles.orderSubtotalAmount}>{formattedTotalPrice}</span>
-                                        </div>
-                                    )}
                                 </div>
                             )}
 
