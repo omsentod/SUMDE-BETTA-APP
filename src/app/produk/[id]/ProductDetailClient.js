@@ -445,10 +445,6 @@ export default function ProductDetailClient() {
                                 </svg>
                                 <span>Kembali ke Gallery VIP</span>
                             </Link>
-                            <span className={styles.vipBreadcrumbDivider} aria-hidden="true">/</span>
-                            <span className={styles.vipBreadcrumbBadge}>
-                                ✦ Gallery VIP Edisi Tunggal
-                            </span>
                         </div>
                     ) : (
                         <div className={styles.standardBreadcrumbBar}>
