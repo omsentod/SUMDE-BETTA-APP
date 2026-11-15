@@ -83,6 +83,23 @@ export async function POST(request) {
       }
     }
 
+    // Kirim notifikasi bot Telegram + lampiran PDF lembar manifest packing ke tim gudang
+    // untuk pesanan yang baru saja selesai dicetak resinya (PAID -> PROCESSING)
+    const newlyPrintedIds = results
+      .filter((r) => r.ok && r.previousStatus === 'PAID')
+      .map((r) => r.orderId);
+
+    if (newlyPrintedIds.length > 0) {
+      // Jalankan secara asynchronous (jangan memblokir response dialog cetak admin)
+      import('@/lib/telegram')
+        .then(({ sendPackingBaggingAlertTelegram }) =>
+          sendPackingBaggingAlertTelegram(newlyPrintedIds)
+        )
+        .catch((tgErr) =>
+          console.warn('Gagal memicu bot telegram cetak resi:', tgErr.message)
+        );
+    }
+
     return NextResponse.json({ results });
   } catch (error) {
     console.error('Error marking orders as printed:', error);

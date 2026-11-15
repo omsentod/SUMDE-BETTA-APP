@@ -45,6 +45,30 @@ export function getTelegramNotifTargets() {
 }
 
 /**
+ * Mengambil daftar Chat ID target khusus Tim Packing / Gudang.
+ * Prioritas:
+ * 1. TELEGRAM_PACKING_CHAT_ID / TELEGRAM_PACKING_TARGETS (kontak pribadi atau grup khusus packing)
+ * 2. Fallback ke getTelegramNotifTargets() jika variabel khusus packing belum diisi.
+ */
+export function getTelegramPackingTargets() {
+  const raw =
+    process.env.TELEGRAM_PACKING_CHAT_ID ||
+    process.env.TELEGRAM_PACKING_TARGETS ||
+    '';
+
+  const specific = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (specific.length > 0) {
+    return specific;
+  }
+
+  return getTelegramNotifTargets();
+}
+
+/**
  * Pemanggilan API mentah ke Telegram Bot API
  */
 export async function callTelegramApi(method, body = {}) {
@@ -596,7 +620,7 @@ export async function sendAdminPackingDigestTelegram(kloterLabel = '', customTar
     }
 
     const { token, appUrl } = getTelegramConfig();
-    const targets = customTargets && customTargets.length > 0 ? customTargets : getTelegramNotifTargets();
+    const targets = customTargets && customTargets.length > 0 ? customTargets : getTelegramPackingTargets();
 
     if (!token || targets.length === 0) {
       return {
@@ -734,5 +758,212 @@ export async function sendOrderShippedTelegram(order, waybill = null) {
   } catch (err) {
     console.error('Error sendOrderShippedTelegram:', err.message);
     return { sent: false, channel: 'telegram', error: err.message };
+  }
+}
+
+/**
+ * Mengirimkan file dokumen (PDF/binary) langsung ke Telegram via method sendDocument (Multipart/form-data)
+ */
+export async function sendTelegramDocument({
+  chatId,
+  documentBuffer,
+  fileName = 'manifest-bungkus-ikan.pdf',
+  caption = '',
+  parseMode = 'Markdown',
+  replyMarkup = null,
+}) {
+  const { token } = getTelegramConfig();
+  if (!token) {
+    throw new Error('TELEGRAM_BOT_TOKEN belum dikonfigurasi di environment (.env).');
+  }
+
+  const formData = new FormData();
+  formData.append('chat_id', String(chatId));
+  if (caption) {
+    formData.append('caption', caption);
+  }
+  if (parseMode) {
+    formData.append('parse_mode', parseMode);
+  }
+  if (replyMarkup) {
+    formData.append(
+      'reply_markup',
+      typeof replyMarkup === 'string' ? replyMarkup : JSON.stringify(replyMarkup)
+    );
+  }
+
+  const blob = new Blob([documentBuffer], { type: 'application/pdf' });
+  formData.append('document', blob, fileName);
+
+  const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendDocument`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.ok) {
+    console.error('Telegram sendDocument Error:', data);
+    throw new Error(data.description || 'Gagal mengirim dokumen ke Telegram');
+  }
+
+  return data.result;
+}
+
+/**
+ * Notifikasi Bot Telegram saat Admin selesai mencetak resi pengiriman
+ * Mengirimkan ringkasan (Total Pesanan, Total Ikan, Hari/Tanggal & Waktu, Link Packing Gudang)
+ * dan secara otomatis melampirkan file PDF Lembar Manifest Packing Gudang (Tahap 1: Bungkus Plastik Ikan).
+ */
+export async function sendPackingBaggingAlertTelegram(orderIds, customTargets = null) {
+  if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+    return { sent: false, reason: 'Tidak ada orderIds yang diberikan.' };
+  }
+
+  if (!isTelegramConfigured()) {
+    return { sent: false, error: 'TELEGRAM_BOT_TOKEN belum dikonfigurasi di environment (.env).' };
+  }
+
+  try {
+    const { default: prisma } = await import('./prisma.js');
+    const { buildBaggingRows, generateBaggingManifestPdf } = await import('./packingManifest.js');
+
+    const orders = await prisma.order.findMany({
+      where: { id: { in: orderIds } },
+      select: {
+        id: true,
+        orderSource: true,
+        tiktokAccountName: true,
+        tiktokUsername: true,
+        telegramUsername: true,
+        tiktokLiveBasket: {
+          select: {
+            tiktokAccount: {
+              select: { handle: true },
+            },
+          },
+        },
+        name: true,
+        shippingCourier: true,
+        shippingService: true,
+        trackingNumber: true,
+        packingStatus: true,
+        createdAt: true,
+        items: {
+          select: {
+            id: true,
+            quantity: true,
+            customName: true,
+            customImage: true,
+            selectedSize: true,
+            variant: {
+              select: {
+                imageUrl: true,
+              },
+            },
+            product: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                brand: true,
+                department: {
+                  select: { isLiveFish: true, name: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (orders.length === 0) {
+      return { sent: false, reason: 'Pesanan tidak ditemukan di database.' };
+    }
+
+    const { baggingRows, totalBaggingFish } = buildBaggingRows(orders);
+    const dt = formatIndoDateTime(new Date());
+    const { appUrl } = getTelegramConfig();
+    const packingUrl = `${appUrl}/admin/packing`;
+
+    // Format Caption Bersih & Rapi Sesuai Permintaan
+    const caption =
+      `📦 *RESI SELESAI DICETAK • SIAP BUNGKUS IKAN*\n\n` +
+      `*Waktu:* ${dt.day}, ${dt.date} • ${dt.time}\n` +
+      `*Pesanan:* ${orders.length} pesanan\n` +
+      `*Total Ikan:* ${totalBaggingFish} ekor\n\n` +
+      `File PDF lembar manifest terlampir di atas.`;
+
+    // Generate file PDF Lembar Manifest Bungkus Ikan
+    const pdfBuffer = generateBaggingManifestPdf({
+      dateStr: dt.full,
+      totalOrders: orders.length,
+      totalFish: totalBaggingFish,
+      rows: baggingRows,
+    });
+
+    const now = new Date();
+    const dateFormatted = now
+      .toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta',
+      })
+      .replace(/\//g, '-');
+    const fileName = `bungkusikan-${dateFormatted}.pdf`;
+
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          {
+            text: 'Buka Menu Packing Gudang',
+            url: packingUrl,
+          },
+        ],
+      ],
+    };
+
+    const targets = customTargets && customTargets.length > 0 ? customTargets : getTelegramPackingTargets();
+    const deliveries = [];
+
+    for (const chatId of targets) {
+      try {
+        const res = await sendTelegramDocument({
+          chatId,
+          documentBuffer: pdfBuffer,
+          fileName,
+          caption,
+          parseMode: 'Markdown',
+          replyMarkup,
+        });
+        deliveries.push({ chatId, ok: true, messageId: res?.message_id });
+      } catch (docErr) {
+        console.error(`Gagal kirim PDF ke Chat ID ${chatId}, mencoba fallback teks:`, docErr.message);
+        // Fallback kirim pesan teks biasa jika upload dokumen terhambat
+        try {
+          const textRes = await callTelegramApi('sendMessage', {
+            chat_id: chatId,
+            text: `${caption}\n\n⚠️ *(Gagal melampirkan file PDF, silakan klik tombol di bawah untuk membuka lembar manifest)*`,
+            parse_mode: 'Markdown',
+            reply_markup: replyMarkup,
+          });
+          deliveries.push({ chatId, ok: true, messageId: textRes?.message_id, fallback: true });
+        } catch (msgErr) {
+          deliveries.push({ chatId, ok: false, error: msgErr.message });
+        }
+      }
+    }
+
+    const successCount = deliveries.filter((d) => d.ok).length;
+    return {
+      sent: successCount > 0,
+      totalOrders: orders.length,
+      totalFish: totalBaggingFish,
+      deliveries,
+    };
+  } catch (err) {
+    console.error('Error sendPackingBaggingAlertTelegram:', err.message);
+    return { sent: false, error: err.message };
   }
 }
