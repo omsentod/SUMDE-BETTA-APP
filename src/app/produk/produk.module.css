@@ -708,7 +708,6 @@
 /* VIP Layout Adaptation */
 .mainLayoutVip {
     position: relative;
-    z-index: 2;
 }
 
 /* VIP Sidebar */
@@ -717,6 +716,12 @@
     border: 1px solid rgba(245, 158, 11, 0.35) !important;
     box-shadow: 0 16px 45px rgba(0, 0, 0, 0.65) !important;
     backdrop-filter: blur(20px);
+}
+
+.sidebarVip :global(.filterHeader),
+.sidebarVip :global(.filterSheetFooter) {
+    background: #101018 !important;
+    border-color: rgba(245, 158, 11, 0.25) !important;
 }
 
 .sidebarVip :global(.filterHeaderTitle) {

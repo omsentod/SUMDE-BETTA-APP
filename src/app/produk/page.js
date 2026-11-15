@@ -294,12 +294,40 @@ function GalleryContent() {
         });
     }, [searchParams]);
 
-    // Lock body scroll while mobile filter sheet is open
+    // Lock body scroll & tandai state mobile-filter-open agar bottom nav / floating button tidak tabrakan
     useEffect(() => {
         if (typeof document === 'undefined') return;
-        const prev = document.body.style.overflow;
-        if (isMobileFiltersOpen) document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = prev; };
+        const prevOverflow = document.body.style.overflow;
+        if (isMobileFiltersOpen) {
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('mobile-filter-open');
+        } else {
+            document.body.classList.remove('mobile-filter-open');
+        }
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            document.body.classList.remove('mobile-filter-open');
+        };
+    }, [isMobileFiltersOpen]);
+
+    // Tutup mobile filter otomatis saat resize ke layar desktop (≥768px) atau saat tombol Esc ditekan
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 768 && isMobileFiltersOpen) {
+                setIsMobileFiltersOpen(false);
+            }
+        };
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isMobileFiltersOpen) {
+                setIsMobileFiltersOpen(false);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
     }, [isMobileFiltersOpen]);
 
     // Count active filters

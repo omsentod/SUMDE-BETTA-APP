@@ -20,6 +20,19 @@
     z-index: 1000;
     padding-bottom: env(safe-area-inset-bottom, 0);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, visibility 0s;
+  }
+
+  /* Sembunyikan bottom nav dengan mulus saat mobile filter sheet di halaman produk terbuka */
+  :global(body.mobile-filter-open) .bar {
+    transform: translateY(100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, visibility 0s linear 0.25s !important;
   }
 
   .item {
