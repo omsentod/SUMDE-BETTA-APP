@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
-import { buildBaggingRows, resolveTikTokHost } from '@/lib/packingManifest';
+import { buildBaggingRows, resolveTikTokHost, formatVariantLabel } from '@/lib/packingManifest';
 import PrintControls from './PrintControls';
 import styles from './manifest.module.css';
 
