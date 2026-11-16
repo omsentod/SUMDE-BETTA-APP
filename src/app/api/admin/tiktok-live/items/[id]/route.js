@@ -29,7 +29,10 @@ export async function PATCH(request, { params }) {
       data.name = cleanName;
     }
     if (body.price !== undefined) {
-      const parsedPrice = Number(body.price);
+      const parsedPrice =
+        typeof body.price === 'string'
+          ? Number(body.price.replace(/\D/g, ''))
+          : Number(body.price);
       if (!Number.isFinite(parsedPrice) || parsedPrice < 0 || parsedPrice > 1_000_000_000) {
         return NextResponse.json({ error: 'Harga tidak valid.' }, { status: 400 });
       }

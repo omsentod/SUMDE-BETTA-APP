@@ -165,7 +165,8 @@ export async function POST(request) {
     let resolvedVariantId = null;
     let resolvedSize = selectedSize ? String(selectedSize).trim().slice(0, 60) : null;
     let resolvedName = String(name || '').trim().slice(0, 200);
-    let resolvedPrice = Number(price);
+    let resolvedPrice =
+      typeof price === 'string' ? Number(price.replace(/\D/g, '')) : Number(price);
     let resolvedImage = sanitizeImageUrl(image);
 
     if (productId) {

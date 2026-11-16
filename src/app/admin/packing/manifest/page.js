@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
-import { buildBaggingRows } from '@/lib/packingManifest';
+import { buildBaggingRows, resolveTikTokHost } from '@/lib/packingManifest';
 import PrintControls from './PrintControls';
 import styles from './manifest.module.css';
 
@@ -355,13 +355,10 @@ export default async function PackingManifestPage({ searchParams }) {
                   : [{ id: 'empty', quantity: 1, customName: 'Item Pesanan' }];
               const rowSpan = items.length;
 
+              const liveHost = resolveTikTokHost(order);
               const sourceText =
                 order.orderSource === 'TIKTOK_LIVE'
-                  ? `TikTok Live ${
-                      order.tiktokLiveBasket?.tiktokAccount?.handle
-                        ? `@${order.tiktokLiveBasket.tiktokAccount.handle.replace(/^@+/, '')}`
-                        : order.tiktokAccountName || ''
-                    }`.trim()
+                  ? `TikTok Live ${liveHost || ''}`.trim()
                   : order.orderSource === 'TELEGRAM'
                   ? `Telegram Drop ${
                       order.telegramUsername

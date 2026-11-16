@@ -3986,6 +3986,45 @@ body.vip-mode-active {
     background: #14141f !important;
 }
 
+[data-vip="true"] .mobileActionSelect option,
+.vipRoomContainer .mobileActionSelect option {
+    background: #14141f !important;
+    color: #f1f5f9 !important;
+}
+
+/* Global fallback parity for .sidebar.sidebarVip (Desktop & Mobile) */
+.sidebar.sidebarVip .clearFiltersBtn {
+    color: #fbbf24 !important;
+}
+
+.sidebar.sidebarVip .clearFiltersBtn:hover {
+    color: #ffffff !important;
+}
+
+.sidebar.sidebarVip .filterSectionTitle {
+    color: #e2e8f0 !important;
+}
+
+.sidebar.sidebarVip .checkboxText {
+    color: #cbd5e1 !important;
+}
+
+.sidebar.sidebarVip .checkboxLabel:hover .checkboxText {
+    color: #fbbf24 !important;
+}
+
+.sidebar.sidebarVip .divider {
+    border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.sidebar.sidebarVip .rangeSliderTrack {
+    background: linear-gradient(90deg, #d97706, #fbbf24) !important;
+}
+
+.sidebar.sidebarVip .rangeValue {
+    color: #fbbf24 !important;
+}
+
 @media (max-width: 767px) {
     .sidebar.sidebarVip {
         background: #12121a !important;

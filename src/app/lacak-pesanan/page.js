@@ -118,7 +118,13 @@ function TrackOrderContent() {
         if (currentUser?.email && !identifierInput && !paramEmail) {
             setIdentifierInput(currentUser.email);
         }
-    }, [currentUser?.email, paramEmail]);
+    }, [currentUser?.email, paramEmail, identifierInput]);
+
+    // Keep inputs in sync if query params change
+    useEffect(() => {
+        if (paramOrderId) setOrderIdInput(paramOrderId);
+        if (paramEmail) setIdentifierInput(paramEmail);
+    }, [paramOrderId, paramEmail]);
 
     const fetchTracking = useCallback(async (orderId, identifier) => {
         if (!orderId) return;
@@ -130,7 +136,7 @@ function TrackOrderContent() {
                 url += `&identifier=${encodeURIComponent(identifier)}`;
             }
             const res = await fetch(url);
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 throw new Error(data.error || 'Pesanan tidak ditemukan.');
             }
@@ -157,7 +163,7 @@ function TrackOrderContent() {
         }
     }, []);
 
-    // Auto-fetch if query params are present on mount
+    // Auto-fetch if query params are present on mount or changed
     useEffect(() => {
         if (paramOrderId) {
             fetchTracking(paramOrderId, paramEmail);
@@ -178,8 +184,12 @@ function TrackOrderContent() {
         if (cleanIdent) {
             params.set('email', cleanIdent);
         }
-        router.replace(`/lacak-pesanan?${params.toString()}`);
-        fetchTracking(cleanId, cleanIdent);
+        const targetUrl = `/lacak-pesanan?${params.toString()}`;
+        if (cleanId === paramOrderId && cleanIdent === paramEmail) {
+            fetchTracking(cleanId, cleanIdent);
+        } else {
+            router.replace(targetUrl);
+        }
     };
 
     const handleCopyWaybill = (code) => {
@@ -536,7 +546,7 @@ function TrackOrderContent() {
                                     {orderData.recipientName} ({orderData.maskedPhone})
                                 </div>
                                 <p className={styles.addressText}>
-                                    {orderData.streetAddress}, {orderData.city}, {orderData.province} {orderData.postalCode}
+                                    {[orderData.streetAddress, orderData.district, orderData.city, orderData.province, orderData.postalCode].filter(Boolean).join(', ')}
                                 </p>
                             </div>
                         </div>

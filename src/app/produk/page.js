@@ -1104,7 +1104,9 @@ function GalleryContent() {
                             <ArtisticBettaEmpty
                                 theme={activeTab === 'premium' ? 'vip' : 'default'}
                                 title={
-                                    activeTab === 'premium'
+                                    activeFilterCount > 0
+                                        ? (activeTab === 'premium' ? 'Tidak Ada Koleksi yang Sesuai' : 'Tidak Ada Produk yang Sesuai')
+                                        : activeTab === 'premium'
                                         ? 'Belum Ada Koleksi Gallery'
                                         : activeDept?.isLiveFish === false
                                         ? `Belum Ada Produk di ${activeDept.name}`
@@ -1115,7 +1117,11 @@ function GalleryContent() {
                                         : 'Tidak Ada Produk Ditemukan'
                                 }
                                 description={
-                                    activeTab === 'premium'
+                                    activeFilterCount > 0
+                                        ? (activeTab === 'premium'
+                                            ? 'Tidak ada koleksi Gallery VIP yang cocok dengan kombinasi filter saat ini. Coba reset filter untuk melihat koleksi lainnya.'
+                                            : 'Tidak ada produk yang cocok dengan kombinasi filter saat ini. Coba atur ulang filter Anda.')
+                                        : activeTab === 'premium'
                                         ? 'Seluruh koleksi gallery saat ini sedang teradopsi atau dalam kurasi farm. Silakan jelajahi Koleksi Reguler kami.'
                                         : activeDept?.isLiveFish === false
                                         ? `Produk untuk kategori ${activeDept.name} sedang dalam proses restock.`

@@ -12,20 +12,31 @@ export default function OrderSourceBadge({ order, showAccountSubtext = false }) 
   const source = resolveSource(order);
 
   if (source === 'TIKTOK_LIVE') {
-    // Username TikTok yang digunakan tim untuk live streaming
-    let liveHandle = order?.tiktokLiveBasket?.tiktokAccount?.handle || null;
-    if (!liveHandle && order?.tiktokAccountName) {
+    // Username TikTok yang digunakan tim untuk live streaming (bisa multi-akun)
+    let liveHandle = null;
+    if (order?.tiktokAccountName) {
       const raw = order.tiktokAccountName.trim();
-      if (raw.startsWith('@')) {
-        liveHandle = raw;
-      } else {
-        const matchDefault = raw.match(/Akun\s+Live\s+(\d+)/i);
-        if (matchDefault) {
-          liveHandle = `@sumdebetta.live${matchDefault[1]}`;
+      const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+      if (parts.length > 1) {
+        liveHandle = parts.map((p) => (p.startsWith('@') ? p : `@${p}`)).join(' + ');
+      } else if (parts.length === 1) {
+        const p = parts[0];
+        if (p.startsWith('@')) {
+          liveHandle = p;
         } else {
-          liveHandle = `@${raw.toLowerCase().replace(/\s+/g, '.')}`;
+          const matchDefault = p.match(/Akun\s+Live\s+(\d+)/i);
+          if (matchDefault) {
+            liveHandle = `@sumdebetta.live${matchDefault[1]}`;
+          } else {
+            liveHandle = `@${p.toLowerCase().replace(/\s+/g, '.')}`;
+          }
         }
       }
+    }
+
+    if (!liveHandle && order?.tiktokLiveBasket?.tiktokAccount?.handle) {
+      const h = order.tiktokLiveBasket.tiktokAccount.handle.trim();
+      liveHandle = h.startsWith('@') ? h : `@${h}`;
     }
 
     const tooltipDetail = [

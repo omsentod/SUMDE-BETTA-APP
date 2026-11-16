@@ -141,16 +141,23 @@ const toDateInputValue = (d) => {
 };
 
 function resolveTikTokHost(order) {
+  if (order?.tiktokAccountName) {
+    const raw = order.tiktokAccountName.trim();
+    const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      return parts.map((p) => (p.startsWith('@') ? p : `@${p}`)).join(' + ');
+    }
+    if (parts.length === 1) {
+      const p = parts[0];
+      if (p.startsWith('@')) return p;
+      const match = p.match(/Akun\s+Live\s+(\d+)/i);
+      if (match) return `@sumdebetta.live${match[1]}`;
+      return `@${p.toLowerCase().replace(/\s+/g, '.')}`;
+    }
+  }
   if (order?.tiktokLiveBasket?.tiktokAccount?.handle) {
     const h = order.tiktokLiveBasket.tiktokAccount.handle.trim();
     return h.startsWith('@') ? h : `@${h}`;
-  }
-  if (order?.tiktokAccountName) {
-    const raw = order.tiktokAccountName.trim();
-    if (raw.startsWith('@')) return raw;
-    const match = raw.match(/Akun\s+Live\s+(\d+)/i);
-    if (match) return `@sumdebetta.live${match[1]}`;
-    return `@${raw.toLowerCase().replace(/\s+/g, '.')}`;
   }
   return null;
 }
@@ -273,7 +280,16 @@ function PackingPageInner() {
   }, [activeTab, dateFilter, customStartDate, customEndDate, searchQuery, currentUser, canAccess, toast]);
 
   useEffect(() => {
-    loadOrders();
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await loadOrders();
+      }
+    };
+    run();
+    return () => {
+      ignore = true;
+    };
   }, [loadOrders]);
 
   // Listener keyboard Escape untuk menutup pop up modal konfirmasi pemunduran pos
@@ -281,7 +297,7 @@ function PackingPageInner() {
     if (!revertModal.isOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && !isBulkBusy) {
-        closeRevertModal();
+        setRevertModal((prev) => ({ ...prev, isOpen: false }));
       }
     };
     window.addEventListener('keydown', handleKeyDown);

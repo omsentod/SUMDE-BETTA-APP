@@ -13,6 +13,21 @@ function formatRupiah(amount) {
   }).format(Number(amount) || 0);
 }
 
+// Memformat angka string mentah menjadi format ribuan dengan titik (misal 100000 -> 100.000, mulai 1.000)
+function formatThousands(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const clean = String(val).replace(/\D/g, '');
+  if (!clean) return '';
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Mengambil nilai angka integer murni dari string berformat ribuan
+function parseThousands(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  const clean = String(val).replace(/\D/g, '');
+  return clean ? Number(clean) : 0;
+}
+
 export default function AddDealModal({
   accounts,
   selectedAccountId,
@@ -91,10 +106,10 @@ export default function AddDealModal({
     if (prod.variants && prod.variants.length > 0) {
       const firstVar = prod.variants[0];
       setSelectedVariantId(firstVar.id);
-      setItemPrice(String(firstVar.price ?? prod.price));
+      setItemPrice(formatThousands(firstVar.price ?? prod.price));
       if (firstVar.imageUrl) setItemImage(firstVar.imageUrl);
     } else {
-      setItemPrice(String(prod.price));
+      setItemPrice(formatThousands(prod.price));
     }
   };
 
@@ -103,7 +118,7 @@ export default function AddDealModal({
     const variant = variants.find((v) => v.id === variantId);
     if (!variant || !selectedProduct) return;
     setItemName(`${selectedProduct.name} (${variant.size})`);
-    setItemPrice(String(variant.price ?? selectedProduct.price));
+    setItemPrice(formatThousands(variant.price ?? selectedProduct.price));
     if (variant.imageUrl) setItemImage(variant.imageUrl);
   };
 
@@ -151,7 +166,7 @@ export default function AddDealModal({
       toast.warning('Nama ikan atau item wajib diisi');
       return;
     }
-    const numericPrice = Number(itemPrice);
+    const numericPrice = parseThousands(itemPrice);
     if (!Number.isFinite(numericPrice) || numericPrice < 1000) {
       toast.warning('Harga minimal Rp 1.000');
       return;
@@ -331,13 +346,13 @@ export default function AddDealModal({
               </label>
               <input
                 id="deal-price"
-                type="number"
-                min="1000"
-                step="500"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 className={styles.input}
-                placeholder="150000"
+                placeholder="Contoh: 150.000"
                 value={itemPrice}
-                onChange={(e) => setItemPrice(e.target.value)}
+                onChange={(e) => setItemPrice(formatThousands(e.target.value))}
                 required
               />
             </div>

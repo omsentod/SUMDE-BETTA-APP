@@ -21,6 +21,21 @@ function formatRupiah(amount) {
   }).format(Number(amount) || 0);
 }
 
+// Memformat angka string mentah menjadi format ribuan dengan titik (misal 100000 -> 100.000, mulai 1.000)
+function formatThousands(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const clean = String(val).replace(/\D/g, '');
+  if (!clean) return '';
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Mengambil nilai angka integer murni dari string berformat ribuan
+function parseThousands(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  const clean = String(val).replace(/\D/g, '');
+  return clean ? Number(clean) : 0;
+}
+
 function formatShortTime(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
@@ -37,6 +52,22 @@ function getEffectiveStatus(basket) {
   if (basket.order?.status) return basket.order.status;
   if (basket.status === 'CHECKED_OUT') return 'PENDING';
   return basket.status || 'OPEN';
+}
+
+function getBasketAccounts(basket) {
+  if (!basket) return [];
+  const map = new Map();
+  if (basket.tiktokAccount) {
+    const key = basket.tiktokAccount.id || basket.tiktokAccount.handle || 'primary';
+    map.set(key, basket.tiktokAccount);
+  }
+  (basket.items || []).forEach((it) => {
+    if (it.tiktokAccount) {
+      const key = it.tiktokAccount.id || it.tiktokAccount.handle || `item-${it.id}`;
+      map.set(key, it.tiktokAccount);
+    }
+  });
+  return Array.from(map.values());
 }
 
 function getStatusBadge(effectiveStatus) {
@@ -268,10 +299,17 @@ export default function AdminTikTokLivePage() {
     );
     const countText = totalItems > 0 ? `${totalItems} ekor ikan` : 'ikan';
     const url = `${window.location.origin}/live/${basket.claimToken}`;
+
+    const accounts = getBasketAccounts(basket);
+    const accountNames = accounts.map((a) => a.handle || a.name).join(' & ');
+    const liveSourceText = accountNames
+      ? `sesi TikTok Live (${accountNames})`
+      : 'sesi TikTok Live Sumde Betta';
+
     const dmText = [
       `Halo kak @${basket.tiktokUsername}!`,
       ``,
-      `Terima kasih sudah ikutan sesi TikTok Live Sumde Betta.`,
+      `Terima kasih sudah ikutan ${liveSourceText}.`,
       `Berikut link rekap order & keep kamu (${countText}):`,
       url,
       ``,
@@ -291,14 +329,14 @@ export default function AdminTikTokLivePage() {
     setEditingItemId(item.id);
     setEditItemDraft({
       name: item.name || '',
-      price: String(item.price || ''),
+      price: formatThousands(item.price || ''),
       quantity: String(item.quantity || 1),
       note: item.note || '',
     });
   };
 
   const handleSaveItemEdit = async (itemId) => {
-    const numericPrice = Number(editItemDraft.price);
+    const numericPrice = parseThousands(editItemDraft.price);
     const numericQty = Math.max(1, parseInt(editItemDraft.quantity, 10) || 1);
     if (!editItemDraft.name.trim()) {
       toast.warning('Nama item wajib diisi');
@@ -589,16 +627,34 @@ export default function AdminTikTokLivePage() {
                         </td>
 
                         <td>
-                          {basket.tiktokAccount ? (
-                            <div className={styles.accountCol}>
-                              <span className={styles.accountChip}>{basket.tiktokAccount.name}</span>
-                              {basket.tiktokAccount.hostName ? (
-                                <span className={styles.accountHostSub}>Host: {basket.tiktokAccount.hostName}</span>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <span className={styles.buyerSub}>-</span>
-                          )}
+                          {(() => {
+                            const accounts = getBasketAccounts(basket);
+                            if (accounts.length > 1) {
+                              return (
+                                <div className={styles.accountCol}>
+                                  <span className={styles.multiAccountBadge}>
+                                    Multi-Akun ({accounts.length})
+                                  </span>
+                                  <span className={styles.accountHostSub}>
+                                    {accounts.map((a) => a.handle || a.name).join(' · ')}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            if (accounts.length === 1) {
+                              return (
+                                <div className={styles.accountCol}>
+                                  <span className={styles.accountChip}>{accounts[0].name}</span>
+                                  {accounts[0].hostName ? (
+                                    <span className={styles.accountHostSub}>Host: {accounts[0].hostName}</span>
+                                  ) : (
+                                    <span className={styles.accountHostSub}>{accounts[0].handle}</span>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return <span className={styles.buyerSub}>-</span>;
+                          })()}
                         </td>
 
                         <td>
@@ -705,12 +761,26 @@ export default function AdminTikTokLivePage() {
                                   <span>
                                     Pembeli: <strong>@{basket.tiktokUsername}</strong>
                                   </span>
-                                  {basket.tiktokAccount && (
-                                    <span>
-                                      Akun Live: <strong>{basket.tiktokAccount.name} ({basket.tiktokAccount.handle})</strong>
-                                      {basket.tiktokAccount.hostName ? ` • Host: ${basket.tiktokAccount.hostName}` : ''}
-                                    </span>
-                                  )}
+                                  {(() => {
+                                    const accounts = getBasketAccounts(basket);
+                                    if (accounts.length > 1) {
+                                      return (
+                                        <span>
+                                          Akun Live: <strong>{accounts.map((a) => `${a.name} (${a.handle})`).join(' + ')}</strong>
+                                          <span className={styles.multiTag}>(Gabungan {accounts.length} Akun)</span>
+                                        </span>
+                                      );
+                                    }
+                                    if (accounts.length === 1) {
+                                      return (
+                                        <span>
+                                          Akun Live: <strong>{accounts[0].name} ({accounts[0].handle})</strong>
+                                          {accounts[0].hostName ? ` • Host: ${accounts[0].hostName}` : ''}
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                   {basket.order?.trackingNumber && (
                                     <span>
                                       Resi: <strong>{basket.order.trackingNumber}</strong>
@@ -762,15 +832,15 @@ export default function AdminTikTokLivePage() {
                                           placeholder="Nama item"
                                         />
                                         <input
-                                          type="number"
-                                          min="1000"
-                                          step="500"
+                                          type="text"
+                                          inputMode="numeric"
+                                          autoComplete="off"
                                           className={styles.input}
                                           value={editItemDraft.price}
                                           onChange={(e) =>
-                                            setEditItemDraft((d) => ({ ...d, price: e.target.value }))
+                                            setEditItemDraft((d) => ({ ...d, price: formatThousands(e.target.value) }))
                                           }
-                                          placeholder="Harga"
+                                          placeholder="Contoh: 150.000"
                                         />
                                         <input
                                           type="number"

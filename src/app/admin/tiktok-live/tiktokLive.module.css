@@ -677,6 +677,27 @@
   white-space: nowrap;
 }
 
+.multiAccountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.multiTag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-left: 6px;
+}
+
 .itemSummary {
   display: flex;
   flex-direction: column;
