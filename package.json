@@ -11,7 +11,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
-    "products:sync-sold": "node scratch/sync_sold_count.js"
+    "products:sync-sold": "node scratch/sync_sold_count.js",
+    "images:optimize": "node scratch/optimize_existing_images.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

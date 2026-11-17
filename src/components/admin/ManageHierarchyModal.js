@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/context/ToastContext';
+import { compressImage } from '@/lib/clientImageCompressor';
 import styles from './ManageHierarchyModal.module.css';
 
 const DEPT_ICON_PRESETS = [
@@ -76,10 +77,11 @@ export default function ManageHierarchyModal({ isOpen, onClose, onHierarchyUpdat
 
   const activeDept = departments.find((d) => d.id === selectedDeptId) || departments[0] || null;
 
-  const handleUploadIcon = async (file, targetForm) => {
-    if (!file) return;
+  const handleUploadIcon = async (rawFile, targetForm) => {
+    if (!rawFile) return;
     setIsUploading(true);
     try {
+      const file = await compressImage(rawFile, { maxWidth: 600, maxHeight: 600, quality: 0.82 });
       const fd = new FormData();
       fd.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });

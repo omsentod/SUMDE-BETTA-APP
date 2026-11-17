@@ -24,7 +24,7 @@ export default function LiveCheckoutForm({ basket, newItemsAlert, onCancel, onPa
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
+    phone: basket?.whatsappNumber || '',
     streetAddress: '',
     rtRw: '',
     province: '',

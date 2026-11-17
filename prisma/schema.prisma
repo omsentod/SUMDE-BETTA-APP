@@ -279,6 +279,9 @@ model TikTokLiveBasket {
   claimCode       String           @unique
   claimToken      String?          @unique
   tiktokUsername  String
+  whatsappNumber  String?
+  waSentAt        DateTime?
+  waSentCount     Int              @default(0)
   tiktokAccountId String?
   tiktokAccount   TikTokAccount?   @relation(fields: [tiktokAccountId], references: [id], onDelete: SetNull)
   status          String           @default("OPEN") // OPEN | CHECKED_OUT | CANCELLED
@@ -291,6 +294,7 @@ model TikTokLiveBasket {
 
   @@index([tiktokUsername, status])
   @@index([status])
+  @@index([waSentAt])
 }
 
 model TikTokLiveItem {

@@ -139,6 +139,7 @@ export default function ProductCardVIP({
 
     const hasGallery = gallery.length > 1;
     const [imgIdx, setImgIdx] = useState(0);
+    const [imgLoaded, setImgLoaded] = useState(false);
     const touchStartX = useRef(null);
     const touchStartY = useRef(null);
     const isSwiping = useRef(false);
@@ -386,7 +387,8 @@ export default function ProductCardVIP({
                             src={gallery[safeImgIdx]}
                             alt={name}
                             fill
-                            className={`${styles.image} ${effectiveSold ? styles.imageSold : ''}`}
+                            onLoad={() => setImgLoaded(true)}
+                            className={`${styles.image} ${imgLoaded ? styles.imageLoaded : styles.imageLoading} ${effectiveSold ? styles.imageSold : ''}`}
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                     ) : (

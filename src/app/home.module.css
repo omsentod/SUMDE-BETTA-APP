@@ -32,8 +32,13 @@
     overflow: hidden;
     border-radius: 24px;
     border: 1px solid var(--border-color);
-    background: var(--bg-dark);
+    background: #090e1a;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes heroShimmerPulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 :global([data-theme="dark"]) .heroCarousel {
@@ -55,10 +60,27 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    background: #090e1a;
     opacity: 0;
     transition: opacity 0.8s ease-in-out;
     pointer-events: none;
     z-index: 1;
+}
+
+.heroSlide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.04) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: heroShimmerPulse 2.2s infinite ease-in-out;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .heroSlideActive {
@@ -73,8 +95,16 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: 0;
-    transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1;
+    transition: opacity 0.5s ease, transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.heroBgImageLoading {
+    opacity: 0;
+}
+
+.heroBgImageLoaded {
+    opacity: 1;
 }
 
 .heroSlideActive .heroBgImage {
@@ -96,9 +126,9 @@
 :global([data-theme="light"]) .heroOverlay {
     background: linear-gradient(
         90deg,
-        rgba(15, 23, 42, 0.82) 0%,
-        rgba(15, 23, 42, 0.55) 50%,
-        rgba(15, 23, 42, 0.15) 100%
+        rgba(15, 23, 42, 0.88) 0%,
+        rgba(15, 23, 42, 0.65) 50%,
+        rgba(15, 23, 42, 0.22) 100%
     );
 }
 
@@ -364,7 +394,14 @@
     height: 100%;
     border-radius: 50%;
     overflow: hidden;
-    background: var(--bg-card);
+    background: linear-gradient(
+        90deg,
+        var(--bg-card) 0%,
+        var(--input-bg, rgba(125, 125, 125, 0.15)) 50%,
+        var(--bg-card) 100%
+    );
+    background-size: 200% 100%;
+    animation: heroShimmerPulse 1.8s infinite ease-in-out;
 }
 
 .categoryImage {

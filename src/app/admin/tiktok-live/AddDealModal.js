@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { useToast } from '@/context/ToastContext';
+import { compressImage } from '@/lib/clientImageCompressor';
 import LiveSelect from './LiveSelect';
 import styles from './tiktokLive.module.css';
 
@@ -66,6 +67,7 @@ export default function AddDealModal({
   );
 
   const [tiktokUsername, setTiktokUsername] = useState(initialUsername);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [entryMode, setEntryMode] = useState('custom'); // 'custom' | 'catalog'
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedVariantId, setSelectedVariantId] = useState('');
@@ -123,10 +125,11 @@ export default function AddDealModal({
   };
 
   const handleUploadImage = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
     setUploading(true);
     try {
+      const file = await compressImage(rawFile, { maxWidth: 1000, maxHeight: 1000, quality: 0.82 });
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
@@ -184,6 +187,7 @@ export default function AddDealModal({
         body: JSON.stringify({
           tiktokUsername: cleanUser,
           tiktokAccountId: selectedAccountId,
+          whatsappNumber: whatsappNumber.trim() || null,
           productId: entryMode === 'catalog' && selectedProductId ? selectedProductId : null,
           variantId: entryMode === 'catalog' && selectedVariantId ? selectedVariantId : null,
           selectedSize: activeVariant?.size || null,
@@ -268,6 +272,21 @@ export default function AddDealModal({
                 required
               />
             </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="deal-wa">
+              No. WhatsApp Pembeli <span className={styles.labelOptional}>(Opsional — untuk follow-up langsung via WA)</span>
+            </label>
+            <input
+              id="deal-wa"
+              type="tel"
+              inputMode="tel"
+              className={styles.input}
+              placeholder="contoh: 081234567890 (bisa diisi nanti saat pembeli chat)"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+            />
           </div>
 
           <div className={styles.modeSwitch}>

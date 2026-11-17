@@ -19,6 +19,7 @@ const DEFAULT_CATEGORIES = ['Plakat', 'Halfmoon', 'Crowntail', 'Giant', 'Double 
 const DEFAULT_GRADES = ['COMP', 'COMPETITION', 'A', 'B', 'C'];
 
 import { normalizeWholesaleTiers } from '@/lib/wholesale';
+import { compressImages } from '@/lib/clientImageCompressor';
 
 const emptyProductForm = () => ({
   name: '',
@@ -251,13 +252,15 @@ function AdminProductsInner() {
 
   // Upload foto multi-file lalu masukkan ke media list
   const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+    const rawFiles = Array.from(e.target.files || []);
+    if (rawFiles.length === 0) return;
     setIsUploading(true);
     setUploadError('');
-    const fd = new FormData();
-    files.forEach((f) => fd.append('file', f));
     try {
+      // Otomatis kompres foto mentah kamera HP (3-5MB) menjadi WebP tajam (~80-120KB) sebelum upload
+      const files = await compressImages(rawFiles, { maxWidth: 1200, maxHeight: 1200, quality: 0.82 });
+      const fd = new FormData();
+      files.forEach((f) => fd.append('file', f));
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal mengunggah gambar.');

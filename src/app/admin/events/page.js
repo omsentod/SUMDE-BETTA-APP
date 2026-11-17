@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import AdminConfirmModal, { useConfirmModal } from '@/components/admin/AdminConfirmModal';
 import { useToast } from '@/context/ToastContext';
 import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
+import { compressImage } from '@/lib/clientImageCompressor';
 import styles from '../dashboard/adminDashboard.module.css';
 
 const emptyEventForm = () => ({
@@ -87,13 +88,14 @@ export default function AdminEventsPage() {
   }, [events, search]);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const rawFile = e.target.files[0];
+    if (!rawFile) return;
     setIsUploading(true);
     setUploadError('');
-    const fd = new FormData();
-    fd.append('file', file);
     try {
+      const file = await compressImage(rawFile, { maxWidth: 1600, maxHeight: 900, quality: 0.84 });
+      const fd = new FormData();
+      fd.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal mengunggah gambar.');

@@ -182,6 +182,30 @@
   - Menggunakan Web Audio API oscillator (`A5 sine beep`) dan `navigator.vibrate` tanpa aset eksternal.
   - Native `BarcodeDetector` API diutamakan dengan fallback input manual jika kamera tidak tersedia.
 
+## 18. Hostinger Server Directory Architecture & Image Storage (`~/domains/sumdebetta.com/`)
+- **Struktur Direktori Hostinger Production**:
+  ```text
+  ~/domains/sumdebetta.com/
+  ├── uploads/                     # FOLDER PERSISTEN FOTO PRODUK (di luar public_html & hbuilds)
+  ├── public_html/                 # Web root / reverse proxy Hostinger
+  ├── hbuilds/
+  │   ├── config/.env              # Production environment variables
+  │   ├── last-source/             # Git repository source code terbaru di server
+  │   └── versions/<UUID>/nodejs/  # Active Next.js runtime (tempat restart via tmp/restart.txt)
+  └── .trash/
+  ```
+- **Aturan Penyimpanan Uploads**:
+  - File foto produk dan banner HARUS disimpan di folder persisten `~/domains/sumdebetta.com/uploads` (via env `UPLOADS_DIR`).
+  - JANGAN PERNAH menyimpan file upload dinamis di dalam `public_html` atau `hbuilds/versions/` karena Hostinger membersihkan `public_html` dan membuat folder versi UUID baru saat setiap kali git deploy.
+  - File disajikan secara aman via route handler Next.js `/uploads/[filename]`.
+- **Batch Image Optimization Command**:
+  - Untuk merampingkan seluruh foto lama di folder `uploads` persisten tanpa mengubah nama file:
+    ```bash
+    cd ~/domains/sumdebetta.com/hbuilds/last-source
+    node scratch/optimize_existing_images.js
+    ```
+
+
 
 
 

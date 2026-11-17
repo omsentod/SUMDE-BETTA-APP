@@ -14,6 +14,7 @@ export default function LiveSelect({
   disabled = false,
   size = 'md',
   ariaLabel,
+  leadingIcon = null,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -87,13 +88,20 @@ export default function LiveSelect({
           !selectedOption ? styles.customSelectPlaceholder : ''
         }`}
       >
-        <span className={styles.customSelectValue}>
-          <span className={styles.customSelectValueMain}>
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-          {selectedOption?.sublabel && (
-            <span className={styles.customSelectValueSub}>{selectedOption.sublabel}</span>
+        <span className={styles.customSelectTriggerLeft}>
+          {leadingIcon && (
+            <span className={styles.customSelectLeadingIcon} aria-hidden="true">
+              {leadingIcon}
+            </span>
           )}
+          <span className={styles.customSelectValue}>
+            <span className={styles.customSelectValueMain}>
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+            {selectedOption?.sublabel && (
+              <span className={styles.customSelectValueSub}>{selectedOption.sublabel}</span>
+            )}
+          </span>
         </span>
         <svg
           className={`${styles.customSelectChevron} ${isOpen ? styles.customSelectChevronOpen : ''}`}
@@ -112,80 +120,119 @@ export default function LiveSelect({
       </button>
 
       {isOpen && (
-        <div className={styles.customSelectMenu} role="listbox">
-          {searchable && (
-            <div className={styles.customSelectSearchWrap}>
-              <svg
-                className={styles.customSelectSearchIcon}
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+        <>
+          <div
+            className={styles.customSelectBackdrop}
+            onClick={() => {
+              setIsOpen(false);
+              setSearch('');
+            }}
+            aria-hidden="true"
+          />
+          <div className={styles.customSelectMenu} role="listbox">
+            <div className={styles.customSelectSheetHandle} aria-hidden="true" />
+            <div className={styles.customSelectSheetHead}>
+              <span className={styles.customSelectSheetTitle}>{ariaLabel || placeholder}</span>
+              <button
+                type="button"
+                className={styles.customSelectSheetClose}
+                onClick={() => {
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+                aria-label="Tutup pilihan"
               >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                autoFocus
-                className={styles.customSelectSearchInput}
-                placeholder={searchPlaceholder}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
-          )}
 
-          <div className={styles.customSelectList}>
-            {filteredOptions.length === 0 ? (
-              <div className={styles.customSelectEmpty}>Tidak ada pilihan cocok</div>
-            ) : (
-              filteredOptions.map((opt) => {
-                const isSelected = opt.value === value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    className={`${styles.customSelectOption} ${
-                      isSelected ? styles.customSelectOptionActive : ''
-                    }`}
-                    onClick={() => handlePick(opt.value)}
-                  >
-                    <span className={styles.customSelectOptionText}>
-                      <span className={styles.customSelectOptionLabel}>{opt.label}</span>
-                      {opt.sublabel && (
-                        <span className={styles.customSelectOptionSub}>{opt.sublabel}</span>
-                      )}
-                    </span>
-                    {isSelected && (
-                      <svg
-                        className={styles.customSelectCheck}
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </button>
-                );
-              })
+            {searchable && (
+              <div className={styles.customSelectSearchWrap}>
+                <svg
+                  className={styles.customSelectSearchIcon}
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  autoFocus
+                  className={styles.customSelectSearchInput}
+                  placeholder={searchPlaceholder}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             )}
+
+            <div className={styles.customSelectList}>
+              {filteredOptions.length === 0 ? (
+                <div className={styles.customSelectEmpty}>Tidak ada pilihan cocok</div>
+              ) : (
+                filteredOptions.map((opt) => {
+                  const isSelected = opt.value === value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      className={`${styles.customSelectOption} ${
+                        isSelected ? styles.customSelectOptionActive : ''
+                      }`}
+                      onClick={() => handlePick(opt.value)}
+                    >
+                      <span className={styles.customSelectOptionText}>
+                        <span className={styles.customSelectOptionLabel}>{opt.label}</span>
+                        {opt.sublabel && (
+                          <span className={styles.customSelectOptionSub}>{opt.sublabel}</span>
+                        )}
+                      </span>
+                      {isSelected && (
+                        <svg
+                          className={styles.customSelectCheck}
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

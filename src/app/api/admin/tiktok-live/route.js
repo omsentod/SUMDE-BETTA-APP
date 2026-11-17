@@ -7,6 +7,7 @@ import {
   generateClaimToken,
   LIVE_ITEM_PLACEHOLDER_IMAGE,
   normalizeTikTokUsername,
+  normalizeWhatsAppNumber,
 } from '@/lib/tiktokLive';
 
 export const dynamic = 'force-dynamic';
@@ -132,6 +133,7 @@ export async function POST(request) {
     const {
       tiktokUsername,
       tiktokAccountId,
+      whatsappNumber,
       productId,
       variantId,
       selectedSize,
@@ -145,6 +147,15 @@ export async function POST(request) {
     const normUser = normalizeTikTokUsername(tiktokUsername);
     if (!normUser.ok) {
       return NextResponse.json({ error: normUser.error }, { status: 400 });
+    }
+
+    let cleanWhatsapp = null;
+    if (whatsappNumber && String(whatsappNumber).trim()) {
+      const normWa = normalizeWhatsAppNumber(whatsappNumber);
+      if (!normWa.ok) {
+        return NextResponse.json({ error: normWa.error }, { status: 400 });
+      }
+      cleanWhatsapp = normWa.normalized;
     }
 
     const parsedQty = parseInt(quantity ?? 1, 10);
@@ -239,6 +250,7 @@ export async function POST(request) {
             claimToken: generateClaimToken(),
             tiktokUsername: normUser.username,
             tiktokAccountId: resolvedAccountId,
+            ...(cleanWhatsapp ? { whatsappNumber: cleanWhatsapp } : {}),
             status: 'OPEN',
           },
         });
@@ -249,6 +261,7 @@ export async function POST(request) {
             updatedAt: new Date(),
             ...(!basket.claimToken ? { claimToken: generateClaimToken() } : {}),
             ...(resolvedAccountId && !basket.tiktokAccountId ? { tiktokAccountId: resolvedAccountId } : {}),
+            ...(cleanWhatsapp && !basket.whatsappNumber ? { whatsappNumber: cleanWhatsapp } : {}),
           },
         });
       }

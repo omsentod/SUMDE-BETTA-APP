@@ -84,6 +84,7 @@ export async function GET(request) {
         claimCode: basket.claimCode,
         claimToken: basket.claimToken,
         tiktokUsername: basket.tiktokUsername,
+        whatsappNumber: basket.whatsappNumber || null,
         updatedAt: basket.updatedAt,
         primaryAccount,
         liveAccountHandles,

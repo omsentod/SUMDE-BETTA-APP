@@ -17,7 +17,10 @@ const isFreshPrisma = existingPrisma &&
   existingPrisma._runtimeDataModel?.models?.ChatTemplate?.fields?.some((f) => f.name === 'answerText') &&
   existingPrisma._runtimeDataModel?.models?.Product?.fields?.some((f) => f.name === 'isWholesale') &&
   existingPrisma._runtimeDataModel?.models?.TikTokLiveBasket?.fields?.some((f) => f.name === 'claimToken') &&
-  existingPrisma._runtimeDataModel?.models?.TikTokAccount?.fields?.some((f) => f.name === 'avatar');
+  existingPrisma._runtimeDataModel?.models?.TikTokLiveBasket?.fields?.some((f) => f.name === 'whatsappNumber') &&
+  existingPrisma._runtimeDataModel?.models?.TikTokLiveBasket?.fields?.some((f) => f.name === 'waSentAt') &&
+  existingPrisma._runtimeDataModel?.models?.TikTokAccount?.fields?.some((f) => f.name === 'avatar') &&
+  existingPrisma._runtimeDataModel?.models?.TikTokAccount?.fields?.some((f) => f.name === 'hostUserId');
 
 const prisma = isFreshPrisma ? existingPrisma : new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],

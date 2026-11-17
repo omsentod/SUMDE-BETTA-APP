@@ -220,7 +220,10 @@ export async function POST(request) {
 
       await tx.tikTokLiveBasket.update({
         where: { id: basket.id },
-        data: { orderId: newOrder.id },
+        data: {
+          orderId: newOrder.id,
+          ...(!basket.whatsappNumber && cleanedPhone ? { whatsappNumber: cleanedPhone } : {}),
+        },
       });
 
       return newOrder;

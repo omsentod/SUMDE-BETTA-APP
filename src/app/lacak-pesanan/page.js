@@ -113,13 +113,6 @@ function TrackOrderContent() {
     const [liveTracking, setLiveTracking] = useState(null);
     const [loadingTracking, setLoadingTracking] = useState(false);
 
-    // Auto-fill identifier jika user login dan belum ada input identifier
-    useEffect(() => {
-        if (currentUser?.email && !identifierInput && !paramEmail) {
-            setIdentifierInput(currentUser.email);
-        }
-    }, [currentUser?.email, paramEmail, identifierInput]);
-
     // Keep inputs in sync if query params change
     useEffect(() => {
         if (paramOrderId) setOrderIdInput(paramOrderId);
@@ -272,7 +265,7 @@ function TrackOrderContent() {
                                 <label htmlFor="identifierInput" className={styles.label}>
                                     Email atau Nomor WhatsApp
                                 </label>
-                                {currentUser?.email && identifierInput !== currentUser.email && (
+                                {currentUser?.role === 'customer' && currentUser?.email && identifierInput !== currentUser.email && (
                                     <button
                                         type="button"
                                         onClick={() => {

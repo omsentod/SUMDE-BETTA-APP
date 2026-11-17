@@ -1,60 +1,129 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 const ProductContext = createContext();
+
+const PRODUCTS_CACHE_KEY = 'sumde_products_cache_v1';
+
+function getStoredProducts() {
+    if (typeof window === 'undefined') return [];
+    try {
+        const item = sessionStorage.getItem(PRODUCTS_CACHE_KEY);
+        if (!item) return [];
+        const parsed = JSON.parse(item);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+        }
+    } catch {
+        // ignore
+    }
+    return [];
+}
+
+function saveStoredProducts(list) {
+    if (typeof window === 'undefined') return;
+    try {
+        if (Array.isArray(list)) {
+            sessionStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(list));
+        }
+    } catch {
+        // ignore quota limits
+    }
+}
 
 export function ProductProvider({ children }) {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const activeControllerRef = useRef(null);
 
-    const fetchProducts = useCallback(async ({ showLoading = true } = {}) => {
-        if (showLoading) setIsLoading(true);
-        try {
-            const res = await fetch('/api/products', { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                setProducts(data);
-            }
-        } catch (error) {
-            console.error('Gagal mengambil data produk:', error);
-        } finally {
-            setIsLoading(false);
-        }
+    const updateProductsAndCache = useCallback((updater) => {
+        setProducts((prev) => {
+            const next = typeof updater === 'function' ? updater(prev) : updater;
+            saveStoredProducts(next);
+            return next;
+        });
     }, []);
 
+    const fetchProducts = useCallback(async ({ showLoading = true } = {}) => {
+        if (activeControllerRef.current) {
+            activeControllerRef.current.abort();
+        }
+        const controller = new AbortController();
+        activeControllerRef.current = controller;
+
+        if (showLoading) setIsLoading(true);
+        try {
+            const res = await fetch('/api/products', {
+                cache: 'no-store',
+                signal: controller.signal,
+            });
+            if (res.ok) {
+                const data = await res.json();
+                updateProductsAndCache(data);
+            }
+        } catch (error) {
+            if (error?.name !== 'AbortError') {
+                console.error('Gagal mengambil data produk:', error);
+            }
+        } finally {
+            if (activeControllerRef.current === controller) {
+                activeControllerRef.current = null;
+                setIsLoading(false);
+            }
+        }
+    }, [updateProductsAndCache]);
+
     useEffect(() => {
-        let cancelled = false;
-        const load = async (showLoading = true) => {
-            if (showLoading) setIsLoading(true);
+        // 1. Instant hydration dari cache sesi lokal (mencegah FOUC / halaman kosong saat refresh / navigasi)
+        const cached = getStoredProducts();
+        if (cached.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate cached products before network
+            setProducts(cached);
+            setIsLoading(false);
+        }
+
+        // 2. Background revalidation dengan AbortController
+        const controller = new AbortController();
+        activeControllerRef.current = controller;
+
+        const load = async () => {
             try {
-                const res = await fetch('/api/products', { cache: 'no-store' });
+                const res = await fetch('/api/products', {
+                    cache: 'no-store',
+                    signal: controller.signal,
+                });
                 if (res.ok) {
                     const data = await res.json();
-                    if (!cancelled) setProducts(data);
+                    updateProductsAndCache(data);
                 }
             } catch (error) {
-                console.error('Gagal mengambil data produk:', error);
+                if (error?.name !== 'AbortError') {
+                    console.error('Gagal mengambil data produk:', error);
+                }
             } finally {
-                if (!cancelled && showLoading) setIsLoading(false);
+                if (activeControllerRef.current === controller) {
+                    activeControllerRef.current = null;
+                    setIsLoading(false);
+                }
             }
         };
 
-        load(true);
+        load();
 
         let lastFetchTime = Date.now();
         const handleFocus = () => {
             if (Date.now() - lastFetchTime > 60_000) {
                 lastFetchTime = Date.now();
-                load(false);
+                fetchProducts({ showLoading: false });
             }
         };
         window.addEventListener('focus', handleFocus);
 
         return () => {
-            cancelled = true;
+            controller.abort();
             window.removeEventListener('focus', handleFocus);
         };
-    }, []);
+    }, [updateProductsAndCache, fetchProducts]);
 
     const addProduct = useCallback(async (productData) => {
         const res = await fetch('/api/products', {
@@ -64,9 +133,9 @@ export function ProductProvider({ children }) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Gagal menambahkan produk.');
-        setProducts((prev) => [data, ...prev]);
+        updateProductsAndCache((prev) => [data, ...prev]);
         return data;
-    }, []);
+    }, [updateProductsAndCache]);
 
     const updateProduct = useCallback(async (id, productData) => {
         const res = await fetch(`/api/products/${id}`, {
@@ -76,20 +145,19 @@ export function ProductProvider({ children }) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Gagal mengubah produk.');
-        setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
+        updateProductsAndCache((prev) => prev.map((p) => (p.id === id ? data : p)));
         return data;
-    }, []);
+    }, [updateProductsAndCache]);
 
     const deleteProduct = useCallback(async (id, { permanent = false } = {}) => {
         const url = `/api/products/${id}${permanent ? '?permanent=true' : ''}`;
         const res = await fetch(url, { method: 'DELETE' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Gagal menghapus produk.');
-        // Produk yang dihapus (baik soft-delete / masuk recycle-bin maupun permanent)
-        // dikeluarkan dari daftar produk aktif toko.
-        setProducts((prev) => prev.filter((p) => p.id !== id));
+        // Produk yang dihapus dikeluarkan dari daftar produk aktif toko.
+        updateProductsAndCache((prev) => prev.filter((p) => p.id !== id));
         return data;
-    }, []);
+    }, [updateProductsAndCache]);
 
     const value = useMemo(() => ({
         products, isLoading, fetchProducts,

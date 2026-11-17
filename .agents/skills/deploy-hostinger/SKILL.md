@@ -110,6 +110,16 @@ node prisma/(seed-file).js
 
 ---
 
+### Step 2b — Optimasi Seluruh Foto Lama di Folder Uploads (In-Place)
+Jika ingin merampingkan seluruh foto produk lama yang ada di folder persisten `uploads/` agar website semakin kencang:
+```bash
+cd ~/domains/sumdebetta.com/hbuilds/last-source
+node scratch/optimize_existing_images.js
+```
+Script ini otomatis mendeteksi folder persisten `~/domains/sumdebetta.com/uploads/` dan mengompres foto-foto lama secara aman tanpa mengubah nama file (link database tetap utuh).
+
+---
+
 ### Step 3 — Restart app (Passenger)
 Cari UUID deployment terbaru (`ls ~/domains/sumdebetta.com/hbuilds/versions/`), lalu:
 ```bash

@@ -113,3 +113,104 @@ export async function ensureDefaultTikTokAccounts(db) {
     skipDuplicates: true,
   });
 }
+
+/**
+ * Normalisasi nomor WhatsApp Indonesia menjadi format wa.me resmi (628xxx).
+ * Menerima format: 0812..., +62812..., 62812..., 812...
+ */
+export function normalizeWhatsAppNumber(raw) {
+  if (!raw) {
+    return { ok: false, normalized: '', display: '', error: 'Nomor WhatsApp wajib diisi.' };
+  }
+  let digits = String(raw).replace(/\D/g, '');
+  if (!digits) {
+    return { ok: false, normalized: '', display: '', error: 'Nomor WhatsApp tidak valid.' };
+  }
+  if (digits.startsWith('08')) {
+    digits = '62' + digits.slice(1);
+  } else if (digits.startsWith('8')) {
+    digits = '62' + digits;
+  } else if (digits.startsWith('0')) {
+    digits = '62' + digits.slice(1);
+  } else if (!digits.startsWith('62') && digits.length >= 9 && digits.length <= 13) {
+    digits = '62' + digits;
+  }
+
+  if (!/^628[0-9]{7,13}$/.test(digits)) {
+    return {
+      ok: false,
+      normalized: '',
+      display: '',
+      error: 'Nomor WhatsApp harus nomor seluler Indonesia yang valid (08xx / 628xx, 10-15 digit).',
+    };
+  }
+
+  const localNum = '0' + digits.slice(2);
+  let display = localNum;
+  if (localNum.length >= 10) {
+    display = `${localNum.slice(0, 4)}-${localNum.slice(4, 8)}-${localNum.slice(8)}`;
+  }
+
+  return {
+    ok: true,
+    normalized: digits,
+    display,
+    error: null,
+  };
+}
+
+export function formatWhatsAppDisplay(raw) {
+  if (!raw) return '';
+  const norm = normalizeWhatsAppNumber(raw);
+  return norm.ok ? norm.display : String(raw);
+}
+
+/**
+ * Buat template teks pesan rekap checkout untuk dikirim ke pembeli via WhatsApp / DM.
+ */
+export function buildBuyerCheckoutMessage({ basket, appOrigin = '' }) {
+  if (!basket) return '';
+  const totalItems = (basket.items || []).reduce(
+    (acc, it) => acc + (Number(it.quantity) || 1),
+    0
+  );
+  const countText = totalItems > 0 ? `${totalItems} ekor ikan` : 'ikan';
+  const url = `${appOrigin}/live/${basket.claimToken || ''}`;
+
+  const accountsMap = new Map();
+  if (basket.tiktokAccount) {
+    accountsMap.set(basket.tiktokAccount.id || basket.tiktokAccount.handle || 'primary', basket.tiktokAccount);
+  }
+  (basket.items || []).forEach((it) => {
+    if (it.tiktokAccount) {
+      accountsMap.set(it.tiktokAccount.id || it.tiktokAccount.handle || `item-${it.id}`, it.tiktokAccount);
+    }
+  });
+  const accounts = Array.from(accountsMap.values());
+  const accountNames = accounts.map((a) => a.handle || a.name).join(' & ');
+  const liveSourceText = accountNames
+    ? `sesi TikTok Live (${accountNames})`
+    : 'sesi TikTok Live Sumde Betta';
+
+  return [
+    `Halo kak @${basket.tiktokUsername}!`,
+    ``,
+    `Terima kasih sudah ikutan ${liveSourceText}.`,
+    `Berikut link rekap order & keep kamu (${countText}):`,
+    url,
+    ``,
+    `Silakan buka link di atas untuk cek rincian ikan, lengkapi alamat kirim, dan selesaikan pembayaran ya kak.`,
+    `Terima kasih!`,
+  ].join('\n');
+}
+
+/**
+ * Buat deep link https://wa.me/628... dengan pesan rekap otomatis.
+ */
+export function buildBuyerWhatsAppUrl({ basket, appOrigin = '' }) {
+  if (!basket?.claimToken || !basket?.whatsappNumber) return '';
+  const norm = normalizeWhatsAppNumber(basket.whatsappNumber);
+  if (!norm.ok) return '';
+  const message = buildBuyerCheckoutMessage({ basket, appOrigin });
+  return `https://wa.me/${norm.normalized}?text=${encodeURIComponent(message)}`;
+}

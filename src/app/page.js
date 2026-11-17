@@ -55,23 +55,28 @@ export default function CatalogHome() {
     const [events, setEvents] = useState([]);
     const [eventsLoading, setEventsLoading] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [bannerLoaded, setBannerLoaded] = useState(false);
 
-    // Fetch active events for the homepage carousel
+    // Fetch active events for the homepage carousel with AbortController
     useEffect(() => {
+        const controller = new AbortController();
         const fetchActiveEvents = async () => {
             try {
-                const res = await fetch('/api/events?active=true');
+                const res = await fetch('/api/events?active=true', { signal: controller.signal });
                 if (res.ok) {
                     const data = await res.json();
                     setEvents(data);
                 }
             } catch (err) {
-                console.error('Gagal memuat event aktif:', err);
+                if (err?.name !== 'AbortError') {
+                    console.error('Gagal memuat event aktif:', err);
+                }
             } finally {
                 setEventsLoading(false);
             }
         };
         fetchActiveEvents();
+        return () => controller.abort();
     }, []);
 
     // Autoplay carousel
@@ -83,7 +88,8 @@ export default function CatalogHome() {
         return () => clearInterval(interval);
     }, [events]);
 
-    if (isLoading || eventsLoading) {
+    // Hanya tampilkan full-page skeleton jika produk benar-benar belum tersedia sama sekali (misal kunjungan pertama)
+    if (isLoading && products.length === 0) {
         return (
             <div className={styles.homeContainer}>
                 <section className={`container ${styles.heroSection}`}>
@@ -144,8 +150,9 @@ export default function CatalogHome() {
                                             alt={event.title}
                                             fill
                                             sizes="(max-width: 1400px) 100vw, 1400px"
-                                            className={styles.heroBgImage}
+                                            className={`${styles.heroBgImage} ${bannerLoaded ? styles.heroBgImageLoaded : styles.heroBgImageLoading}`}
                                             priority={idx === 0}
+                                            onLoad={() => setBannerLoaded(true)}
                                         />
 
                                         <div className={styles.heroOverlay} />
@@ -207,8 +214,9 @@ export default function CatalogHome() {
                                 alt={featuredProduct ? featuredProduct.name : "Featured Betta Splendens"}
                                 fill
                                 sizes="(max-width: 1400px) 100vw, 1400px"
-                                className={styles.heroBgImage}
+                                className={`${styles.heroBgImage} ${bannerLoaded ? styles.heroBgImageLoaded : styles.heroBgImageLoading}`}
                                 priority
+                                onLoad={() => setBannerLoaded(true)}
                             />
 
                             <div className={styles.heroOverlay} />

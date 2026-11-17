@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/context/ToastContext';
+import { compressImage } from '@/lib/clientImageCompressor';
 import styles from './tiktokLive.module.css';
 
 export default function AccountsModal({ accounts = [], teamUsers = [], onClose, onSaved }) {
@@ -83,15 +84,16 @@ export default function AccountsModal({ accounts = [], teamUsers = [], onClose, 
       toast.warning('File harus berupa gambar (JPG, PNG, WebP).');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.warning('Ukuran foto maksimal 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.warning('Ukuran foto maksimal 10MB.');
       return;
     }
 
     setUploading(true);
     try {
+      const compressed = await compressImage(file, { maxWidth: 400, maxHeight: 400, quality: 0.82 });
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressed);
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -447,10 +449,9 @@ export default function AccountsModal({ accounts = [], teamUsers = [], onClose, 
               {viewMode === 'edit' && (
                 <button
                   type="button"
-                  className={styles.btnDangerSmall}
+                  className={`${styles.btnDangerSmall} ${styles.btnDeleteLeft}`}
                   onClick={handleDeleteAccount}
                   disabled={deleting || saving}
-                  style={{ marginRight: 'auto' }}
                 >
                   {deleting ? 'Menghapus...' : 'Hapus Akun'}
                 </button>

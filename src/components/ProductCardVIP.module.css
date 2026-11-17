@@ -71,9 +71,41 @@
     overflow: hidden;
 }
 
+/* Shimmer placeholder in VIP obsidian-gold hue */
+.imageContainer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(245, 158, 11, 0.02) 0%,
+        rgba(245, 158, 11, 0.09) 50%,
+        rgba(245, 158, 11, 0.02) 100%
+    );
+    background-size: 200% 100%;
+    animation: vipImageShimmer 2s infinite ease-in-out;
+    z-index: 0;
+    pointer-events: none;
+}
+
+@keyframes vipImageShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 .image {
     object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    z-index: 1;
+    transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.imageLoading {
+    opacity: 0;
+}
+
+.imageLoaded {
+    opacity: 1;
 }
 
 @media (hover: hover) and (pointer: fine) {
