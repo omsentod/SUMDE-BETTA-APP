@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import sharp from 'sharp';
+import { createRequire } from 'module';
 
 /**
  * Script Optimasi & Kompresi Foto Lama (In-Place Batch Optimizer)
@@ -18,6 +18,40 @@ import sharp from 'sharp';
  *    node scratch/optimize_existing_images.js /home/u707667165/domains/sumdebetta.com/uploads
  */
 
+function resolveSharp() {
+  const require = createRequire(import.meta.url);
+
+  // 1. Coba require langsung dari lokasi script
+  try {
+    return require('sharp');
+  } catch {}
+
+  // 2. Coba require dari direktori kerja saat ini (process.cwd())
+  try {
+    const cwdRequire = createRequire(path.join(process.cwd(), 'dummy.js'));
+    return cwdRequire('sharp');
+  } catch {}
+
+  // 3. Coba cari di folder versions Hostinger (hbuilds/versions/<UUID>/nodejs)
+  try {
+    const versionsDir = path.join(os.homedir(), 'domains', 'sumdebetta.com', 'hbuilds', 'versions');
+    if (fs.existsSync(versionsDir)) {
+      const versions = fs.readdirSync(versionsDir).sort().reverse();
+      for (const v of versions) {
+        const candidateDir = path.join(versionsDir, v, 'nodejs');
+        if (fs.existsSync(candidateDir)) {
+          try {
+            const vRequire = createRequire(path.join(candidateDir, 'dummy.js'));
+            return vRequire('sharp');
+          } catch {}
+        }
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
 function resolvePath(p) {
   if (!p) return null;
   if (p.startsWith('~/')) {
@@ -26,7 +60,7 @@ function resolvePath(p) {
   return path.resolve(p);
 }
 
-async function optimizeFolder(folderPath, maxDimension = 1200, quality = 82) {
+async function optimizeFolder(sharp, folderPath, maxDimension = 1200, quality = 82) {
   if (!fs.existsSync(folderPath)) {
     return null;
   }
@@ -79,6 +113,7 @@ async function optimizeFolder(folderPath, maxDimension = 1200, quality = 82) {
       if (ext === '.jpg' || ext === '.jpeg') {
         compressedBuffer = await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer();
       } else if (ext === '.png') {
+        // Jika PNG dan memiliki transparansi, gunakan png compression
         compressedBuffer = await pipeline.png({ quality, compressionLevel: 9 }).toBuffer();
       } else if (ext === '.webp') {
         compressedBuffer = await pipeline.webp({ quality }).toBuffer();
@@ -106,6 +141,15 @@ async function run() {
   console.log('=====================================================');
   console.log('✦ SUMDE BETTA: BATCH IMAGE OPTIMIZER (IN-PLACE)');
   console.log('=====================================================');
+
+  // Load library sharp secara dinamis
+  const sharp = resolveSharp();
+  if (!sharp) {
+    console.error('\n❌ ERROR: Library "sharp" belum terinstall di server.');
+    console.error('Silakan install sharp terlebih dahulu dengan perintah:');
+    console.error('  npm install sharp\n');
+    process.exit(1);
+  }
 
   const cliTarget = process.argv[2] ? resolvePath(process.argv[2]) : null;
 
@@ -141,7 +185,7 @@ async function run() {
     if (!dir || processedDirs.has(dir)) continue;
     if (fs.existsSync(dir)) {
       processedDirs.add(dir);
-      const res = await optimizeFolder(dir, 1200, 82);
+      const res = await optimizeFolder(sharp, dir, 1200, 82);
       if (res) {
         grandTotalCount += res.count;
         grandTotalSaved += res.savedBytes;
@@ -153,12 +197,13 @@ async function run() {
   const imgDirCandidates = [
     path.join(process.cwd(), 'public', 'img'),
     path.resolve(process.cwd(), '..', 'public', 'img'),
+    path.join(os.homedir(), 'domains', 'sumdebetta.com', 'hbuilds', 'last-source', 'public', 'img'),
   ];
 
   for (const imgDir of imgDirCandidates) {
     if (fs.existsSync(imgDir) && !processedDirs.has(imgDir)) {
       processedDirs.add(imgDir);
-      const res = await optimizeFolder(imgDir, 1400, 82);
+      const res = await optimizeFolder(sharp, imgDir, 1400, 82);
       if (res) {
         grandTotalCount += res.count;
         grandTotalSaved += res.savedBytes;
