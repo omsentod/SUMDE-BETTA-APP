@@ -1,0 +1,192 @@
+/* Courier Selection Dropdown Styles
+ * Clean, restrained, high-craft design with light/dark theme parity.
+ */
+
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  width: 100%;
+  height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.trigger:hover {
+  border-color: var(--primary);
+}
+
+.trigger:focus-visible,
+.triggerOpen {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.triggerContent {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.triggerLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevronIcon {
+  color: var(--text-muted);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.trigger:hover .chevronIcon,
+.triggerOpen .chevronIcon {
+  color: var(--primary);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Logo & Icon Thumbnails */
+.logoThumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 2px 4px;
+  width: 44px;
+  height: 26px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.logoImg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.iconThumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, var(--text-muted) 12%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  width: 44px;
+  height: 26px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  color: var(--text-main);
+}
+
+/* Small variant for table view */
+.sm {
+  width: 36px;
+  height: 22px;
+  padding: 1px 3px;
+  border-radius: 4px;
+}
+
+/* Popover Menu */
+.popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: var(--dropdown-bg, var(--bg-card));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 0.35rem;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  user-select: none;
+}
+
+.optionItem:hover {
+  background: var(--dropdown-hover-bg, var(--bg-hover));
+}
+
+.optionSelected {
+  background: var(--bg-active);
+}
+
+.optionSelected:hover {
+  background: var(--bg-active);
+}
+
+.optionContent {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.optionLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.checkIcon {
+  color: var(--primary);
+  flex-shrink: 0;
+}

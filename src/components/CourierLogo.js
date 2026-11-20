@@ -11,6 +11,7 @@ const ALIAS = {
   'sicepat': 'sicepat',
   'si cepat': 'sicepat',
   'anteraja': 'anteraja',
+  'tiki': 'tiki',
   'gojek': 'gojek',
   'gosend': 'gojek',
   'grab': 'grab',
@@ -19,7 +20,14 @@ const ALIAS = {
 };
 
 // Couriers with image logos in /public/courier/
-const IMAGE_COURIERS = new Set(['jnt', 'pos']);
+const COURIER_FILE_MAP = {
+  jnt: '/courier/jnt.png',
+  pos: '/courier/pos.png',
+  jne: '/courier/jne.png',
+  sicepat: '/courier/sicepat.png',
+  anteraja: '/courier/anteraja.webp',
+  tiki: '/courier/tiki.webp',
+};
 
 // Display label per courier (falls back to the code itself)
 const LABEL = {
@@ -27,6 +35,7 @@ const LABEL = {
   jne: 'JNE',
   sicepat: 'SICEPAT',
   anteraja: 'ANTERAJA',
+  tiki: 'TIKI',
   gojek: 'GOJEK',
   grab: 'GRAB',
   pos: 'POS',
@@ -38,14 +47,15 @@ export default function CourierLogo({ code, size = 'md' }) {
   const label = key ? LABEL[key] : (code || 'KURIR').toUpperCase();
   const sizeClass = size === 'sm' ? styles.sm : size === 'lg' ? styles.lg : '';
   const hasError = key ? failedKeys.has(key) : false;
+  const imgSrc = key ? COURIER_FILE_MAP[key] : null;
 
-  // Render official PNG logo from /public/courier/ if available
-  if (key && IMAGE_COURIERS.has(key) && !hasError) {
+  // Render official logo from /public/courier/ if available
+  if (imgSrc && !hasError) {
     return (
       <span className={`${styles.logoWrapper} ${sizeClass}`.trim()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`/courier/${key}.png`}
+          src={imgSrc}
           alt={label}
           className={styles.logoImg}
           onError={() => {

@@ -549,6 +549,19 @@
   text-transform: uppercase;
 }
 
+.tdCourierWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tdCourierName {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
 .tdAwbText {
   font-family: monospace;
   font-weight: 700;

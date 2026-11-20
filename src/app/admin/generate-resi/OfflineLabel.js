@@ -14,13 +14,22 @@ function normalizeCourierCode(raw) {
   return 'other';
 }
 
+const COURIER_LOGOS = {
+  jnt: '/courier/jnt.png',
+  pos: '/courier/pos.png',
+  jne: '/courier/jne.png',
+  sicepat: '/courier/sicepat.png',
+  anteraja: '/courier/anteraja.webp',
+  tiki: '/courier/tiki.webp',
+};
+
 export default function OfflineLabel({ item }) {
   if (!item) return null;
 
   const refId = (item.id || item.referenceNumber || 'REF-OFFLINE').trim();
   const courierKey = normalizeCourierCode(item.courier);
   const courierLabel = (item.courier || 'J&T Express').toUpperCase();
-  const hasImageLogo = courierKey === 'jnt' || courierKey === 'pos';
+  const courierLogoSrc = COURIER_LOGOS[courierKey] || null;
 
   return (
     <div className={styles.label}>
@@ -46,10 +55,10 @@ export default function OfflineLabel({ item }) {
 
         <div className={styles.headerRight}>
           <div className={styles.courierBox}>
-            {hasImageLogo ? (
+            {courierLogoSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={`/courier/${courierKey}.png`}
+                src={courierLogoSrc}
                 alt={courierLabel}
                 className={styles.courierBareImg}
                 onError={(e) => {
@@ -62,7 +71,7 @@ export default function OfflineLabel({ item }) {
             ) : null}
             <div
               className={styles.courierBareText}
-              style={{ display: hasImageLogo ? 'none' : 'block' }}
+              style={{ display: courierLogoSrc ? 'none' : 'block' }}
             >
               {courierLabel}
             </div>

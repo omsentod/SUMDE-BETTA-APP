@@ -6,21 +6,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { canUser, getFirstAccessibleAdminRoute } from '@/lib/permission-utils';
 import OfflineLabel from './OfflineLabel';
+import CourierSelect, { CourierThumbnail, getCourierOption } from './CourierSelect';
 import { downloadOfflineWaybillTemplate, generateAutoTrackingCode, parseOfflineWaybillsExcel } from './excelHelper';
 import styles from './generateResi.module.css';
 
 const STORAGE_KEY = 'sumde_offline_waybills_queue';
-
-const COURIER_OPTIONS = [
-  { value: 'J&T Express', label: 'J&T Express' },
-  { value: 'POS Indonesia', label: 'POS Indonesia' },
-  { value: 'SiCepat', label: 'SiCepat' },
-  { value: 'JNE Express', label: 'JNE Express' },
-  { value: 'AnterAja', label: 'AnterAja' },
-  { value: 'TIKI', label: 'TIKI' },
-  { value: 'Kurir Toko / Travel', label: 'Kurir Toko / Travel / Bus' },
-  { value: 'Lainnya', label: 'Lainnya / Manual' },
-];
 
 const INITIAL_SAMPLE = [
   {
@@ -403,18 +393,11 @@ function GenerateResiPageInner() {
                   <label htmlFor="field-courier" className={styles.fieldLabel}>
                     Ekspedisi Kurir
                   </label>
-                  <select
+                  <CourierSelect
                     id="field-courier"
                     value={formData.courier}
-                    onChange={(e) => setFormData({ ...formData, courier: e.target.value })}
-                    className={styles.fieldInput}
-                  >
-                    {COURIER_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(courierVal) => setFormData({ ...formData, courier: courierVal })}
+                  />
                 </div>
 
                 {/* Alamat Lengkap (String Digabung) */}
@@ -575,7 +558,10 @@ function GenerateResiPageInner() {
                             </div>
                           </td>
                           <td>
-                            <span className={styles.tdCourierBadge}>{it.courier}</span>
+                            <div className={styles.tdCourierWrap}>
+                              <CourierThumbnail option={getCourierOption(it.courier)} size="sm" />
+                              <span className={styles.tdCourierName}>{it.courier}</span>
+                            </div>
                           </td>
                           <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
                             <button
